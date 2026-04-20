@@ -1845,41 +1845,45 @@ function parseDrv(csv){
   const lns=csv.split(/\r?\n/);
   for(let i=0;i<Math.min(lns.length,15);i++){
     const u=lns[i].toUpperCase();
-    if(u.includes('DOMINIO')&&(u.includes('UNIDAD')||u.includes('COLOR'))){hi=i;break;}
+    if(u.includes('DOMINIO')&&u.includes('UNIDAD')){hi=i;break;}
   }
   if(hi<0)return autos;
-  // Normalizar encabezados: quitar tildes y caracteres especiales
+  const hdr=cF(lns[hi]);
+  // Buscar indices por nombre (tolerante a tildes y espacios)
   const norm=s=>s.toUpperCase().trim()
-    .replace(/[ÁÀÂÄ]/g,'A').replace(/[ÉÈÊË]/g,'E')
-    .replace(/[ÍÌÎÏ]/g,'I').replace(/[ÓÒÔÖ]/g,'O')
-    .replace(/[ÚÙÛÜ]/g,'U').replace(/Ñ/g,'N')
+    .replace(/[\u00C0-\u00C6]/g,'A').replace(/[\u00C8-\u00CB]/g,'E')
+    .replace(/[\u00CC-\u00CF]/g,'I').replace(/[\u00D2-\u00D6]/g,'O')
+    .replace(/[\u00D9-\u00DC]/g,'U').replace(/\u00D1/g,'N')
+    .replace(/[\u00E0-\u00E6]/g,'A').replace(/[\u00E8-\u00EB]/g,'E')
+    .replace(/[\u00EC-\u00EF]/g,'I').replace(/[\u00F2-\u00F6]/g,'O')
+    .replace(/[\u00F9-\u00FC]/g,'U').replace(/\u00F1/g,'N')
     .replace(/[^A-Z0-9 ]/g,'').trim();
-  const hdr=cF(lns[hi]).map(norm);
-  const gi=h=>hdr.findIndex(x=>x===h||x.startsWith(h));
-  // Indices fijos por nombre normalizado
-  const iDom=gi('DOMINIO');
-  const iEmp=gi('EMPRESA');
-  const iUni=hdr.findIndex(h=>h==='UNIDAD'||h.includes('UNIDAD'));
-  const iCol=gi('COLOR');
-  const iAno=hdr.findIndex(h=>h==='ANO'||h==='AO'||h==='A O');
-  const iKm=gi('KM');
-  const iPre=hdr.findIndex(h=>h.startsWith('PUBLICO'));
-  const iInf=hdr.findIndex(h=>h.includes('INFO')&&h.includes('TOMA'));
-  const iVToma=hdr.findIndex(h=>h.includes('VALOR')&&h.includes('TOMA'));
-  const iCosto=hdr.findIndex(h=>h.includes('COSTO')&&h.includes('TOTAL'));
+  const nh=hdr.map(norm);
+  const fi=t=>nh.findIndex(h=>h===t||h.startsWith(t));
+  const iDom=fi('DOMINIO');
+  const iEmp=fi('EMPRESA');
+  const iUni=fi('UNIDAD');
+  const iCol=fi('COLOR');
+  const iAno=fi('ANO');
+  const iKm=fi('KM');
+  const iPre=fi('PUBLICO');
+  const iInf=nh.findIndex(h=>h.includes('INFO')&&h.includes('TOMA')&&!h.includes('MARZO')&&!h.includes('ABRIL'));
+  const iVToma=nh.findIndex(h=>h.includes('VALOR')&&h.includes('TOMA'));
+  const iCosto=nh.findIndex(h=>h.includes('COSTO')&&h.includes('TOTAL'));
   const gc=(c,i)=>i>=0&&i<c.length?c[i].trim():'';
   for(let i=hi+1;i<lns.length;i++){
     const l=lns[i].trim();if(!l)continue;
     const c=cF(l);
     const dom=gc(c,iDom),emp=gc(c,iEmp),uni=gc(c,iUni);
-    if(norm(dom).includes('DIAS DE STOCK'))break;
-    if(dom&&!emp&&!uni){const p=norm(dom);if(MARCAS.has(p)){marca=p;continue;}}
-    if(!dom||norm(dom)==='DOMINIO')continue;
+    const ndom=norm(dom);
+    if(ndom.includes('DIAS DE STOCK'))break;
+    if(dom&&!emp&&!uni){if(MARCAS.has(ndom)){marca=ndom;continue;}}
+    if(!dom||ndom==='DOMINIO')continue;
     const anio=parseInt(gc(c,iAno).replace(/[^0-9]/g,''))||0;
     if(anio<1990||anio>2030)continue;
     const inf=gc(c,iInf);
     let est='DISPONIBLE';
-    if(/se[nñ]ado/i.test(inf)||/seniado/i.test(inf))est='SENIADO';
+    if(/se[nñ]ado|seniado/i.test(inf))est='SENIADO';
     else if(/recibir/i.test(inf))est='A RECIBIR';
     else if(/preparac|taller/i.test(inf))est='EN PREPARACION';
     const pts=(uni||'').split(' ');
