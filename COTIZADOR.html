@@ -918,42 +918,179 @@ const OKM_D=[
   {marca:"TOYOTA",    modelo:"HILUX",   version:"2.8 SRX AT 4X4",         anno:2025,precio:0,       color:"BLANCO",estado:"CONSULTAR"},
 ];
 const MKT={
-  "TOYOTA":{"HILUX":["2.4 DX CS 4X2","2.8 SR 4X4 MT","2.8 SRX AT 4X4","2.8 GR-SPORT 4X4"],"YARIS":["1.5 XLS MT","1.5 XLS CVT"],"YARIS CROSS":["1.5 S CVT","GR-SPORT CVT"],"COROLLA":["2.0 XEI CVT","2.0 SE-G CVT","1.8 XLI CVT"],"COROLLA CROSS":["2.0 XEI CVT","GR-SPORT 2.0 CVT"],"SW4":["2.8 TDI SR AT 4X2","2.8 TDI SRX AT 4X4"],"ETIOS":["1.5 XLS MT","1.5 CROSS MT"]},
-  "VOLKSWAGEN":{"AMAROK":["2.0 TDI 140HP 4X2","2.0 TDI 140HP 4X4","HIGHLINE AT 180HP","V6 EXTREME 4X4"],"TAOS":["1.4 TSI COMFORTLINE MT","1.4 TSI HIGHLINE AT"],"POLO":["1.0 TSI TRACK MT","TSI GTS AT"],"NIVUS":["1.0 TSI COMFORTLINE AT","1.0 TSI HIGHLINE AT"],"GOL":["1.6 5P TRENDLINE","1.6 5P COMFORTLINE"],"VIRTUS":["1.0 TSI MT","1.6 HIGHLINE AT"],"SAVEIRO":["1.6 S/EXT MT","1.6 C/EXT MT"]},
-  "CHEVROLET":{"TRACKER":["1.2T PREMIERE AT","1.0T LT MT","1.2T LTZ AT"],"ONIX":["1.0T MT 5P","1.0T PREMIER AT","1.0T LT MT"],"ONIX PLUS":["1.0T LT AT","1.0T PREMIER AT"],"S10":["2.8TD CD 4X2 LS","2.8TD CD 4X4 LTZ AT"],"MONTANA":["1.2T PREMIER AT"]},
-  "FORD":{"RANGER":["2.0T XL CD 4X2","2.0T XLS CD 4X4 AT","3.0T RAPTOR 4X4","2.0T LIMITED 4X4 AT"],"TERRITORY":["1.5T SE AT","1.5T TITANIUM AT"],"KA":["1.5 S MT","1.5 SE AT"],"ECOSPORT":["1.5 S MT","2.0 TITANIUM AT"]},
-  "FIAT":{"CRONOS":["1.3 PRECISION CVT","1.3 DRIVE MT","1.3 LIKE MT"],"ARGO":["1.0 DRIVE MT","1.3 PRECISION MT"],"STRADA":["WORKING 1.4 CS MT","VOLCANO 1.3T CD AT"],"TORO":["VOLCANO 2.0 DIESEL 4X4 AT9","ENDURANCE 1.3T 4X2 AT"],"MOBI":["1.0 EASY MT","1.0 EASY PACK TOP"],"PALIO":["1.4 ATTRACTIVE MT"]},
-  "RENAULT":{"KWID":["1.0 LIFE MT","1.0 ZEN MT","1.0 OUTSIDER MT"],"KARDIAN":["1.0T INTENS CVT","1.0T ZEN MT"],"DUSTER":["1.6 ZEN MT","1.3T INTENS CVT"],"OROCH":["1.6 ZEN MT","1.3T OUTSIDER AT"],"SANDERO":["1.6 ZEN MT","STEPWAY 1.6 MT"],"KANGOO":["1.5 DCI FURGON"]},
-  "BYD":{"ATTO 2":["STANDARD RANGE","LONG RANGE"],"DOLPHIN MINI":["COMFORT","PREMIUM"],"SHARK":["6X AWD PHEV"],"YUAN PRO":["STANDARD","LONG RANGE"]},
-  "PEUGEOT":{"208":["1.2T LIKE MT","1.2T ALLURE AT","1.2T GT TIPTRONIC"],"2008":["1.0T ACTIVE AT6","1.2T ALLURE AT","1.2T GT AT"],"3008":["1.6T ALLURE AT","1.6T GT AT"],"PARTNER":["1.6 FURGON MT"]},
-  "CITROEN":{"C3":["1.6 VTI FEEL MT","1.6 VTI SHINE MT"],"BASALT":["1.0T FEEL AT6","1.0T SHINE AT6"],"BERLINGO":["FURGON 1.6 BUSINESS","MULTISPACE 1.6"]},
-  "NISSAN":{"KICKS":["1.6 ADVANCE CVT","1.6 EXCLUSIVE CVT"],"FRONTIER":["2.3 TDI LE AT 4X4","2.3 TDI PRO-4X AT"],"SENTRA":["2.0 EXCLUSIVE CVT"],"VERSA":["1.6 ADVANCE CVT"]},
-  "HONDA":{"HR-V":["1.5T EXL CVT","1.5T LX CVT"],"WR-V":["1.0T EX CVT"],"CIVIC":["2.0 EX CVT"]},
-  "JEEP":{"COMPASS":["2.4 LONGITUDE AT","1.3T TRAILHAWK AT"],"RENEGADE":["1.8 SPORT AT","1.8 LONGITUDE AT"]},
-  "HYUNDAI":{"CRETA":["1.0T GL AT","1.0T GLS AT"],"TUCSON":["2.0 GL MT","2.0 GLS AT"]},
-  "KIA":{"SPORTAGE":["2.0 EX MT","1.6T GT-LINE AT"],"SELTOS":["1.4T SX AT"]},
-  "MITSUBISHI":{"L200":["2.4 DID GL MT 4X2","2.4 DID HPE MT 4X4"],"ECLIPSE CROSS":["1.5T CVT"]},
+  "TOYOTA":{
+    "HILUX":{
+      "4X2 CC DX 2.4 TDI 6 MT":42639000,"4X2 CS DX 2.4 TDI 6 MT":45821000,"4X2 DC DX 2.4 TDI 6 MT":51375000,
+      "4X2 DC DX 2.4 TDI 6 AT":52754000,"4X2 DC SR 2.4 TDI 6 MT":58612000,"4X2 DC SR 2.4 TDI 6 AT":61175000,
+      "4X2 DC SRV 2.8 TDI 6 AT":69556000,"4X2 DC SRX 2.8 TDI 6 AT":79971000,"4X4 CC DX 2.4 TDI 6 MT":51977000,
+      "4X4 CS DX 2.4 TDI 6 MT":54668000,"4X4 DC DX 2.4 TDI 6 MT":59819000,"4X4 DC DX 2.4 TDI 6 AT":61433000,
+      "4X2 DC SR 2.8 TDI 6 MT":68507000,"4X2 DC SR 2.8 TDI 6 AT":71376000,"4X4 DC SRV 2.8 TDI 6 AT":78431000,
+      "4X4 DC SRV+ 2.8 TDI 6 AT":81888000,"4X4 DC SRX 2.8 TDI 6 AT":86399000,"4X4 DC GR-SPORT IV 2.8 TDI 6 AT":91377000
+    },
+    "SW4":{"4X4 SRX 2.8 TDI 6 AT 7A":93635000,"4X4 DIAMOND II 2.8 TDI 6 AT 7A":94558000,"4X4 GR-S 2.8 TDI AT 7A":99142000},
+    "COROLLA":{
+      "XLI 2.0 CVT":46132000,"XEI 2.0 CVT":50460000,"HEV XEI 1.8 E-CVT":52814000,
+      "SEG 2.0 CVT":56442000,"HEV SEG 1.8 E-CVT":58230000,"GR-SPORT 2.0 S-CVT":57489000
+    },
+    "COROLLA CROSS":{
+      "XLI 2.0 CVT":53968000,"XEI 2.0 CVT":57994000,"XEI HEV 1.8 E-CVT":59405000,
+      "SEG 2.0 CVT":63782000,"HEV SEG 1.8 E-CVT":65734000,"GR-SPORT 2.0 CVT":66133000
+    },
+    "YARIS":{"XS CVT":36334000,"XLS+ CVT":40134000,"S CVT":43006000},
+    "YARIS CROSS":{
+      "XLI":43514000,"XEI":47310000,"XEI HEV":50507000,"SEG":52274000,"SEG HEV":56070000
+    },
+    "FURGON":{"L2H2 2.8 TDI 6 AT 3A":69970000},
+    "COMMUTER":{"2.8 TDI 6 AT 14A":84043000}
+  },
+  "FIAT":{
+    "MOBI":{"TREKKING":27911000},
+    "CRONOS":{
+      "LIKE 1.3 GSE":31079000,"DRIVE 1.3 GSE PACK PLUS":33729000,
+      "DRIVE 1.3 GSE CVT PACK PLUS":34785000,"PRECISION 1.3 GSE CVT":36588000
+    },
+    "ARGO":{"DRIVE 1.3 MT":29924000,"DRIVE 1.3 CVT":31331000},
+    "PULSE":{
+      "DRIVE 1.3 MTS":35536000,"DRIVE 1.3 CVT":36765000,"AUDACE 1.0T CVT":40099000,
+      "IMPETUS 1.0T CVT":41027000,"ABARTH TURBO 270 AT6":45978000
+    },
+    "FASTBACK":{"TURBO 270 AT":43739000,"ABARTH TURBO 270 AT6":51339000},
+    "FIAT 600":{"MHEV 1.2 AT":43828000},
+    "FIORINO":{"ENDURANCE 1.3":28817000},
+    "STRADA":{
+      "FREEDOM CS 1.3 MT":31127000,"FREEDOM 1.3 8V CD":35904000,
+      "VOLCANO 1.3 8V CD CVT":40076000,"RANCH T200 CD CVT":43461000,"ULTRA T200 CD CVT":43583000
+    },
+    "TORO":{
+      "FREEDOM T270 AT6 4X2":43407000,"VOLCANO T270 AT6 4X2":48684000,
+      "VOLCANO TD350 AT9 4X4":54689000,"ULTRA TD350 AT9 4X4":64141000,
+      "FREEDOM 1.3T AT6 4X2":46842000,"VOLCANO 1.3T AT6 4X2":53162000,"VOLCANO 2.2TD AT9 4X4":58233000
+    },
+    "TITANO":{
+      "ENDURANCE MT 4X2":48907000,"ENDURANCE MT 4X4":45862000,"FREEDOM MT 4X4":52650000,
+      "FREEDOM PLUS AT 4X4":56481000,"RANCH AT 4X4":61552000
+    }
+  },
+  "JEEP":{
+    "RENEGADE":{
+      "1.3T SPORT AT6":41783000,"LONGITUDE 1.3 AT6":47653000,
+      "S T270 1.3T AT6":48743000,"WILLYS 1.3T 4X4 AT9":54347000
+    },
+    "COMPASS":{
+      "SPORT T270 AT6 4X2":51159000,"LIMITED PLUS T270 AT6 4X2":57594000,
+      "S T270 1.3T AT6 FWD":57091000,"BLACKHAWK 2.0T GME AT9 4X4":64631000
+    },
+    "COMMANDER":{
+      "LIMITED GSE 1.3T FWD AT6":60136000,"OVERLAND 2.0T GME AT9 4X4":78533000,
+      "BLACKHAWK 2.0T GME AT9 4X4":79228000
+    },
+    "RAMPAGE":{
+      "BIGHORN 2.2 TD AT8 4X4":55770000,"REBEL 2.0L GME":60943000,
+      "LARAMIE 2.0L GME":63078000,"RT 2.0L GME":68946000
+    },
+    "DAKOTA":{"WARLOCK 2.2 AT8 4X4":70861000,"LARAMIE 2.2 AT8 4X4":72915000}
+  },
+  "RENAULT":{
+    "KWID":{"ICONIC BITONO":27500000,"ICONIC OUTSIDER":27800000},
+    "STEPWAY":{"INTENS 1.6":37500000},
+    "KARDIAN":{"EVOLUTION MT":38700000,"EVOLUTION EDC":43500000,"ICONIC EDC":47200000},
+    "DUSTER":{"INTENS 1.6 MT":44000000,"ICONIC 1.3T 4X2 CVT":48000000,"ICONIC 1.3T 4X4 MT":50000000},
+    "LOGAN":{"INTENS 1.6":38500000},
+    "BOREAL":{"EVOLUTION":51500000,"TECHNO":56500000,"ICONIC":59900000},
+    "ARKANA":{"E-TECH HYBRID ESPIRIT ALPINE":56700000},
+    "KOLEOS":{"TECHNO":83500000,"SPIRIT ALPINE FULL HYBRID":93000000},
+    "KANGOO":{"II 1.6 SCe":48000000,"EXPRESS 2A 1.6":44500000,"EXPRESS 5A 1.6":49000000,"E-TECH":54000000},
+    "OROCH":{"EMOTION 1.6 2WD":44900000,"ICONIC 1.3T 2WD CVT":50500000,"OUTSIDER 1.3T 4WD":51900000},
+    "MASTER":{"FURGON L1H1":65000000,"FURGON L2H2":71800000,"FURGON L3H2":75000000}
+  },
+  "CITROEN":{
+    "C3":{
+      "VTi FEEL MY26":31360000,"VTi AT FEEL PACK MY26":32070000,"VTi AT XTR MY26":32770000,
+      "T200 FEEL PLUS MY26":34030000
+    },
+    "BASALT":{
+      "1.3 LIVE PK MY26":32260000,"1.3 FEEL MY26":34150000,"T200 SHINE MY26":38450000,
+      "T200 DARK EDITION MY26":38970000
+    },
+    "AIRCROSS":{
+      "1.3 FEEL PK MY26":37090000,"T200 FEEL PK MY26":40530000,"T200 SHINE MY26":41280000,
+      "T200 SHINE 7 MY26":43430000,"T200 XTR MY26":41720000
+    },
+    "C4":{"HYBRID PLUS":47900000,"HYBRID MAX":59900000},
+    "BERLINGO":{"FURGON HDi 92 BUSINESS":38270000},
+    "JUMPY":{"L3 HDi 150":57440000,"L3 HDi 150 6P":62900000},
+    "JUMPER":{"L2H2 HDi 140 VAN":69840000,"L3H2 HDi 140 VAN":75090000}
+  },
+  "CHEVROLET":{
+    "ONIX":{
+      "1.0 LT MT":32792000,"1.0 LTZ AT":35904000,"1.0T PREMIER AT":38956000,"1.0T RS AT":39292000
+    },
+    "ONIX PLUS":{"1.0T LT MT":32665000,"1.0T LTZ AT":35904000,"1.0T PREMIER AT":38956000},
+    "TRACKER":{
+      "1.2T AT":40085000,"1.2 AT LTZ":45788000,"1.2T AT PREMIER":49975000,"1.2T AT RS":50006000
+    },
+    "SPIN":{"1.8N LT 5A MT":36300000,"1.8N PREMIER 7A AT":42411000},
+    "MONTANA":{
+      "1.2T LT":41888000,"1.2T LTZ AT":43948000,"1.2T PREMIER AT":47038000,"1.2T RS AT":47656000
+    },
+    "S10":{
+      "CS 2.8 TD 4X2 WT MT":43328000,"CS 2.8 TD 4X4 WT MT":50500000,
+      "CD 2.8 TD 4X2 WT MT":48004000,"CD 2.8 TD 4X4 WT MT":59480000,
+      "CD 2.8 TD 4X4 WT AT":59964000,"CD 2.8 TD 4X4 Z71 AT":67400000,
+      "CD 2.8 TD 4X4 LTZ AT":70780000,"CD 2.8 TD 4X4 HC AT":75260000
+    },
+    "SPARK EUV":{"ACTIV":43760000},
+    "CAPTIVA":{"PHEV PREMIER":56100000},
+    "TRAILBLAZER":{"2.8 4X4 HC AT":77192000}
+  },
+  "PEUGEOT":{
+    "208":{
+      "ALLURE MT AM26":33800000,"ALLURE AT AM26":35600000,
+      "ALLURE PK T200 AM26":38600000,"GT T200 AM26":40700000
+    },
+    "2008":{
+      "ACTIVE T200 AM26":42400000,"ALLURE T200 AM26":45600000,"GT T200 AM26":49800000
+    },
+    "408":{"GT AM25":73500000},
+    "3008":{"GT AM25":76600000},
+    "5008":{"GT AM25":81000000},
+    "PARTNER":{"CONFORT 1.6 HDI 92":33900000},
+    "EXPERT":{"L3 HDI 150":55500000,"L3 HDI 150 6P":60750000},
+    "BOXER":{"L2 H2 HDI 140":67500000,"L3 H2 HDI 140":72500000}
+  },
   "DFSK":{
-    "K01H":["MINI TRUCK","FURGON CERRADO","FURGON REFRIGERADO"],
-    "C31":["ESTANDAR","BOX","BOX REFRIGERADO"],
-    "C32":["ESTANDAR"],
-    "C35":["ESTANDAR"],
-    "EC":["35/31 FURGON MT"],
-    "GLORY 580":["7 PLAZAS"],
-    "GLORY 500":["5 PLAZAS"],
-    "E5":["HIBRIDA ENCHUFABLE"],
+    "K01H":{"MINI TRUCK":29500000,"FURGON CERRADO":34890000,"FURGON REFRIGERADO":43250000},
+    "C31":{"CABINA SIMPLE 1150KG":32800000,"BOX":37995000,"BOX REFRIGERADO":44200000},
+    "C32":{"CABINA DOBLE":35310000},
+    "C35":{"FURGON":37550000,"FURGON 7A HOMOLOGADA":41125000},
+    "GLORY 500":{"1.5 CVT 5 PLAZAS":39150000},
+    "GLORY 580":{"1.8 CVT 7 PLAZAS":43300000}
   },
   "FOTON":{
-    "TM1 NACIONAL":["CAB SIMPLE","CAB DOBLE"],
-    "TM1 IMPORT":["CAB SIMPLE","CAB DOBLE"],
-    "TM2":["BOX CARGO","BOX CARGO REFRIGERADO"],
-    "Z-TRUCK":["CAB SIMPLE","CAB DOBLE"],
-    "WONDER":["CAB SIMPLE","CAB DOBLE","CS BOX"],
-    "G7":["4X2 MT","4X2 AT","4X4 MT","4X4 AT"],
-    "BLUELINE":["V9 4X4 AT"],
-    "AUMARK S3":["615 CHASIS","916 CHASIS","916 FLATBED","1016 CHASIS"],
-    "E-AUMARK L6":["CHASIS","FLATBED","BOX","BOX REFRIGERADO"],
+    "TM1":{"1.5 CABINA SIMPLE":0},
+    "TM2 HD":{"1.5 CABINA SIMPLE":0},
+    "TUNLAND G7":{"4X4 AT8":58250000,"4X4 MT":53100000,"4X2 AT":50800750,"4X2 MT":47460000},
+    "TUNLAND V9":{"4X4 2.0 HYBRID AT8 ZF":81150000},
+    "AUMARK S3":{"2.8 615 MT5 3500KG":0,"3.8 916 MT6 5000KG":0,"3.8 1016 MT6 6000KG":0}
   },
+  "VOLKSWAGEN":{
+    "AMAROK":{"2.0 TDI 140HP 4X2":0,"2.0 TDI 180HP 4X4 AT":0,"V6 EXTREME 4X4":0},
+    "TAOS":{"1.4 TSI COMFORTLINE MT":0,"1.4 TSI HIGHLINE AT":0},
+    "POLO":{"1.0 TSI TRACK MT":0,"TSI GTS AT":0},
+    "GOL":{"1.6 5P TRENDLINE":0},
+    "VIRTUS":{"1.0 TSI MT":0,"1.6 HIGHLINE AT":0},
+    "SAVEIRO":{"1.6 S/EXT MT":0,"1.6 C/EXT MT":0}
+  },
+  "FORD":{
+    "RANGER":{"2.0T XL CD 4X2":0,"2.0T XLS CD 4X4 AT":0,"3.0T RAPTOR 4X4":0},
+    "TERRITORY":{"1.5T SE AT":0,"1.5T TITANIUM AT":0},
+    "ECOSPORT":{"1.5 S MT":0,"2.0 TITANIUM AT":0}
+  },
+  "NISSAN":{
+    "KICKS":{"1.6 ADVANCE CVT":0,"1.6 EXCLUSIVE CVT":0},
+    "FRONTIER":{"2.3 TDI LE AT 4X4":0,"2.3 TDI PRO-4X AT":0},
+    "SENTRA":{"2.0 EXCLUSIVE CVT":0}
+  }
 };
 
 // ── ESTADO EN MEMORIA ─────────────────────────────────────────────────────────
@@ -1200,7 +1337,7 @@ function onMarca(){
 function onModelo(){
   ['version','anno'].forEach(disEl);
   const t=$$('tipo').value,ma=$$('marca').value,mo=$$('modelo').value; if(!mo)return;
-  const vs=t==='usado'?[...new Set(stk.filter(u=>u.marca===ma&&u.modelo===mo).map(u=>u.version))].sort():t==='okm'?[...new Set(okm.filter(u=>u.marca===ma&&u.modelo===mo).map(u=>u.version))].sort():(MKT[ma]||{})[mo]||[];
+  const mktVers=(MKT[ma]||{})[mo];const vs=t==='usado'?[...new Set(stk.filter(u=>u.marca===ma&&u.modelo===mo).map(u=>u.version))].sort():t==='okm'?[...new Set(okm.filter(u=>u.marca===ma&&u.modelo===mo).map(u=>u.version))].sort():Array.isArray(mktVers)?mktVers:Object.keys(mktVers||{}).sort();
   selOpts('version',vs,'— Elegir versión —');
 }
 function onVer(){
@@ -1235,6 +1372,13 @@ function onAuto(){
     if(u&&u.precio>0){$$('pa1').value=u.precio;if(u.color)$$('color').value=u.color}
     if(u) updEstado(u.estado);
   } else {
+    // Cargar precio de lista si existe en MKT
+    const mktMo=(MKT[ma]||{})[mo];
+    if(mktMo&&!Array.isArray(mktMo)&&mktMo[v]&&mktMo[v]>0){
+      $$('pa1').value=mktMo[v];
+      const aral=$$('ar-al');
+      aral.innerHTML='<div class="al info">📋 Precio de <strong>lista pública ' + new Date().toLocaleString('es-AR',{month:'long',year:'numeric'}) + '</strong></div>';
+    }
     updEstado('');
   }
   cP();
@@ -1607,13 +1751,14 @@ function impX(e){
           const partes=unidad.split(' ');
           let modelo=partes[0]||'', version=partes.slice(1).join(' ');
           if(['HILUX','COROLLA','YARIS','LAND'].includes(partes[0]?.toUpperCase())&&partes[1]&&['DC','CS','CROSS','CRUISER'].includes(partes[1]?.toUpperCase())){modelo=partes.slice(0,2).join(' ');version=partes.slice(2).join(' ');}
-          let precio=0; const praw=String(row[ci.pre]||'').replace(/[^0-9.]/g,''); if(praw) precio=Math.round(parseFloat(praw))||0;
+          let precio=0; const praw=String(row[ci.pre]||'').replace(/[$\s]/g,'').replace(/\./g,'').replace(/,/g,''); if(praw) precio=parseInt(praw)||0;
           const eraw=String(row[ci.est]||'').toLowerCase().trim();
           let estado='DISPONIBLE';
           if(eraw.includes('preparac')) estado='EN PREPARACION';
           else if(eraw.includes('recibir')) estado='A RECIBIR';
           else if(eraw.includes('seña')||eraw.includes('senia')) estado='SENIADO';
-          nuevos.push({dominio:v.toUpperCase(),marca:marcaActual,modelo:modelo.toUpperCase(),version:version.toUpperCase(),anno:parseInt(row[ci.ano])||0,km:parseInt(row[ci.km])||0,precio,color:String(row[ci.col]||'').toUpperCase().trim(),estado});
+          const kmRaw=String(row[ci.km]||'').replace(/[^0-9]/g,'');const kmVal=parseInt(kmRaw)||0;
+          nuevos.push({dominio:v.toUpperCase(),marca:marcaActual,modelo:modelo.toUpperCase(),version:version.toUpperCase(),anno:parseInt(row[ci.ano])||0,km:kmVal,precio,color:String(row[ci.col]||'').toUpperCase().trim(),estado});
         }
         if(!nuevos.length){alert('❌ No se encontraron vehículos.');return}
         if(!confirm(`✅ Se encontraron ${nuevos.length} vehículos.\n¿Reemplazar el stock actual?`))return;
@@ -1633,55 +1778,50 @@ function impXO(e){
   r.onload=ev=>{
     try{
       const wb=XLSX.read(ev.target.result,{type:'binary'});
-      const ws=wb.Sheets[wb.SheetNames[0]];
-      const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
-      // Buscar fila de encabezado
-      let hdrIdx=-1;
-      for(let i=0;i<rows.length;i++){
-        const r0=rows[i].map(c=>String(c).toUpperCase());
-        if(r0.some(c=>c.includes('MARCA'))&&r0.some(c=>c.includes('MODELO'))){hdrIdx=i;break}
+      // Procesar TODAS las hojas (excepto INSTRUCCIONES)
+      let totalNuevos=0;
+      const marcasActualizadas=[];
+      for(const sheetName of wb.SheetNames){
+        if(sheetName.toUpperCase().includes('INSTRUC')) continue;
+        const ws=wb.Sheets[sheetName];
+        const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+        // Buscar fila encabezado
+        let hdrIdx=-1;
+        for(let i=0;i<rows.length;i++){
+          const r0=rows[i].map(c=>String(c).toUpperCase());
+          if(r0.some(c=>c==='MARCA')&&r0.some(c=>c==='MODELO')&&r0.some(c=>c==='PRECIO')){hdrIdx=i;break}
+        }
+        if(hdrIdx<0) continue;
+        const hdr=rows[hdrIdx].map(c=>String(c).toUpperCase().trim());
+        const ci={
+          marca:  hdr.findIndex(h=>h==='MARCA'),
+          modelo: hdr.findIndex(h=>h==='MODELO'),
+          ver:    hdr.findIndex(h=>h==='VERSION'||h.includes('VERSI')),
+          precio: hdr.findIndex(h=>h==='PRECIO'),
+        };
+        if(ci.marca<0||ci.modelo<0||ci.precio<0) continue;
+        // Leer filas
+        for(let i=hdrIdx+1;i<rows.length;i++){
+          const row=rows[i];
+          const marca=String(row[ci.marca]||'').trim().toUpperCase();
+          const modelo=String(row[ci.modelo]||'').trim().toUpperCase();
+          const version=ci.ver>=0?String(row[ci.ver]||'').trim().toUpperCase():'';
+          if(!marca||!modelo) continue;
+          const praw=String(row[ci.precio]||'').replace(/[$.\s]/g,'').replace(/\./g,'').replace(/,/g,'');
+          const precio=parseInt(praw)||0;
+          if(precio<100000) continue;
+          // Actualizar MKT
+          if(!MKT[marca]) MKT[marca]={};
+          if(!MKT[marca][modelo]) MKT[marca][modelo]={};
+          const key=version||modelo;
+          MKT[marca][modelo][key]=precio;
+          if(!marcasActualizadas.includes(marca)) marcasActualizadas.push(marca);
+          totalNuevos++;
+        }
       }
-      if(hdrIdx<0){alert('❌ No se encontró encabezado MARCA/MODELO. Usá la plantilla descargable.');return}
-      const hdr=rows[hdrIdx].map(c=>String(c).toUpperCase().trim());
-      const ci={
-        marca:  hdr.findIndex(h=>h==='MARCA'),
-        modelo: hdr.findIndex(h=>h==='MODELO'),
-        ver:    hdr.findIndex(h=>h.includes('VERSI')),
-        anno:   hdr.findIndex(h=>h.includes('A'+'N'+'O')||h.includes('AÑO')),
-        precio: hdr.findIndex(h=>h.includes('PRECIO')),
-        color:  hdr.findIndex(h=>h.includes('COLOR')),
-        estado: hdr.findIndex(h=>h.includes('ESTADO')),
-        obs:    hdr.findIndex(h=>h.includes('OBS')),
-      };
-      const nuevos=[];
-      for(let i=hdrIdx+1;i<rows.length;i++){
-        const row=rows[i];
-        const marca=String(row[ci.marca]||'').trim().toUpperCase();
-        if(!marca) continue;
-        let precio=0;
-        const praw=String(row[ci.precio]||'').replace(/[^0-9.]/g,'');
-        if(praw) precio=Math.round(parseFloat(praw))||0;
-        const eraw=String(row[ci.estado]||'').toLowerCase().trim();
-        let estado='DISPONIBLE';
-        if(eraw.includes('consultar')) estado='CONSULTAR';
-        else if(eraw.includes('reserv')) estado='RESERVADO';
-        else if(eraw.includes('camino')) estado='EN CAMINO';
-        nuevos.push({
-          marca,
-          modelo: String(row[ci.modelo]||'').trim().toUpperCase(),
-          version:String(row[ci.ver]   ||'').trim().toUpperCase(),
-          anno:   parseInt(row[ci.anno])||2025,
-          precio,
-          color:  String(row[ci.color] ||'').trim().toUpperCase(),
-          estado,
-          obs:    String(row[ci.obs]   ||'').trim(),
-        });
-      }
-      if(!nuevos.length){alert('❌ No se encontraron vehículos en el archivo.');return}
-      const ok=confirm(`✅ Se encontraron ${nuevos.length} vehículos 0km.\n\n¿Reemplazar el stock 0km actual?`);
-      if(!ok)return;
-      okm=nuevos; rAdm(); rOkm();
-      alert(`✅ Stock 0km actualizado con ${nuevos.length} unidades.\nRecordá exportar el JSON.`);
+      if(!totalNuevos){alert('❌ No se encontraron versiones válidas. Verificá que el archivo tenga el formato correcto.');return}
+      alert(`✅ Listas de precios actualizadas:\n\n${marcasActualizadas.map(m=>'• '+m).join('\n')}\n\nTotal: ${totalNuevos} versiones cargadas.\n\nRecordá exportar el JSON para guardar los cambios.`);
+      rAdm();
     }catch(err){alert('❌ Error al leer el Excel: '+err.message);}
   };
   r.readAsBinaryString(f);
