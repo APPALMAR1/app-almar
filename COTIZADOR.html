@@ -1379,16 +1379,49 @@ function onAuto(){
     if(u&&u.precio>0){$$('pa1').value=u.precio;if(u.color)$$('color').value=u.color}
     if(u) updEstado(u.estado);
   } else {
-    // Cargar precio de lista si existe en MKT
+    const MKT_USD_DATA={"FOTON": {"Z-TRUCK": {"CAB SIMPLE": 22200, "CAB DOBLE": 25400}, "TM1 NACIONAL": {"CAB SIMPLE": 28300, "CAB DOBLE": 29400}, "TM1 IMPORT": {"BOX CARGO": 33600, "BOX CARGO REFRIGERADO": 42100}, "TM2": {"CAB SIMPLE": 31300, "CAB DOBLE": 32700}, "WONDER": {"CAB SIMPLE": 29400, "CAB DOBLE": 30900, "CS BOX": 35000}, "G7": {"4X2 MT": 49489, "4X2 AT": 52900, "4X4 MT": 55174, "4X4 AT": 60461}, "V9": {"4X4 AT HYBRID": 83768}, "AUMARK S3 615": {"CHASIS": 52800}, "AUMARK S3 916": {"CHASIS": 59700}, "AUMARK S3 1016": {"CHASIS": 65000}, "AUMAN D 1621": {"CHASIS 4X2": 82000}}};
     const mktMo=(MKT[ma]||{})[mo];
-    if(mktMo&&!Array.isArray(mktMo)&&mktMo[v]&&mktMo[v]>0){
+    const usdMo=(MKT_USD_DATA[ma]||{})[mo];
+    const usdPrecio=usdMo?usdMo[v]:0;
+    const aral=$$('ar-al');
+    if(usdPrecio>0){
+      aral.innerHTML='<div class="al info" style="display:flex;flex-direction:column;gap:6px">'+
+        '<div>💵 <strong>Precio FOTON: USD '+usdPrecio.toLocaleString('es-AR')+'</strong></div>'+
+        '<div style="display:flex;gap:8px;align-items:center">'+
+        '<label style="font-size:11px;white-space:nowrap">💱 Dólar vendedor BNA:</label>'+
+        '<input id="tc-bna" type="number" placeholder="Buscando..." style="width:90px;padding:4px;border-radius:4px;border:1px solid #aaa;font-size:13px;font-weight:700" oninput="calcFoton('+usdPrecio+')">'+
+        '<span style="font-size:10px;color:#888" id="bna-estado">⏳</span>'+
+        '</div>'+
+        '<div id="foton-pesos" style="font-size:13px;font-weight:700;color:#27ae60"></div>'+
+        '</div>';
+      fetch('https://api.bluelytics.com.ar/v2/latest')
+        .then(r=>r.json())
+        .then(d=>{
+          const tc=d.oficial.value_sell;
+          const tcEl=document.getElementById('tc-bna');
+          if(tcEl){tcEl.value=tc;document.getElementById('bna-estado').textContent='✓ BNA oficial';calcFoton(usdPrecio);}
+        })
+        .catch(()=>{
+          const tcEl=document.getElementById('tc-bna');
+          if(tcEl){document.getElementById('bna-estado').textContent='⚠️ Ingresá manualmente';}
+        });
+    } else if(mktMo&&!Array.isArray(mktMo)&&mktMo[v]&&mktMo[v]>0){
       $$('pa1').value=mktMo[v];
-      const aral=$$('ar-al');
-      aral.innerHTML='<div class="al info">📋 Precio de <strong>lista pública ' + new Date().toLocaleString('es-AR',{month:'long',year:'numeric'}) + '</strong></div>';
+      aral.innerHTML='<div class="al info">📋 Precio de <strong>lista pública '+new Date().toLocaleString('es-AR',{month:'long',year:'numeric'})+'</strong></div>';
     }
     updEstado('');
   }
   cP();
+}
+function calcFoton(usd){
+  const tcEl=document.getElementById('tc-bna');
+  const resEl=document.getElementById('foton-pesos');
+  if(!tcEl||!resEl) return;
+  const tc=parseFloat(tcEl.value)||0;
+  if(tc<=0){resEl.textContent='';return;}
+  const pesos=Math.round(usd*tc);
+  resEl.textContent='💰 Precio en pesos: $'+pesos.toLocaleString('es-AR');
+  const pa1El=$$('pa1'); if(pa1El) pa1El.value=pesos;
 }
 function updEstado(estado){
   const ep=$$('rest');
