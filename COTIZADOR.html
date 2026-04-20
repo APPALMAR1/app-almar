@@ -482,6 +482,8 @@ select,input[type=text],input[type=number]{
   color:#1A2332!important;font-size:7.5pt!important;
   padding:0.8mm 2mm!important;border-radius:2px!important
 }
+/* ocultar selector campañas y cuotas en impresión — las cuotas van en col-A via print-cuotas */
+.addb,.cg-mini,.qg-mini,.cred-box-tit,.clbl2,#uva-al,#ltv-al,#qg-mini-wrap,#cred-box,#cred-camp-resumen{display:none!important}
 
 /* ── PROPUESTA 2 COLUMNAS ── */
 .p2{display:grid!important;grid-template-columns:1fr 1fr!important;gap:3mm!important;align-items:start;margin-bottom:2mm!important}
@@ -515,8 +517,7 @@ select,input[type=text],input[type=number]{
 .si2.falta .stl,.si2.falta .svl{color:#C0392B!important}
 .prog{display:none!important}
 
-/* ── BOX CUOTAS — ocultar todo el cred-box en impresión (las cuotas van en col-A) ── */
-.addb,.cg-mini,.qg-mini,.cred-box-tit,.clbl2,#uva-al,#ltv-al,#qg-mini-wrap,#cred-box{display:none!important}
+/* ── BOX CUOTAS — ocultar en pantalla solo los que no tienen display inline (manejado por JS) ── */
 /* ── CUOTAS en col-A, debajo del Total a cubrir ── */
 #print-cuotas{display:block!important;margin-top:2mm!important}
 .pq-tit{font-family:'Barlow Condensed',Arial;font-weight:800;font-size:8pt;color:#1A5276;letter-spacing:.5px;text-transform:uppercase;margin-bottom:1.5mm;border-bottom:1.5px solid #1A5276;padding-bottom:.8mm}
