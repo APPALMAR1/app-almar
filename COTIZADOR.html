@@ -622,6 +622,7 @@ input[type=text]#p-obs{background:#F5F7FA!important;border:1px solid #D5DCE6!imp
       <div class="fr f2">
         <div class="fld"><label>Tipo <span class="req">*</span></label>
           <select id="tipo" onchange="onTipo()"><option value="">— Elegir tipo —</option><option value="usado">Usado (Stock Almar)</option><option value="okm">0 km (Stock Almar)</option><option value="mercado">Multimarcas 0km</option></select>
+          <select id="subtipo" onchange="onSubtipo()" disabled style="display:none"><option value="">— Auto o Utilitario —</option><option value="Auto">🚗 Autos</option><option value="Utilitario/Pickup">🚛 Utilitarios / Pickups</option></select>
         </div>
         <div class="fld"><label>Búsqueda rápida</label>
           <div class="sw2"><span class="sico">🔍</span><input type="text" id="busq" placeholder="Escribir modelo..." oninput="buscar()"></div>
@@ -1299,17 +1300,45 @@ function bBN(){
 function selOpts(id,opts,ph){const s=$$(id);s.innerHTML=`<option value="">${ph}</option>`;opts.forEach(v=>s.add(new Option(v,v)));s.disabled=false}
 function disEl(id){$$(id).innerHTML='<option value="">—</option>';$$(id).disabled=true}
 
+const MKT_TIPOS={"TOYOTA": {"Auto": ["COROLLA", "COROLLA CROSS", "YARIS", "YARIS CROSS"], "Utilitario/Pickup": ["HILUX", "SW4", "FURGON", "COMMUTER"]}, "FIAT": {"Auto": ["MOBI", "CRONOS", "ARGO", "PULSE", "FASTBACK", "FIAT 600"], "Utilitario/Pickup": ["FIORINO", "STRADA", "TORO", "TITANO"]}, "JEEP": {"Auto": ["RENEGADE", "COMPASS", "COMMANDER"], "Utilitario/Pickup": ["RAMPAGE", "DAKOTA"]}, "RENAULT": {"Auto": ["KWID", "STEPWAY", "KARDIAN", "DUSTER", "LOGAN", "BOREAL", "ARKANA", "KOLEOS", "KANGOO"], "Utilitario/Pickup": ["OROCH", "MASTER"]}, "CITROEN": {"Auto": ["C3", "BASALT", "AIRCROSS", "C4"], "Utilitario/Pickup": ["BERLINGO", "JUMPY", "JUMPER"]}, "CHEVROLET": {"Auto": ["ONIX", "ONIX PLUS", "TRACKER", "SPIN", "CAPTIVA", "SPARK EUV"], "Utilitario/Pickup": ["MONTANA", "S10", "TRAILBLAZER"]}, "PEUGEOT": {"Auto": ["208", "2008", "408", "3008", "5008"], "Utilitario/Pickup": ["PARTNER", "EXPERT", "BOXER"]}, "DFSK": {"Auto": ["GLORY 580", "GLORY 500"], "Utilitario/Pickup": ["K01H", "C31", "C32", "C35", "EC 35/31"]}, "FOTON": {"Auto": [], "Utilitario/Pickup": ["Z-TRUCK", "TM1 NACIONAL", "TM1 IMPORT", "TM2", "WONDER", "G7", "V9", "AUMARK S3 615", "AUMARK S3 916", "AUMARK S3 1016", "AUMAN D 1621"]}};
+
 function onTipo(){
   ['marca','modelo','version','anno'].forEach(disEl);
   $$('ar').style.display='none'; $$('ar-al').innerHTML='';
   const t=$$('tipo').value; if(!t)return;
+  if(t==='mercado'){
+    // Mostrar selector de subtipo
+    $$('subtipo').style.display='';
+    $$('subtipo').disabled=false;
+    $$('subtipo').value='';
+    ['marca','modelo','version','anno'].forEach(disEl);
+    return;
+  }
+  $$('subtipo').style.display='none';
+  $$('subtipo').disabled=true;
   const ms=t==='usado'?[...new Set(stk.map(u=>u.marca))].sort():t==='okm'?[...new Set(okm.map(u=>u.marca))].sort():Object.keys(MKT).sort();
   selOpts('marca',ms,'— Elegir marca —');
+}
+
+function onSubtipo(){
+  ['marca','modelo','version','anno'].forEach(disEl);
+  const sub=$$('subtipo').value; if(!sub)return;
+  // Filtrar marcas que tienen modelos del subtipo elegido
+  const marcas=Object.keys(MKT_TIPOS).filter(m=>(MKT_TIPOS[m][sub]||[]).length>0).sort();
+  selOpts('marca',marcas,'— Elegir marca —');
 }
 function onMarca(){
   ['modelo','version','anno'].forEach(disEl);
   const t=$$('tipo').value,ma=$$('marca').value; if(!ma)return;
-  const ms=t==='usado'?[...new Set(stk.filter(u=>u.marca===ma).map(u=>u.modelo))].sort():t==='okm'?[...new Set(okm.filter(u=>u.marca===ma).map(u=>u.modelo))].sort():Object.keys(MKT[ma]||{}).sort();
+  let ms;
+  if(t==='mercado'){
+    const sub=$$('subtipo').value;
+    const todos=Object.keys(MKT[ma]||{});
+    const filtrados=(MKT_TIPOS[ma]||{})[sub]||[];
+    ms=sub?todos.filter(m=>filtrados.includes(m)).sort():todos.sort();
+  } else {
+    ms=t==='usado'?[...new Set(stk.filter(u=>u.marca===ma).map(u=>u.modelo))].sort():t==='okm'?[...new Set(okm.filter(u=>u.marca===ma).map(u=>u.modelo))].sort():Object.keys(MKT[ma]||{}).sort();
+  }
   selOpts('modelo',ms,'— Elegir modelo —');
 }
 function onModelo(){
