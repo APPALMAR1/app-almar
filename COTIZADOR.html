@@ -1843,21 +1843,27 @@ function parseDrv(csv){
   const MARCAS=new Set(['CITROEN','CHERY','CHEVROLET','DS','FIAT','FORD','NISSAN','PEUGEOT','RENAULT','TOYOTA','VOLKSWAGEN','HONDA','JEEP']);
   const autos=[];let marca='';let hi=-1;
   const lns=csv.split(/\r?\n/);
-  // Buscar fila de encabezado
   for(let i=0;i<Math.min(lns.length,15);i++){
     const u=lns[i].toUpperCase();
-    if(u.includes('DOMINIO')&&u.includes('UNIDAD')){hi=i;break;}
+    if(u.includes('DOMINIO')&&(u.includes('UNIDAD')||u.includes('COLOR'))){hi=i;break;}
   }
   if(hi<0)return autos;
-  const hdr=cF(lns[hi]).map(c=>c.toUpperCase().trim().replace(/[^A-Z0-9 ]/g,'').trim());
-  // Indices de columnas clave
-  const iDom=hdr.findIndex(h=>h==='DOMINIO');
-  const iEmp=hdr.findIndex(h=>h==='EMPRESA');
-  const iUni=hdr.findIndex(h=>h.includes('UNIDAD'));
-  const iCol=hdr.findIndex(h=>h==='COLOR');
-  const iAno=hdr.findIndex(h=>h==='AO'||h==='ANO'||h.startsWith('A') && h.endsWith('O') && h.length<=3);
-  const iKm=hdr.findIndex(h=>h==='KM');
-  const iPre=hdr.findIndex(h=>h.startsWith('PUBLICO')||h.startsWith('PRECIO'));
+  // Normalizar encabezados: quitar tildes y caracteres especiales
+  const norm=s=>s.toUpperCase().trim()
+    .replace(/[ÁÀÂÄ]/g,'A').replace(/[ÉÈÊË]/g,'E')
+    .replace(/[ÍÌÎÏ]/g,'I').replace(/[ÓÒÔÖ]/g,'O')
+    .replace(/[ÚÙÛÜ]/g,'U').replace(/Ñ/g,'N')
+    .replace(/[^A-Z0-9 ]/g,'').trim();
+  const hdr=cF(lns[hi]).map(norm);
+  const gi=h=>hdr.findIndex(x=>x===h||x.startsWith(h));
+  // Indices fijos por nombre normalizado
+  const iDom=gi('DOMINIO');
+  const iEmp=gi('EMPRESA');
+  const iUni=hdr.findIndex(h=>h==='UNIDAD'||h.includes('UNIDAD'));
+  const iCol=gi('COLOR');
+  const iAno=hdr.findIndex(h=>h==='ANO'||h==='AO'||h==='A O');
+  const iKm=gi('KM');
+  const iPre=hdr.findIndex(h=>h.startsWith('PUBLICO'));
   const iInf=hdr.findIndex(h=>h.includes('INFO')&&h.includes('TOMA'));
   const iVToma=hdr.findIndex(h=>h.includes('VALOR')&&h.includes('TOMA'));
   const iCosto=hdr.findIndex(h=>h.includes('COSTO')&&h.includes('TOTAL'));
@@ -1866,15 +1872,14 @@ function parseDrv(csv){
     const l=lns[i].trim();if(!l)continue;
     const c=cF(l);
     const dom=gc(c,iDom),emp=gc(c,iEmp),uni=gc(c,iUni);
-    if(dom.toUpperCase().includes('DIAS DE STOCK'))break;
-    // Detectar fila de marca (solo tiene dominio, sin empresa ni unidad)
-    if(dom&&!emp&&!uni){const p=dom.replace(/"/g,'').trim().toUpperCase();if(MARCAS.has(p)){marca=p;continue;}}
-    if(!dom||dom==='DOMINIO')continue;
+    if(norm(dom).includes('DIAS DE STOCK'))break;
+    if(dom&&!emp&&!uni){const p=norm(dom);if(MARCAS.has(p)){marca=p;continue;}}
+    if(!dom||norm(dom)==='DOMINIO')continue;
     const anio=parseInt(gc(c,iAno).replace(/[^0-9]/g,''))||0;
     if(anio<1990||anio>2030)continue;
     const inf=gc(c,iInf);
     let est='DISPONIBLE';
-    if(/se[n\u00f1]ado/i.test(inf))est='SENIADO';
+    if(/se[nñ]ado/i.test(inf)||/seniado/i.test(inf))est='SENIADO';
     else if(/recibir/i.test(inf))est='A RECIBIR';
     else if(/preparac|taller/i.test(inf))est='EN PREPARACION';
     const pts=(uni||'').split(' ');
