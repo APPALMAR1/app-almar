@@ -1789,7 +1789,7 @@ function impXO(e){
         let hdrIdx=-1;
         for(let i=0;i<rows.length;i++){
           const r0=rows[i].map(c=>String(c).toUpperCase());
-          if(r0.some(c=>c==='MARCA')&&r0.some(c=>c==='MODELO')&&r0.some(c=>c==='PRECIO')){hdrIdx=i;break}
+          if(r0.some(c=>c==='MARCA'||c==='MODELO'||c==='PRECIO'||c==='VERSION') && r0.filter(c=>['MARCA','MODELO','PRECIO','VERSION'].includes(c)).length>=3){hdrIdx=i;break}
         }
         if(hdrIdx<0) continue;
         const hdr=rows[hdrIdx].map(c=>String(c).toUpperCase().trim());
@@ -1807,8 +1807,10 @@ function impXO(e){
           const modelo=String(row[ci.modelo]||'').trim().toUpperCase();
           const version=ci.ver>=0?String(row[ci.ver]||'').trim().toUpperCase():'';
           if(!marca||!modelo) continue;
-          const praw=String(row[ci.precio]||'').replace(/[$.\s]/g,'').replace(/\./g,'').replace(/,/g,'');
-          const precio=parseInt(praw)||0;
+          const pval=row[ci.precio];
+          let precio=0;
+          if(typeof pval==='number'){precio=Math.round(pval);}
+          else{const praw=String(pval||'').replace(/[$\s]/g,'').replace(/\./g,'').replace(/,/g,'');precio=parseInt(praw)||0;}
           if(precio<100000) continue;
           // Actualizar MKT
           if(!MKT[marca]) MKT[marca]={};
