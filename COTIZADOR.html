@@ -1505,8 +1505,8 @@ function vVend(uid, titId='dtit', listId='dh'){
 // ── STOCK ────────────────────────────────────────────────────────────────────
 function rStk(){
   const el=$$('sl'); el.innerHTML='';
-  // Filtrar: mostrar todo excepto A RECIBIR
-  const visible=stk.filter(u=>u.estado!=='A RECIBIR');
+  // Mostrar todo el stock incluyendo A RECIBIR
+  const visible=stk;
   if(!visible.length){
     el.innerHTML='<div class="empty"><div class="eico">🚗</div><div class="ettl">Sin unidades</div></div>';
     return;
