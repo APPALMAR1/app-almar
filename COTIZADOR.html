@@ -1855,17 +1855,23 @@ function parseDrv(csv){
     if(dom.toUpperCase().includes('DIAS DE STOCK'))break;
     if(dom&&!emp&&!uni){const p=dom.replace(/"/g,'').trim().toUpperCase();if(MARCAS.has(p)){marca=p;continue;}}
     if(dom==='DOMINIO'||!dom)continue;
-    const anio=parseInt(g(c,'AÑO').replace(/[^0-9]/g,''))||0;
+    // Buscar año flexible (AÑO, ANO, etc.)
+    const anoIdx=hdr.findIndex(h=>h.replace(/[^A-Z]/g,'').startsWith('A') && h.replace(/[^A-Z]/g,'').endsWith('O') && h.replace(/[^A-Z]/g,'').length<=3);
+    const anioRaw=anoIdx>=0&&anoIdx<c.length?c[anoIdx].trim():'';
+    const anio=parseInt(anioRaw.replace(/[^0-9]/g,''))||0;
     if(anio<1990||anio>2030)continue;
     const inf=g(c,'INFO TOMA');
     let est='DISPONIBLE';
-    if(/señado/i.test(inf))est='SENIADO';
+    if(/se[ñn]ado/i.test(inf))est='SENIADO';
     else if(/recibir/i.test(inf))est='A RECIBIR';
     else if(/preparac|taller/i.test(inf))est='EN PREPARACION';
+    // Precio: buscar columna PUBLICO (puede ser PUBLICO ABRIL, PUBLICO MARZO, etc.)
+    const preIdx=hdr.findIndex(h=>h.includes('PUBLICO')||h.includes('PRECIO'));
+    const precioRaw=preIdx>=0&&preIdx<c.length?c[preIdx].trim():'';
     const pts=(uni||'').split(' ');
     autos.push({dominio:(dom==='-')?'':dom,empresa:emp,marca,modelo:pts[0]||uni,version:pts.slice(1).join(' ')||'',
       anno:anio,km:parseInt(g(c,'KM').replace(/[^0-9]/g,''))||0,
-      precio:pNv(g(c,'PUBLICO')),color:g(c,'COLOR'),estado:est,
+      precio:pNv(precioRaw),color:g(c,'COLOR'),estado:est,
       _infoToma:inf,_valorToma:pNv(g(c,'VALOR TOMA')),_costoTotal:pNv(g(c,'COSTO TOTAL'))});
   }
   return autos;
