@@ -312,7 +312,7 @@ select option{background:var(--s2)}
 /* CRÉDITO INTEGRADO en columna B */
 .cred-box{background:var(--bg);border:1.5px solid var(--b);border-radius:var(--rad);padding:10px;margin-top:8px;margin-bottom:6px}
 .cred-box-tit{font-family:var(--hf);font-weight:800;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--b);margin-bottom:8px;display:flex;align-items:center;gap:5px}
-.cg-mini{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:8px}
+.cg-mini{display:flex;flex-direction:column;gap:4px;margin-bottom:8px}
 .cc-mini{background:var(--s2);border:1.5px solid var(--bdr);border-radius:6px;padding:7px 9px;cursor:pointer;transition:all var(--trs);position:relative}
 .cc-mini::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:3px 0 0 3px}
 .cc-mini.icbc::before{background:var(--r)}.cc-mini.bbva::before{background:var(--b)}.cc-mini.otro::before{background:var(--y)}
@@ -1505,42 +1505,94 @@ function rCampMini(){
   const financiera=MARCA_FINANCIERA[ma]||null;
   const act=camp.filter(c=>c.activa);
 
-  // Separar en bancos y campañas de marca
+  // Agrupar bancos por nombre de banco
   const bancos=act.filter(c=>!c.marca);
   const deMarca=act.filter(c=>c.marca&&c.marca===ma);
 
-  function crearChip(c){
-    const bn=c.banco.toLowerCase();
-    const cls=bn.includes('icbc')?'icbc':bn.includes('bbva')?'bbva':bn.includes('santander')?'otro':bn.includes('gpat')||bn.includes('fca')||bn.includes('psa')||bn.includes('movilize')?'marca':'otro';
+  // Obtener bancos únicos
+  const bancosUnicos=[...new Set(bancos.map(c=>c.banco))];
+  // Obtener financieras de marca únicas
+  const marcaUnicas=[...new Set(deMarca.map(c=>c.banco))];
+
+  function crearBotonBanco(nombreBanco, esMarca){
+    const campsDeBanco=act.filter(c=>c.banco===nombreBanco);
+    const seleccionado=campsDeBanco.some(c=>c.id===credCampId);
     const d=document.createElement('div');
-    d.className='cc-mini '+cls+(credCampId===c.id?' sel':'');
-    d.onclick=()=>sCredCamp(c.id);
-    const tnaStr=c.tna>0?c.tna.toFixed(1).replace('.',',')+'%':'0%';
-    d.innerHTML=`<div class="mch">✓</div><div class="mba">${c.banco}</div><div class="mno">${c.nombre}</div><div class="mtn">${tnaStr}</div>`;
+    const color=esMarca?'#E67E22':'var(--b)';
+    d.style.cssText=`display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:8px;cursor:pointer;border:1.5px solid ${seleccionado?color:'var(--brd)'};background:${seleccionado?(esMarca?'rgba(230,126,34,.15)':'rgba(36,113,163,.12)'):'var(--bg)'};transition:all .15s`;
+    d.onclick=()=>{
+      // Si tiene una sola campaña, seleccionarla directamente
+      if(campsDeBanco.length===1){
+        sCredCamp(campsDeBanco[0].id);
+      } else {
+        // Si tiene varias, mostrar sub-selector
+        mostrarSubCampanas(nombreBanco, campsDeBanco);
+      }
+    };
+    const ico=esMarca?'⭐':'🏦';
+    d.innerHTML=`<span style="font-size:18px">${ico}</span><span style="font-weight:700;font-size:13px;color:${seleccionado?color:'var(--tx)'}">${nombreBanco}</span>${seleccionado?`<span style="margin-left:auto;font-size:10px;color:${color}">✓ Seleccionado</span>`:''}`;
     g.appendChild(d);
   }
 
-  // Título bancos
-  if(bancos.length){
+  // Campañas de marca primero
+  if(marcaUnicas.length){
     const t=document.createElement('div');
-    t.style.cssText='font-size:9px;font-weight:800;letter-spacing:1.5px;color:#888;text-transform:uppercase;margin:4px 0 2px;width:100%';
-    t.textContent='🏦 Bancos';
+    t.style.cssText='font-size:9px;font-weight:800;letter-spacing:1.5px;color:#E67E22;text-transform:uppercase;margin:4px 0 4px';
+    t.textContent='⭐ Campaña de marca';
     g.appendChild(t);
-    bancos.forEach(crearChip);
+    marcaUnicas.forEach(b=>crearBotonBanco(b,true));
+    const sep=document.createElement('div');
+    sep.style.cssText='border-top:1px solid var(--brd);margin:8px 0';
+    g.appendChild(sep);
   }
 
-  // Título campañas de marca (solo si hay)
-  if(deMarca.length){
+  // Bancos
+  if(bancosUnicos.length){
     const t=document.createElement('div');
-    t.style.cssText='font-size:9px;font-weight:800;letter-spacing:1.5px;color:#E67E22;text-transform:uppercase;margin:8px 0 2px;width:100%';
-    t.textContent='⭐ Campaña '+financiera;
+    t.style.cssText='font-size:9px;font-weight:800;letter-spacing:1.5px;color:#888;text-transform:uppercase;margin:4px 0 4px';
+    t.textContent='🏦 Bancos';
     g.appendChild(t);
-    deMarca.forEach(crearChip);
+    bancosUnicos.forEach(b=>crearBotonBanco(b,false));
   }
+}
+
+function mostrarSubCampanas(banco, camps){
+  // Mostrar las campañas del banco elegido en un selector secundario
+  const g=$$('cg-mini');
+  // Agregar botón volver + opciones
+  const volver=document.createElement('div');
+  volver.style.cssText='display:flex;align-items:center;gap:6px;padding:6px 10px;cursor:pointer;color:var(--b);font-size:11px;font-weight:700';
+  volver.innerHTML='← Volver';
+  volver.onclick=()=>rCampMini();
+  g.appendChild(volver);
+
+  const tit=document.createElement('div');
+  tit.style.cssText='font-size:11px;font-weight:800;color:var(--tx);padding:4px 0 8px';
+  tit.textContent=banco+' — Elegí una línea:';
+  g.appendChild(tit);
+
+  camps.forEach(c=>{
+    const seleccionado=credCampId===c.id;
+    const d=document.createElement('div');
+    d.style.cssText=`padding:10px 14px;border-radius:8px;cursor:pointer;border:1.5px solid ${seleccionado?'var(--b)':'var(--brd)'};background:${seleccionado?'rgba(36,113,163,.12)':'var(--bg)'};margin-bottom:4px`;
+    d.onclick=()=>{sCredCamp(c.id);rCampMini()};
+    const tnaStr=c.tna>0?c.tna.toFixed(1).replace('.',',')+'% TNA':'0% TNA';
+    const comStr=c.comision>0?' · '+c.comision+'% gastos':'';
+    d.innerHTML=`<div style="font-weight:700;font-size:12px;color:${seleccionado?'var(--b)':'var(--tx)'}">${c.nombre}</div><div style="font-size:10px;color:#888;margin-top:2px">${tnaStr} · hasta ${c.plazoMax}m${comStr}</div>`;
+    g.appendChild(d);
+  });
 }
 
 function sCredCamp(id){
   credCampId=id; credPlazo=null;
+  // Calcular gastos bancarios (quebranto + IVA 21%) sobre monto a financiar
+  const cv=camp.find(c=>c.id===id);
+  const mt=parseFloat($$('pb1').value)||0;
+  if(cv&&mt>0&&cv.comision>0){
+    const quebranto=Math.round(mt*(cv.comision/100)*1.21);
+    $$('pa3').value=quebranto;
+    cP(); // recalcular total
+  }
   rCampMini(); calcCred();
 }
 
@@ -1549,6 +1601,15 @@ function calcCred(){
   const box=$$('cred-box');
 
   if(mt<=0){box.style.display='none';$$('print-cuotas').style.display='none';$$('print-cuotas').innerHTML='';return}
+  // Recalcular gastos bancarios si hay campaña seleccionada
+  if(credCampId&&mt>0){
+    const cv=camp.find(c=>c.id===credCampId);
+    if(cv&&cv.comision>0){
+      const quebranto=Math.round(mt*(cv.comision/100)*1.21);
+      $$('pa3').value=quebranto;
+      cP();
+    }
+  }
   box.style.display='block';
   rCampMini();
 
