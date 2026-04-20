@@ -698,7 +698,7 @@ input[type=text]#p-obs{background:#F5F7FA!important;border:1px solid #D5DCE6!imp
 
         <!-- BOX CALCULADORA CRÉDITO -->
         <div class="cred-box" id="cred-box" style="display:none">
-          <div class="cred-box-tit">🏦 Seleccioná campaña y plazo</div>
+          <div class="cred-box-tit" id="cred-box-tit">🏦 Seleccioná campaña y plazo</div>
           <!-- campañas mini -->
           <div class="cg-mini no-print-item" id="cg-mini"></div>
           <div id="ltv-al" class="ltv-al"></div>
@@ -1585,6 +1585,19 @@ function mostrarSubCampanas(banco, camps){
   });
 }
 
+function cambiarCampania(){
+  credCampId=null; credPlazo=null;
+  const rs=$$('cred-camp-resumen'); if(rs) rs.style.display='none';
+  $$('qg-mini-wrap').style.display='none';
+  $$('cg-mini').style.display='block';
+  $$('cred-box-tit').style.display='block';
+  $$('ltv-al').innerHTML='';
+  $$('uva-al').innerHTML='';
+  $$('pa3').value='';
+  cP();
+  rCampMini();
+}
+
 function sCredCamp(id){
   credCampId=id; credPlazo=null;
   // Calcular gastos bancarios (quebranto + IVA 21%) sobre monto a financiar
@@ -1623,8 +1636,18 @@ function calcCred(){
     if(cv){const lp=mt/pr,lm=cv.ltv/100;lal.innerHTML=lp>lm?`<div class="al warn" style="margin-top:0;margin-bottom:6px">⚠️ Monto (${(lp*100).toFixed(0)}%) supera LTV ${cv.ltv}%. Máximo: ${fmt(pr*lm)}</div>`:`<div class="al ok" style="margin-top:0;margin-bottom:6px">✅ LTV OK — ${(lp*100).toFixed(0)}% (máx ${cv.ltv}%)</div>`}
   }
 
-  if(!credCampId){$$('qg-mini-wrap').style.display='none';return}
-  const cv=camp.find(c=>c.id===credCampId); if(!cv){$$('qg-mini-wrap').style.display='none';return}
+  if(!credCampId){$$('qg-mini-wrap').style.display='none';$$('cg-mini').style.display='block';$$('cred-box-tit').style.display='block';return}
+  const cv=camp.find(c=>c.id===credCampId); if(!cv){$$('qg-mini-wrap').style.display='none';$$('cg-mini').style.display='block';$$('cred-box-tit').style.display='block';return}
+
+  // Ocultar selector y mostrar resumen compacto de campaña elegida
+  $$('cg-mini').style.display='none';
+  $$('cred-box-tit').style.display='none';
+  // Resumen campaña seleccionada
+  let rs=$$('cred-camp-resumen');
+  if(!rs){rs=document.createElement('div');rs.id='cred-camp-resumen';$$('cred-box').insertBefore(rs,$$('ltv-al'));}
+  const colorR=cv.marca?'#E67E22':'var(--b)';
+  rs.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-radius:8px;border:1.5px solid '+colorR+';background:rgba(36,113,163,.08);margin-bottom:6px';
+  rs.innerHTML=`<div><div style="font-weight:800;font-size:12px;color:${colorR}">${cv.banco} — ${cv.nombre}</div><div style="font-size:10px;color:#888;margin-top:1px">TNA ${cv.tna.toFixed(1).replace('.',',')}%${cv.comision>0?' · '+cv.comision+'% gastos':''} · hasta ${cv.plazoMax}m</div></div><button onclick="cambiarCampania()" style="background:none;border:1px solid var(--brd);color:var(--m);border-radius:6px;padding:4px 8px;font-size:10px;font-weight:700;cursor:pointer">✏️ Cambiar</button>`;
 
   // Cuotas
   $$('qg-mini-wrap').style.display='block';
@@ -1697,6 +1720,9 @@ function resetP(){
   $$('exa').innerHTML=''; $$('exb').innerHTML='';
   $$('ar').style.display='none'; $$('ar-al').innerHTML=''; $$('cred-box').style.display='none';
   credCampId=null; credPlazo=null;
+  const rs=$$('cred-camp-resumen'); if(rs) rs.style.display='none';
+  if($$('cred-box-tit')) $$('cred-box-tit').style.display='block';
+  if($$('cg-mini')) $$('cg-mini').style.display='block';
   $$('wap').style.display='none';
   cP();
 }
