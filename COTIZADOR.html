@@ -1876,6 +1876,28 @@ function pNv(s){if(!s)return 0;const n=parseInt(String(s).replace(/[$\.]/g,'').r
 
 // ── INIT ─────────────────────────────────────────────────────────────────────
 bLogin();
+
+// ── AUTO-SYNC DRIVE AL INICIAR ───────────────────────────────────────────────
+(function autoSync(){
+  // Solo si estamos online (no file://)
+  if(location.protocol==='file:') return;
+  const URL_CSV='https://docs.google.com/spreadsheets/d/e/2PACX-1vRZc13F55AeNqNfw0rG-9vVA5-ETS0DH3tPLTS5JA6aDK-F87p5tfrR4U3eB-Cfug/pub?gid=1231420949&single=true&output=csv';
+  fetch(URL_CSV+'&t='+Date.now(),{cache:'no-store'})
+    .then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.text();})
+    .then(csv=>{
+      const autos=parseDrv(csv);
+      if(!autos.length) return;
+      stk=autos;
+      // Mostrar barra de sync discreta
+      const bar=document.createElement('div');
+      const ts=new Date().toLocaleDateString('es-AR')+' '+new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
+      bar.style.cssText='position:fixed;bottom:48px;left:0;right:0;background:rgba(39,174,96,.92);color:#fff;font-size:11px;font-weight:600;text-align:center;padding:5px;z-index:999;';
+      bar.textContent='✓ Stock actualizado desde Drive · '+autos.length+' vehículos · '+ts;
+      document.body.appendChild(bar);
+      setTimeout(()=>bar.remove(),4000);
+    })
+    .catch(()=>{}); // Silencioso si falla
+})();
 </script>
 </body>
 </html>
