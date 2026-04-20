@@ -931,11 +931,17 @@ const CAMP_D=[
   {id:31,banco:"FCA",       nombre:"FIAT TITANO — 30 MESES",  tipo:"TRAD",tna:34.9, comision:10,  plazoMax:30,ltv:80,activa:true,  marca:"FIAT",     modelos:["TITANO"]},
   {id:32,banco:"FCA",       nombre:"JEEP/RAM — TODOS",        tipo:"TRAD",tna:0,    comision:11,  plazoMax:36,ltv:80,activa:true,  marca:"JEEP",     modelos:null},
   {id:33,banco:"FCA",       nombre:"JEEP DAKOTA — 30 MESES",  tipo:"TRAD",tna:27.9, comision:10,  plazoMax:30,ltv:80,activa:true,  marca:"JEEP",     modelos:["DAKOTA"]},
-  // PSA — Peugeot y Citroën (pendiente tasas)
-  {id:40,banco:"PSA Finance",nombre:"PEUGEOT — TODOS",        tipo:"TRAD",tna:0,    comision:0,   plazoMax:36,ltv:80,activa:false, marca:"PEUGEOT",  modelos:null},
-  {id:41,banco:"PSA Finance",nombre:"CITROËN — TODOS",        tipo:"TRAD",tna:0,    comision:0,   plazoMax:36,ltv:80,activa:false, marca:"CITROEN",  modelos:null},
-  // MOVILIZE — Renault (pendiente tasas)
-  {id:50,banco:"MOVILIZE",  nombre:"RENAULT — TODOS",         tipo:"TRAD",tna:0,    comision:0,   plazoMax:36,ltv:80,activa:false, marca:"RENAULT",  modelos:null},
+  // PSA Finance — Peugeot y Citroën (Circular 434-2026 Abril 2026)
+  {id:40,banco:"PSA Finance",nombre:"PEUGEOT — TASA EXPRESS",   tipo:"TRAD",tna:0,    comision:12,  plazoMax:36,ltv:80,activa:true,  marca:"PEUGEOT",  modelos:null},
+  {id:41,banco:"PSA Finance",nombre:"PEUGEOT — EXCLUSIVA 208/2008",tipo:"TRAD",tna:0, comision:12,  plazoMax:36,ltv:80,activa:true,  marca:"PEUGEOT",  modelos:["208","2008"]},
+  {id:42,banco:"PSA Finance",nombre:"PEUGEOT — TASA SIMPLE",    tipo:"TRAD",tna:11.9, comision:10,  plazoMax:36,ltv:80,activa:true,  marca:"PEUGEOT",  modelos:null},
+  {id:43,banco:"PSA Finance",nombre:"PEUGEOT — TODA LA GAMA",   tipo:"TRAD",tna:16,   comision:8,   plazoMax:48,ltv:80,activa:true,  marca:"PEUGEOT",  modelos:null},
+  {id:44,banco:"PSA Finance",nombre:"CITROËN — TASA EXPRESS",   tipo:"TRAD",tna:0,    comision:12,  plazoMax:36,ltv:80,activa:true,  marca:"CITROEN",  modelos:null},
+  {id:45,banco:"PSA Finance",nombre:"CITROËN — TASA SIMPLE",    tipo:"TRAD",tna:11.9, comision:10,  plazoMax:36,ltv:80,activa:true,  marca:"CITROEN",  modelos:null},
+  // MOBILIZE — Renault (Política Comercial MFS 01/04/2026)
+  {id:50,banco:"MOBILIZE",   nombre:"RENAULT — TASA 0%",        tipo:"TRAD",tna:0,    comision:9,   plazoMax:24,ltv:70,activa:true,  marca:"RENAULT",  modelos:null},
+  {id:51,banco:"MOBILIZE",   nombre:"RENAULT — LINEA ESTÁNDAR", tipo:"TRAD",tna:34.9, comision:12,  plazoMax:60,ltv:70,activa:true,  marca:"RENAULT",  modelos:null},
+  {id:52,banco:"MOBILIZE",   nombre:"RENAULT — CLASSIC",        tipo:"TRAD",tna:64.9, comision:5,   plazoMax:60,ltv:70,activa:true,  marca:"RENAULT",  modelos:null},
   // DFSK/Santander y Foton/Santander
   {id:60,banco:"DFSK/SANTANDER",nombre:"DFSK — TODOS LOS MODELOS",tipo:"TRAD",tna:47.9,comision:4,plazoMax:60,ltv:80,activa:true, marca:"DFSK",     modelos:null},
   {id:61,banco:"FOTON/SANTANDER",nombre:"FOTON — TODOS LOS MODELOS",tipo:"TRAD",tna:47.9,comision:4,plazoMax:60,ltv:80,activa:true,marca:"FOTON",    modelos:null},
@@ -948,7 +954,7 @@ const MARCA_FINANCIERA={
   "JEEP":"FCA",
   "PEUGEOT":"PSA Finance",
   "CITROEN":"PSA Finance",
-  "RENAULT":"MOVILIZE",
+  "RENAULT":"MOBILIZE",
   "DFSK":"DFSK/SANTANDER",
   "FOTON":"FOTON/SANTANDER",
 };
