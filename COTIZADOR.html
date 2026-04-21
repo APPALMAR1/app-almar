@@ -1857,9 +1857,7 @@ function syncDrive(){
   // Verificar si estamos en localhost (bat) o file://
   const esLocal = location.protocol === 'http:' || location.protocol === 'https:';
   if(!esLocal){
-    const msg = '⚠️ Para usar la sincronización automática, abrí el cotizador con el archivo ABRIR_COTIZADOR.bat (doble clic).
-
-Eso levanta un servidor local desde donde el botón funciona perfectamente.';
+    const msg = '⚠️ Para usar la sincronización automática, abrí el cotizador con el archivo ABRIR_COTIZADOR.bat (doble clic).\nEso levanta un servidor local desde donde el botón funciona perfectamente.';
     alert(msg);
     return;
   }
