@@ -1610,15 +1610,15 @@ function cambiarCampania(){
 
 function sCredCamp(id){
   credCampId=id; credPlazo=null;
-  // Calcular gastos bancarios (quebranto + IVA 21%) sobre monto a financiar
   const cv=camp.find(c=>c.id===id);
   const mt=parseFloat($$('pb1').value)||0;
   if(cv&&mt>0&&cv.comision>0){
     const quebranto=Math.round(mt*(cv.comision/100)*1.21);
-    $$('pa3').value=quebranto;
-    cP(); // recalcular total
+    // Asignar sin disparar oninput para evitar bucle
+    const el=$$('pa3'); if(el) el.value=quebranto;
   }
-  rCampMini(); calcCred();
+  rCampMini();
+  calcCred();
 }
 
 function calcCred(){
