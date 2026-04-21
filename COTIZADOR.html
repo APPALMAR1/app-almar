@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -312,7 +312,7 @@ select option{background:var(--s2)}
 /* CRÉDITO INTEGRADO en columna B */
 .cred-box{background:var(--bg);border:1.5px solid var(--b);border-radius:var(--rad);padding:10px;margin-top:8px;margin-bottom:6px}
 .cred-box-tit{font-family:var(--hf);font-weight:800;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--b);margin-bottom:8px;display:flex;align-items:center;gap:5px}
-.cg-mini{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:8px}
+.cg-mini{display:flex;flex-direction:column;gap:4px;margin-bottom:8px}
 .cc-mini{background:var(--s2);border:1.5px solid var(--bdr);border-radius:6px;padding:7px 9px;cursor:pointer;transition:all var(--trs);position:relative}
 .cc-mini::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:3px 0 0 3px}
 .cc-mini.icbc::before{background:var(--r)}.cc-mini.bbva::before{background:var(--b)}.cc-mini.otro::before{background:var(--y)}
@@ -482,6 +482,8 @@ select,input[type=text],input[type=number]{
   color:#1A2332!important;font-size:7.5pt!important;
   padding:0.8mm 2mm!important;border-radius:2px!important
 }
+/* ocultar selector campañas y cuotas en impresión — las cuotas van en col-A via print-cuotas */
+.addb,.cg-mini,.qg-mini,.cred-box-tit,.clbl2,#uva-al,#ltv-al,#qg-mini-wrap,#cred-box,#cred-camp-resumen{display:none!important}
 
 /* ── PROPUESTA 2 COLUMNAS ── */
 .p2{display:grid!important;grid-template-columns:1fr 1fr!important;gap:3mm!important;align-items:start;margin-bottom:2mm!important}
@@ -515,8 +517,7 @@ select,input[type=text],input[type=number]{
 .si2.falta .stl,.si2.falta .svl{color:#C0392B!important}
 .prog{display:none!important}
 
-/* ── BOX CUOTAS — ocultar todo el cred-box en impresión (las cuotas van en col-A) ── */
-.addb,.cg-mini,.qg-mini,.cred-box-tit,.clbl2,#uva-al,#ltv-al,#qg-mini-wrap,#cred-box{display:none!important}
+/* ── BOX CUOTAS — ocultar en pantalla solo los que no tienen display inline (manejado por JS) ── */
 /* ── CUOTAS en col-A, debajo del Total a cubrir ── */
 #print-cuotas{display:block!important;margin-top:2mm!important}
 .pq-tit{font-family:'Barlow Condensed',Arial;font-weight:800;font-size:8pt;color:#1A5276;letter-spacing:.5px;text-transform:uppercase;margin-bottom:1.5mm;border-bottom:1.5px solid #1A5276;padding-bottom:.8mm}
@@ -621,7 +622,8 @@ input[type=text]#p-obs{background:#F5F7FA!important;border:1px solid #D5DCE6!imp
     <div class="cb">
       <div class="fr f2">
         <div class="fld"><label>Tipo <span class="req">*</span></label>
-          <select id="tipo" onchange="onTipo()"><option value="">— Elegir tipo —</option><option value="usado">Usado (Stock Almar)</option><option value="okm">0 km (Stock Almar)</option><option value="mercado">Cualquier marca/modelo</option></select>
+          <select id="tipo" onchange="onTipo()"><option value="">— Elegir tipo —</option><option value="usado">Usado (Stock Almar)</option><option value="okm">0 km (Stock Almar)</option><option value="mercado">Multimarcas 0km</option></select>
+          <select id="subtipo" onchange="onSubtipo()" disabled style="display:none"><option value="">— Auto o Utilitario —</option><option value="Auto">🚗 Autos</option><option value="Utilitario/Pickup">🚛 Utilitarios / Pickups</option></select>
         </div>
         <div class="fld"><label>Búsqueda rápida</label>
           <div class="sw2"><span class="sico">🔍</span><input type="text" id="busq" placeholder="Escribir modelo..." oninput="buscar()"></div>
@@ -697,7 +699,7 @@ input[type=text]#p-obs{background:#F5F7FA!important;border:1px solid #D5DCE6!imp
 
         <!-- BOX CALCULADORA CRÉDITO -->
         <div class="cred-box" id="cred-box" style="display:none">
-          <div class="cred-box-tit">🏦 Seleccioná campaña y plazo</div>
+          <div class="cred-box-tit" id="cred-box-tit">🏦 Seleccioná campaña y plazo</div>
           <!-- campañas mini -->
           <div class="cg-mini no-print-item" id="cg-mini"></div>
           <div id="ltv-al" class="ltv-al"></div>
@@ -802,12 +804,12 @@ input[type=text]#p-obs{background:#F5F7FA!important;border:1px solid #D5DCE6!imp
   <div class="sh">
     <div><div class="st2">Stock Usados</div><div class="ss2">Inventario Almar</div></div>
     <div class="brow no-print" style="margin:0;gap:5px">
-      <button class="btn btn-r btn-sm" id="btn-drive-sync" onclick="syncDrive()">☁ Actualizar desde Drive</button>
+      <button class="btn btn-r btn-sm" id="btn-drive-sync" onclick="syncDrive()">☁ Actualizar Drive</button>
       <button class="btn btn-ghost btn-sm" onclick="pdfStock()">🖨 Imprimir / PDF</button>
       <button class="btn btn-ghost btn-sm" onclick="emailStock()">📧 Email</button>
     </div>
   </div>
-  <div id="drive-sync-bar" style="display:none;margin-bottom:8px;padding:8px 12px;border-radius:6px;font-size:11px;font-weight:600;letter-spacing:.5px"></div>
+  <div id="drive-sync-bar" style="display:none;margin-bottom:8px;padding:8px 12px;border-radius:6px;font-size:11px;font-weight:600"></div>
   <div class="card" id="sl" style="padding:0;overflow:hidden"></div>
   <div class="pft-stk" style="display:none">Precios orientativos · Sujeto a disponibilidad · ALMAR Concesionario Oficial · Posadas, Misiones</div>
 </div>
@@ -857,9 +859,6 @@ input[type=text]#p-obs{background:#F5F7FA!important;border:1px solid #D5DCE6!imp
     </div>
   </div>
   <div class="al info" style="margin-top:6px">ℹ️ Datos en memoria de sesión. Exportá para conservar los cambios.</div>
-  <div class="ads" style="margin-top:10px"><div class="ah" onclick="tgA(this)"><span style="font-size:16px">☁</span><div class="attl">Configurar Drive (Actualización automática)</div><div class="aarr">▼</div></div>
-    <div class="ab" id="drive-cfg-sec"></div>
-  </div>
   <div class="ads" style="margin-top:10px"><div class="ah" onclick="tgA(this)"><span style="font-size:16px">🔐</span><div class="attl">Desbloquear Usuarios</div><div class="aarr">▼</div></div>
     <div class="ab"><div style="font-size:10px;color:var(--m);margin-bottom:10px">Si un vendedor fue bloqueado por intentos fallidos, tocá el botón para restablecer su acceso.</div>
       <div id="blk-list"></div>
@@ -871,9 +870,11 @@ input[type=text]#p-obs{background:#F5F7FA!important;border:1px solid #D5DCE6!imp
     <button class="btn btn-sm" onclick="document.getElementById('impx').click()" style="background:none;border:1.5px solid var(--g);color:var(--g);font-family:var(--hf);font-weight:700;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;padding:5px 10px;border-radius:6px;cursor:pointer">📊 Importar Excel Usados</button>
     <button class="btn btn-sm" onclick="document.getElementById('impxo').click()" style="background:none;border:1.5px solid var(--b);color:var(--b);font-family:var(--hf);font-weight:700;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;padding:5px 10px;border-radius:6px;cursor:pointer">🏎 Importar Excel 0km</button>
     <button class="btn btn-sm" onclick="dlgPlantillaOkm()" style="background:none;border:1.5px solid var(--m);color:var(--m);font-family:var(--hf);font-weight:700;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;padding:5px 10px;border-radius:6px;cursor:pointer">📋 Plantilla 0km</button>
+    <button class="btn btn-sm" onclick="document.getElementById('impxc').click()" style="background:none;border:1.5px solid #E67E22;color:#E67E22;font-family:var(--hf);font-weight:700;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;padding:5px 10px;border-radius:6px;cursor:pointer">🏦 Importar Campañas Excel</button>
     <input type="file" id="impf"  accept=".json"      style="display:none" onchange="impD(event)">
     <input type="file" id="impx"  accept=".xlsx,.xls" style="display:none" onchange="impX(event)">
     <input type="file" id="impxo" accept=".xlsx,.xls" style="display:none" onchange="impXO(event)">
+    <input type="file" id="impxc" accept=".xlsx,.xls" style="display:none" onchange="impXC(event)">
   </div>
 </div>
 </div>
@@ -899,23 +900,66 @@ const puedeVerTodos = u => esSupervisor(u)||esGerencia(u);
 const PL=[12,18,24,36,48,60];
 
 const CAMP_D=[
-  {id:1,banco:"ICBC",nombre:"TASA OPORTUNIDAD",tipo:"TRAD",tna:53,   comision:0, plazoMax:60,ltv:80,activa:true},
-  {id:2,banco:"ICBC",nombre:"TASA PROMOCIONAL",tipo:"TRAD",tna:61,   comision:5, plazoMax:60,ltv:80,activa:true},
-  {id:3,banco:"ICBC",nombre:"TASA MAX 36M",    tipo:"TRAD",tna:63,   comision:10,plazoMax:36,ltv:80,activa:true},
-  {id:4,banco:"ICBC",nombre:"TASA MAX 60M",    tipo:"TRAD",tna:63,   comision:11,plazoMax:60,ltv:80,activa:true},
-  {id:5,banco:"ICBC",nombre:"SEGURO LIBERADO", tipo:"TRAD",tna:59,   comision:0, plazoMax:60,ltv:80,activa:true},
-  {id:6,banco:"BBVA",nombre:"TRADICIONAL AUTOS",tipo:"TRAD",tna:47.9,comision:0, plazoMax:60,ltv:80,activa:true},
-  {id:7,banco:"BBVA",nombre:"UTILITARIOS",     tipo:"TRAD",tna:47.9, comision:0, plazoMax:60,ltv:80,activa:true},
-  {id:8,banco:"BBVA",nombre:"ELÉCT/HÍBRIDO",  tipo:"TRAD",tna:44.9, comision:0, plazoMax:60,ltv:80,activa:true},
-  {id:9,banco:"BBVA",nombre:"UVA AUTOS",       tipo:"UVA", tna:22.9, comision:0, plazoMax:48,ltv:80,activa:true},
-  {id:10,banco:"BBVA",nombre:"SIN COMISIÓN",   tipo:"TRAD",tna:42.9, comision:0, plazoMax:60,ltv:80,activa:true},
-  {id:11,banco:"PSA FINANCE",nombre:"PEUGEOT/CITROÉN/DS", tipo:"TRAD",tna:45,comision:0,plazoMax:60,ltv:80,activa:true},
-  {id:12,banco:"MOBILIZE",   nombre:"RENAULT/DACIA",       tipo:"TRAD",tna:48,comision:0,plazoMax:60,ltv:80,activa:true},
-  {id:13,banco:"FCA",        nombre:"FIAT/JEEP/ALFA",      tipo:"TRAD",tna:46,comision:0,plazoMax:60,ltv:80,activa:true},
-  {id:14,banco:"GPAT",       nombre:"CHEVROLET",           tipo:"TRAD",tna:44,comision:0,plazoMax:60,ltv:80,activa:true},
+  // ── BANCOS ──────────────────────────────────────────────────────────────
+  {id:1, banco:"ICBC",      nombre:"TASA OPORTUNIDAD",        tipo:"TRAD",tna:53,   comision:0,  plazoMax:60,ltv:80,activa:true,  marca:null},
+  {id:2, banco:"ICBC",      nombre:"TASA PROMOCIONAL",        tipo:"TRAD",tna:61,   comision:5,  plazoMax:60,ltv:80,activa:true,  marca:null},
+  {id:3, banco:"ICBC",      nombre:"TASA MAX 36M",            tipo:"TRAD",tna:63,   comision:10, plazoMax:36,ltv:80,activa:true,  marca:null},
+  {id:4, banco:"ICBC",      nombre:"TASA MAX 60M",            tipo:"TRAD",tna:63,   comision:11, plazoMax:60,ltv:80,activa:true,  marca:null},
+  {id:5, banco:"ICBC",      nombre:"SEGURO LIBERADO",         tipo:"TRAD",tna:59,   comision:0,  plazoMax:60,ltv:80,activa:true,  marca:null},
+  {id:6, banco:"BBVA",      nombre:"TRADICIONAL AUTOS",       tipo:"TRAD",tna:47.9, comision:0,  plazoMax:60,ltv:80,activa:true,  marca:null},
+  {id:7, banco:"BBVA",      nombre:"UTILITARIOS",             tipo:"TRAD",tna:47.9, comision:0,  plazoMax:60,ltv:80,activa:true,  marca:null},
+  {id:8, banco:"BBVA",      nombre:"ELÉCT/HÍBRIDO",           tipo:"TRAD",tna:44.9, comision:0,  plazoMax:60,ltv:80,activa:true,  marca:null},
+  {id:9, banco:"BBVA",      nombre:"UVA AUTOS",               tipo:"UVA", tna:22.9, comision:0,  plazoMax:48,ltv:80,activa:true,  marca:null},
+  {id:10,banco:"BBVA",      nombre:"SIN COMISIÓN",            tipo:"TRAD",tna:42.9, comision:0,  plazoMax:60,ltv:80,activa:true,  marca:null},
+  {id:11,banco:"SANTANDER", nombre:"AUTOS 0KM TRADICIONAL",   tipo:"TRAD",tna:47.9, comision:4,  plazoMax:60,ltv:80,activa:true,  marca:null},
+  {id:12,banco:"SANTANDER", nombre:"AUTOS USADOS TRADICIONAL",tipo:"TRAD",tna:49.9, comision:4,  plazoMax:60,ltv:80,activa:true,  marca:null},
+  {id:13,banco:"SANTANDER", nombre:"AUTOS SELECT/PAS",        tipo:"TRAD",tna:45.9, comision:4,  plazoMax:60,ltv:80,activa:true,  marca:null},
+  {id:14,banco:"SANTANDER", nombre:"ESPECIAL",                tipo:"TRAD",tna:53.9, comision:4,  plazoMax:60,ltv:80,activa:true,  marca:null},
+  {id:15,banco:"SANTANDER", nombre:"LINEA GREEN",             tipo:"TRAD",tna:39.9, comision:4,  plazoMax:60,ltv:80,activa:true,  marca:null},
+  {id:16,banco:"SANTANDER", nombre:"CAMIONES/UTILITARIOS",    tipo:"TRAD",tna:47.9, comision:4,  plazoMax:60,ltv:80,activa:true,  marca:null},
+  // ── CAMPAÑAS DE MARCA ───────────────────────────────────────────────────
+  // GPAT — Chevrolet
+  {id:20,banco:"GPAT",      nombre:"ONIX — PROMOCIONAL",      tipo:"TRAD",tna:0,    comision:15.8,plazoMax:36,ltv:70,activa:true,  marca:"CHEVROLET",modelos:["ONIX","ONIX PLUS"]},
+  {id:21,banco:"GPAT",      nombre:"ONIX — EXCLUSIVO 0%",     tipo:"TRAD",tna:0,    comision:16.2,plazoMax:24,ltv:70,activa:true,  marca:"CHEVROLET",modelos:["ONIX","ONIX PLUS"]},
+  {id:22,banco:"GPAT",      nombre:"TRACKER — PROMOCIONAL",   tipo:"TRAD",tna:0,    comision:15.8,plazoMax:36,ltv:70,activa:true,  marca:"CHEVROLET",modelos:["TRACKER"]},
+  {id:23,banco:"GPAT",      nombre:"TRACKER — EXCLUSIVO 0%",  tipo:"TRAD",tna:0,    comision:16.2,plazoMax:24,ltv:70,activa:true,  marca:"CHEVROLET",modelos:["TRACKER"]},
+  {id:24,banco:"GPAT",      nombre:"SPIN / MONTANA",          tipo:"TRAD",tna:0,    comision:15.8,plazoMax:30,ltv:70,activa:true,  marca:"CHEVROLET",modelos:["SPIN","MONTANA"]},
+  {id:25,banco:"GPAT",      nombre:"S10 / TRAILBLAZER",       tipo:"TRAD",tna:0,    comision:15.8,plazoMax:30,ltv:70,activa:true,  marca:"CHEVROLET",modelos:["S10","TRAILBLAZER"]},
+  {id:26,banco:"GPAT",      nombre:"CAPTIVA PHEV",            tipo:"TRAD",tna:0,    comision:17,  plazoMax:30,ltv:70,activa:true,  marca:"CHEVROLET",modelos:["CAPTIVA"]},
+  {id:27,banco:"GPAT",      nombre:"SPARK EUV",               tipo:"TRAD",tna:0,    comision:15.8,plazoMax:30,ltv:70,activa:true,  marca:"CHEVROLET",modelos:["SPARK EUV"]},
+  // FCA — Fiat y Jeep
+  {id:30,banco:"FCA",       nombre:"FIAT — TODOS LOS MODELOS",tipo:"TRAD",tna:0,    comision:11,  plazoMax:36,ltv:80,activa:true,  marca:"FIAT",     modelos:null},
+  {id:31,banco:"FCA",       nombre:"FIAT TITANO — 30 MESES",  tipo:"TRAD",tna:34.9, comision:10,  plazoMax:30,ltv:80,activa:true,  marca:"FIAT",     modelos:["TITANO"]},
+  {id:32,banco:"FCA",       nombre:"JEEP/RAM — TODOS",        tipo:"TRAD",tna:0,    comision:11,  plazoMax:36,ltv:80,activa:true,  marca:"JEEP",     modelos:null},
+  {id:33,banco:"FCA",       nombre:"JEEP DAKOTA — 30 MESES",  tipo:"TRAD",tna:27.9, comision:10,  plazoMax:30,ltv:80,activa:true,  marca:"JEEP",     modelos:["DAKOTA"]},
+  // PSA Finance — Peugeot y Citroën (Circular 434-2026 Abril 2026)
+  {id:40,banco:"PSA Finance",nombre:"PEUGEOT — TASA EXPRESS",   tipo:"TRAD",tna:0,    comision:12,  plazoMax:36,ltv:80,activa:true,  marca:"PEUGEOT",  modelos:null},
+  {id:41,banco:"PSA Finance",nombre:"PEUGEOT — EXCLUSIVA 208/2008",tipo:"TRAD",tna:0, comision:12,  plazoMax:36,ltv:80,activa:true,  marca:"PEUGEOT",  modelos:["208","2008"]},
+  {id:42,banco:"PSA Finance",nombre:"PEUGEOT — TASA SIMPLE",    tipo:"TRAD",tna:11.9, comision:10,  plazoMax:36,ltv:80,activa:true,  marca:"PEUGEOT",  modelos:null},
+  {id:43,banco:"PSA Finance",nombre:"PEUGEOT — TODA LA GAMA",   tipo:"TRAD",tna:16,   comision:8,   plazoMax:48,ltv:80,activa:true,  marca:"PEUGEOT",  modelos:null},
+  {id:44,banco:"PSA Finance",nombre:"CITROËN — TASA EXPRESS",   tipo:"TRAD",tna:0,    comision:12,  plazoMax:36,ltv:80,activa:true,  marca:"CITROEN",  modelos:null},
+  {id:45,banco:"PSA Finance",nombre:"CITROËN — TASA SIMPLE",    tipo:"TRAD",tna:11.9, comision:10,  plazoMax:36,ltv:80,activa:true,  marca:"CITROEN",  modelos:null},
+  // MOBILIZE — Renault (Política Comercial MFS 01/04/2026)
+  {id:50,banco:"MOBILIZE",   nombre:"RENAULT — TASA 0%",        tipo:"TRAD",tna:0,    comision:9,   plazoMax:24,ltv:70,activa:true,  marca:"RENAULT",  modelos:null},
+  {id:51,banco:"MOBILIZE",   nombre:"RENAULT — LINEA ESTÁNDAR", tipo:"TRAD",tna:34.9, comision:12,  plazoMax:60,ltv:70,activa:true,  marca:"RENAULT",  modelos:null},
+  {id:52,banco:"MOBILIZE",   nombre:"RENAULT — CLASSIC",        tipo:"TRAD",tna:64.9, comision:5,   plazoMax:60,ltv:70,activa:true,  marca:"RENAULT",  modelos:null},
+  // DFSK/Santander y Foton/Santander
+  {id:60,banco:"DFSK/SANTANDER",nombre:"DFSK — TODOS LOS MODELOS",tipo:"TRAD",tna:47.9,comision:4,plazoMax:60,ltv:80,activa:true, marca:"DFSK",     modelos:null},
+  {id:61,banco:"FOTON/SANTANDER",nombre:"FOTON — TODOS LOS MODELOS",tipo:"TRAD",tna:47.9,comision:4,plazoMax:60,ltv:80,activa:true,marca:"FOTON",    modelos:null},
 ];
-// Stock usados actualizado desde Drive: 17/04/2026
-const STK_D=[{"dominio":"AG855IE","empresa":"AL","marca":"CITROEN","modelo":"C3","version":"1.6 VTI FEEL L/22 MT","anno":2024,"km":18000,"precio":20638812,"color":"GRIS OSCURO","estado":"SENIADO","_infoToma":"Señado Mauri","_valorToma":21800000,"_reacon":17488088,"_costoTotal":1000000},{"dominio":"AE795JT","empresa":"AL","marca":"CITROEN","modelo":"C3","version":"1.6 VTI FEEL BT","anno":2021,"km":79000,"precio":17669363,"color":"BLANCO","estado":"DISPONIBLE","_infoToma":"","_valorToma":17900000,"_reacon":14000000,"_costoTotal":450000},{"dominio":"PLZ975","empresa":"AL","marca":"CITROEN","modelo":"C3","version":"AIRCROSS 115 SHINE W","anno":2016,"km":97000,"precio":16500000,"color":"GRIS ALUMINIO","estado":"A RECIBIR","_infoToma":"A recibir","_valorToma":15500000,"_reacon":15500000,"_costoTotal":0},{"dominio":"AB042CS","empresa":"AL","marca":"CHERY","modelo":"QQ","version":"COMFORT SECURITY","anno":2017,"km":79000,"precio":10833333,"color":"MARRON","estado":"DISPONIBLE","_infoToma":"","_valorToma":10800000,"_reacon":8500000,"_costoTotal":1500000},{"dominio":"LGS128","empresa":"KO","marca":"CHEVROLET","modelo":"AGILE","version":"1.4 LT","anno":2012,"km":125000,"precio":9532680,"color":"GRIS ALUMINIO","estado":"DISPONIBLE","_infoToma":"","_valorToma":9500000,"_reacon":7362000,"_costoTotal":1000000},{"dominio":"AF488ZK","empresa":"AL","marca":"CHEVROLET","modelo":"CRUZE","version":"4P 1.4T LTZ AT","anno":2022,"km":106300,"precio":27984826,"color":"BLANCO","estado":"DISPONIBLE","_infoToma":"","_valorToma":25700000,"_reacon":25700000,"_costoTotal":580000},{"dominio":"AE407HN","empresa":"AL","marca":"CHEVROLET","modelo":"ONIX","version":"PLUS 1.2 LT 4P","anno":2020,"km":80000,"precio":17886714,"color":"BLANCO","estado":"SENIADO","_infoToma":"Señado Tobias","_valorToma":17300000,"_reacon":14590040,"_costoTotal":0},{"dominio":"","empresa":"CO","marca":"CHEVROLET","modelo":"ONIX","version":"1.0T MT 5P","anno":2026,"km":0,"precio":32890000,"color":"GRIS OSCURO","estado":"DISPONIBLE","_infoToma":"","_valorToma":0,"_reacon":0,"_costoTotal":0},{"dominio":"","empresa":"AL","marca":"CHEVROLET","modelo":"ONIX","version":"1.4 LS JOY L/17","anno":2017,"km":51000,"precio":14950000,"color":"GRIS OSCURO","estado":"A RECIBIR","_infoToma":"A recibir","_valorToma":13750000,"_reacon":11500000,"_costoTotal":0},{"dominio":"AB225AC","empresa":"CO","marca":"CHEVROLET","modelo":"ONIX","version":"1.4 LS JOY L/17","anno":2017,"km":73000,"precio":14694302,"color":"GRIS OSCURO","estado":"SENIADO","_infoToma":"Señado Lucio","_valorToma":14250000,"_reacon":13537000,"_costoTotal":60000},{"dominio":"AD052KW","empresa":"AL","marca":"CHEVROLET","modelo":"S","version":"10 2.8TD CD 4X2 LS L/17","anno":2018,"km":118000,"precio":28163960,"color":"BORDO","estado":"SENIADO","_infoToma":"Señado Tobias","_valorToma":25000000,"_reacon":25000000,"_costoTotal":300000},{"dominio":"PQL979","empresa":"CO","marca":"DS","modelo":"DS","version":"3 1.6 VTI SO CHIC","anno":2016,"km":94000,"precio":16508238,"color":"BLANCO","estado":"DISPONIBLE","_infoToma":"","_valorToma":17970000,"_reacon":15291000,"_costoTotal":0},{"dominio":"AG172FM","empresa":"CO","marca":"FIAT","modelo":"CRONOS","version":"1.3 PRECISION CVT","anno":2023,"km":26000,"precio":26322000,"color":"BLANCO PERLADO","estado":"SENIADO","_infoToma":"Señado Diego","_valorToma":24600000,"_reacon":24600000,"_costoTotal":0},{"dominio":"AF862PZ","empresa":"AL","marca":"FIAT","modelo":"CRONOS","version":"1.3 PRECISION CVT","anno":2023,"km":54000,"precio":26038184,"color":"CINZA STRATO","estado":"DISPONIBLE","_infoToma":"","_valorToma":24700000,"_reacon":21500000,"_costoTotal":800000},{"dominio":"AB450ZJ","empresa":"KO","marca":"FIAT","modelo":"MOBI","version":"1.0 EASY PACK TOP","anno":2017,"km":117000,"precio":12841200,"color":"GRIS ALUMINIO","estado":"DISPONIBLE","_infoToma":"","_valorToma":13000000,"_reacon":11700000,"_costoTotal":0},{"dominio":"","empresa":"CO","marca":"FIAT","modelo":"STRADA","version":"1.3 VOLCANO AT6","anno":2026,"km":0,"precio":40100000,"color":"GRIS OSCURO","estado":"DISPONIBLE","_infoToma":"","_valorToma":0,"_reacon":0,"_costoTotal":0},{"dominio":"AA263BS","empresa":"AL","marca":"FIAT","modelo":"STRADA","version":"ADVENTURE 1.6 CD L/14 LOCKER","anno":2016,"km":130000,"precio":14940229,"color":"GRIS OSCURO","estado":"DISPONIBLE","_infoToma":"","_valorToma":15300000,"_reacon":12900000,"_costoTotal":1000000},{"dominio":"AB329DX","empresa":"KO","marca":"FIAT","modelo":"TORO","version":"VOLCANO PRE 2.0 DIESEL 4X4 AT9","anno":2017,"km":115000,"precio":25021200,"color":"ROJO","estado":"SENIADO","_infoToma":"Señado Tobias","_valorToma":24000000,"_reacon":20570000,"_costoTotal":1000000},{"dominio":"PCQ934","empresa":"KO","marca":"FIAT","modelo":"STRADA","version":"1.4 WORKING L/14 CS","anno":2015,"km":127000,"precio":12862080,"color":"BLANCO","estado":"DISPONIBLE","_infoToma":"","_valorToma":12500000,"_reacon":10000000,"_costoTotal":1000000},{"dominio":"AE957VJ","empresa":"CO","marca":"FORD","modelo":"F","version":"150 LARIAT LUXURY 5.9L V8 4X4 AT","anno":2021,"km":78000,"precio":55000,"color":"BLANCO","estado":"DISPONIBLE","_infoToma":"","_valorToma":0,"_reacon":0,"_costoTotal":0},{"dominio":"PPZ609","empresa":"KO","marca":"FORD","modelo":"FIESTA","version":"1.6 S 5P MT","anno":2016,"km":121000,"precio":0,"color":"AZUL","estado":"DISPONIBLE","_infoToma":"Nuevo ingreso","_valorToma":0,"_reacon":0,"_costoTotal":0},{"dominio":"MKM413","empresa":"AL","marca":"FORD","modelo":"KA","version":"1.6 PULSE TOP L/11","anno":2013,"km":107000,"precio":10915048,"color":"NEGRO","estado":"DISPONIBLE","_infoToma":"","_valorToma":10500000,"_reacon":9500000,"_costoTotal":0},{"dominio":"AD857HG","empresa":"AL","marca":"NISSAN","modelo":"SENTRA","version":"1.8 EXCLUSIVE PURE DRIVE CVT","anno":2019,"km":140000,"precio":21938167,"color":"MARRON","estado":"DISPONIBLE","_infoToma":"","_valorToma":22800000,"_reacon":18340000,"_costoTotal":90000},{"dominio":"AA900TN","empresa":"AL","marca":"PEUGEOT","modelo":"408","version":"2.0 ALLURE NAV MT","anno":2017,"km":92000,"precio":14996220,"color":"BLANCO","estado":"A RECIBIR","_infoToma":"A recibir","_valorToma":13800000,"_reacon":9565000,"_costoTotal":1900000},{"dominio":"AH073EA","empresa":"AL","marca":"PEUGEOT","modelo":"2008","version":"1.0 T200 ACTIVE AT6","anno":2024,"km":50000,"precio":32974500,"color":"GRIS CEMENTO","estado":"DISPONIBLE","_infoToma":"","_valorToma":28500000,"_reacon":28500000,"_costoTotal":0},{"dominio":"MDV176","empresa":"KO","marca":"PEUGEOT","modelo":"308","version":"1.6 ALLURE NAV","anno":2013,"km":160000,"precio":9916836,"color":"CHAMPAGNE","estado":"DISPONIBLE","_infoToma":"","_valorToma":13320000,"_reacon":8791498,"_costoTotal":0},{"dominio":"NUP332","empresa":"KO","marca":"PEUGEOT","modelo":"308","version":"1.6 HDI ALLURE NAV","anno":2014,"km":131000,"precio":12117747,"color":"BLANCO","estado":"DISPONIBLE","_infoToma":"","_valorToma":13720000,"_reacon":9670000,"_costoTotal":2000000},{"dominio":"AG691QY","empresa":"AL","marca":"PEUGEOT","modelo":"208","version":"1.6 VTI ACTIVE PACK TIPTRONIC","anno":2024,"km":25000,"precio":24540000,"color":"BLANCO","estado":"DISPONIBLE","_infoToma":"Nuevo ingreso","_valorToma":23400000,"_reacon":20000000,"_costoTotal":450000},{"dominio":"PPX366","empresa":"AL","marca":"PEUGEOT","modelo":"208","version":"1.6 VTI FELINE MT","anno":2015,"km":65000,"precio":14936552,"color":"BORDO","estado":"DISPONIBLE","_infoToma":"Nuevo ingreso","_valorToma":14500000,"_reacon":13000000,"_costoTotal":0},{"dominio":"OYM167","empresa":"AL","marca":"PEUGEOT","modelo":"208","version":"ALLURE 1.6N TOUCHSCREEN","anno":2015,"km":114000,"precio":13274892,"color":"GRIS ALUMINIO","estado":"DISPONIBLE","_infoToma":"","_valorToma":14420000,"_reacon":12777000,"_costoTotal":250000},{"dominio":"AF519GI","empresa":"CO","marca":"PEUGEOT","modelo":"208","version":"1.2T GT TIPTRONIC","anno":2022,"km":29000,"precio":33962500,"color":"BLANCO","estado":"DISPONIBLE","_infoToma":"","_valorToma":32500000,"_reacon":30875000,"_costoTotal":0},{"dominio":"AA650UY","empresa":"AL","marca":"RENAULT","modelo":"FLUENCE","version":"PH2 2.0 LUXE PACK CVT","anno":2016,"km":116000,"precio":15990011,"color":"GRIS ALUMINIO","estado":"DISPONIBLE","_infoToma":"Nuevo ingreso","_valorToma":15750000,"_reacon":14250000,"_costoTotal":280000},{"dominio":"MGN487","empresa":"KO","marca":"RENAULT","modelo":"CLIO","version":"MIO 3P AUTHENTIQUE PACK LOOK","anno":2013,"km":115000,"precio":11688160,"color":"CHAMPAGNE","estado":"DISPONIBLE","_infoToma":"","_valorToma":11300000,"_reacon":9626000,"_costoTotal":450000},{"dominio":"OHL538","empresa":"AL","marca":"RENAULT","modelo":"DUSTER","version":"CONFORT 1.6 4X2 ABS","anno":2014,"km":118000,"precio":13029488,"color":"VERDE","estado":"SENIADO","_infoToma":"Señado Lucio","_valorToma":14350000,"_reacon":11330000,"_costoTotal":500000},{"dominio":"LRC349","empresa":"AL","marca":"RENAULT","modelo":"SANDERO","version":"STEPWAY 1.6 CONFORT PH2","anno":2012,"km":121000,"precio":12812874,"color":"BORDO","estado":"DISPONIBLE","_infoToma":"","_valorToma":11950000,"_reacon":10600000,"_costoTotal":350000},{"dominio":"ODA287","empresa":"AL","marca":"RENAULT","modelo":"SANDERO","version":"SL TECH RUN","anno":2014,"km":143000,"precio":11400000,"color":"GRIS ALUMINIO","estado":"DISPONIBLE","_infoToma":"","_valorToma":11500000,"_reacon":9120000,"_costoTotal":0},{"dominio":"AG284IH","empresa":"AL","marca":"TOYOTA","modelo":"ETIOS","version":"1.5 XLS PACK 4P AT","anno":2023,"km":45000,"precio":24489784,"color":"ROJO","estado":"A RECIBIR","_infoToma":"A recibir","_valorToma":23850000,"_reacon":20273000,"_costoTotal":0},{"dominio":"AC729XB","empresa":"AL","marca":"TOYOTA","modelo":"HILUX","version":"DC 2.8 TDI SRX 4X2 AT6 L16","anno":2018,"km":100000,"precio":40986000,"color":"BORDO","estado":"DISPONIBLE","_infoToma":"","_valorToma":36000000,"_reacon":34500000,"_costoTotal":0},{"dominio":"AA115YS","empresa":"CO","marca":"TOYOTA","modelo":"HILUX","version":"DC 2.8 TDI SRX 4X4 MT6 L16","anno":2016,"km":122000,"precio":40320000,"color":"BLANCO","estado":"DISPONIBLE","_infoToma":"","_valorToma":37300000,"_reacon":37300000,"_costoTotal":0},{"dominio":"","empresa":"AL","marca":"TOYOTA","modelo":"HILUX","version":"DC 2.4 TDI SR 4X2 AT6","anno":2026,"km":0,"precio":61825125,"color":"BLANCO","estado":"DISPONIBLE","_infoToma":"","_valorToma":54712500,"_reacon":54712500,"_costoTotal":0},{"dominio":"AD829YO","empresa":"AL","marca":"TOYOTA","modelo":"HILUX","version":"CS 2.4 TDI DX 4X2","anno":2019,"km":58000,"precio":34020000,"color":"BLANCO","estado":"DISPONIBLE","_infoToma":"","_valorToma":28300000,"_reacon":27000000,"_costoTotal":0},{"dominio":"AG013HI","empresa":"AL","marca":"TOYOTA","modelo":"COROLLA","version":"CROSS GR-SPORT 2.0 CVT","anno":2023,"km":39000,"precio":48266512,"color":"BLANCO","estado":"DISPONIBLE","_infoToma":"","_valorToma":45400000,"_reacon":41768000,"_costoTotal":0},{"dominio":"PKZ499","empresa":"AL","marca":"TOYOTA","modelo":"COROLLA","version":"1.8 XLI CVT L14","anno":2016,"km":136000,"precio":19995341,"color":"BLANCO","estado":"EN PREPARACION","_infoToma":"En preparacion","_valorToma":21000000,"_reacon":13360000,"_costoTotal":2200000},{"dominio":"ORR102","empresa":"AL","marca":"TOYOTA","modelo":"COROLLA","version":"1.8 XEI MT L14","anno":2015,"km":126000,"precio":19890599,"color":"BORDO","estado":"DISPONIBLE","_infoToma":"","_valorToma":20650000,"_reacon":17500000,"_costoTotal":450000},{"dominio":"JZB812","empresa":"KO","marca":"VOLKSWAGEN","modelo":"AMAROK","version":"2.0 TDI 4X4 DC TRENDLINE 140HP MT","anno":2011,"km":243000,"precio":19987401,"color":"NEGRO","estado":"DISPONIBLE","_infoToma":"","_valorToma":20700000,"_reacon":15000000,"_costoTotal":2000000},{"dominio":"AD152DA","empresa":"AL","marca":"VOLKSWAGEN","modelo":"AMAROK","version":"2.0 TDI 4x4 DC TRENDLINE 140HP L/17","anno":2018,"km":111000,"precio":30235254,"color":"BLANCO","estado":"SENIADO","_infoToma":"Señado Camila","_valorToma":29500000,"_reacon":26500000,"_costoTotal":1200000},{"dominio":"PLT360","empresa":"AL","marca":"VOLKSWAGEN","modelo":"AMAROK","version":"2.0 TDI 4X2 DC STARLINE 140HP","anno":2016,"km":90000,"precio":25904608,"color":"BLANCO","estado":"DISPONIBLE","_infoToma":"","_valorToma":23700000,"_reacon":22650000,"_costoTotal":190000},{"dominio":"AE650AP","empresa":"AL","marca":"VOLKSWAGEN","modelo":"AMAROK","version":"2.0 TDI 4X2 HIGHLINE AT 180HP L17","anno":2021,"km":81100,"precio":40920342,"color":"GRIS ALUMINIO","estado":"SENIADO","_infoToma":"Señado Tobias","_valorToma":38000000,"_reacon":35800000,"_costoTotal":0},{"dominio":"AC025PN","empresa":"AL","marca":"VOLKSWAGEN","modelo":"AMAROK","version":"2.0 TDI 4X2 HIGHLINE MT 180HP L17","anno":2018,"km":170000,"precio":32595000,"color":"BLANCO","estado":"A RECIBIR","_infoToma":"A recibir","_valorToma":30500000,"_reacon":26500000,"_costoTotal":0},{"dominio":"AF337GH","empresa":"CO","marca":"VOLKSWAGEN","modelo":"TAOS","version":"1.4 250 TSI HIGHLINE TIP","anno":2022,"km":53000,"precio":42393857,"color":"BLANCO","estado":"DISPONIBLE","_infoToma":"","_valorToma":40700000,"_reacon":40000000,"_costoTotal":0},{"dominio":"AG660TH","empresa":"AL","marca":"VOLKSWAGEN","modelo":"NUEVO","version":"POLO TRACK MSI","anno":2024,"km":7000,"precio":24447500,"color":"GRIS ALUMINIO","estado":"A RECIBIR","_infoToma":"A recibir","_valorToma":23400000,"_reacon":19250000,"_costoTotal":0},{"dominio":"AE904OW","empresa":"CO","marca":"VOLKSWAGEN","modelo":"POLO","version":"1.4 TSI GTS AT 5P","anno":2021,"km":60000,"precio":34980000,"color":"GRIS OSCURO","estado":"DISPONIBLE","_infoToma":"","_valorToma":33500000,"_reacon":31800000,"_costoTotal":0},{"dominio":"OWP864","empresa":"KO","marca":"VOLKSWAGEN","modelo":"VENTO","version":"2.5 170HO ADVANCE PLUS L/15","anno":2015,"km":169000,"precio":17707293,"color":"NEGRO","estado":"DISPONIBLE","_infoToma":"","_valorToma":21700000,"_reacon":14104000,"_costoTotal":1350000},{"dominio":"ORC144","empresa":"KO","marca":"VOLKSWAGEN","modelo":"SAVEIRO","version":"1.6 C/EXT","anno":2015,"km":200000,"precio":13201517,"color":"BLANCO","estado":"DISPONIBLE","_infoToma":"","_valorToma":14500000,"_reacon":11100000,"_costoTotal":1000000},{"dominio":"AD760KU","empresa":"AL","marca":"VOLKSWAGEN","modelo":"GOL","version":"1.6 5P TRENDLINE L19","anno":2019,"km":50000,"precio":19977246,"color":"BLANCO","estado":"DISPONIBLE","_infoToma":"","_valorToma":18300000,"_reacon":17300000,"_costoTotal":0},{"dominio":"AB163WJ","empresa":"KO","marca":"VOLKSWAGEN","modelo":"GOLF","version":"1.6 TRENDLINE 5P","anno":2017,"km":134000,"precio":21962078,"color":"GRIS ALUMINIO","estado":"DISPONIBLE","_infoToma":"","_valorToma":24400000,"_reacon":19990000,"_costoTotal":1000000}]
+
+// Mapeo marca → financiera de marca
+const MARCA_FINANCIERA={
+  "CHEVROLET":"GPAT",
+  "FIAT":"FCA",
+  "JEEP":"FCA",
+  "PEUGEOT":"PSA Finance",
+  "CITROEN":"PSA Finance",
+  "RENAULT":"MOBILIZE",
+  "DFSK":"DFSK/SANTANDER",
+  "FOTON":"FOTON/SANTANDER",
+};
+const STK_D=[{"dominio":"AG855IE","empresa":"AL","marca":"CITROEN","modelo":"C3","version":"1.6 VTI FEEL L/22 MT","anno":2024,"km":18000,"precio":20638812,"color":"GRIS OSCURO","estado":"SENIADO","_infoToma":"Señado Mauri","_valorToma":21800000,"_reacon":1000000,"_costoTotal":18488088},{"dominio":"AE795JT","empresa":"AL","marca":"CITROEN","modelo":"C3","version":"1.6 VTI FEEL BT","anno":2021,"km":79000,"precio":17986859,"color":"BLANCO","estado":"DISPONIBLE","_infoToma":"","_valorToma":17900000,"_reacon":450000,"_costoTotal":14450000},{"dominio":"PLZ975","empresa":"AL","marca":"CITROEN","modelo":"C3 AIRCROSS","version":"115 SHINE W","anno":2016,"km":97000,"precio":15750000,"color":"GRIS ALUMINIO","estado":"A RECIBIR","_infoToma":"A recibir","_valorToma":15500000,"_reacon":0,"_costoTotal":15500000},{"dominio":"AB042CS","empresa":"AL","marca":"CHERY","modelo":"QQ","version":"COMFORT SECURITY","anno":2017,"km":79000,"precio":10555556,"color":"MARRON","estado":"DISPONIBLE","_infoToma":"","_valorToma":10800000,"_reacon":1500000,"_costoTotal":10000000},{"dominio":"LGS128","empresa":"KO","marca":"CHEVROLET","modelo":"AGILE","version":"1.4 LT","anno":2012,"km":125000,"precio":8529240,"color":"GRIS ALUMINIO","estado":"DISPONIBLE","_infoToma":"","_valorToma":9500000,"_reacon":1000000,"_costoTotal":8362000},{"dominio":"AF488ZK","empresa":"AL","marca":"CHEVROLET","modelo":"CRUZE","version":"4P 1.4T LTZ AT","anno":2022,"km":106300,"precio":27984826,"color":"BLANCO","estado":"DISPONIBLE","_infoToma":"","_valorToma":25700000,"_reacon":580000,"_costoTotal":26280000},{"dominio":"AE407HN","empresa":"AL","marca":"CHEVROLET","modelo":"ONIX PLUS","version":"1.2 LT 4P","anno":2020,"km":80000,"precio":17886714,"color":"BLANCO","estado":"SENIADO","_infoToma":"Señado Tobias","_valorToma":17300000,"_reacon":0,"_costoTotal":14590040},{"dominio":"","empresa":"CO","marca":"CHEVROLET","modelo":"ONIX","version":"1.0T MT 5P","anno":2026,"km":0,"precio":32890000,"color":"GRIS OSCURO","estado":"DISPONIBLE","_infoToma":"","_valorToma":0,"_reacon":0,"_costoTotal":0},{"dominio":"","empresa":"AL","marca":"CHEVROLET","modelo":"ONIX","version":"1.4 LS JOY L/17","anno":2017,"km":51000,"precio":15180000,"color":"GRIS OSCURO","estado":"A RECIBIR","_infoToma":"A recibir","_valorToma":13750000,"_reacon":0,"_costoTotal":11500000},{"dominio":"AB225AC","empresa":"CO","marca":"CHEVROLET","modelo":"ONIX","version":"1.4 LS JOY L/17","anno":2017,"km":73000,"precio":14694302,"color":"GRIS OSCURO","estado":"SENIADO","_infoToma":"Señado Lucio","_valorToma":14250000,"_reacon":60000,"_costoTotal":13597000},{"dominio":"AD052KW","empresa":"AL","marca":"CHEVROLET","modelo":"S10","version":"2.8TD CD 4X2 LS L/17","anno":2018,"km":118000,"precio":28163960,"color":"BORDO","estado":"SENIADO","_infoToma":"Señado Tobias","_valorToma":25000000,"_reacon":300000,"_costoTotal":25300000},{"dominio":"PQL979","empresa":"CO","marca":"DS","modelo":"DS 3","version":"1.6 VTI SO CHIC","anno":2016,"km":94000,"precio":16508238,"color":"BLANCO","estado":"DISPONIBLE","_infoToma":"","_valorToma":17970000,"_reacon":0,"_costoTotal":15291000},{"dominio":"AF862PZ","empresa":"AL","marca":"FIAT","modelo":"CRONOS","version":"1.3 PRECISION CVT","anno":2023,"km":54000,"precio":26193968,"color":"CINZA STRATO","estado":"DISPONIBLE","_infoToma":"","_valorToma":24700000,"_reacon":800000,"_costoTotal":22300000},{"dominio":"AB450ZJ","empresa":"KO","marca":"FIAT","modelo":"MOBI","version":"1.0 EASY PACK TOP","anno":2017,"km":117000,"precio":12951900,"color":"GRIS ALUMINIO","estado":"DISPONIBLE","_infoToma":"","_valorToma":13000000,"_reacon":0,"_costoTotal":11700000},{"dominio":"","empresa":"CO","marca":"FIAT","modelo":"STRADA","version":"1.3 VOLCANO AT6","anno":2026,"km":0,"precio":40100000,"color":"GRIS OSCURO","estado":"DISPONIBLE","_infoToma":"","_valorToma":0,"_reacon":0,"_costoTotal":0},{"dominio":"AA263BS","empresa":"AL","marca":"FIAT","modelo":"STRADA","version":"ADVENTURE 1.6 CD L/14 LOCKER","anno":2016,"km":130000,"precio":14940229,"color":"GRIS OSCURO","estado":"DISPONIBLE","_infoToma":"","_valorToma":15300000,"_reacon":1000000,"_costoTotal":13900000},{"dominio":"AB329DX","empresa":"KO","marca":"FIAT","modelo":"TORO","version":"VOLCANO PRE 2.0 DIESEL 4X4 AT9","anno":2017,"km":115000,"precio":25021200,"color":"ROJO","estado":"SENIADO","_infoToma":"Señado Tobias","_valorToma":24000000,"_reacon":1000000,"_costoTotal":21570000},{"dominio":"PCQ934","empresa":"KO","marca":"FIAT","modelo":"STRADA","version":"1.4 WORKING L/14 CS","anno":2015,"km":127000,"precio":13305600,"color":"BLANCO","estado":"DISPONIBLE","_infoToma":"","_valorToma":12500000,"_reacon":1000000,"_costoTotal":11000000},{"dominio":"AE957VJ","empresa":"CO","marca":"FORD","modelo":"F 150","version":"LARIAT LUXURY 5.9L V8 4X4 AT","anno":2021,"km":78000,"precio":0,"color":"BLANCO","estado":"DISPONIBLE","_infoToma":"","_valorToma":0,"_reacon":0,"_costoTotal":0},{"dominio":"PPZ609","empresa":"KO","marca":"FORD","modelo":"FIESTA","version":"1.6 S 5P MT","anno":2016,"km":121000,"precio":14850000,"color":"AZUL","estado":"DISPONIBLE","_infoToma":"Nuevo ingreso","_valorToma":15080000,"_reacon":0,"_costoTotal":11000000},{"dominio":"MKM413","empresa":"AL","marca":"FORD","modelo":"KA","version":"1.6 PULSE TOP L/11","anno":2013,"km":107000,"precio":10632762,"color":"NEGRO","estado":"DISPONIBLE","_infoToma":"","_valorToma":10500000,"_reacon":0,"_costoTotal":9500000},{"dominio":"AD857HG","empresa":"AL","marca":"NISSAN","modelo":"SENTRA","version":"1.8 EXCLUSIVE PURE DRIVE CVT","anno":2019,"km":140000,"precio":21938167,"color":"MARRON","estado":"DISPONIBLE","_infoToma":"","_valorToma":22800000,"_reacon":90000,"_costoTotal":18430000},{"dominio":"AA900TN","empresa":"AL","marca":"PEUGEOT","modelo":"408","version":"2.0 ALLURE NAV MT","anno":2017,"km":92000,"precio":15649725,"color":"BLANCO","estado":"A RECIBIR","_infoToma":"A recibir","_valorToma":13800000,"_reacon":1900000,"_costoTotal":11465000},{"dominio":"AH073EA","empresa":"AL","marca":"PEUGEOT","modelo":"2008","version":"1.0 T200 ACTIVE AT6","anno":2024,"km":50000,"precio":32974500,"color":"GRIS CEMENTO","estado":"DISPONIBLE","_infoToma":"","_valorToma":28500000,"_reacon":0,"_costoTotal":28500000},{"dominio":"MDV176","empresa":"KO","marca":"PEUGEOT","modelo":"308","version":"1.6 ALLURE NAV","anno":2013,"km":160000,"precio":10630848,"color":"CHAMPAGNE","estado":"DISPONIBLE","_infoToma":"","_valorToma":13320000,"_reacon":0,"_costoTotal":8791498},{"dominio":"NUP332","empresa":"KO","marca":"PEUGEOT","modelo":"308","version":"1.6 HDI ALLURE NAV","anno":2014,"km":131000,"precio":11576776,"color":"BLANCO","estado":"DISPONIBLE","_infoToma":"","_valorToma":13720000,"_reacon":2000000,"_costoTotal":11670000},{"dominio":"AG691QY","empresa":"AL","marca":"PEUGEOT","modelo":"208","version":"1.6 VTI ACTIVE PACK TIPTRONIC","anno":2024,"km":25000,"precio":25562500,"color":"BLANCO","estado":"DISPONIBLE","_infoToma":"Nuevo ingreso","_valorToma":23400000,"_reacon":450000,"_costoTotal":20450000},{"dominio":"PPX366","empresa":"AL","marca":"PEUGEOT","modelo":"208","version":"1.6 VTI FELINE MT","anno":2015,"km":65000,"precio":15488828,"color":"BORDO","estado":"DISPONIBLE","_infoToma":"Nuevo ingreso","_valorToma":14500000,"_reacon":0,"_costoTotal":13000000},{"dominio":"OYM167","empresa":"AL","marca":"PEUGEOT","modelo":"208","version":"ALLURE 1.6N TOUCHSCREEN","anno":2015,"km":114000,"precio":12492622,"color":"GRIS ALUMINIO","estado":"DISPONIBLE","_infoToma":"","_valorToma":14420000,"_reacon":250000,"_costoTotal":13027000},{"dominio":"AF519GI","empresa":"CO","marca":"PEUGEOT","modelo":"208","version":"1.2T GT TIPTRONIC","anno":2022,"km":29000,"precio":33962500,"color":"BLANCO","estado":"DISPONIBLE","_infoToma":"","_valorToma":32500000,"_reacon":0,"_costoTotal":30875000},{"dominio":"AA650UY","empresa":"AL","marca":"RENAULT","modelo":"FLUENCE","version":"PH2 2.0 LUXE PACK CVT","anno":2016,"km":116000,"precio":15990011,"color":"GRIS ALUMINIO","estado":"DISPONIBLE","_infoToma":"Nuevo ingreso","_valorToma":15750000,"_reacon":280000,"_costoTotal":14530000},{"dominio":"MGN487","empresa":"KO","marca":"RENAULT","modelo":"CLIO","version":"MIO 3P AUTHENTIQUE PACK LOOK","anno":2013,"km":115000,"precio":10982840,"color":"CHAMPAGNE","estado":"DISPONIBLE","_infoToma":"","_valorToma":11300000,"_reacon":450000,"_costoTotal":10076000},{"dominio":"OHL538","empresa":"AL","marca":"RENAULT","modelo":"DUSTER","version":"CONFORT 1.6 4X2 ABS","anno":2014,"km":118000,"precio":13029488,"color":"VERDE","estado":"SENIADO","_infoToma":"Señado Lucio","_valorToma":14350000,"_reacon":500000,"_costoTotal":11830000},{"dominio":"LRC349","empresa":"AL","marca":"RENAULT","modelo":"SANDERO","version":"STEPWAY 1.6 CONFORT PH2","anno":2012,"km":121000,"precio":11509870,"color":"BORDO","estado":"DISPONIBLE","_infoToma":"","_valorToma":11950000,"_reacon":350000,"_costoTotal":10950000},{"dominio":"ODA287","empresa":"AL","marca":"RENAULT","modelo":"SANDERO","version":"SL TECH RUN","anno":2014,"km":143000,"precio":10944000,"color":"GRIS ALUMINIO","estado":"DISPONIBLE","_infoToma":"","_valorToma":11500000,"_reacon":0,"_costoTotal":9120000},{"dominio":"AG284IH","empresa":"AL","marca":"TOYOTA","modelo":"ETIOS","version":"1.5 XLS PACK 4P AT","anno":2023,"km":45000,"precio":25807529,"color":"ROJO","estado":"A RECIBIR","_infoToma":"A recibir","_valorToma":23850000,"_reacon":0,"_costoTotal":20273000},{"dominio":"AC729XB","empresa":"AL","marca":"TOYOTA","modelo":"HILUX","version":"DC 2.8 TDI SRX 4X2 AT6 L16","anno":2018,"km":100000,"precio":40986000,"color":"BORDO","estado":"DISPONIBLE","_infoToma":"","_valorToma":36000000,"_reacon":0,"_costoTotal":34500000},{"dominio":"AA115YS","empresa":"CO","marca":"TOYOTA","modelo":"HILUX","version":"DC 2.8 TDI SRX 4X4 MT6 L16","anno":2016,"km":122000,"precio":39960000,"color":"BLANCO","estado":"DISPONIBLE","_infoToma":"","_valorToma":37300000,"_reacon":0,"_costoTotal":37300000},{"dominio":"","empresa":"AL","marca":"TOYOTA","modelo":"HILUX","version":"DC 2.4 TDI SR 4X2 AT6","anno":2026,"km":0,"precio":61825125,"color":"BLANCO","estado":"DISPONIBLE","_infoToma":"","_valorToma":54712500,"_reacon":0,"_costoTotal":54712500},{"dominio":"AD829YO","empresa":"AL","marca":"TOYOTA","modelo":"HILUX","version":"CS 2.4 TDI DX 4X2","anno":2019,"km":58000,"precio":34020000,"color":"BLANCO","estado":"DISPONIBLE","_infoToma":"","_valorToma":28300000,"_reacon":0,"_costoTotal":27000000},{"dominio":"AG013HI","empresa":"AL","marca":"TOYOTA","modelo":"COROLLA CROSS","version":"GR-SPORT 2.0 CVT","anno":2023,"km":39000,"precio":49948272,"color":"BLANCO","estado":"DISPONIBLE","_infoToma":"","_valorToma":45400000,"_reacon":0,"_costoTotal":41768000},{"dominio":"PKZ499","empresa":"AL","marca":"TOYOTA","modelo":"COROLLA","version":"1.8 XLI CVT L14","anno":2016,"km":136000,"precio":21521703,"color":"BLANCO","estado":"EN PREPARACION","_infoToma":"En preparacion","_valorToma":21000000,"_reacon":2200000,"_costoTotal":15560000},{"dominio":"ORR102","empresa":"AL","marca":"TOYOTA","modelo":"COROLLA","version":"1.8 XEI MT L14","anno":2015,"km":126000,"precio":20946737,"color":"BORDO","estado":"DISPONIBLE","_infoToma":"","_valorToma":20650000,"_reacon":450000,"_costoTotal":17950000},{"dominio":"JZB812","empresa":"KO","marca":"VOLKSWAGEN","modelo":"AMAROK","version":"2.0 TDI 4X4 DC TRENDLINE 140HP MT","anno":2011,"km":243000,"precio":22285604,"color":"NEGRO","estado":"DISPONIBLE","_infoToma":"","_valorToma":20700000,"_reacon":2000000,"_costoTotal":17000000},{"dominio":"AD152DA","empresa":"AL","marca":"VOLKSWAGEN","modelo":"AMAROK","version":"2.0 TDI 4x4 DC TRENDLINE 140HP L/17","anno":2018,"km":111000,"precio":30235254,"color":"BLANCO","estado":"SENIADO","_infoToma":"Señado Camila","_valorToma":29500000,"_reacon":1200000,"_costoTotal":27700000},{"dominio":"PLT360","empresa":"AL","marca":"VOLKSWAGEN","modelo":"AMAROK","version":"2.0 TDI 4X2 DC STARLINE 140HP","anno":2016,"km":90000,"precio":25904608,"color":"BLANCO","estado":"DISPONIBLE","_infoToma":"","_valorToma":23700000,"_reacon":190000,"_costoTotal":22840000},{"dominio":"AE650AP","empresa":"AL","marca":"VOLKSWAGEN","modelo":"AMAROK","version":"2.0 TDI 4X2 HIGHLINE AT 180HP L17","anno":2021,"km":81100,"precio":40920342,"color":"GRIS ALUMINIO","estado":"SENIADO","_infoToma":"Señado Tobias","_valorToma":38000000,"_reacon":0,"_costoTotal":35800000},{"dominio":"AC025PN","empresa":"AL","marca":"VOLKSWAGEN","modelo":"AMAROK","version":"2.0 TDI 4X2 HIGHLINE MT 180HP L17","anno":2018,"km":170000,"precio":32595000,"color":"BLANCO","estado":"A RECIBIR","_infoToma":"A recibir","_valorToma":30500000,"_reacon":0,"_costoTotal":26500000},{"dominio":"AF337GH","empresa":"CO","marca":"VOLKSWAGEN","modelo":"TAOS","version":"1.4 250 TSI HIGHLINE TIP","anno":2022,"km":53000,"precio":42393857,"color":"BLANCO","estado":"DISPONIBLE","_infoToma":"","_valorToma":40700000,"_reacon":0,"_costoTotal":40000000},{"dominio":"AG660TH","empresa":"AL","marca":"VOLKSWAGEN","modelo":"POLO","version":"TRACK MSI NUEVO","anno":2024,"km":7000,"precio":24524500,"color":"GRIS ALUMINIO","estado":"A RECIBIR","_infoToma":"A recibir","_valorToma":23400000,"_reacon":0,"_costoTotal":19250000},{"dominio":"AE904OW","empresa":"CO","marca":"VOLKSWAGEN","modelo":"POLO","version":"1.4 TSI GTS AT 5P","anno":2021,"km":60000,"precio":34980000,"color":"GRIS OSCURO","estado":"DISPONIBLE","_infoToma":"","_valorToma":33500000,"_reacon":0,"_costoTotal":31800000},{"dominio":"OWP864","empresa":"KO","marca":"VOLKSWAGEN","modelo":"VENTO","version":"2.5 170HO ADVANCE PLUS L/15","anno":2015,"km":169000,"precio":17944444,"color":"NEGRO","estado":"DISPONIBLE","_infoToma":"","_valorToma":21700000,"_reacon":1350000,"_costoTotal":15454000},{"dominio":"ORC144","empresa":"KO","marca":"VOLKSWAGEN","modelo":"SAVEIRO","version":"1.6 C/EXT","anno":2015,"km":200000,"precio":12967862,"color":"BLANCO","estado":"DISPONIBLE","_infoToma":"","_valorToma":14500000,"_reacon":1000000,"_costoTotal":12100000},{"dominio":"AD760KU","empresa":"AL","marca":"VOLKSWAGEN","modelo":"GOL","version":"1.6 5P TRENDLINE L19","anno":2019,"km":50000,"precio":19977246,"color":"BLANCO","estado":"DISPONIBLE","_infoToma":"","_valorToma":18300000,"_reacon":0,"_costoTotal":17300000},{"dominio":"AB163WJ","empresa":"KO","marca":"VOLKSWAGEN","modelo":"GOLF","version":"1.6 TRENDLINE 5P","anno":2017,"km":134000,"precio":21962078,"color":"GRIS ALUMINIO","estado":"DISPONIBLE","_infoToma":"","_valorToma":24400000,"_reacon":1000000,"_costoTotal":20990000}]
 const OKM_D=[
   {marca:"CITROEN",   modelo:"C3",      version:"1.6 VTI FEEL MT",       anno:2025,precio:0,       color:"VARIOS",estado:"CONSULTAR"},
   {marca:"CHEVROLET", modelo:"ONIX",    version:"1.0T MT 5P",             anno:2026,precio:32890000,color:"GRIS OSCURO",estado:"DISPONIBLE"},
@@ -926,42 +970,157 @@ const OKM_D=[
   {marca:"TOYOTA",    modelo:"HILUX",   version:"2.8 SRX AT 4X4",         anno:2025,precio:0,       color:"BLANCO",estado:"CONSULTAR"},
 ];
 const MKT={
-  "TOYOTA":{"HILUX":["2.4 DX CS 4X2","2.8 SR 4X4 MT","2.8 SRX AT 4X4","2.8 GR-SPORT 4X4"],"YARIS":["1.5 XLS MT","1.5 XLS CVT"],"YARIS CROSS":["1.5 S CVT","GR-SPORT CVT"],"COROLLA":["2.0 XEI CVT","2.0 SE-G CVT","1.8 XLI CVT"],"COROLLA CROSS":["2.0 XEI CVT","GR-SPORT 2.0 CVT"],"SW4":["2.8 TDI SR AT 4X2","2.8 TDI SRX AT 4X4"],"ETIOS":["1.5 XLS MT","1.5 CROSS MT"]},
-  "VOLKSWAGEN":{"AMAROK":["2.0 TDI 140HP 4X2","2.0 TDI 140HP 4X4","HIGHLINE AT 180HP","V6 EXTREME 4X4"],"TAOS":["1.4 TSI COMFORTLINE MT","1.4 TSI HIGHLINE AT"],"POLO":["1.0 TSI TRACK MT","TSI GTS AT"],"NIVUS":["1.0 TSI COMFORTLINE AT","1.0 TSI HIGHLINE AT"],"GOL":["1.6 5P TRENDLINE","1.6 5P COMFORTLINE"],"VIRTUS":["1.0 TSI MT","1.6 HIGHLINE AT"],"SAVEIRO":["1.6 S/EXT MT","1.6 C/EXT MT"]},
-  "CHEVROLET":{"TRACKER":["1.2T PREMIERE AT","1.0T LT MT","1.2T LTZ AT"],"ONIX":["1.0T MT 5P","1.0T PREMIER AT","1.0T LT MT"],"ONIX PLUS":["1.0T LT AT","1.0T PREMIER AT"],"S10":["2.8TD CD 4X2 LS","2.8TD CD 4X4 LTZ AT"],"MONTANA":["1.2T PREMIER AT"]},
-  "FORD":{"RANGER":["2.0T XL CD 4X2","2.0T XLS CD 4X4 AT","3.0T RAPTOR 4X4","2.0T LIMITED 4X4 AT"],"TERRITORY":["1.5T SE AT","1.5T TITANIUM AT"],"KA":["1.5 S MT","1.5 SE AT"],"ECOSPORT":["1.5 S MT","2.0 TITANIUM AT"]},
-  "FIAT":{"CRONOS":["1.3 PRECISION CVT","1.3 DRIVE MT","1.3 LIKE MT"],"ARGO":["1.0 DRIVE MT","1.3 PRECISION MT"],"STRADA":["WORKING 1.4 CS MT","VOLCANO 1.3T CD AT"],"TORO":["VOLCANO 2.0 DIESEL 4X4 AT9","ENDURANCE 1.3T 4X2 AT"],"MOBI":["1.0 EASY MT","1.0 EASY PACK TOP"],"PALIO":["1.4 ATTRACTIVE MT"]},
-  "RENAULT":{"KWID":["1.0 LIFE MT","1.0 ZEN MT","1.0 OUTSIDER MT"],"KARDIAN":["1.0T INTENS CVT","1.0T ZEN MT"],"DUSTER":["1.6 ZEN MT","1.3T INTENS CVT"],"OROCH":["1.6 ZEN MT","1.3T OUTSIDER AT"],"SANDERO":["1.6 ZEN MT","STEPWAY 1.6 MT"],"KANGOO":["1.5 DCI FURGON"]},
-  "BYD":{"ATTO 2":["STANDARD RANGE","LONG RANGE"],"DOLPHIN MINI":["COMFORT","PREMIUM"],"SHARK":["6X AWD PHEV"],"YUAN PRO":["STANDARD","LONG RANGE"]},
-  "PEUGEOT":{"208":["1.2T LIKE MT","1.2T ALLURE AT","1.2T GT TIPTRONIC"],"2008":["1.0T ACTIVE AT6","1.2T ALLURE AT","1.2T GT AT"],"3008":["1.6T ALLURE AT","1.6T GT AT"],"PARTNER":["1.6 FURGON MT"]},
-  "CITROEN":{"C3":["1.6 VTI FEEL MT","1.6 VTI SHINE MT"],"BASALT":["1.0T FEEL AT6","1.0T SHINE AT6"],"BERLINGO":["FURGON 1.6 BUSINESS","MULTISPACE 1.6"]},
-  "NISSAN":{"KICKS":["1.6 ADVANCE CVT","1.6 EXCLUSIVE CVT"],"FRONTIER":["2.3 TDI LE AT 4X4","2.3 TDI PRO-4X AT"],"SENTRA":["2.0 EXCLUSIVE CVT"],"VERSA":["1.6 ADVANCE CVT"]},
-  "HONDA":{"HR-V":["1.5T EXL CVT","1.5T LX CVT"],"WR-V":["1.0T EX CVT"],"CIVIC":["2.0 EX CVT"]},
-  "JEEP":{"COMPASS":["2.4 LONGITUDE AT","1.3T TRAILHAWK AT"],"RENEGADE":["1.8 SPORT AT","1.8 LONGITUDE AT"]},
-  "HYUNDAI":{"CRETA":["1.0T GL AT","1.0T GLS AT"],"TUCSON":["2.0 GL MT","2.0 GLS AT"]},
-  "KIA":{"SPORTAGE":["2.0 EX MT","1.6T GT-LINE AT"],"SELTOS":["1.4T SX AT"]},
-  "MITSUBISHI":{"L200":["2.4 DID GL MT 4X2","2.4 DID HPE MT 4X4"],"ECLIPSE CROSS":["1.5T CVT"]},
+  "TOYOTA":{
+    "HILUX":{
+      "4X2 CC DX 2.4 TDI 6 MT":42639000,"4X2 CS DX 2.4 TDI 6 MT":45821000,"4X2 DC DX 2.4 TDI 6 MT":51375000,
+      "4X2 DC DX 2.4 TDI 6 AT":52754000,"4X2 DC SR 2.4 TDI 6 MT":58612000,"4X2 DC SR 2.4 TDI 6 AT":61175000,
+      "4X2 DC SRV 2.8 TDI 6 AT":69556000,"4X2 DC SRX 2.8 TDI 6 AT":79971000,"4X4 CC DX 2.4 TDI 6 MT":51977000,
+      "4X4 CS DX 2.4 TDI 6 MT":54668000,"4X4 DC DX 2.4 TDI 6 MT":59819000,"4X4 DC DX 2.4 TDI 6 AT":61433000,
+      "4X2 DC SR 2.8 TDI 6 MT":68507000,"4X2 DC SR 2.8 TDI 6 AT":71376000,"4X4 DC SRV 2.8 TDI 6 AT":78431000,
+      "4X4 DC SRV+ 2.8 TDI 6 AT":81888000,"4X4 DC SRX 2.8 TDI 6 AT":86399000,"4X4 DC GR-SPORT IV 2.8 TDI 6 AT":91377000
+    },
+    "SW4":{"4X4 SRX 2.8 TDI 6 AT 7A":93635000,"4X4 DIAMOND II 2.8 TDI 6 AT 7A":94558000,"4X4 GR-S 2.8 TDI AT 7A":99142000},
+    "COROLLA":{
+      "XLI 2.0 CVT":46132000,"XEI 2.0 CVT":50460000,"HEV XEI 1.8 E-CVT":52814000,
+      "SEG 2.0 CVT":56442000,"HEV SEG 1.8 E-CVT":58230000,"GR-SPORT 2.0 S-CVT":57489000
+    },
+    "COROLLA CROSS":{
+      "XLI 2.0 CVT":53968000,"XEI 2.0 CVT":57994000,"XEI HEV 1.8 E-CVT":59405000,
+      "SEG 2.0 CVT":63782000,"HEV SEG 1.8 E-CVT":65734000,"GR-SPORT 2.0 CVT":66133000
+    },
+    "YARIS":{"XS CVT":36334000,"XLS+ CVT":40134000,"S CVT":43006000},
+    "YARIS CROSS":{"XLI":43514000,"XEI":47310000,"XEI HEV":50507000,"SEG":52274000,"SEG HEV":56070000},
+    "FURGON":{"L2H2 2.8 TDI 6 AT 3A":69970000},
+    "COMMUTER":{"2.8 TDI 6 AT 14A":84043000}
+  },
+  "FIAT":{
+    "MOBI":{"TREKKING":27911000},
+    "CRONOS":{
+      "LIKE 1.3 GSE MY26":31079000,"DRIVE 1.3 GSE PACK PLUS MY26":33729000,
+      "DRIVE 1.3 GSE CVT PACK PLUS MY26":34785000,"PRECISION 1.3 GSE CVT MY26":36588000
+    },
+    "ARGO":{"DRIVE 1.3 MT":29924000,"DRIVE 1.3 CVT":31331000},
+    "PULSE":{
+      "DRIVE 1.3 MTS":35536000,"DRIVE 1.3 CVT":36765000,"AUDACE 1.0T CVT":40099000,
+      "IMPETUS 1.0T CVT":41027000,"ABARTH TURBO 270 AT6":45978000
+    },
+    "FASTBACK":{"TURBO 270 AT":43739000,"ABARTH TURBO 270 AT6":51339000},
+    "FIAT 600":{"MHEV 1.2 AT":43828000},
+    "FIORINO":{"ENDURANCE 1.3":28817000},
+    "STRADA":{
+      "FREEDOM CS 1.3 MT":31127000,"FREEDOM 1.3 8V CD":35904000,
+      "VOLCANO 1.3 8V CD CVT":40076000,"RANCH T200 CD CVT":43461000,"ULTRA T200 CD CVT":43583000
+    },
+    "TORO":{
+      "FREEDOM T270 AT6 4X2":43407000,"VOLCANO T270 AT6 4X2":48684000,
+      "VOLCANO TD350 AT9 4X4":54689000,"ULTRA TD350 AT9 4X4":64141000,
+      "FREEDOM 1.3T AT6 4X2":46842000,"VOLCANO 1.3T AT6 4X2":53162000,"VOLCANO 2.2TD AT9 4X4":58233000
+    },
+    "TITANO":{
+      "ENDURANCE MT 4X2":48907000,"ENDURANCE MT 4X4":45862000,"FREEDOM MT 4X4":52650000,
+      "FREEDOM PLUS AT 4X4":56481000,"RANCH AT 4X4":61552000
+    }
+  },
+  "JEEP":{
+    "RENEGADE":{
+      "1.3T SPORT AT6":41783000,"LONGITUDE 1.3 AT6 MY23":47653000,
+      "S T270 1.3T AT6 MY23":48743000,"WILLYS 1.3T 4X4 AT9":54347000
+    },
+    "COMPASS":{
+      "SPORT T270 AT6 4X2":51159000,"LIMITED PLUS T270 AT6 4X2":57594000,
+      "S T270 1.3T AT6 FWD MY23":57091000,"BLACKHAWK 2.0T GME AT9 4X4":64631000
+    },
+    "COMMANDER":{
+      "LIMITED GSE 1.3T FWD AT6":60136000,"OVERLAND 2.0T GME AT9 4X4":78533000,
+      "BLACKHAWK 2.0T GME AT9 4X4":79228000
+    },
+    "RAMPAGE":{
+      "BIGHORN 2.2 TD AT8 4X4":55770000,"REBEL 2.0L GME":60943000,
+      "LARAMIE 2.0L GME":63078000,"RT 2.0L GME":68946000
+    },
+    "DAKOTA":{"WARLOCK 2.2 AT8 4X4":70861000,"LARAMIE 2.2 AT8 4X4":72915000}
+  },
+  "RENAULT":{
+    "KWID":{"ICONIC BITONO":27500000,"ICONIC OUTSIDER":27800000},
+    "STEPWAY":{"INTENS 1.6":37500000},
+    "KARDIAN":{"EVOLUTION MT MY25":38700000,"EVOLUTION EDC MY25":43500000,"ICONIC EDC MY25":47200000},
+    "DUSTER":{"INTENS 1.6 MT":44000000,"ICONIC 1.3T 4X2 CVT":48000000,"ICONIC 1.3T 4X4 MT":50000000},
+    "LOGAN":{"INTENS 1.6":38500000},
+    "BOREAL":{"EVOLUTION":51500000,"TECHNO":56500000,"ICONIC":59900000},
+    "ARKANA":{"E-TECH HYBRID ESPIRIT ALPINE":56700000},
+    "KOLEOS":{"TECHNO":83500000,"SPIRIT ALPINE FULL HYBRID":93000000},
+    "KANGOO":{"II 1.6 SCe":48000000,"EXPRESS 2A 1.6 SCe114":44500000,"EXPRESS 5A 1.6 SCe114":49000000,"E-TECH":54000000},
+    "OROCH":{"EMOTION 1.6 SCe 114 2WD":44900000,"ICONIC 1.3 TCe 169 2WD CVT":50500000,"OUTSIDER 1.3 TCE 163 4WD":51900000},
+    "MASTER":{"FURGON L1H1":65000000,"FURGON L2H2":71800000,"FURGON L3H2":75000000}
+  },
+  "CITROEN":{
+    "C3":{
+      "VTi FEEL MY26":31360000,"VTi AT FEEL PACK MY26":32070000,"VTi AT FEEL PACK MY26 BITONO":32320000,
+      "VTi AT XTR MY26":32770000,"VTi AT XTR MY26 BITONO":33020000,
+      "T200 FEEL PL YOU! MY26":34030000,"T200 FEEL PL YOU! MY26 BITONO":34280000
+    },
+    "BASALT":{
+      "1.3 LIVE PK MY26":32260000,"1.3 FEEL MY26":34150000,"T200 SHINE MY26":38450000,
+      "T200 SHINE MY26 BITONO":38700000,"T200 DARK EDITION MY26":38970000,"T200 DARK EDITION MY26 BITONO":39220000
+    },
+    "AIRCROSS":{
+      "1.3 FEEL PK MY26":37090000,"T200 FEEL PK MY26":40530000,"T200 SHINE MY26":41280000,
+      "T200 SHINE MY26 BITONO":41530000,"T200 SHINE 7 MY26":43430000,"T200 SHINE 7 MY26 BITONO":43680000,
+      "T200 XTR MY26":41720000,"T200 XTR MY26 BITONO":41970000
+    },
+    "C4":{"HYBRID PLUS":47900000,"HYBRID MAX":59900000},
+    "BERLINGO":{"FURGON HDi 92 BUSINESS AM25":38270000},
+    "JUMPY":{"L3 HDi 150 MY26":57440000,"L3 HDi 150 6P MY26":62900000},
+    "JUMPER":{"L2H2 HDi 140 VAN MY26":69840000,"L3H2 HDi 140 VAN MY26":75090000}
+  },
+  "CHEVROLET":{
+    "ONIX":{"1.0 LT MT":32792000,"1.0 LTZ AT":35904000,"1.0T PREMIER AT":38956000,"1.0T RS AT":39292000},
+    "ONIX PLUS":{"1.0T LT MT":32665000,"1.0T LTZ AT":35904000,"1.0T PREMIER AT":38956000},
+    "TRACKER":{"1.2T AT":40085000,"1.2 AT LTZ":45788000,"1.2T AT PREMIER":49975000,"1.2T AT RS":50006000},
+    "SPIN":{"1.8N LT 5A MT":36300000,"1.8N PREMIER 7A AT":42411000},
+    "MONTANA":{"1.2T LT":41888000,"1.2T LTZ AT":43948000,"1.2T PREMIER AT":47038000,"1.2T RS AT":47656000},
+    "S10":{
+      "CS 2.8 TD 4X2 WT MT":43328000,"CS 2.8 TD 4X4 WT MT":50500000,
+      "CD 2.8 TD 4X2 WT MT":48004000,"CD 2.8 TD 4X4 WT MT":59480000,
+      "CD 2.8 TD 4X4 WT AT":59964000,"CD 2.8 TD 4X4 Z71 AT":67400000,
+      "CD 2.8 TD 4X4 LTZ AT":70780000,"CD 2.8 TD 4X4 HC AT":75260000
+    },
+    "SPARK EUV":{"ACTIV":43760000},
+    "CAPTIVA":{"PHEV PREMIER":56100000},
+    "TRAILBLAZER":{"2.8 4X4 HC AT":77192000}
+  },
+  "PEUGEOT":{
+    "208":{"ALLURE MT AM26":33800000,"ALLURE AT AM26":35600000,"ALLURE PK T200 AM26":38600000,"GT T200 AM26":40700000},
+    "2008":{"ACTIVE T200 AM26":42400000,"ALLURE T200 AM26":45600000,"GT T200 AM26":49800000},
+    "408":{"GT AM25":73500000},
+    "3008":{"GT AM25":76600000},
+    "5008":{"GT AM25":81000000},
+    "PARTNER":{"CONFORT 1.6 HDI 92AM22.5":33900000},
+    "EXPERT":{"L3 HDI 150AM26":55500000,"L3 HDI 150 6P AM26":60750000},
+    "BOXER":{"L2 H2 HDI 140 AM26":67500000,"L3 H2 HDI 140 AM26":72500000}
+  },
   "DFSK":{
-    "K01H":["MINI TRUCK","FURGON CERRADO","FURGON REFRIGERADO"],
-    "C31":["ESTANDAR","BOX","BOX REFRIGERADO"],
-    "C32":["ESTANDAR"],
-    "C35":["ESTANDAR"],
-    "EC":["35/31 FURGON MT"],
-    "GLORY 580":["7 PLAZAS"],
-    "GLORY 500":["5 PLAZAS"],
-    "E5":["HIBRIDA ENCHUFABLE"],
+    "K01H":{"MINI TRUCK":29494800,"FURGON CERRADO":34884000,"FURGON REFRIGERADO":43243200},
+    "C31":{"CABINA SIMPLE":32788800,"BOX":37994400,"BOX REFRIGERADO":44172000},
+    "C32":{"CABINA DOBLE":35305200},
+    "C35":{"FURGON":37540800},
+    "EC 35/31":{"FURGON MT":48222000},
+    "GLORY 580":{"7 PLAZAS":43070400},
+    "GLORY 500":{"5 PLAZAS":39031200}
   },
   "FOTON":{
-    "TM1 NACIONAL":["CAB SIMPLE","CAB DOBLE"],
-    "TM1 IMPORT":["CAB SIMPLE","CAB DOBLE"],
-    "TM2":["BOX CARGO","BOX CARGO REFRIGERADO"],
-    "Z-TRUCK":["CAB SIMPLE","CAB DOBLE"],
-    "WONDER":["CAB SIMPLE","CAB DOBLE","CS BOX"],
-    "G7":["4X2 MT","4X2 AT","4X4 MT","4X4 AT"],
-    "BLUELINE":["V9 4X4 AT"],
-    "AUMARK S3":["615 CHASIS","916 CHASIS","916 FLATBED","1016 CHASIS"],
-    "E-AUMARK L6":["CHASIS","FLATBED","BOX","BOX REFRIGERADO"],
-  },
+    "Z-TRUCK":{"CAB SIMPLE":30747000,"CAB DOBLE":35179000},
+    "TM1 NACIONAL":{"CAB SIMPLE":39195500,"CAB DOBLE":40719000},
+    "TM1 IMPORT":{"BOX CARGO":46536000,"BOX CARGO REFRIGERADO":58308500},
+    "TM2":{"CAB SIMPLE":43350500,"CAB DOBLE":45289500},
+    "WONDER":{"CAB SIMPLE":40719000,"CAB DOBLE":42796500,"CS BOX":48475000},
+    "G7":{"4X2 MT":49489300,"4X2 AT":52900100,"4X4 MT":55174000,"4X4 AT":60460700},
+    "V9":{"4X4 AT HYBRID":83767700},
+    "AUMARK S3 615":{"CHASIS":73128000},
+    "AUMARK S3 916":{"CHASIS":82684500},
+    "AUMARK S3 1016":{"CHASIS":90025000},
+    "AUMAN D 1621":{"CHASIS 4X2":113570000}
+  }
 };
 
 // ── ESTADO EN MEMORIA ─────────────────────────────────────────────────────────
@@ -1192,23 +1351,51 @@ function bBN(){
 function selOpts(id,opts,ph){const s=$$(id);s.innerHTML=`<option value="">${ph}</option>`;opts.forEach(v=>s.add(new Option(v,v)));s.disabled=false}
 function disEl(id){$$(id).innerHTML='<option value="">—</option>';$$(id).disabled=true}
 
+const MKT_TIPOS={"TOYOTA": {"Auto": ["COROLLA", "COROLLA CROSS", "YARIS", "YARIS CROSS"], "Utilitario/Pickup": ["HILUX", "SW4", "FURGON", "COMMUTER"]}, "FIAT": {"Auto": ["MOBI", "CRONOS", "ARGO", "PULSE", "FASTBACK", "FIAT 600"], "Utilitario/Pickup": ["FIORINO", "STRADA", "TORO", "TITANO"]}, "JEEP": {"Auto": ["RENEGADE", "COMPASS", "COMMANDER"], "Utilitario/Pickup": ["RAMPAGE", "DAKOTA"]}, "RENAULT": {"Auto": ["KWID", "STEPWAY", "KARDIAN", "DUSTER", "LOGAN", "BOREAL", "ARKANA", "KOLEOS", "KANGOO"], "Utilitario/Pickup": ["OROCH", "MASTER"]}, "CITROEN": {"Auto": ["C3", "BASALT", "AIRCROSS", "C4"], "Utilitario/Pickup": ["BERLINGO", "JUMPY", "JUMPER"]}, "CHEVROLET": {"Auto": ["ONIX", "ONIX PLUS", "TRACKER", "SPIN", "CAPTIVA", "SPARK EUV"], "Utilitario/Pickup": ["MONTANA", "S10", "TRAILBLAZER"]}, "PEUGEOT": {"Auto": ["208", "2008", "408", "3008", "5008"], "Utilitario/Pickup": ["PARTNER", "EXPERT", "BOXER"]}, "DFSK": {"Auto": ["GLORY 580", "GLORY 500"], "Utilitario/Pickup": ["K01H", "C31", "C32", "C35", "EC 35/31"]}, "FOTON": {"Auto": [], "Utilitario/Pickup": ["Z-TRUCK", "TM1 NACIONAL", "TM1 IMPORT", "TM2", "WONDER", "G7", "V9", "AUMARK S3 615", "AUMARK S3 916", "AUMARK S3 1016", "AUMAN D 1621"]}};
+
 function onTipo(){
   ['marca','modelo','version','anno'].forEach(disEl);
   $$('ar').style.display='none'; $$('ar-al').innerHTML='';
   const t=$$('tipo').value; if(!t)return;
+  if(t==='mercado'){
+    // Mostrar selector de subtipo
+    $$('subtipo').style.display='';
+    $$('subtipo').disabled=false;
+    $$('subtipo').value='';
+    ['marca','modelo','version','anno'].forEach(disEl);
+    return;
+  }
+  $$('subtipo').style.display='none';
+  $$('subtipo').disabled=true;
   const ms=t==='usado'?[...new Set(stk.map(u=>u.marca))].sort():t==='okm'?[...new Set(okm.map(u=>u.marca))].sort():Object.keys(MKT).sort();
   selOpts('marca',ms,'— Elegir marca —');
+}
+
+function onSubtipo(){
+  ['marca','modelo','version','anno'].forEach(disEl);
+  const sub=$$('subtipo').value; if(!sub)return;
+  // Filtrar marcas que tienen modelos del subtipo elegido
+  const marcas=Object.keys(MKT_TIPOS).filter(m=>(MKT_TIPOS[m][sub]||[]).length>0).sort();
+  selOpts('marca',marcas,'— Elegir marca —');
 }
 function onMarca(){
   ['modelo','version','anno'].forEach(disEl);
   const t=$$('tipo').value,ma=$$('marca').value; if(!ma)return;
-  const ms=t==='usado'?[...new Set(stk.filter(u=>u.marca===ma).map(u=>u.modelo))].sort():t==='okm'?[...new Set(okm.filter(u=>u.marca===ma).map(u=>u.modelo))].sort():Object.keys(MKT[ma]||{}).sort();
+  let ms;
+  if(t==='mercado'){
+    const sub=$$('subtipo').value;
+    const todos=Object.keys(MKT[ma]||{});
+    const filtrados=(MKT_TIPOS[ma]||{})[sub]||[];
+    ms=sub?todos.filter(m=>filtrados.includes(m)).sort():todos.sort();
+  } else {
+    ms=t==='usado'?[...new Set(stk.filter(u=>u.marca===ma).map(u=>u.modelo))].sort():t==='okm'?[...new Set(okm.filter(u=>u.marca===ma).map(u=>u.modelo))].sort():Object.keys(MKT[ma]||{}).sort();
+  }
   selOpts('modelo',ms,'— Elegir modelo —');
 }
 function onModelo(){
   ['version','anno'].forEach(disEl);
   const t=$$('tipo').value,ma=$$('marca').value,mo=$$('modelo').value; if(!mo)return;
-  const vs=t==='usado'?[...new Set(stk.filter(u=>u.marca===ma&&u.modelo===mo).map(u=>u.version))].sort():t==='okm'?[...new Set(okm.filter(u=>u.marca===ma&&u.modelo===mo).map(u=>u.version))].sort():(MKT[ma]||{})[mo]||[];
+  const mktVers=(MKT[ma]||{})[mo];const vs=t==='usado'?[...new Set(stk.filter(u=>u.marca===ma&&u.modelo===mo).map(u=>u.version))].sort():t==='okm'?[...new Set(okm.filter(u=>u.marca===ma&&u.modelo===mo).map(u=>u.version))].sort():Array.isArray(mktVers)?mktVers:Object.keys(mktVers||{}).sort();
   selOpts('version',vs,'— Elegir versión —');
 }
 function onVer(){
@@ -1243,9 +1430,49 @@ function onAuto(){
     if(u&&u.precio>0){$$('pa1').value=u.precio;if(u.color)$$('color').value=u.color}
     if(u) updEstado(u.estado);
   } else {
+    const MKT_USD_DATA={"FOTON": {"Z-TRUCK": {"CAB SIMPLE": 22200, "CAB DOBLE": 25400}, "TM1 NACIONAL": {"CAB SIMPLE": 28300, "CAB DOBLE": 29400}, "TM1 IMPORT": {"BOX CARGO": 33600, "BOX CARGO REFRIGERADO": 42100}, "TM2": {"CAB SIMPLE": 31300, "CAB DOBLE": 32700}, "WONDER": {"CAB SIMPLE": 29400, "CAB DOBLE": 30900, "CS BOX": 35000}, "G7": {"4X2 MT": 49489, "4X2 AT": 52900, "4X4 MT": 55174, "4X4 AT": 60461}, "V9": {"4X4 AT HYBRID": 83768}, "AUMARK S3 615": {"CHASIS": 52800}, "AUMARK S3 916": {"CHASIS": 59700}, "AUMARK S3 1016": {"CHASIS": 65000}, "AUMAN D 1621": {"CHASIS 4X2": 82000}}};
+    const mktMo=(MKT[ma]||{})[mo];
+    const usdMo=(MKT_USD_DATA[ma]||{})[mo];
+    const usdPrecio=usdMo?usdMo[v]:0;
+    const aral=$$('ar-al');
+    if(usdPrecio>0){
+      aral.innerHTML='<div class="al info" style="display:flex;flex-direction:column;gap:6px">'+
+        '<div>💵 <strong>Precio FOTON: USD '+usdPrecio.toLocaleString('es-AR')+'</strong></div>'+
+        '<div style="display:flex;gap:8px;align-items:center">'+
+        '<label style="font-size:11px;white-space:nowrap">💱 Dólar vendedor BNA:</label>'+
+        '<input id="tc-bna" type="number" placeholder="Buscando..." style="width:90px;padding:4px;border-radius:4px;border:1px solid #aaa;font-size:13px;font-weight:700" oninput="calcFoton('+usdPrecio+')">'+
+        '<span style="font-size:10px;color:#888" id="bna-estado">⏳</span>'+
+        '</div>'+
+        '<div id="foton-pesos" style="font-size:13px;font-weight:700;color:#27ae60"></div>'+
+        '</div>';
+      fetch('https://api.bluelytics.com.ar/v2/latest')
+        .then(r=>r.json())
+        .then(d=>{
+          const tc=d.oficial.value_sell;
+          const tcEl=document.getElementById('tc-bna');
+          if(tcEl){tcEl.value=tc;document.getElementById('bna-estado').textContent='✓ BNA oficial';calcFoton(usdPrecio);}
+        })
+        .catch(()=>{
+          const tcEl=document.getElementById('tc-bna');
+          if(tcEl){document.getElementById('bna-estado').textContent='⚠️ Ingresá manualmente';}
+        });
+    } else if(mktMo&&!Array.isArray(mktMo)&&mktMo[v]&&mktMo[v]>0){
+      $$('pa1').value=mktMo[v];
+      aral.innerHTML='<div class="al info">📋 Precio de <strong>lista pública '+new Date().toLocaleString('es-AR',{month:'long',year:'numeric'})+'</strong></div>';
+    }
     updEstado('');
   }
   cP();
+}
+function calcFoton(usd){
+  const tcEl=document.getElementById('tc-bna');
+  const resEl=document.getElementById('foton-pesos');
+  if(!tcEl||!resEl) return;
+  const tc=parseFloat(tcEl.value)||0;
+  if(tc<=0){resEl.textContent='';return;}
+  const pesos=Math.round(usd*tc);
+  resEl.textContent='💰 Precio en pesos: $'+pesos.toLocaleString('es-AR');
+  const pa1El=$$('pa1'); if(pa1El) pa1El.value=pesos;
 }
 function updEstado(estado){
   const ep=$$('rest');
@@ -1281,21 +1508,113 @@ function buscar(){
 
 // ── CALCULADORA CRÉDITO INTEGRADA (Columna B) ─────────────────────────────────
 function rCampMini(){
-  const g=$$('cg-mini'), act=camp.filter(c=>c.activa);
+  const g=$$('cg-mini');
   g.innerHTML='';
-  act.forEach(c=>{
-    const bn=c.banco.toLowerCase();
-    const cls=bn.includes('icbc')?'icbc':bn.includes('bbva')?'bbva':'otro';
+  const ma=($$('marca')?.value||'').toUpperCase();
+  const financiera=MARCA_FINANCIERA[ma]||null;
+  const act=camp.filter(c=>c.activa);
+
+  // Agrupar bancos por nombre de banco
+  const bancos=act.filter(c=>!c.marca);
+  const deMarca=act.filter(c=>c.marca&&c.marca===ma);
+
+  // Obtener bancos únicos
+  const bancosUnicos=[...new Set(bancos.map(c=>c.banco))];
+  // Obtener financieras de marca únicas
+  const marcaUnicas=[...new Set(deMarca.map(c=>c.banco))];
+
+  function crearBotonBanco(nombreBanco, esMarca){
+    const campsDeBanco=act.filter(c=>c.banco===nombreBanco);
+    const seleccionado=campsDeBanco.some(c=>c.id===credCampId);
     const d=document.createElement('div');
-    d.className='cc-mini '+cls+(credCampId===c.id?' sel':'');
-    d.onclick=()=>sCredCamp(c.id);
-    d.innerHTML=`<div class="mch">✓</div><div class="mba">${c.banco}</div><div class="mno">${c.nombre}</div><div class="mtn">${c.tna.toFixed(2).replace('.',',')}%</div>`;
+    const color=esMarca?'#E67E22':'var(--b)';
+    d.style.cssText=`display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:8px;cursor:pointer;border:1.5px solid ${seleccionado?color:'var(--brd)'};background:${seleccionado?(esMarca?'rgba(230,126,34,.15)':'rgba(36,113,163,.12)'):'var(--bg)'};transition:all .15s`;
+    d.onclick=()=>{
+      // Si tiene una sola campaña, seleccionarla directamente
+      if(campsDeBanco.length===1){
+        sCredCamp(campsDeBanco[0].id);
+      } else {
+        // Si tiene varias, mostrar sub-selector
+        mostrarSubCampanas(nombreBanco, campsDeBanco);
+      }
+    };
+    const ico=esMarca?'⭐':'🏦';
+    d.innerHTML=`<span style="font-size:18px">${ico}</span><span style="font-weight:700;font-size:13px;color:${seleccionado?color:'var(--tx)'}">${nombreBanco}</span>${seleccionado?`<span style="margin-left:auto;font-size:10px;color:${color}">✓ Seleccionado</span>`:''}`;
+    g.appendChild(d);
+  }
+
+  // Campañas de marca primero
+  if(marcaUnicas.length){
+    const t=document.createElement('div');
+    t.style.cssText='font-size:9px;font-weight:800;letter-spacing:1.5px;color:#E67E22;text-transform:uppercase;margin:4px 0 4px';
+    t.textContent='⭐ Campaña de marca';
+    g.appendChild(t);
+    marcaUnicas.forEach(b=>crearBotonBanco(b,true));
+    const sep=document.createElement('div');
+    sep.style.cssText='border-top:1px solid var(--brd);margin:8px 0';
+    g.appendChild(sep);
+  }
+
+  // Bancos
+  if(bancosUnicos.length){
+    const t=document.createElement('div');
+    t.style.cssText='font-size:9px;font-weight:800;letter-spacing:1.5px;color:#888;text-transform:uppercase;margin:4px 0 4px';
+    t.textContent='🏦 Bancos';
+    g.appendChild(t);
+    bancosUnicos.forEach(b=>crearBotonBanco(b,false));
+  }
+}
+
+function mostrarSubCampanas(banco, camps){
+  // Mostrar las campañas del banco elegido en un selector secundario
+  const g=$$('cg-mini');
+  // Agregar botón volver + opciones
+  const volver=document.createElement('div');
+  volver.style.cssText='display:flex;align-items:center;gap:6px;padding:6px 10px;cursor:pointer;color:var(--b);font-size:11px;font-weight:700';
+  volver.innerHTML='← Volver';
+  volver.onclick=()=>rCampMini();
+  g.appendChild(volver);
+
+  const tit=document.createElement('div');
+  tit.style.cssText='font-size:11px;font-weight:800;color:var(--tx);padding:4px 0 8px';
+  tit.textContent=banco+' — Elegí una línea:';
+  g.appendChild(tit);
+
+  camps.forEach(c=>{
+    const seleccionado=credCampId===c.id;
+    const d=document.createElement('div');
+    d.style.cssText=`padding:10px 14px;border-radius:8px;cursor:pointer;border:1.5px solid ${seleccionado?'var(--b)':'var(--brd)'};background:${seleccionado?'rgba(36,113,163,.12)':'var(--bg)'};margin-bottom:4px`;
+    d.onclick=()=>{sCredCamp(c.id);};
+    const tnaStr=c.tna>0?c.tna.toFixed(1).replace('.',',')+'% TNA':'0% TNA';
+    const comStr=c.comision>0?' · '+c.comision+'% gastos':'';
+    d.innerHTML=`<div style="font-weight:700;font-size:12px;color:${seleccionado?'var(--b)':'var(--tx)'}">${c.nombre}</div><div style="font-size:10px;color:#888;margin-top:2px">${tnaStr} · hasta ${c.plazoMax}m${comStr}</div>`;
     g.appendChild(d);
   });
 }
 
+function cambiarCampania(){
+  credCampId=null; credPlazo=null;
+  const rs=$$('cred-camp-resumen'); if(rs) rs.style.display='none';
+  $$('qg-mini-wrap').style.display='none';
+  $$('cg-mini').style.display='block';
+  $$('cred-box-tit').style.display='block';
+  $$('ltv-al').innerHTML='';
+  $$('uva-al').innerHTML='';
+  $$('pa3').value='';
+  cP();
+  rCampMini();
+}
+
 function sCredCamp(id){
   credCampId=id; credPlazo=null;
+  // Calcular gastos bancarios (quebranto + IVA 21%) sobre monto a financiar
+  const cv=camp.find(c=>c.id===id);
+  const mt=parseFloat($$('pb1').value)||0;
+  if(cv&&mt>0&&cv.comision>0){
+    const quebranto=Math.round(mt*(cv.comision/100)*1.21);
+    $$('pa3').value=quebranto;
+    cP(); // recalcular total
+  }
   rCampMini(); calcCred();
 }
 
@@ -1304,6 +1623,14 @@ function calcCred(){
   const box=$$('cred-box');
 
   if(mt<=0){box.style.display='none';$$('print-cuotas').style.display='none';$$('print-cuotas').innerHTML='';return}
+  // Recalcular gastos bancarios si hay campaña seleccionada
+  if(credCampId&&mt>0){
+    const cv=camp.find(c=>c.id===credCampId);
+    if(cv&&cv.comision>0){
+      const quebranto=Math.round(mt*(cv.comision/100)*1.21);
+      $$('pa3').value=quebranto;
+    }
+  }
   box.style.display='block';
   rCampMini();
 
@@ -1315,8 +1642,18 @@ function calcCred(){
     if(cv){const lp=mt/pr,lm=cv.ltv/100;lal.innerHTML=lp>lm?`<div class="al warn" style="margin-top:0;margin-bottom:6px">⚠️ Monto (${(lp*100).toFixed(0)}%) supera LTV ${cv.ltv}%. Máximo: ${fmt(pr*lm)}</div>`:`<div class="al ok" style="margin-top:0;margin-bottom:6px">✅ LTV OK — ${(lp*100).toFixed(0)}% (máx ${cv.ltv}%)</div>`}
   }
 
-  if(!credCampId){$$('qg-mini-wrap').style.display='none';return}
-  const cv=camp.find(c=>c.id===credCampId); if(!cv){$$('qg-mini-wrap').style.display='none';return}
+  if(!credCampId){$$('qg-mini-wrap').style.display='none';$$('cg-mini').style.display='block';$$('cred-box-tit').style.display='block';return}
+  const cv=camp.find(c=>c.id===credCampId); if(!cv){$$('qg-mini-wrap').style.display='none';$$('cg-mini').style.display='block';$$('cred-box-tit').style.display='block';return}
+
+  // Ocultar selector y mostrar resumen compacto de campaña elegida
+  $$('cg-mini').style.display='none';
+  $$('cred-box-tit').style.display='none';
+  // Resumen campaña seleccionada
+  let rs=$$('cred-camp-resumen');
+  if(!rs){rs=document.createElement('div');rs.id='cred-camp-resumen';$$('cred-box').insertBefore(rs,$$('ltv-al'));}
+  const colorR=cv.marca?'#E67E22':'var(--b)';
+  rs.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-radius:8px;border:1.5px solid '+colorR+';background:rgba(36,113,163,.08);margin-bottom:6px';
+  rs.innerHTML=`<div><div style="font-weight:800;font-size:12px;color:${colorR}">${cv.banco} — ${cv.nombre}</div><div style="font-size:10px;color:#888;margin-top:1px">TNA ${cv.tna.toFixed(1).replace('.',',')}%${cv.comision>0?' · '+cv.comision+'% gastos':''} · hasta ${cv.plazoMax}m</div></div><button onclick="cambiarCampania()" style="background:none;border:1px solid var(--brd);color:var(--m);border-radius:6px;padding:4px 8px;font-size:10px;font-weight:700;cursor:pointer">✏️ Cambiar</button>`;
 
   // Cuotas
   $$('qg-mini-wrap').style.display='block';
@@ -1389,6 +1726,9 @@ function resetP(){
   $$('exa').innerHTML=''; $$('exb').innerHTML='';
   $$('ar').style.display='none'; $$('ar-al').innerHTML=''; $$('cred-box').style.display='none';
   credCampId=null; credPlazo=null;
+  const rs=$$('cred-camp-resumen'); if(rs) rs.style.display='none';
+  if($$('cred-box-tit')) $$('cred-box-tit').style.display='block';
+  if($$('cg-mini')) $$('cg-mini').style.display='block';
   $$('wap').style.display='none';
   cP();
 }
@@ -1440,15 +1780,47 @@ function lmpH(){if(!CU)return;if(confirm('¿Eliminar tu historial?')){HG[CU.id]=
 
 // ── COTIZADOR RÁPIDO (drawer) ────────────────────────────────────────────────
 function rCampCot(){
-  const g=$$('cg-cot'),act=camp.filter(c=>c.activa);
+  const g=$$('cg-cot');
   if(!g)return; g.innerHTML='';
-  act.forEach(c=>{
+  const ma=($$('marca')?.value||'').toUpperCase();
+  const financiera=MARCA_FINANCIERA[ma]||null;
+  const act=camp.filter(c=>c.activa);
+  const bancos=act.filter(c=>!c.marca);
+  const deMarca=act.filter(c=>c.marca&&c.marca===ma);
+
+  function crearTarjeta(c){
     const bn=c.banco.toLowerCase();
-    const cls=bn.includes('icbc')?'icbc':bn.includes('bbva')?'bbva':'otro';
-    const d=document.createElement('div');d.className='cc '+cls+(cotCampId===c.id?' sel':'');d.onclick=()=>{cotCampId=c.id;rCampCot();calcCot()};
-    d.innerHTML=`<div class="ccch">✓</div><div class="ccba">${c.banco}</div><div class="ccno">${c.nombre}</div><div class="cctn">${c.tna.toFixed(2).replace('.',',')}%</div><div class="ccde">Hasta ${c.plazoMax}m · LTV ${c.ltv}%${c.comision?` · ${c.comision}% comisión`:''}</div>`;
+    const cls=bn.includes('icbc')?'icbc':bn.includes('bbva')?'bbva':
+              bn.includes('gpat')||bn.includes('fca')||bn.includes('psa')||bn.includes('movilize')?'marca':'otro';
+    const d=document.createElement('div');
+    d.className='cc '+cls+(cotCampId===c.id?' sel':'');
+    d.onclick=()=>{cotCampId=c.id;rCampCot();calcCot()};
+    const tnaStr=c.tna>0?c.tna.toFixed(1).replace('.',',')+'%':'0% TNA';
+    d.innerHTML=`<div class="ccch">✓</div><div class="ccba">${c.banco}</div><div class="ccno">${c.nombre}</div><div class="cctn">${tnaStr}</div><div class="ccde">Hasta ${c.plazoMax}m · LTV ${c.ltv}%${c.comision?` · ${c.comision}% gastos`:''}</div>`;
     g.appendChild(d);
-  });
+  }
+
+  // Campañas de marca primero (si aplica)
+  if(deMarca.length){
+    const t=document.createElement('div');
+    t.style.cssText='font-size:9px;font-weight:800;letter-spacing:1.5px;color:#E67E22;text-transform:uppercase;margin:4px 0 4px;width:100%;padding:4px 0';
+    t.textContent='⭐ Campaña '+financiera+' para '+ma;
+    g.appendChild(t);
+    deMarca.forEach(crearTarjeta);
+    // Separador
+    const sep=document.createElement('div');
+    sep.style.cssText='border-top:1px solid var(--brd);margin:8px 0 4px;width:100%';
+    g.appendChild(sep);
+  }
+
+  // Bancos
+  if(bancos.length){
+    const t=document.createElement('div');
+    t.style.cssText='font-size:9px;font-weight:800;letter-spacing:1.5px;color:#888;text-transform:uppercase;margin:4px 0 4px;width:100%';
+    t.textContent='🏦 Bancos';
+    g.appendChild(t);
+    bancos.forEach(crearTarjeta);
+  }
 }
 function calcCot(){
   const pr=parseFloat($$('cot-precio').value)||0,an=parseFloat($$('cot-ant').value)||0,mt=Math.max(0,pr-an);
@@ -1513,32 +1885,35 @@ function vVend(uid, titId='dtit', listId='dh'){
 // ── STOCK ────────────────────────────────────────────────────────────────────
 function rStk(){
   const el=$$('sl'); el.innerHTML='';
-  const visible=stk.filter(u=>u.estado!=='A RECIBIR');
+  // Mostrar todo el stock incluyendo A RECIBIR
+  const visible=stk;
   if(!visible.length){
-    el.innerHTML='<div class="empty"><div class="eico">\u{1F697}</div><div class="ettl">Sin unidades</div><div class="esub">Pres. Actualizar desde Drive.</div></div>';
+    el.innerHTML='<div class="empty"><div class="eico">🚗</div><div class="ettl">Sin unidades</div></div>';
     return;
   }
+  // Ordenar: DISPONIBLE primero, luego EN PREPARACION, luego SENIADO
   const orden={'DISPONIBLE':0,'EN PREPARACION':1,'SENIADO':2};
   const sorted=[...visible].sort((a,b)=>{
-    const oa=orden[a.estado]??9, ob=orden[b.estado]??9;
-    if(oa!==ob) return oa-ob;
-    return (a.marca||'').localeCompare(b.marca||'');
+    const ma=(a.marca||'').localeCompare(b.marca||'','es');
+    if(ma!==0) return ma;
+    return (a.modelo||'').localeCompare(b.modelo||'','es');
   });
-  const eCol={'DISPONIBLE':'var(--g)','EN PREPARACION':'var(--y)','SENIADO':'var(--r)'};
-  const eTag={'DISPONIBLE':'tag-g','EN PREPARACION':'tag-y','SENIADO':'tag-r'};
-  const puedeVerToma = CU && (esGerencia(CU)||esSupervisor(CU));
+  // Color e ícono por estado
+  const eCol={
+    'DISPONIBLE':'var(--g)',
+    'EN PREPARACION':'var(--y)',
+    'SENIADO':'var(--r)',
+  };
+  const eTag={
+    'DISPONIBLE':'tag-g',
+    'EN PREPARACION':'tag-y',
+    'SENIADO':'tag-r',
+  };
   sorted.forEach(u=>{
     const col=eCol[u.estado]||'var(--m)';
     const tag=eTag[u.estado]||'tag-y';
     const d=document.createElement('div'); d.className='hi';
-    const tomaHtml = puedeVerToma && u._valorToma
-      ? '<div style="font-size:9px;color:var(--y);margin-top:1px">Toma: '+fmt(u._valorToma)+(u._costoTotal?' · Costo: '+fmt(u._costoTotal):'')+' · '+u._pctToma+'</div>'
-      : '';
-    const empHtml = u.empresa ? '<span style="font-size:9px;opacity:.45;margin-left:4px">['+u.empresa+']</span>' : '';
-    const pr = u.precio ? fmt(u.precio) : 'Consultar';
-    const prColor = u.precio ? 'var(--b)' : 'var(--m)';
-    const km = (u.km||0).toLocaleString('es-AR');
-    d.innerHTML='<div class="hico" style="background:'+col+'">\u{1F697}</div><div class="hinf"><div class="haut">'+u.marca+' '+u.modelo+' '+u.version+empHtml+'</div><div class="hdet">'+u.anno+' · '+km+' km · '+(u.color||'—')+' · '+(u.dominio||'—')+'</div>'+tomaHtml+'</div><div class="hr2"><div class="hcuo" style="color:'+prColor+'">'+pr+'</div><div class="hfec"><span class="tag '+tag+'">'+u.estado+'</span></div></div>';
+    d.innerHTML=`<div class="hico" style="background:${col}">🚗</div><div class="hinf"><div class="haut">${u.marca} ${u.modelo} ${u.version}</div><div class="hdet">${u.anno} · ${(u.km||0).toLocaleString('es-AR')} km · ${u.color||'—'} · ${u.dominio||'—'}</div></div><div class="hr2"><div class="hcuo" style="color:${u.precio?'var(--b)':'var(--m)'}">${u.precio?fmt(u.precio):'Consultar'}</div><div class="hfec"><span class="tag ${tag}">${u.estado}</span></div></div>`;
     el.appendChild(d);
   });
 }
@@ -1546,7 +1921,6 @@ function rOkm(){const el=$$('ol');el.innerHTML='';okm.forEach(u=>{const d=docume
 
 // ── ADMIN ────────────────────────────────────────────────────────────────────
 function rAdm(){
-  rDriveCfg();
   if(!esSupervisor(CU)){$$('screen-admin').innerHTML='<div class="page"><div class="al err">🔒 Acceso restringido. Solo Mauricio García.</div></div>';return}
   const t=$$('atc');t.innerHTML='<thead><tr><th>Banco</th><th>Nombre</th><th>TNA %</th><th>Com %</th><th>Plazo Máx</th><th>LTV %</th><th>Activa</th></tr></thead>';
   const tb=document.createElement('tbody');
@@ -1613,13 +1987,14 @@ function impX(e){
           const partes=unidad.split(' ');
           let modelo=partes[0]||'', version=partes.slice(1).join(' ');
           if(['HILUX','COROLLA','YARIS','LAND'].includes(partes[0]?.toUpperCase())&&partes[1]&&['DC','CS','CROSS','CRUISER'].includes(partes[1]?.toUpperCase())){modelo=partes.slice(0,2).join(' ');version=partes.slice(2).join(' ');}
-          let precio=0; const praw=String(row[ci.pre]||'').replace(/[^0-9.]/g,''); if(praw) precio=Math.round(parseFloat(praw))||0;
+          let precio=0; const praw=String(row[ci.pre]||'').replace(/[$\s]/g,'').replace(/\./g,'').replace(/,/g,''); if(praw) precio=parseInt(praw)||0;
           const eraw=String(row[ci.est]||'').toLowerCase().trim();
           let estado='DISPONIBLE';
           if(eraw.includes('preparac')) estado='EN PREPARACION';
           else if(eraw.includes('recibir')) estado='A RECIBIR';
           else if(eraw.includes('seña')||eraw.includes('senia')) estado='SENIADO';
-          nuevos.push({dominio:v.toUpperCase(),marca:marcaActual,modelo:modelo.toUpperCase(),version:version.toUpperCase(),anno:parseInt(row[ci.ano])||0,km:parseInt(row[ci.km])||0,precio,color:String(row[ci.col]||'').toUpperCase().trim(),estado});
+          const kmRaw=String(row[ci.km]||'').replace(/[^0-9]/g,'');const kmVal=parseInt(kmRaw)||0;
+          nuevos.push({dominio:v.toUpperCase(),marca:marcaActual,modelo:modelo.toUpperCase(),version:version.toUpperCase(),anno:parseInt(row[ci.ano])||0,km:kmVal,precio,color:String(row[ci.col]||'').toUpperCase().trim(),estado});
         }
         if(!nuevos.length){alert('❌ No se encontraron vehículos.');return}
         if(!confirm(`✅ Se encontraron ${nuevos.length} vehículos.\n¿Reemplazar el stock actual?`))return;
@@ -1632,6 +2007,73 @@ function impX(e){
   });
 }
 // ── IMPORTAR EXCEL 0KM ───────────────────────────────────────────────────────
+// ── IMPORTAR CAMPAÑAS DESDE EXCEL ────────────────────────────────────────────
+function impXC(e){
+  const f=e.target.files[0]; if(!f)return;
+  e.target.value='';
+  loadXLSX(()=>{
+    const r=new FileReader();
+    r.onload=ev=>{
+      try{
+        const wb=XLSX.read(ev.target.result,{type:'binary'});
+        let actualizadas=0, nuevas=0, errores=[];
+        for(const sheetName of wb.SheetNames){
+          const upper=sheetName.toUpperCase();
+          if(upper.includes('INDIC')||upper.includes('INSTRUC')) continue;
+          const ws=wb.Sheets[sheetName];
+          const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+          // Buscar fila de encabezado (BANCO, NOMBRE, TNA)
+          let hdrIdx=-1;
+          for(let i=0;i<rows.length;i++){
+            const r0=rows[i].map(c=>String(c).toUpperCase().trim());
+            if(r0.includes('BANCO')&&r0.includes('NOMBRE')&&(r0.includes('TNA%')||r0.includes('TNA'))){hdrIdx=i;break;}
+          }
+          if(hdrIdx<0) continue;
+          const hdr=rows[hdrIdx].map(c=>String(c).toUpperCase().trim());
+          const ci={
+            banco:   hdr.findIndex(h=>h==='BANCO'),
+            nombre:  hdr.findIndex(h=>h==='NOMBRE'),
+            tna:     hdr.findIndex(h=>h==='TNA%'||h==='TNA'),
+            com:     hdr.findIndex(h=>h==='COM%'||h==='COM'||h==='COMISION'||h==='COMISIÓN'),
+            plazo:   hdr.findIndex(h=>h==='PLAZO_MAX'||h==='PLAZO MAX'||h==='PLAZO'),
+            ltv:     hdr.findIndex(h=>h==='LTV%'||h==='LTV'),
+            activa:  hdr.findIndex(h=>h==='ACTIVA'),
+          };
+          if(ci.banco<0||ci.nombre<0||ci.tna<0) continue;
+          for(let i=hdrIdx+1;i<rows.length;i++){
+            const row=rows[i];
+            const banco=String(row[ci.banco]||'').trim().toUpperCase();
+            const nombre=String(row[ci.nombre]||'').trim().toUpperCase();
+            if(!banco||!nombre||banco==='BANCO') continue;
+            const tna=parseFloat(String(row[ci.tna]||'0').replace(',','.'))||0;
+            const com=ci.com>=0?parseFloat(String(row[ci.com]||'0').replace(',','.'))||0:0;
+            const plazoMax=ci.plazo>=0?parseInt(row[ci.plazo])||60:60;
+            const ltv=ci.ltv>=0?parseInt(row[ci.ltv])||80:80;
+            const activaVal=ci.activa>=0?row[ci.activa]:1;
+            const activa=activaVal===1||activaVal==='1'||activaVal===true||String(activaVal).toUpperCase()==='TRUE';
+            // Buscar campaña existente por banco+nombre
+            const idx=camp.findIndex(c=>c.banco.toUpperCase()===banco&&c.nombre.toUpperCase()===nombre);
+            if(idx>=0){
+              camp[idx].tna=tna;
+              camp[idx].comision=com;
+              camp[idx].plazoMax=plazoMax;
+              camp[idx].ltv=ltv;
+              camp[idx].activa=activa;
+              actualizadas++;
+            } else {
+              camp.push({id:Date.now()+Math.random(),banco,nombre,tipo:'TRAD',tna,comision:com,plazoMax,ltv,activa,marca:null});
+              nuevas++;
+            }
+          }
+        }
+        rAdm(); rCampMini(); rCampCot();
+        alert(`✅ Campañas importadas correctamente.\n\n📝 Actualizadas: ${actualizadas}\n➕ Nuevas: ${nuevas}\n\n⚠️ No olvides hacer EXPORTAR JSON para guardar los cambios.`);
+      }catch(err){alert('❌ Error al leer el archivo: '+err.message);}
+    };
+    r.readAsBinaryString(f);
+  });
+}
+
 function impXO(e){
   const f=e.target.files[0]; if(!f)return;
   loadXLSX(()=>{
@@ -1639,55 +2081,52 @@ function impXO(e){
   r.onload=ev=>{
     try{
       const wb=XLSX.read(ev.target.result,{type:'binary'});
-      const ws=wb.Sheets[wb.SheetNames[0]];
-      const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
-      // Buscar fila de encabezado
-      let hdrIdx=-1;
-      for(let i=0;i<rows.length;i++){
-        const r0=rows[i].map(c=>String(c).toUpperCase());
-        if(r0.some(c=>c.includes('MARCA'))&&r0.some(c=>c.includes('MODELO'))){hdrIdx=i;break}
+      // Procesar TODAS las hojas (excepto INSTRUCCIONES)
+      let totalNuevos=0;
+      const marcasActualizadas=[];
+      for(const sheetName of wb.SheetNames){
+        if(sheetName.toUpperCase().includes('INSTRUC')) continue;
+        const ws=wb.Sheets[sheetName];
+        const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+        // Buscar fila encabezado
+        let hdrIdx=-1;
+        for(let i=0;i<rows.length;i++){
+          const r0=rows[i].map(c=>String(c).toUpperCase());
+          if(r0.some(c=>c==='MARCA'||c==='MODELO'||c==='PRECIO'||c==='VERSION') && r0.filter(c=>['MARCA','MODELO','PRECIO','VERSION'].includes(c)).length>=3){hdrIdx=i;break}
+        }
+        if(hdrIdx<0) continue;
+        const hdr=rows[hdrIdx].map(c=>String(c).toUpperCase().trim());
+        const ci={
+          marca:  hdr.findIndex(h=>h==='MARCA'),
+          modelo: hdr.findIndex(h=>h==='MODELO'),
+          ver:    hdr.findIndex(h=>h==='VERSION'||h.includes('VERSI')),
+          precio: hdr.findIndex(h=>h==='PRECIO'),
+        };
+        if(ci.marca<0||ci.modelo<0||ci.precio<0) continue;
+        // Leer filas
+        for(let i=hdrIdx+1;i<rows.length;i++){
+          const row=rows[i];
+          const marca=String(row[ci.marca]||'').trim().toUpperCase();
+          const modelo=String(row[ci.modelo]||'').trim().toUpperCase();
+          const version=ci.ver>=0?String(row[ci.ver]||'').trim().toUpperCase():'';
+          if(!marca||!modelo) continue;
+          const pval=row[ci.precio];
+          let precio=0;
+          if(typeof pval==='number'){precio=Math.round(pval);}
+          else{const praw=String(pval||'').replace(/[$\s]/g,'').replace(/\./g,'').replace(/,/g,'');precio=parseInt(praw)||0;}
+          if(precio<100000) continue;
+          // Actualizar MKT
+          if(!MKT[marca]) MKT[marca]={};
+          if(!MKT[marca][modelo]) MKT[marca][modelo]={};
+          const key=version||modelo;
+          MKT[marca][modelo][key]=precio;
+          if(!marcasActualizadas.includes(marca)) marcasActualizadas.push(marca);
+          totalNuevos++;
+        }
       }
-      if(hdrIdx<0){alert('❌ No se encontró encabezado MARCA/MODELO. Usá la plantilla descargable.');return}
-      const hdr=rows[hdrIdx].map(c=>String(c).toUpperCase().trim());
-      const ci={
-        marca:  hdr.findIndex(h=>h==='MARCA'),
-        modelo: hdr.findIndex(h=>h==='MODELO'),
-        ver:    hdr.findIndex(h=>h.includes('VERSI')),
-        anno:   hdr.findIndex(h=>h.includes('A'+'N'+'O')||h.includes('AÑO')),
-        precio: hdr.findIndex(h=>h.includes('PRECIO')),
-        color:  hdr.findIndex(h=>h.includes('COLOR')),
-        estado: hdr.findIndex(h=>h.includes('ESTADO')),
-        obs:    hdr.findIndex(h=>h.includes('OBS')),
-      };
-      const nuevos=[];
-      for(let i=hdrIdx+1;i<rows.length;i++){
-        const row=rows[i];
-        const marca=String(row[ci.marca]||'').trim().toUpperCase();
-        if(!marca) continue;
-        let precio=0;
-        const praw=String(row[ci.precio]||'').replace(/[^0-9.]/g,'');
-        if(praw) precio=Math.round(parseFloat(praw))||0;
-        const eraw=String(row[ci.estado]||'').toLowerCase().trim();
-        let estado='DISPONIBLE';
-        if(eraw.includes('consultar')) estado='CONSULTAR';
-        else if(eraw.includes('reserv')) estado='RESERVADO';
-        else if(eraw.includes('camino')) estado='EN CAMINO';
-        nuevos.push({
-          marca,
-          modelo: String(row[ci.modelo]||'').trim().toUpperCase(),
-          version:String(row[ci.ver]   ||'').trim().toUpperCase(),
-          anno:   parseInt(row[ci.anno])||2025,
-          precio,
-          color:  String(row[ci.color] ||'').trim().toUpperCase(),
-          estado,
-          obs:    String(row[ci.obs]   ||'').trim(),
-        });
-      }
-      if(!nuevos.length){alert('❌ No se encontraron vehículos en el archivo.');return}
-      const ok=confirm(`✅ Se encontraron ${nuevos.length} vehículos 0km.\n\n¿Reemplazar el stock 0km actual?`);
-      if(!ok)return;
-      okm=nuevos; rAdm(); rOkm();
-      alert(`✅ Stock 0km actualizado con ${nuevos.length} unidades.\nRecordá exportar el JSON.`);
+      if(!totalNuevos){alert('❌ No se encontraron versiones válidas. Verificá que el archivo tenga el formato correcto.');return}
+      alert(`✅ Listas de precios actualizadas:\n\n${marcasActualizadas.map(m=>'• '+m).join('\n')}\n\nTotal: ${totalNuevos} versiones cargadas.\n\nRecordá exportar el JSON para guardar los cambios.`);
+      rAdm();
     }catch(err){alert('❌ Error al leer el Excel: '+err.message);}
   };
   r.readAsBinaryString(f);
@@ -1824,318 +2263,113 @@ function emailPropuesta(){
   window.location.href=`mailto:${$$('p-email').value||''}?subject=${asunto}&body=${cuerpo}`;
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
-// ── SYNC USADOS DESDE GOOGLE DRIVE ───────────────────────────────────────────
-// ID del archivo en Drive (hoja "Lista 16/04/2026")
-const DRIVE_FILE_ID = '1oRvMFRY-F_YOFbr2VycLgP9v_QXEwX1q';
-const DRIVE_GID     = '1231420949'; // gid de la primera hoja
 
-// ══════════════════════════════════════════════════════════════════════════════
-// ── ACTUALIZACIÓN DE STOCK DESDE GOOGLE DRIVE ────────────────────────────────
-//
-// Requiere que el cotizador esté abierto desde localhost (via actualizar.bat)
-// El archivo Drive debe estar publicado: Archivo → Publicar en la web → CSV
-//
-// Tu archivo tiene DOS hojas publicadas. Pegá las URLs de ambas en el
-// Panel Admin → "Configurar Drive". El cotizador las combina automáticamente.
-// ══════════════════════════════════════════════════════════════════════════════
-
-// URLs por defecto (se pueden cambiar desde Panel Admin → Configurar Drive)
-let DRIVE_URL_H1 = localStorage.getItem('almar_drive_h1') || 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRZc13F55AeNqNfw0rG-9vVA5-ETS0DH3tPLTS5JA6aDK-F87p5tfrR4U3eB-Cfug/pub?gid=1231420949&single=true&output=csv';
-let DRIVE_URL_H2 = localStorage.getItem('almar_drive_h2') || '';
-
+// ── SYNC DRIVE ──────────────────────────────────────────────────────────────
+let DRIVE_URL_H1=localStorage.getItem('almar_drive_h1')||'https://docs.google.com/spreadsheets/d/e/2PACX-1vRZc13F55AeNqNfw0rG-9vVA5-ETS0DH3tPLTS5JA6aDK-F87p5tfrR4U3eB-Cfug/pub?gid=1231420949&single=true&output=csv';
 function syncDrive(){
-  const btn = $$('btn-drive-sync');
-  const bar = $$('drive-sync-bar');
-  if(!btn||!bar) return;
-
-  if(!DRIVE_URL_H1){
-    alert('Primero configurá la URL del Drive en Panel Admin → Configurar Drive.');
-    return;
-  }
-
-  // Verificar si estamos en localhost (bat) o file://
-  const esLocal = location.protocol === 'http:' || location.protocol === 'https:';
-  if(!esLocal){
-    const msg = '⚠️ Para usar la sincronización automática, abrí el cotizador con el archivo ABRIR_COTIZADOR.bat (doble clic).\nEso levanta un servidor local desde donde el botón funciona perfectamente.';
-    alert(msg);
-    return;
-  }
-
-  btn.disabled = true;
-  btn.textContent = '⏳ Leyendo Drive…';
-  bar.style.display = 'block';
-  bar.style.background = 'rgba(26,82,118,.15)';
-  bar.style.color = 'var(--b)';
-  bar.textContent = 'Conectando con Google Drive…';
-
-  // Leer hoja 1 (obligatoria)
-  const p1 = fetch(DRIVE_URL_H1 + '&t=' + Date.now(), {cache:'no-store'}).then(r=>{
-    if(!r.ok) throw new Error('Hoja 1: HTTP '+r.status);
-    return r.text();
-  });
-
-  // Leer hoja 2 (opcional)
-  const p2 = DRIVE_URL_H2
-    ? fetch(DRIVE_URL_H2 + '&t=' + Date.now(), {cache:'no-store'}).then(r=>r.ok?r.text():'').catch(()=>'')
-    : Promise.resolve('');
-
-  bar.textContent = 'Leyendo hojas del Drive…';
-
-  Promise.all([p1, p2])
-    .then(([csv1, csv2]) => {
-      const autos1 = parseDriveCSV(csv1, false);
-      const autos2 = csv2 ? parseDriveCSV(csv2, true) : [];
-      
-      // Combinar: hoja1 es el stock actual (prioridad), hoja2 son autos adicionales
-      // Evitar duplicados por dominio
-      const dominiosH1 = new Set(autos1.map(a=>a.dominio).filter(Boolean));
-      const soloH2 = autos2.filter(a=>!a.dominio || !dominiosH1.has(a.dominio));
-      const todos = [...autos1, ...soloH2];
-
-      if(!todos.length) throw new Error('No se encontraron vehículos en ninguna hoja');
-
-      stk = todos;
-      rStk();
-      if(typeof onTipo==='function') onTipo();
-
-      const ts = new Date().toLocaleDateString('es-AR')+' '+
-                 new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
-      bar.style.background='rgba(39,174,96,.12)';
-      bar.style.color='var(--g)';
-      bar.textContent = '✓ '+todos.length+' vehículos actualizados (H1:'+autos1.length+' H2:'+soloH2.length+') · '+ts;
-      btn.textContent='☁ Actualizar desde Drive'; btn.disabled=false;
-
-      // Guardar timestamp
-      localStorage.setItem('almar_stk_ts', ts);
+  const btn=$$('btn-drive-sync'),bar=$$('drive-sync-bar');
+  if(!btn||!bar)return;
+  if(location.protocol==='file:'){alert('Para la sincronizacion automatica\nabrí el cotizador con ABRIR_COTIZADOR.bat');return;}
+  btn.disabled=true;btn.textContent='Actualizando...';
+  bar.style.display='block';bar.style.background='rgba(26,82,118,.15)';bar.style.color='var(--b)';bar.textContent='Conectando con Drive...';
+  fetch(DRIVE_URL_H1+'&t='+Date.now(),{cache:'no-store'})
+    .then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.text();})
+    .then(csv=>{
+      const a=parseDrv(csv);
+      if(!a.length)throw new Error('Sin vehiculos');
+      stk=a;rStk();
+      const ts=new Date().toLocaleDateString('es-AR')+' '+new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
+      bar.style.background='rgba(39,174,96,.12)';bar.style.color='var(--g)';bar.textContent=a.length+' vehiculos actualizados '+ts;
+      btn.textContent='Actualizar Drive';btn.disabled=false;
     })
-    .catch(err=>{
-      console.error('syncDrive:', err);
-      bar.style.background='rgba(192,57,43,.12)';
-      bar.style.color='var(--r)';
-      bar.textContent='✕ '+err.message+'. Abrí el cotizador con ABRIR_COTIZADOR.bat y verificá tu conexión.';
-      btn.textContent='☁ Reintentar'; btn.disabled=false;
-    });
+    .catch(e=>{bar.style.background='rgba(192,57,43,.12)';bar.style.color='var(--r)';bar.textContent='Error: '+e.message;btn.textContent='Reintentar';btn.disabled=false;});
 }
-
-// ── PARSEO CSV FORMATO ALMAR ──────────────────────────────────────────────────
-// Columnas A-J: DOMINIO, EMPRESA, UNIDAD, COLOR, AÑO, KM, FECHA ING, DÍAS, PUBLICO, (vacío)
-// Columna K: INFO TOMA → determina el estado
-// Columnas L-O: VALOR TOMA, REACON, COSTO TOTAL, % TOMA (solo para gerencia)
-//
-// Filas de marca: solo col A tiene texto, resto vacío → actualizan marcaActual
-// Se detiene al encontrar "DIAS DE STOCK" o "0km Multimarca" (fin de usados)
-// ─────────────────────────────────────────────────────────────────────────────
-function parseDriveCSV(csv, esHoja2){
-  const lineas = csv.split(/\r?\n/);
-  const autos = [];
-  let marcaActual = '';
-  let headerIdx = -1;
-
-  // 1. Encontrar fila de encabezados (contiene "DOMINIO")
-  for(let i=0; i<Math.min(lineas.length,15); i++){
-    if(lineas[i].toUpperCase().includes('DOMINIO') &&
-       lineas[i].toUpperCase().includes('UNIDAD')){
-      headerIdx = i; break;
-    }
+function parseDrv(csv){
+  const MARCAS=new Set(['CITROEN','CHERY','CHEVROLET','DS','FIAT','FORD','NISSAN','PEUGEOT','RENAULT','TOYOTA','VOLKSWAGEN','HONDA','JEEP']);
+  const autos=[];let marca='';let hi=-1;
+  const lns=csv.split(/\r?\n/);
+  for(let i=0;i<Math.min(lns.length,15);i++){
+    const u=lns[i].toUpperCase();
+    if(u.includes('DOMINIO')&&u.includes('UNIDAD')){hi=i;break;}
   }
-  if(headerIdx < 0) return autos;
-
-  // 2. Mapear columnas desde el encabezado
-  const hdr = csvFila(lineas[headerIdx]).map(c=>c.toUpperCase().trim());
-  const ci = {
-    dom: hdr.findIndex(h=>h==='DOMINIO'||h.includes('DOMINIO')),
-    emp: hdr.findIndex(h=>h==='EMPRESA'),
-    uni: hdr.findIndex(h=>h.includes('UNIDAD')),
-    col: hdr.findIndex(h=>h.includes('COLOR')),
-    ano: hdr.findIndex(h=>h.includes('AÑO')||h==='ANO'||h.includes('AÑO')),
-    km:  hdr.findIndex(h=>h==='KM'),
-    pre: hdr.findIndex(h=>h.includes('PUBLICO')||h.includes('PRECIO')),
-    inf: hdr.findIndex(h=>h.includes('INFO TOMA')),
-    vto: hdr.findIndex(h=>h.includes('VALOR TOMA')),
-    rea: hdr.findIndex(h=>h.includes('REACON')),
-    cto: hdr.findIndex(h=>h.includes('COSTO TOTAL')),
-    pct: hdr.findIndex(h=>h.includes('% DE')||h.includes('%DE')||h.includes('% MB')),
-  };
-
-  const MARCAS = new Set(['CITROEN','CITROËN','CHERY','CHEVROLET','DS','FIAT','FORD',
-    'NISSAN','PEUGEOT','RENAULT','TOYOTA','VOLKSWAGEN','HONDA','JEEP','HYUNDAI',
-    'KIA','MITSUBISHI','SUZUKI','MERCEDES','BMW','AUDI','VOLVO']);
-
-  // 3. Procesar fila por fila
-  for(let i = headerIdx+1; i < lineas.length; i++){
-    const linea = lineas[i].trim();
-    if(!linea) continue;
-
-    const cols = csvFila(linea);
-    const get = (idx) => idx>=0 && idx<cols.length ? cols[idx].trim() : '';
-
-    const domRaw = get(ci.dom);
-    const emp    = get(ci.emp);
-    const unidad = get(ci.uni);
-
-    // Detener al llegar a la sección de días de stock u 0km
-    if(domRaw.toUpperCase().includes('DIAS DE STOCK') ||
-       domRaw.toUpperCase().includes('0KM MULTIMARCA') ||
-       domRaw.toUpperCase().includes('PARQUE')) break;
-
-    // Detectar fila de marca (dominio es nombre de marca, empresa y unidad vacíos)
-    if(domRaw && !emp && !unidad){
-      const p = domRaw.replace(/"/g,'').trim().toUpperCase();
-      if(MARCAS.has(p) || (/^[A-ZÁÉÍÓÚÜÑ\s\/\-]+$/.test(p) && p.length<20)){
-        marcaActual = p; continue;
-      }
-    }
-    // También detectar marcas que están en col A aunque haya algo en otras cols
-    // (ej: "CITROEN,,,,,,,,,,,,,,,,,,,")
-    {
-      const p = domRaw.replace(/"/g,'').trim().toUpperCase();
-      if(MARCAS.has(p) && cols.slice(1).every(c=>!c.trim())){
-        marcaActual = p; continue;
-      }
-    }
-
-    if(domRaw==='DOMINIO'||!domRaw) continue;
-
-    const anio = parseInt(get(ci.ano).replace(/[^0-9]/g,''))||0;
-    if(anio<1990||anio>2030) continue;
-
-    const kmNum = parseInt(get(ci.km).replace(/[^0-9]/g,''))||0;
-    const precio = pNum(get(ci.pre));
-    const infoToma = get(ci.inf);
-
-    let estado = 'DISPONIBLE';
-    if(/señado|seniado/i.test(infoToma))        estado='SENIADO';
-    else if(/recibir/i.test(infoToma))           estado='A RECIBIR';
-    else if(/preparac|taller/i.test(infoToma))   estado='EN PREPARACION';
-
-    const partes = unidad.split(' ');
-    const modelo  = partes[0]||unidad;
-    const version = partes.slice(1).join(' ')||'';
-
+  if(hi<0)return autos;
+  const hdr=cF(lns[hi]);
+  // Buscar indices por nombre (tolerante a tildes y espacios)
+  const norm=s=>s.toUpperCase().trim()
+    .replace(/[\u00C0-\u00C6]/g,'A').replace(/[\u00C8-\u00CB]/g,'E')
+    .replace(/[\u00CC-\u00CF]/g,'I').replace(/[\u00D2-\u00D6]/g,'O')
+    .replace(/[\u00D9-\u00DC]/g,'U').replace(/\u00D1/g,'N')
+    .replace(/[\u00E0-\u00E6]/g,'A').replace(/[\u00E8-\u00EB]/g,'E')
+    .replace(/[\u00EC-\u00EF]/g,'I').replace(/[\u00F2-\u00F6]/g,'O')
+    .replace(/[\u00F9-\u00FC]/g,'U').replace(/\u00F1/g,'N')
+    .replace(/[^A-Z0-9 ]/g,'').trim();
+  const nh=hdr.map(norm);
+  const fi=t=>nh.findIndex(h=>h===t||h.startsWith(t));
+  const iDom=fi('DOMINIO');
+  const iEmp=fi('EMPRESA');
+  const iUni=fi('UNIDAD');
+  const iCol=fi('COLOR');
+  const iAno=fi('ANO');
+  const iKm=fi('KM');
+  const iPre=fi('PUBLICO');
+  const iInf=nh.findIndex(h=>h.includes('INFO')&&h.includes('TOMA')&&!h.includes('MARZO')&&!h.includes('ABRIL'));
+  const iVToma=nh.findIndex(h=>h.includes('VALOR')&&h.includes('TOMA'));
+  const iCosto=nh.findIndex(h=>h.includes('COSTO')&&h.includes('TOTAL'));
+  const gc=(c,i)=>i>=0&&i<c.length?c[i].trim():'';
+  for(let i=hi+1;i<lns.length;i++){
+    const l=lns[i].trim();if(!l)continue;
+    const c=cF(l);
+    const dom=gc(c,iDom),emp=gc(c,iEmp),uni=gc(c,iUni);
+    const ndom=norm(dom);
+    if(ndom.includes('DIAS DE STOCK'))break;
+    if(dom&&!emp&&!uni){if(MARCAS.has(ndom)){marca=ndom;continue;}}
+    if(!dom||ndom==='DOMINIO')continue;
+    const anio=parseInt(gc(c,iAno).replace(/[^0-9]/g,''))||0;
+    if(anio<1990||anio>2030)continue;
+    const inf=gc(c,iInf);
+    let est='DISPONIBLE';
+    if(/se[nñ]ado|seniado/i.test(inf))est='SENIADO';
+    else if(/recibir/i.test(inf))est='A RECIBIR';
+    else if(/preparac|taller/i.test(inf))est='EN PREPARACION';
+    const pts=(uni||'').split(' ');
     autos.push({
-      dominio: (domRaw==='-'||domRaw==='–')?'':domRaw,
-      empresa: emp,
-      marca:   marcaActual,
-      modelo,
-      version,
-      anno:    anio,
-      km:      kmNum,
-      precio,
-      color:   get(ci.col),
-      estado,
-      _infoToma:   infoToma,
-      _valorToma:  pNum(get(ci.vto)),
-      _reacon:     pNum(get(ci.rea)),
-      _costoTotal: pNum(get(ci.cto)),
-      _pctToma:    get(ci.pct),
+      dominio:(dom==='-')?'':dom,empresa:emp,marca,
+      modelo:pts[0]||uni,version:pts.slice(1).join(' ')||'',
+      anno:anio,km:parseInt(gc(c,iKm).replace(/[^0-9]/g,''))||0,
+      precio:pNv(gc(c,iPre)),color:gc(c,iCol),estado:est,
+      _infoToma:inf,_valorToma:pNv(gc(c,iVToma)),_costoTotal:pNv(gc(c,iCosto))
     });
   }
   return autos;
 }
+function cF(l){const r=[];let a='';let q=false;for(let i=0;i<l.length;i++){const c=l[i];if(c==='"'){q=!q;}else if(c===','&&!q){r.push(a);a='';}else{a+=c;}}r.push(a);return r;}
+function pNv(s){if(!s)return 0;const n=parseInt(String(s).replace(/[$\.]/g,'').replace(/,/g,'').replace(/[^0-9]/g,''));return isNaN(n)?0:n;}
+// ── FIN SYNC DRIVE ───────────────────────────────────────────────────────────
 
-function csvFila(linea){
-  const r=[]; let a=''; let q=false;
-  for(let i=0;i<linea.length;i++){
-    const c=linea[i];
-    if(c==='"'){q=!q;}
-    else if(c===','&&!q){r.push(a);a='';}
-    else{a+=c;}
-  }
-  r.push(a);
-  return r;
-}
-function pNum(s){
-  if(!s)return 0;
-  const n=parseInt(String(s).replace(/\$/g,'').replace(/\./g,'').replace(/,/g,'').replace(/[^0-9]/g,''));
-  return isNaN(n)?0:n;
-}
-// ══════════════════════════════════════════════════════════════════════════════/ ══════════════════════════════════════════════════════════════════════════════
-
-
-// ── CONFIGURAR DRIVE (Panel Admin) ───────────────────────────────────────────
-function rDriveCfg(){
-  // Renderizar sección de config Drive en Admin si existe
-  const sec = $$('drive-cfg-sec');
-  if(!sec) return;
-  const h1 = localStorage.getItem('almar_drive_h1')||DRIVE_URL_H1||'';
-  const h2 = localStorage.getItem('almar_drive_h2')||DRIVE_URL_H2||'';
-  sec.innerHTML = `
-    <div style="font-size:10px;color:var(--m);margin-bottom:10px;line-height:1.6">
-      Pegá las URLs de publicación del Drive (<strong>Archivo → Publicar en la web → CSV</strong>).<br>
-      Hoja 1 es la lista actual. Hoja 2 es opcional (historial anterior).
-    </div>
-    <div style="display:flex;flex-direction:column;gap:8px">
-      <div class="fld"><label>URL Hoja 1 (lista actual) <span class="req">*</span></label>
-        <input type="text" id="drv-h1" value="${h1}" placeholder="https://docs.google.com/spreadsheets/d/e/.../pub?gid=...&output=csv">
-      </div>
-      <div class="fld"><label>URL Hoja 2 (opcional)</label>
-        <input type="text" id="drv-h2" value="${h2}" placeholder="https://docs.google.com/spreadsheets/d/e/.../pub?gid=...&output=csv">
-      </div>
-    </div>
-    <div class="brow" style="margin-top:8px">
-      <button class="btn btn-r btn-sm" onclick="guardarDriveCfg()">💾 Guardar URLs</button>
-      <button class="btn btn-ghost btn-sm" onclick="syncDrive()">☁ Probar ahora</button>
-    </div>
-    <div id="drive-cfg-bar" style="display:none;margin-top:8px;padding:8px 12px;border-radius:6px;font-size:11px;font-weight:600"></div>
-  `;
-}
-function guardarDriveCfg(){
-  const h1 = ($$('drv-h1')?.value||'').trim();
-  const h2 = ($$('drv-h2')?.value||'').trim();
-  if(!h1){ alert('La URL de Hoja 1 es obligatoria.'); return; }
-  if(!h1.includes('docs.google.com')){ alert('La URL no parece válida. Debe ser de Google Drive.'); return; }
-  DRIVE_URL_H1 = h1;
-  DRIVE_URL_H2 = h2;
-  localStorage.setItem('almar_drive_h1', h1);
-  localStorage.setItem('almar_drive_h2', h2);
-  const bar = $$('drive-cfg-bar');
-  if(bar){ bar.style.display='block'; bar.style.background='rgba(39,174,96,.12)'; bar.style.color='var(--g)'; bar.textContent='✓ URLs guardadas. Ahora podés usar el botón "Actualizar desde Drive".'; }
-}
-// ── FIN CONFIGURAR DRIVE ──────────────────────────────────────────────────────
-
-/ ── INIT ─────────────────────────────────────────────────────────────────────
+// ── INIT ─────────────────────────────────────────────────────────────────────
 bLogin();
+
+// ── AUTO-SYNC DRIVE AL INICIAR ───────────────────────────────────────────────
+(function autoSync(){
+  // Solo si estamos online (no file://)
+  if(location.protocol==='file:') return;
+  const URL_CSV='https://docs.google.com/spreadsheets/d/e/2PACX-1vRZc13F55AeNqNfw0rG-9vVA5-ETS0DH3tPLTS5JA6aDK-F87p5tfrR4U3eB-Cfug/pub?gid=1231420949&single=true&output=csv';
+  fetch(URL_CSV+'&t='+Date.now(),{cache:'no-store'})
+    .then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.text();})
+    .then(csv=>{
+      const autos=parseDrv(csv);
+      if(!autos.length) return;
+      stk=autos;
+      // Mostrar barra de sync discreta
+      const bar=document.createElement('div');
+      const ts=new Date().toLocaleDateString('es-AR')+' '+new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
+      bar.style.cssText='position:fixed;bottom:48px;left:0;right:0;background:rgba(39,174,96,.92);color:#fff;font-size:11px;font-weight:600;text-align:center;padding:5px;z-index:999;';
+      bar.textContent='✓ Stock actualizado desde Drive · '+autos.length+' vehículos · '+ts;
+      document.body.appendChild(bar);
+      setTimeout(()=>bar.remove(),4000);
+    })
+    .catch(()=>{}); // Silencioso si falla
+})();
 </script>
-
-<!-- MODAL DRIVE -->
-<div id="drive-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:400;align-items:center;justify-content:center">
-  <div style="background:var(--s1);border:1px solid var(--bdr);border-radius:10px;width:92%;max-width:520px;padding:22px;position:relative">
-    <button onclick="cerrarModalDrive()" style="position:absolute;top:14px;right:14px;background:none;border:none;color:var(--m);font-size:18px;cursor:pointer">✕</button>
-    <div style="font-family:var(--hf);font-weight:800;font-size:15px;color:var(--w);margin-bottom:4px">☁ Actualizar Stock desde Drive</div>
-    <div style="font-size:11px;color:var(--m);margin-bottom:16px">Seguí estos pasos — funciona siempre, sin importar el navegador</div>
-
-    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px">
-      <div style="background:var(--s2);border:1px solid var(--bdr);border-radius:6px;padding:12px;display:flex;gap:10px;align-items:flex-start">
-        <div style="background:var(--r);color:#fff;font-family:var(--hf);font-weight:900;font-size:13px;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0">1</div>
-        <div>
-          <div style="font-size:13px;color:var(--w);font-weight:600;margin-bottom:4px">Abrí el archivo CSV en una nueva pestaña</div>
-          <button onclick="abrirCSV()" style="background:var(--r);color:#fff;border:none;border-radius:5px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--hf)">Abrir lista en Drive →</button>
-          <div style="font-size:10px;color:var(--m);margin-top:4px">Se abre una página con texto. Si ves datos de precios de 0km, cerrá y avisá — hay que cambiar la hoja.</div>
-        </div>
-      </div>
-
-      <div style="background:var(--s2);border:1px solid var(--bdr);border-radius:6px;padding:12px;display:flex;gap:10px;align-items:flex-start">
-        <div style="background:var(--r);color:#fff;font-family:var(--hf);font-weight:900;font-size:13px;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0">2</div>
-        <div style="font-size:13px;color:var(--w);font-weight:600">Seleccioná todo el texto (<strong>Ctrl+A</strong>) y copialo (<strong>Ctrl+C</strong>)</div>
-      </div>
-
-      <div style="background:var(--s2);border:1px solid var(--bdr);border-radius:6px;padding:12px;display:flex;gap:10px;align-items:flex-start">
-        <div style="background:var(--r);color:#fff;font-family:var(--hf);font-weight:900;font-size:13px;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0">3</div>
-        <div style="width:100%">
-          <div style="font-size:13px;color:var(--w);font-weight:600;margin-bottom:6px">Pegalo acá (<strong>Ctrl+V</strong>) y presioná Importar</div>
-          <textarea id="csv-paste" rows="4" placeholder="Pegá el contenido del CSV acá..." style="width:100%;background:var(--inp);border:1.5px solid var(--bdr);border-radius:6px;color:var(--t);font-family:monospace;font-size:10px;padding:8px;resize:vertical"></textarea>
-        </div>
-      </div>
-    </div>
-
-    <div id="drive-modal-bar" style="display:none;padding:8px 12px;border-radius:6px;font-size:11px;font-weight:600;margin-bottom:10px"></div>
-
-    <div style="display:flex;gap:8px;justify-content:flex-end">
-      <button onclick="cerrarModalDrive()" style="background:none;border:1.5px solid var(--bdr);color:var(--m);border-radius:6px;padding:8px 16px;font-size:12px;cursor:pointer;font-family:var(--hf)">Cancelar</button>
-      <button onclick="importarCSVPegado()" style="background:var(--r);color:#fff;border:none;border-radius:6px;padding:8px 20px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--hf)">✓ Importar</button>
-    </div>
-  </div>
-</div>
 </body>
 </html>
