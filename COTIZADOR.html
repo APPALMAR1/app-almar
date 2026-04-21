@@ -906,11 +906,11 @@ const CAMP_D=[
   {id:3, banco:"ICBC",      nombre:"TASA MAX 36M",            tipo:"TRAD",tna:63,   comision:10, plazoMax:36,ltv:80,activa:true,  marca:null},
   {id:4, banco:"ICBC",      nombre:"TASA MAX 60M",            tipo:"TRAD",tna:63,   comision:11, plazoMax:60,ltv:80,activa:true,  marca:null},
   {id:5, banco:"ICBC",      nombre:"SEGURO LIBERADO",         tipo:"TRAD",tna:59,   comision:0,  plazoMax:60,ltv:80,activa:true,  marca:null},
-  {id:6, banco:"BBVA",      nombre:"TRADICIONAL AUTOS",       tipo:"TRAD",tna:47.9, comision:0,  plazoMax:60,ltv:80,activa:true,  marca:null},
-  {id:7, banco:"BBVA",      nombre:"UTILITARIOS",             tipo:"TRAD",tna:47.9, comision:0,  plazoMax:60,ltv:80,activa:true,  marca:null},
-  {id:8, banco:"BBVA",      nombre:"ELÉCT/HÍBRIDO",           tipo:"TRAD",tna:44.9, comision:0,  plazoMax:60,ltv:80,activa:true,  marca:null},
-  {id:9, banco:"BBVA",      nombre:"UVA AUTOS",               tipo:"UVA", tna:22.9, comision:0,  plazoMax:48,ltv:80,activa:true,  marca:null},
-  {id:10,banco:"BBVA",      nombre:"SIN COMISIÓN",            tipo:"TRAD",tna:42.9, comision:0,  plazoMax:60,ltv:80,activa:true,  marca:null},
+  {id:6, banco:"BBVA",      nombre:"TRADICIONAL AUTOS",       tipo:"TRAD",tna:47.9, comision:0,  plazoMax:60,ltv:80,activa:true,  marca:null, coefs:{12:[11.48832,11.13658],18:[8.73223,8.38505],24:[7.39134,7.05424],36:[6.12084,5.80860],48:[5.54974,5.26341],60:[5.25146,4.98998]}},
+  {id:7, banco:"BBVA",      nombre:"UTILITARIOS",             tipo:"TRAD",tna:47.9, comision:0,  plazoMax:60,ltv:80,activa:true,  marca:null, coefs:{12:[11.48832,11.13658],18:[8.73223,8.38505],24:[7.39134,7.05424],36:[6.12084,5.80860],48:[5.54974,5.26341],60:[5.25146,4.98998]}},
+  {id:8, banco:"BBVA",      nombre:"ELÉCT/HÍBRIDO",           tipo:"TRAD",tna:44.9, comision:0,  plazoMax:60,ltv:80,activa:true,  marca:null, coefs:{12:[11.28187,10.95030],18:[8.52012,8.19192],24:[7.17212,6.85251],36:[5.88681,5.58895],48:[5.30190,5.02705],60:[4.99157,4.73904]}},
+  {id:9, banco:"BBVA",      nombre:"UVA AUTOS",               tipo:"UVA", tna:22.9, comision:0,  plazoMax:48,ltv:80,activa:true,  marca:null, coefs:{12:[9.80356,9.62740],18:[7.01732,6.83939],24:[5.63312,5.45616],36:[4.26651,4.09424],48:[3.60042,3.43410]}},
+  {id:10,banco:"BBVA",      nombre:"SIN COMISIÓN",            tipo:"TRAD",tna:42.9, comision:0,  plazoMax:60,ltv:80,activa:true,  marca:null, coefs:{12:[11.14487,10.82689],18:[8.37965,8.06430],24:[7.02718,6.71949],36:[5.73244,5.44451],48:[5.13861,4.87181],60:[4.82035,4.57422]}},
   {id:11,banco:"SANTANDER", nombre:"AUTOS 0KM TRADICIONAL",   tipo:"TRAD",tna:47.9, comision:4,  plazoMax:60,ltv:80,activa:true,  marca:null},
   {id:12,banco:"SANTANDER", nombre:"AUTOS USADOS TRADICIONAL",tipo:"TRAD",tna:49.9, comision:4,  plazoMax:60,ltv:80,activa:true,  marca:null},
   {id:13,banco:"SANTANDER", nombre:"AUTOS SELECT/PAS",        tipo:"TRAD",tna:45.9, comision:4,  plazoMax:60,ltv:80,activa:true,  marca:null},
@@ -928,15 +928,15 @@ const CAMP_D=[
   {id:26,banco:"GPAT",      nombre:"CAPTIVA PHEV",            tipo:"TRAD",tna:0,    comision:17,  plazoMax:30,ltv:70,activa:true,  marca:"CHEVROLET",modelos:["CAPTIVA"]},
   {id:27,banco:"GPAT",      nombre:"SPARK EUV",               tipo:"TRAD",tna:0,    comision:15.8,plazoMax:30,ltv:70,activa:true,  marca:"CHEVROLET",modelos:["SPARK EUV"]},
   // FCA — Fiat y Jeep
-  {id:30,banco:"FCA",       nombre:"FIAT — TODOS LOS MODELOS",tipo:"TRAD",tna:0,    comision:11,  plazoMax:36,ltv:80,activa:true,  marca:"FIAT",     modelos:null},
+  {id:30,banco:"FCA",       nombre:"FIAT — TODOS LOS MODELOS",tipo:"TRAD",tna:0,    comision:11,  plazoMax:36,ltv:80,activa:true,  marca:"FIAT",     modelos:null, coefs:{12:[84.33,84.33],18:[56.22,56.22],24:[45.80,45.32],36:[38.87,37.55]}},
   {id:31,banco:"FCA",       nombre:"FIAT TITANO — 30 MESES",  tipo:"TRAD",tna:34.9, comision:10,  plazoMax:30,ltv:80,activa:true,  marca:"FIAT",     modelos:["TITANO"]},
   {id:32,banco:"FCA",       nombre:"JEEP/RAM — TODOS",        tipo:"TRAD",tna:0,    comision:11,  plazoMax:36,ltv:80,activa:true,  marca:"JEEP",     modelos:null},
   {id:33,banco:"FCA",       nombre:"JEEP DAKOTA — 30 MESES",  tipo:"TRAD",tna:27.9, comision:10,  plazoMax:30,ltv:80,activa:true,  marca:"JEEP",     modelos:["DAKOTA"]},
   // PSA Finance — Peugeot y Citroën (Circular 434-2026 Abril 2026)
-  {id:40,banco:"PSA Finance",nombre:"PEUGEOT — TASA EXPRESS",   tipo:"TRAD",tna:0,    comision:12,  plazoMax:36,ltv:80,activa:true,  marca:"PEUGEOT",  modelos:null},
-  {id:41,banco:"PSA Finance",nombre:"PEUGEOT — EXCLUSIVA 208/2008",tipo:"TRAD",tna:0, comision:12,  plazoMax:36,ltv:80,activa:true,  marca:"PEUGEOT",  modelos:["208","2008"]},
+  {id:40,banco:"PSA Finance",nombre:"PEUGEOT — TASA EXPRESS",   tipo:"TRAD",tna:0,    comision:12,  plazoMax:36,ltv:80,activa:true,  marca:"PEUGEOT",  modelos:null, coefs:{12:[83.33,83.33],18:[55.56,55.56],24:[46.56,46.56],36:[40.60,40.60]}},
+  {id:41,banco:"PSA Finance",nombre:"PEUGEOT — EXCLUSIVA 208/2008",tipo:"TRAD",tna:0, comision:12,  plazoMax:36,ltv:80,activa:true,  marca:"PEUGEOT",  modelos:["208","2008"], coefs:{12:[83.33,83.33],18:[55.56,55.56],24:[41.67,41.67],36:[37.22,37.22]}},
   {id:42,banco:"PSA Finance",nombre:"PEUGEOT — TASA SIMPLE",    tipo:"TRAD",tna:11.9, comision:10,  plazoMax:36,ltv:80,activa:true,  marca:"PEUGEOT",  modelos:null},
-  {id:43,banco:"PSA Finance",nombre:"PEUGEOT — TODA LA GAMA",   tipo:"TRAD",tna:16,   comision:8,   plazoMax:48,ltv:80,activa:true,  marca:"PEUGEOT",  modelos:null},
+  {id:43,banco:"PSA Finance",nombre:"PEUGEOT — TODA LA GAMA",   tipo:"TRAD",tna:16,   comision:8,   plazoMax:48,ltv:80,activa:true,  marca:"PEUGEOT",  modelos:null, coefs:{12:[93.53,93.53],18:[73.57,73.57],24:[63.24,63.24],36:[53.60,53.60],48:[49.85,49.85]}},
   {id:44,banco:"PSA Finance",nombre:"CITROËN — TASA EXPRESS",   tipo:"TRAD",tna:0,    comision:12,  plazoMax:36,ltv:80,activa:true,  marca:"CITROEN",  modelos:null},
   {id:45,banco:"PSA Finance",nombre:"CITROËN — TASA SIMPLE",    tipo:"TRAD",tna:11.9, comision:10,  plazoMax:36,ltv:80,activa:true,  marca:"CITROEN",  modelos:null},
   // MOBILIZE — Renault (Política Comercial MFS 01/04/2026)
@@ -1139,6 +1139,9 @@ const tod=()=>new Date().toLocaleDateString('es-AR');
 const nw=()=>new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
 const gH=id=>(HG[id]||(HG[id]=[]));
 const cuota=(mt,tna,n)=>{const tem=Math.pow(1+tna/100,1/12)-1;return tem>0?mt*tem/(1-Math.pow(1+tem,-n)):mt/n};
+
+// Calcular cuota usando coeficiente del banco (cuota x $1.000)
+const cuotaPorCoef=(mt,coef)=>Math.round(mt/1000*coef);
 
 // ── ESTADO PIN ────────────────────────────────────────────────────────────────
 let pinUser=null, pinInput='', pinAttempts={};
@@ -1629,6 +1632,7 @@ function calcCred(){
     if(cv&&cv.comision>0){
       const quebranto=Math.round(mt*(cv.comision/100)*1.21);
       $$('pa3').value=quebranto;
+      cP();
     }
   }
   box.style.display='block';
@@ -1658,7 +1662,16 @@ function calcCred(){
   // Cuotas
   $$('qg-mini-wrap').style.display='block';
   const g=$$('qg-mini'); g.innerHTML='';
-  const data=PL.map(n=>({n,c:cuota(mt,cv.tna,n)}));
+  // Usar coeficiente oficial del banco si disponible
+  const data=PL.map(n=>{
+    let c;
+    if(cv.coefs&&cv.coefs[n]){
+      c=mt/1000*cv.coefs[n][1]; // cuota promedio
+    } else {
+      c=cuota(mt,cv.tna,n);
+    }
+    return {n,c};
+  });
   const valid=data.filter(d=>d.n<=cv.plazoMax);
   const minC=valid.length?Math.min(...valid.map(d=>d.c)):Infinity;
 
@@ -1667,7 +1680,7 @@ function calcCred(){
     const d=document.createElement('div');
     d.className='qm'+(best?' best':'')+(dis?' dis':'')+(picked&&!best?' picked':'');
     d.onclick=()=>{if(!dis){credPlazo=n;calcCred()}};
-    d.innerHTML=`<div class="mpl">${n}M${dis?' ✗':''}</div><div class="mcv">${fmt(c)}</div><div class="mtt">${fmt(c*n)}</div>${best?'<div class="mst">⭐</div>':''}`;
+    d.innerHTML=`<div class="mpl">${n}M${dis?' ✗':''}</div><div class="mcv">${fmt(c)}</div>${cv.coefs&&cv.coefs[n]?`<div class="mtt" style="font-size:9px;color:#aaa">1era: ${fmt(mt/1000*cv.coefs[n][0])}</div>`:''}${best?'<div class="mst">⭐</div>':''}`;
     g.appendChild(d);
   });
   $$('clbl2').textContent=`${cv.banco} — ${cv.nombre} · TNA ${cv.tna.toFixed(2).replace('.',',')}%`;
