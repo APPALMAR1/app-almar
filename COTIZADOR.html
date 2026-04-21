@@ -901,11 +901,11 @@ const PL=[12,18,24,36,48,60];
 
 const CAMP_D=[
   // ── BANCOS ──────────────────────────────────────────────────────────────
-  {id:1, banco:"ICBC",      nombre:"TASA OPORTUNIDAD",        tipo:"TRAD",tna:53,   comision:0,  plazoMax:60,ltv:80,activa:true,  marca:null},
-  {id:2, banco:"ICBC",      nombre:"TASA PROMOCIONAL",        tipo:"TRAD",tna:61,   comision:5,  plazoMax:60,ltv:80,activa:true,  marca:null},
-  {id:3, banco:"ICBC",      nombre:"TASA MAX 36M",            tipo:"TRAD",tna:63,   comision:10, plazoMax:36,ltv:80,activa:true,  marca:null},
-  {id:4, banco:"ICBC",      nombre:"TASA MAX 60M",            tipo:"TRAD",tna:63,   comision:11, plazoMax:60,ltv:80,activa:true,  marca:null},
-  {id:5, banco:"ICBC",      nombre:"SEGURO LIBERADO",         tipo:"TRAD",tna:59,   comision:0,  plazoMax:60,ltv:80,activa:true,  marca:null},
+  {id:1, banco:"ICBC",      nombre:"TASA OPORTUNIDAD",        tipo:"TRAD",tna:53,   comision:0,  plazoMax:60,ltv:80,activa:true,  marca:null, coefBase:1000,coefs:{12:[118.42,114.56],24:[77.69,74.03],36:[65.25,61.90],48:[59.79,56.74],60:[57.01,54.26]}},
+  {id:2, banco:"ICBC",      nombre:"TASA PROMOCIONAL",        tipo:"TRAD",tna:61,   comision:5,  plazoMax:60,ltv:80,activa:true,  marca:null, coefBase:1000,coefs:{12:[124.03,119.66],24:[83.73,79.65],36:[71.76,68.08],48:[66.69,63.41],60:[64.24,61.32]}},
+  {id:3, banco:"ICBC",      nombre:"TASA MAX 36M",            tipo:"TRAD",tna:63,   comision:10, plazoMax:36,ltv:80,activa:true,  marca:null, coefBase:1000,coefs:{12:[123.33,119.02],24:[84.50,80.37],36:[73.41,69.66]}},
+  {id:4, banco:"ICBC",      nombre:"TASA MAX 60M",            tipo:"TRAD",tna:63,   comision:11, plazoMax:60,ltv:80,activa:true,  marca:null, coefBase:1000,coefs:{12:[123.33,119.02],24:[84.50,80.37],36:[73.41,69.66],48:[68.45,65.11],60:[66.08,63.12]}},
+  {id:5, banco:"ICBC",      nombre:"SEGURO LIBERADO",         tipo:"TRAD",tna:59,   comision:0,  plazoMax:60,ltv:80,activa:true,  marca:null, coefBase:1000,coefs:{12:[122.62,118.38],24:[82.21,78.23],36:[70.11,66.51],48:[64.95,61.72],60:[62.42,59.53]}},
   {id:6, banco:"BBVA",      nombre:"TRADICIONAL AUTOS",       tipo:"TRAD",tna:47.9, comision:0,  plazoMax:60,ltv:80,activa:true,  marca:null, coefBase:100,coefs:{12:[11.48832,11.13658],18:[8.73223,8.38505],24:[7.39134,7.05424],36:[6.12084,5.80860],48:[5.54974,5.26341],60:[5.25146,4.98998]}},
   {id:7, banco:"BBVA",      nombre:"UTILITARIOS",             tipo:"TRAD",tna:47.9, comision:0,  plazoMax:60,ltv:80,activa:true,  marca:null, coefBase:100,coefs:{12:[11.48832,11.13658],18:[8.73223,8.38505],24:[7.39134,7.05424],36:[6.12084,5.80860],48:[5.54974,5.26341],60:[5.25146,4.98998]}},
   {id:8, banco:"BBVA",      nombre:"ELÉCT/HÍBRIDO",           tipo:"TRAD",tna:44.9, comision:0,  plazoMax:60,ltv:80,activa:true,  marca:null, coefBase:100,coefs:{12:[11.28187,10.95030],18:[8.52012,8.19192],24:[7.17212,6.85251],36:[5.88681,5.58895],48:[5.30190,5.02705],60:[4.99157,4.73904]}},
