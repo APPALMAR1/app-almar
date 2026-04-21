@@ -1569,8 +1569,8 @@ function rCampMini(){
 }
 
 function mostrarSubCampanas(banco, camps){
-  // Mostrar las campañas del banco elegido en un selector secundario
   const g=$$('cg-mini');
+  g.innerHTML='';
   // Agregar botón volver + opciones
   const volver=document.createElement('div');
   volver.style.cssText='display:flex;align-items:center;gap:6px;padding:6px 10px;cursor:pointer;color:var(--b);font-size:11px;font-weight:700';
