@@ -678,7 +678,8 @@ input[type=text]#p-obs{background:#F5F7FA!important;border:1px solid #D5DCE6!imp
       <div class="cb">
         <div class="pr"><label class="m">Precio del vehículo</label><input type="number" id="pa1" placeholder="0" oninput="cP()"></div>
         <div class="pr"><label>Gestoría / Patentamiento</label><input type="number" id="pa2" placeholder="0" oninput="cP()"></div>
-        <div class="pr"><label>Gastos bancarios</label><input type="number" id="pa3" placeholder="0" oninput="cP()"></div>
+        <div class="pr"><label>Gastos bancarios campaña</label><input type="number" id="pa3" placeholder="0" oninput="cP()"></div>
+        <div class="pr"><label>Gastos bancarios adicionales</label><input type="number" id="pa3b" placeholder="0" oninput="cP()"></div>
         <div class="pr"><label>Intereses crédito (total)</label><input type="number" id="pa4" placeholder="0" oninput="cP()"></div>
         <div class="pr"><label>Comisión / Premio banco</label><input type="number" id="pa5" placeholder="0" oninput="cP()"></div>
         <div class="pr"><label>Seguro automotor</label><input type="number" id="pa6" placeholder="0" oninput="cP()"></div>
@@ -911,12 +912,12 @@ const CAMP_D=[
   {id:8, banco:"BBVA",      nombre:"ELÉCT/HÍBRIDO",           tipo:"TRAD",tna:44.9, comision:0,  plazoMax:60,ltv:80,activa:true,  marca:null, coefBase:100,coefs:{12:[11.28187,10.95030],18:[8.52012,8.19192],24:[7.17212,6.85251],36:[5.88681,5.58895],48:[5.30190,5.02705],60:[4.99157,4.73904]}},
   {id:9, banco:"BBVA",      nombre:"UVA AUTOS",               tipo:"UVA", tna:22.9, comision:0,  plazoMax:48,ltv:80,activa:true,  marca:null, coefBase:100,coefs:{12:[9.80356,9.62740],18:[7.01732,6.83939],24:[5.63312,5.45616],36:[4.26651,4.09424],48:[3.60042,3.43410]}},
   {id:10,banco:"BBVA",      nombre:"SIN COMISIÓN",            tipo:"TRAD",tna:42.9, comision:0,  plazoMax:60,ltv:80,activa:true,  marca:null, coefBase:100,coefs:{12:[11.14487,10.82689],18:[8.37965,8.06430],24:[7.02718,6.71949],36:[5.73244,5.44451],48:[5.13861,4.87181],60:[4.82035,4.57422]}},
-  {id:11,banco:"SANTANDER", nombre:"AUTOS 0KM TRADICIONAL",   tipo:"TRAD",tna:47.9, comision:4,  plazoMax:60,ltv:80,activa:true,  marca:null, coefBase:100,coefs:{12:[10650.07,10650.07],18:[7893.98,7893.98],24:[6553.09,6553.09],36:[5282.59,5282.59],48:[4711.49,4711.49],60:[4413.21,4413.21]}},
-  {id:12,banco:"SANTANDER", nombre:"AUTOS USADOS TRADICIONAL",tipo:"TRAD",tna:49.9, comision:4,  plazoMax:60,ltv:80,activa:true,  marca:null, coefBase:100,coefs:{12:[10753.34,10753.34],18:[8001.33,8001.33],24:[6665.44,6665.44],36:[5405.23,5405.23],48:[4843.59,4843.59],60:[4553.42,4553.42]}},
-  {id:13,banco:"SANTANDER", nombre:"AUTOS SELECT/PAS",        tipo:"TRAD",tna:45.9, comision:4,  plazoMax:60,ltv:80,activa:true,  marca:null, coefBase:100,coefs:{12:[10547.31,10547.31],18:[7787.39,7787.39],24:[6441.7,6441.7],36:[5161.24,5161.24],48:[4580.89,4580.89],60:[4274.55,4274.55]}},
-  {id:14,banco:"SANTANDER", nombre:"ESPECIAL",                tipo:"TRAD",tna:53.9, comision:4,  plazoMax:60,ltv:80,activa:true,  marca:null, coefBase:100,coefs:{12:[10961.39,10961.39],18:[8218.23,8218.23],24:[6892.97,6892.97],36:[5654.29,5654.29],48:[5112.08,5112.08],60:[4838.23,4838.23]}},
-  {id:15,banco:"SANTANDER", nombre:"LINEA GREEN",             tipo:"TRAD",tna:39.9, comision:4,  plazoMax:60,ltv:80,activa:true,  marca:null, coefBase:100,coefs:{12:[10242.1,10242.1],18:[7472.12,7472.12],24:[6113.37,6113.37],36:[4805.18,4805.18],48:[4198.43,4198.43],60:[3868.53,3868.53]}},
-  {id:16,banco:"SANTANDER", nombre:"CAMIONES/UTILITARIOS",    tipo:"TRAD",tna:47.9, comision:4,  plazoMax:60,ltv:80,activa:true,  marca:null, coefBase:100,coefs:{12:[10650.07,10650.07],18:[7893.98,7893.98],24:[6553.09,6553.09],36:[5282.59,5282.59],48:[4711.49,4711.49],60:[4413.21,4413.21]}},
+  {id:11,banco:"SANTANDER", nombre:"AUTOS 0KM TRADICIONAL",   tipo:"TRAD",tna:47.9, comision:4,  plazoMax:60,ltv:80,activa:true,  marca:null, coefBase:100000,coefs:{12:[10650.07,10650.07],18:[7893.98,7893.98],24:[6553.09,6553.09],36:[5282.59,5282.59],48:[4711.49,4711.49],60:[4413.21,4413.21]}},
+  {id:12,banco:"SANTANDER", nombre:"AUTOS USADOS TRADICIONAL",tipo:"TRAD",tna:49.9, comision:4,  plazoMax:60,ltv:80,activa:true,  marca:null, coefBase:100000,coefs:{12:[10753.34,10753.34],18:[8001.33,8001.33],24:[6665.44,6665.44],36:[5405.23,5405.23],48:[4843.59,4843.59],60:[4553.42,4553.42]}},
+  {id:13,banco:"SANTANDER", nombre:"AUTOS SELECT/PAS",        tipo:"TRAD",tna:45.9, comision:4,  plazoMax:60,ltv:80,activa:true,  marca:null, coefBase:100000,coefs:{12:[10547.31,10547.31],18:[7787.39,7787.39],24:[6441.7,6441.7],36:[5161.24,5161.24],48:[4580.89,4580.89],60:[4274.55,4274.55]}},
+  {id:14,banco:"SANTANDER", nombre:"ESPECIAL",                tipo:"TRAD",tna:53.9, comision:4,  plazoMax:60,ltv:80,activa:true,  marca:null, coefBase:100000,coefs:{12:[10961.39,10961.39],18:[8218.23,8218.23],24:[6892.97,6892.97],36:[5654.29,5654.29],48:[5112.08,5112.08],60:[4838.23,4838.23]}},
+  {id:15,banco:"SANTANDER", nombre:"LINEA GREEN",             tipo:"TRAD",tna:39.9, comision:4,  plazoMax:60,ltv:80,activa:true,  marca:null, coefBase:100000,coefs:{12:[10242.1,10242.1],18:[7472.12,7472.12],24:[6113.37,6113.37],36:[4805.18,4805.18],48:[4198.43,4198.43],60:[3868.53,3868.53]}},
+  {id:16,banco:"SANTANDER", nombre:"CAMIONES/UTILITARIOS",    tipo:"TRAD",tna:47.9, comision:4,  plazoMax:60,ltv:80,activa:true,  marca:null, coefBase:100000,coefs:{12:[10650.07,10650.07],18:[7893.98,7893.98],24:[6553.09,6553.09],36:[5282.59,5282.59],48:[4711.49,4711.49],60:[4413.21,4413.21]}},
   // ── CAMPAÑAS DE MARCA ───────────────────────────────────────────────────
   // GPAT — Chevrolet
   {id:20,banco:"GPAT",      nombre:"ONIX — PROMOCIONAL",      tipo:"TRAD",tna:0,    comision:15.8,plazoMax:36,ltv:70,activa:true,  marca:"CHEVROLET",modelos:["ONIX","ONIX PLUS"]},
@@ -1719,7 +1720,7 @@ function calcCred(){
 
 // ── PROPUESTA (saldo A/B) ────────────────────────────────────────────────────
 function cP(){
-  const iA=['pa1','pa2','pa3','pa4','pa5','pa6'];
+  const iA=['pa1','pa2','pa3','pa3b','pa4','pa5','pa6'];
   const iB=['pb1','pb2','pb3','pb4','pb5','pb6'];
   let tA=iA.reduce((s,id)=>s+(parseFloat($$(id)?.value)||0),0);
   let tB=iB.reduce((s,id)=>s+(parseFloat($$(id)?.value)||0),0);
@@ -1747,7 +1748,7 @@ function addEx(col){
 function resetP(){
   if(!confirm('¿Limpiar toda la propuesta para una nueva operación?'))return;
   ['tipo','marca','modelo','version','anno','color','km','tveh'].forEach(id=>{const el=$$(id);if(el){el.value='';if(el.tagName==='SELECT')el.disabled=['marca','modelo','version','anno'].includes(id)}});
-  ['pa1','pa2','pa3','pa4','pa5','pa6','pb1','pb2','pb3','pb4','pb5','pb6'].forEach(id=>{const el=$$(id);if(el)el.value=''});
+  ['pa1','pa2','pa3','pa3b','pa4','pa5','pa6','pb1','pb2','pb3','pb4','pb5','pb6'].forEach(id=>{const el=$$(id);if(el)el.value=''});
   ['p-cli','p-dni','p-tel','p-email','p-obs'].forEach(id=>{const el=$$(id);if(el)el.value=''});
   $$('exa').innerHTML=''; $$('exb').innerHTML='';
   $$('ar').style.display='none'; $$('ar-al').innerHTML=''; $$('cred-box').style.display='none';
@@ -2259,9 +2260,9 @@ function emailPropuesta(){
   }
 
   // Construir totales A y B
-  const iA=['pa1','pa2','pa3','pa4','pa5','pa6'];
+  const iA=['pa1','pa2','pa3','pa3b','pa4','pa5','pa6'];
   const iB=['pb1','pb2','pb3','pb4','pb5','pb6'];
-  const labA=['Precio del vehículo','Gestoría/Patentamiento','Gastos bancarios','Intereses crédito','Comisión banco','Seguro automotor'];
+  const labA=['Precio del vehículo','Gestoría/Patentamiento','Gastos bancarios campaña','Gastos bancarios adicionales','Intereses crédito','Comisión banco','Seguro automotor'];
   const labB=['Crédito bancario','Usado en parte de pago','Anticipo efectivo','Cheques','Documentos/Pagarés','Otro crédito'];
   let linA='',linB='';
   iA.forEach((id,i)=>{const v=parseFloat($$(id)?.value)||0;if(v>0)linA+=`  • ${labA[i]}: ${fmt(v)}\n`});
