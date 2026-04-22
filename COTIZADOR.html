@@ -1569,7 +1569,11 @@ function rCampMini(){
 }
 
 function mostrarSubCampanas(banco, camps){
+  $$('cred-box').style.display='block';
+  $$('cred-box-tit').style.display='none';
+  $$('qg-mini-wrap').style.display='none';
   const g=$$('cg-mini');
+  g.style.display='block';
   g.innerHTML='';
   // Agregar botón volver + opciones
   const volver=document.createElement('div');
