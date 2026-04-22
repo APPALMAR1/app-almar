@@ -412,7 +412,7 @@ select option{background:var(--s2)}
 .sh{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px}
 .st2{font-family:var(--hf);font-weight:800;font-size:17px;color:var(--w)}.ss2{font-size:9px;color:var(--m);margin-top:1px}
 .tag{display:inline-block;padding:2px 6px;border-radius:3px;font-size:8px;font-weight:700;letter-spacing:1px;text-transform:uppercase}
-.tag-g{background:var(--gg);color:var(--g);border:1px solid var(--g)}.tag-y{background:var(--yg);color:var(--y);border:1px solid var(--y)}.tag-r{background:var(--rg);color:var(--r);border:1px solid var(--r)}
+.tag-g{background:var(--gg);color:var(--g);border:1px solid var(--g)}.tag-y{background:var(--yg);color:var(--y);border:1px solid var(--y)}.tag-r{background:rgba(192,57,43,.18);color:#C0392B;border:1px solid #C0392B}.tag-b{background:rgba(0,105,180,.15);color:#0069b4;border:1px solid #0069b4}
 .waprev{background:#128C7E;border-radius:10px 10px 10px 0;padding:10px 12px;font-size:11px;color:#fff;line-height:1.65;white-space:pre-wrap;margin-top:8px}
 .divider{height:1px;background:var(--bdr);margin:8px 0}
 
@@ -1486,11 +1486,12 @@ function updEstado(estado){
   if(!estado){ep.style.display='none';return}
   const cfg={
     'DISPONIBLE':    {txt:'✅ DISPONIBLE',    bg:'rgba(30,132,73,.2)',  col:'#1E8449'},
+    'NUEVO INGRESO': {txt:'🆕 NUEVO INGRESO',   bg:'rgba(65,192,240,.2)',  col:'#0069b4'},
     'EN PREPARACION':{txt:'🔧 EN PREPARACIÓN',bg:'rgba(239,125,0,.2)',col:'#ef7d00'},
-    'A RECIBIR':     {txt:'📦 A RECIBIR',     bg:'rgba(0,105,180,.2)',col:'#164194'},
-    'SENIADO':       {txt:'🔴 SEÑADO',        bg:'rgba(0,105,180,.2)', col:'#0069b4'},
+    'A RECIBIR':     {txt:'📦 A RECIBIR',     bg:'rgba(22,65,148,.2)',   col:'#164194'},
+    'SENIADO':       {txt:'🔴 SEÑADO',        bg:'rgba(192,57,43,.2)',   col:'#C0392B'},
     'CONSULTAR':     {txt:'💬 CONSULTAR',     bg:'rgba(136,136,136,.2)',col:'#888'},
-    'RESERVADO':     {txt:'🔒 RESERVADO',     bg:'rgba(0,105,180,.2)', col:'#0069b4'},
+    'RESERVADO':     {txt:'🔒 RESERVADO',     bg:'rgba(192,57,43,.15)',  col:'#C0392B'},
     'EN CAMINO':     {txt:'🚛 EN CAMINO',     bg:'rgba(0,105,180,.2)',col:'#164194'},
   };
   const c=cfg[estado]||{txt:estado,bg:'rgba(136,136,136,.15)',col:'#888'};
@@ -1921,29 +1922,29 @@ function rStk(){
     el.innerHTML='<div class="empty"><div class="eico">🚗</div><div class="ettl">Sin unidades</div></div>';
     return;
   }
-  // Ordenar: DISPONIBLE primero, luego EN PREPARACION, luego SENIADO
-  const orden={'DISPONIBLE':0,'EN PREPARACION':1,'SENIADO':2};
+  // Ordenar: DISPONIBLE/NUEVO INGRESO primero, luego EN PREPARACION, A RECIBIR, SENIADO
+  const orden={'DISPONIBLE':0,'NUEVO INGRESO':0,'EN CAMINO':1,'EN PREPARACION':2,'A RECIBIR':3,'SENIADO':4,'RESERVADO':4};
   const sorted=[...visible].sort((a,b)=>{
+    const oa=orden[a.estado]??5, ob=orden[b.estado]??5;
+    if(oa!==ob) return oa-ob;
     const ma=(a.marca||'').localeCompare(b.marca||'','es');
     if(ma!==0) return ma;
     return (a.modelo||'').localeCompare(b.modelo||'','es');
   });
-  // Color e ícono por estado
-  const eCol={
-    'DISPONIBLE':'var(--g)',
-    'EN PREPARACION':'var(--y)',
-    'SENIADO':'var(--r)',
-  };
-  const eTag={
-    'DISPONIBLE':'tag-g',
-    'EN PREPARACION':'tag-y',
-    'SENIADO':'tag-r',
-  };
+  const eCol={'DISPONIBLE':'var(--g)','NUEVO INGRESO':'#0069b4','EN PREPARACION':'var(--y)','A RECIBIR':'#164194','EN CAMINO':'#41c0f0','SENIADO':'#C0392B','RESERVADO':'#C0392B'};
+  const eTag={'DISPONIBLE':'tag-g','NUEVO INGRESO':'tag-b','EN PREPARACION':'tag-y','A RECIBIR':'tag-b','EN CAMINO':'tag-b','SENIADO':'tag-r','RESERVADO':'tag-r'};
   sorted.forEach(u=>{
     const col=eCol[u.estado]||'var(--m)';
     const tag=eTag[u.estado]||'tag-y';
+    const esNuevo=(u._infoToma||'').toLowerCase().includes('nuevo ingreso');
+    const colFinal=esNuevo?'#0069b4':col;
+    const tagFinal=esNuevo?'tag-b':tag;
+    const etiqueta=esNuevo?'NUEVO INGRESO':u.estado;
+    const skipInfo=['a recibir','en preparacion','nuevo ingreso','señado'];
+    const infoExtra=u._infoToma&&u._infoToma.trim()&&!skipInfo.some(x=>(u._infoToma||'').toLowerCase().includes(x))
+      ?`<span style="font-size:9px;color:#ef7d00;font-weight:600;margin-left:4px">· ${u._infoToma}</span>`:'';
     const d=document.createElement('div'); d.className='hi';
-    d.innerHTML=`<div class="hico" style="background:${col}">🚗</div><div class="hinf"><div class="haut">${u.marca} ${u.modelo} ${u.version}</div><div class="hdet">${u.anno} · ${(u.km||0).toLocaleString('es-AR')} km · ${u.color||'—'} · ${u.dominio||'—'}</div></div><div class="hr2"><div class="hcuo" style="color:${u.precio?'var(--b)':'var(--m)'}">${u.precio?fmt(u.precio):'Consultar'}</div><div class="hfec"><span class="tag ${tag}">${u.estado}</span></div></div>`;
+    d.innerHTML=`<div class="hico" style="background:${colFinal}">🚗</div><div class="hinf"><div class="haut">${u.marca} ${u.modelo} ${u.version}</div><div class="hdet">${u.anno} · ${(u.km||0).toLocaleString('es-AR')} km · ${u.color||'—'} · ${u.dominio||'—'}</div></div><div class="hr2"><div class="hcuo" style="color:${u.precio?'var(--b)':'var(--m)'}">${u.precio?fmt(u.precio):'Consultar'}</div><div class="hfec"><span class="tag ${tagFinal}">${etiqueta}</span>${infoExtra}</div></div>`;
     el.appendChild(d);
   });
 }
