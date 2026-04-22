@@ -1511,6 +1511,7 @@ function buscar(){
 
 // ── CALCULADORA CRÉDITO INTEGRADA (Columna B) ─────────────────────────────────
 function rCampMini(){
+  window._subMenuAbierto=false;
   const g=$$('cg-mini');
   g.innerHTML='';
   const ma=($$('marca')?.value||'').toUpperCase();
@@ -1569,6 +1570,7 @@ function rCampMini(){
 }
 
 function mostrarSubCampanas(banco, camps){
+  window._subMenuAbierto=true;
   $$('cred-box').style.display='block';
   $$('cred-box-tit').style.display='none';
   $$('qg-mini-wrap').style.display='none';
@@ -1613,6 +1615,7 @@ function cambiarCampania(){
 }
 
 function sCredCamp(id){
+  window._subMenuAbierto=false;
   credCampId=id; credPlazo=null;
   const cv=camp.find(c=>c.id===id);
   const mt=parseFloat($$('pb1').value)||0;
@@ -1640,7 +1643,7 @@ function calcCred(){
     }
   }
   box.style.display='block';
-  rCampMini();
+  if(!window._subMenuAbierto) rCampMini();
 
   // LTV check
   const pr=parseFloat($$('pa1').value)||0;
