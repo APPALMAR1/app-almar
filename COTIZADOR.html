@@ -1444,6 +1444,13 @@ function onAuto(){
     const u=okm.find(x=>x.marca===ma&&x.modelo===mo&&x.version===v&&x.anno===a);
     if(u&&u.precio>0){$$('pa1').value=u.precio;if(u.color)$$('color').value=u.color}
     if(u) updEstado(u.estado);
+  } else if(t==='mercado_usado'){
+    // Multimarcas Usado: precio libre, el vendedor lo ingresa manualmente
+    $$('pa1').value='';
+    updEstado('');
+    $$('ar-al').innerHTML='<div class="al info">✏️ <strong>Multimarcas Usado</strong> — ingresá el precio del vehículo manualmente.</div>';
+    cP();
+    return;
   } else {
     const MKT_USD_DATA={"FOTON": {"Z-TRUCK": {"CAB SIMPLE": 22200, "CAB DOBLE": 25400}, "TM1 NACIONAL": {"CAB SIMPLE": 28300, "CAB DOBLE": 29400}, "TM1 IMPORT": {"BOX CARGO": 33600, "BOX CARGO REFRIGERADO": 42100}, "TM2": {"CAB SIMPLE": 31300, "CAB DOBLE": 32700}, "WONDER": {"CAB SIMPLE": 29400, "CAB DOBLE": 30900, "CS BOX": 35000}, "G7": {"4X2 MT": 49489, "4X2 AT": 52900, "4X4 MT": 55174, "4X4 AT": 60461}, "V9": {"4X4 AT HYBRID": 83768}, "AUMARK S3 615": {"CHASIS": 52800}, "AUMARK S3 916": {"CHASIS": 59700}, "AUMARK S3 1016": {"CHASIS": 65000}, "AUMAN D 1621": {"CHASIS 4X2": 82000}}};
     const mktMo=(MKT[ma]||{})[mo];
