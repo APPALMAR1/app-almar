@@ -1571,33 +1571,39 @@ function rCampMini(){
 
 function mostrarSubCampanas(banco, camps){
   window._subMenuAbierto=true;
+  // Usar div separado para el submenu, fuera del flujo de calcCred
+  let sub=$$('sub-camp-menu');
+  if(!sub){
+    sub=document.createElement('div');
+    sub.id='sub-camp-menu';
+    sub.style.cssText='position:absolute;top:0;left:0;right:0;bottom:0;background:var(--bg);z-index:10;padding:8px;border-radius:var(--rad);overflow-y:auto';
+    $$('cred-box').style.position='relative';
+    $$('cred-box').appendChild(sub);
+  }
+  sub.innerHTML='';
+  sub.style.display='block';
   $$('cred-box').style.display='block';
-  $$('cred-box-tit').style.display='none';
-  $$('qg-mini-wrap').style.display='none';
-  const g=$$('cg-mini');
-  g.style.display='block';
-  g.innerHTML='';
-  // Agregar botón volver + opciones
+
   const volver=document.createElement('div');
-  volver.style.cssText='display:flex;align-items:center;gap:6px;padding:6px 10px;cursor:pointer;color:var(--b);font-size:11px;font-weight:700';
-  volver.innerHTML='← Volver';
-  volver.onclick=()=>rCampMini();
-  g.appendChild(volver);
+  volver.style.cssText='display:flex;align-items:center;gap:6px;padding:6px 10px;cursor:pointer;color:var(--b);font-size:11px;font-weight:700;margin-bottom:4px';
+  volver.innerHTML='\u2190 Volver';
+  volver.onclick=()=>{sub.style.display='none';window._subMenuAbierto=false;rCampMini();};
+  sub.appendChild(volver);
 
   const tit=document.createElement('div');
   tit.style.cssText='font-size:11px;font-weight:800;color:var(--tx);padding:4px 0 8px';
-  tit.textContent=banco+' — Elegí una línea:';
-  g.appendChild(tit);
+  tit.textContent=banco+' \u2014 Eleg� una l�nea:';
+  sub.appendChild(tit);
 
   camps.forEach(c=>{
     const seleccionado=credCampId===c.id;
     const d=document.createElement('div');
     d.style.cssText=`padding:10px 14px;border-radius:8px;cursor:pointer;border:1.5px solid ${seleccionado?'var(--b)':'var(--brd)'};background:${seleccionado?'rgba(36,113,163,.12)':'var(--bg)'};margin-bottom:4px`;
-    d.onclick=()=>{sCredCamp(c.id);};
-    const tnaStr=c.tna>0?c.tna.toFixed(1).replace('.',',')+'% TNA':'0% TNA';
-    const comStr=c.comision>0?' · '+c.comision+'% gastos':'';
-    d.innerHTML=`<div style="font-weight:700;font-size:12px;color:${seleccionado?'var(--b)':'var(--tx)'}">${c.nombre}</div><div style="font-size:10px;color:#888;margin-top:2px">${tnaStr} · hasta ${c.plazoMax}m${comStr}</div>`;
-    g.appendChild(d);
+    d.onclick=()=>{sub.style.display='none';window._subMenuAbierto=false;sCredCamp(c.id);};
+    const tnaStr=c.tna>0?c.tna.toFixed(1).replace('.',',')+'\u0025 TNA':'0\u0025 TNA';
+    const comStr=c.comision>0?' � '+c.comision+'\u0025 gastos':'';
+    d.innerHTML=`<div style="font-weight:700;font-size:12px;color:${seleccionado?'var(--b)':'var(--tx)'}">${c.nombre}</div><div style="font-size:10px;color:#888;margin-top:2px">${tnaStr} � hasta ${c.plazoMax}m${comStr}</div>`;
+    sub.appendChild(d);
   });
 }
 
@@ -1639,11 +1645,10 @@ function calcCred(){
     if(cv&&cv.comision>0){
       const quebranto=Math.round(mt*(cv.comision/100)*1.21);
       $$('pa3').value=quebranto;
-      cP();
     }
   }
   box.style.display='block';
-  if(!window._subMenuAbierto) rCampMini();
+  rCampMini();
 
   // LTV check
   const pr=parseFloat($$('pa1').value)||0;
@@ -1653,11 +1658,11 @@ function calcCred(){
     if(cv){const lp=mt/pr,lm=cv.ltv/100;lal.innerHTML=lp>lm?`<div class="al warn" style="margin-top:0;margin-bottom:6px">⚠️ Monto (${(lp*100).toFixed(0)}%) supera LTV ${cv.ltv}%. Máximo: ${fmt(pr*lm)}</div>`:`<div class="al ok" style="margin-top:0;margin-bottom:6px">✅ LTV OK — ${(lp*100).toFixed(0)}% (máx ${cv.ltv}%)</div>`}
   }
 
-  if(!credCampId){$$('qg-mini-wrap').style.display='none';if(!window._subMenuAbierto){$$('cg-mini').style.display='block';$$('cred-box-tit').style.display='block';}return}
-  const cv=camp.find(c=>c.id===credCampId); if(!cv){$$('qg-mini-wrap').style.display='none';if(!window._subMenuAbierto){$$('cg-mini').style.display='block';$$('cred-box-tit').style.display='block';}return}
+  if(!credCampId){$$('qg-mini-wrap').style.display='none';$$('cg-mini').style.display='block';$$('cred-box-tit').style.display='block';return}
+  const cv=camp.find(c=>c.id===credCampId); if(!cv){$$('qg-mini-wrap').style.display='none';$$('cg-mini').style.display='block';$$('cred-box-tit').style.display='block';return}
 
   // Ocultar selector y mostrar resumen compacto de campaña elegida
-  if(!window._subMenuAbierto) $$('cg-mini').style.display='none';
+  $$('cg-mini').style.display='none';
   $$('cred-box-tit').style.display='none';
   // Resumen campaña seleccionada
   let rs=$$('cred-camp-resumen');
