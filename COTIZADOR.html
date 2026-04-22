@@ -1653,11 +1653,11 @@ function calcCred(){
     if(cv){const lp=mt/pr,lm=cv.ltv/100;lal.innerHTML=lp>lm?`<div class="al warn" style="margin-top:0;margin-bottom:6px">⚠️ Monto (${(lp*100).toFixed(0)}%) supera LTV ${cv.ltv}%. Máximo: ${fmt(pr*lm)}</div>`:`<div class="al ok" style="margin-top:0;margin-bottom:6px">✅ LTV OK — ${(lp*100).toFixed(0)}% (máx ${cv.ltv}%)</div>`}
   }
 
-  if(!credCampId){$$('qg-mini-wrap').style.display='none';$$('cg-mini').style.display='block';$$('cred-box-tit').style.display='block';return}
-  const cv=camp.find(c=>c.id===credCampId); if(!cv){$$('qg-mini-wrap').style.display='none';$$('cg-mini').style.display='block';$$('cred-box-tit').style.display='block';return}
+  if(!credCampId){$$('qg-mini-wrap').style.display='none';if(!window._subMenuAbierto){$$('cg-mini').style.display='block';$$('cred-box-tit').style.display='block';}return}
+  const cv=camp.find(c=>c.id===credCampId); if(!cv){$$('qg-mini-wrap').style.display='none';if(!window._subMenuAbierto){$$('cg-mini').style.display='block';$$('cred-box-tit').style.display='block';}return}
 
   // Ocultar selector y mostrar resumen compacto de campaña elegida
-  $$('cg-mini').style.display='none';
+  if(!window._subMenuAbierto) $$('cg-mini').style.display='none';
   $$('cred-box-tit').style.display='none';
   // Resumen campaña seleccionada
   let rs=$$('cred-camp-resumen');
