@@ -625,7 +625,7 @@ input[type=text]#p-obs{background:#F5F7FA!important;border:1px solid #D5DCE6!imp
     <div class="cb">
       <div class="fr f2">
         <div class="fld"><label>Tipo <span class="req">*</span></label>
-          <select id="tipo" onchange="onTipo()"><option value="">— Elegir tipo —</option><option value="usado">Usado (Stock Almar)</option><option value="okm">0 km (Stock Almar)</option><option value="mercado">Multimarcas 0km</option></select>
+          <select id="tipo" onchange="onTipo()"><option value="">— Elegir tipo —</option><option value="usado">Usado (Stock Almar)</option><option value="okm">0 km (Stock Almar)</option><option value="mercado">Multimarcas 0km</option><option value="mercado_usado">Multimarcas Usado</option></select>
           <select id="subtipo" onchange="onSubtipo()" disabled style="display:none"><option value="">— Auto o Utilitario —</option><option value="Auto">🚗 Autos</option><option value="Utilitario/Pickup">🚛 Utilitarios / Pickups</option></select>
         </div>
         <div class="fld"><label>Búsqueda rápida</label>
@@ -1365,7 +1365,7 @@ function onTipo(){
   $$('ar').style.display='none'; $$('ar-al').innerHTML='';
   const t=$$('tipo').value; if(!t)return;
   if(t==='mercado'){
-    // Mostrar selector de subtipo
+    // Mostrar selector de subtipo (solo para 0km)
     $$('subtipo').style.display='';
     $$('subtipo').disabled=false;
     $$('subtipo').value='';
@@ -1374,7 +1374,10 @@ function onTipo(){
   }
   $$('subtipo').style.display='none';
   $$('subtipo').disabled=true;
-  const ms=t==='usado'?[...new Set(stk.map(u=>u.marca))].sort():t==='okm'?[...new Set(okm.map(u=>u.marca))].sort():Object.keys(MKT).sort();
+  const ms=t==='usado'?[...new Set(stk.map(u=>u.marca))].sort()
+    :t==='okm'?[...new Set(okm.map(u=>u.marca))].sort()
+    :t==='mercado_usado'?Object.keys(MKT_TIPOS).sort()
+    :Object.keys(MKT).sort();
   selOpts('marca',ms,'— Elegir marca —');
 }
 
@@ -1394,6 +1397,11 @@ function onMarca(){
     const todos=Object.keys(MKT[ma]||{});
     const filtrados=(MKT_TIPOS[ma]||{})[sub]||[];
     ms=sub?todos.filter(m=>filtrados.includes(m)).sort():todos.sort();
+  } else if(t==='mercado_usado'){
+    // Todos los modelos de la marca en MKT_TIPOS (Auto + Utilitario/Pickup)
+    const tipos=MKT_TIPOS[ma]||{};
+    const todos=[...(tipos['Auto']||[]),...(tipos['Utilitario/Pickup']||[])];
+    ms=[...new Set(todos)].sort();
   } else {
     ms=t==='usado'?[...new Set(stk.filter(u=>u.marca===ma).map(u=>u.modelo))].sort():t==='okm'?[...new Set(okm.filter(u=>u.marca===ma).map(u=>u.modelo))].sort():Object.keys(MKT[ma]||{}).sort();
   }
@@ -1402,13 +1410,13 @@ function onMarca(){
 function onModelo(){
   ['version','anno'].forEach(disEl);
   const t=$$('tipo').value,ma=$$('marca').value,mo=$$('modelo').value; if(!mo)return;
-  const mktVers=(MKT[ma]||{})[mo];const vs=t==='usado'?[...new Set(stk.filter(u=>u.marca===ma&&u.modelo===mo).map(u=>u.version))].sort():t==='okm'?[...new Set(okm.filter(u=>u.marca===ma&&u.modelo===mo).map(u=>u.version))].sort():Array.isArray(mktVers)?mktVers:Object.keys(mktVers||{}).sort();
+  const mktVers=(MKT[ma]||{})[mo];const vs=t==='usado'?[...new Set(stk.filter(u=>u.marca===ma&&u.modelo===mo).map(u=>u.version))].sort():t==='okm'?[...new Set(okm.filter(u=>u.marca===ma&&u.modelo===mo).map(u=>u.version))].sort():t==='mercado_usado'?(Array.isArray(mktVers)?mktVers:Object.keys(mktVers||{}).sort()):Array.isArray(mktVers)?mktVers:Object.keys(mktVers||{}).sort();
   selOpts('version',vs,'— Elegir versión —');
 }
 function onVer(){
   disEl('anno');
   const t=$$('tipo').value,ma=$$('marca').value,mo=$$('modelo').value,v=$$('version').value; if(!v)return;
-  const as=t==='usado'?[...new Set(stk.filter(u=>u.marca===ma&&u.modelo===mo&&u.version===v).map(u=>u.anno))].sort((a,b)=>b-a):t==='okm'?[...new Set(okm.filter(u=>u.marca===ma&&u.modelo===mo&&u.version===v).map(u=>u.anno))].sort((a,b)=>b-a):Array.from({length:13},(_,i)=>new Date().getFullYear()-i);
+  const as=t==='usado'?[...new Set(stk.filter(u=>u.marca===ma&&u.modelo===mo&&u.version===v).map(u=>u.anno))].sort((a,b)=>b-a):t==='okm'?[...new Set(okm.filter(u=>u.marca===ma&&u.modelo===mo&&u.version===v).map(u=>u.anno))].sort((a,b)=>b-a):Array.from({length:25},(_,i)=>new Date().getFullYear()-i);
   selOpts('anno',as,'— Elegir año —');
 }
 function onAuto(){
