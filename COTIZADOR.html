@@ -2358,7 +2358,10 @@ function parseDrv(csv){
   const iAno=fi('ANO');
   const iKm=fi('KM');
   const iPre=fi('PUBLICO');
-  const iInf=nh.findIndex(h=>h.includes('INFO')&&h.includes('TOMA')&&!h.includes('MARZO')&&!h.includes('ABRIL'));
+  // Columna K (índice 10) = INFO TOMA / estado. Si no tiene encabezado, usar posición fija.
+  let iInf=nh.findIndex(h=>h.includes('INFO')&&h.includes('TOMA')&&!h.includes('MARZO')&&!h.includes('ABRIL'));
+  if(iInf<0) iInf=nh.findIndex(h=>h.includes('ESTADO')||h.includes('STATUS')||h.includes('OBS'));
+  if(iInf<0) iInf=10; // Columna K por posición fija si no tiene encabezado
   const iVToma=nh.findIndex(h=>h.includes('VALOR')&&h.includes('TOMA'));
   const iCosto=nh.findIndex(h=>h.includes('COSTO')&&h.includes('TOTAL'));
   const gc=(c,i)=>i>=0&&i<c.length?c[i].trim():'';
