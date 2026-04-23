@@ -13,7 +13,7 @@
 .ss-input:focus{outline:none;border-color:var(--r)}
 .ss-input:disabled{opacity:.22;cursor:not-allowed}
 .ss-arrow{position:absolute;right:10px;top:50%;transform:translateY(-50%);pointer-events:none;font-size:10px;color:#888}
-.ss-drop{position:absolute;top:calc(100% + 3px);left:0;right:0;background:var(--s2);border:1.5px solid var(--bdr);border-radius:6px;max-height:220px;overflow-y:auto;z-index:999;display:none;box-shadow:0 4px 16px rgba(0,0,0,.25)}
+.ss-drop{position:fixed;top:0;left:0;width:200px;background:var(--s2);border:1.5px solid var(--bdr);border-radius:6px;max-height:220px;overflow-y:auto;z-index:9999;display:none;box-shadow:0 4px 16px rgba(0,0,0,.25)}
 .ss-drop.open{display:block}
 .ss-item{padding:8px 12px;font-size:13px;cursor:pointer;color:var(--t);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ss-item:hover,.ss-item.focused{background:var(--s3)}
@@ -644,12 +644,12 @@ input[type=text]#p-obs{background:#F5F7FA!important;border:1px solid #D5DCE6!imp
         </div>
       </div>
       <div class="fr f2">
-        <div class="fld"><label>Marca <span class="req">*</span></label><div class="ss-wrap" id="ss-marca"><input class="ss-input" id="marca-inp" placeholder="— Elegir marca —" autocomplete="off" disabled oninput="ssFilter('marca')" onfocus="ssOpen('marca')" onkeydown="ssKey(event,'marca')"><span class="ss-arrow">▼</span><div class="ss-drop" id="marca-drop"></div></div></div>
-        <div class="fld"><label>Modelo <span class="req">*</span></label><div class="ss-wrap" id="ss-modelo"><input class="ss-input" id="modelo-inp" placeholder="— Elegir modelo —" autocomplete="off" disabled oninput="ssFilter('modelo')" onfocus="ssOpen('modelo')" onkeydown="ssKey(event,'modelo')"><span class="ss-arrow">▼</span><div class="ss-drop" id="modelo-drop"></div></div></div>
+        <div class="fld"><label>Marca <span class="req">*</span></label><div class="ss-wrap" id="ss-marca" onclick="if(event.target.className==='ss-arrow')ssOpen('marca')"><input class="ss-input" id="marca-inp" placeholder="— Elegir marca —" autocomplete="off" disabled oninput="ssFilter('marca')" onfocus="ssOpen('marca')" onclick="ssOpen('marca')" onkeydown="ssKey(event,'marca')"><span class="ss-arrow">▼</span><div class="ss-drop" id="marca-drop"></div></div></div>
+        <div class="fld"><label>Modelo <span class="req">*</span></label><div class="ss-wrap" id="ss-modelo" onclick="if(event.target.className==='ss-arrow')ssOpen('modelo')"><input class="ss-input" id="modelo-inp" placeholder="— Elegir modelo —" autocomplete="off" disabled oninput="ssFilter('modelo')" onfocus="ssOpen('modelo')" onclick="ssOpen('modelo')" onkeydown="ssKey(event,'modelo')"><span class="ss-arrow">▼</span><div class="ss-drop" id="modelo-drop"></div></div></div>
       </div>
       <div class="fr f2">
-        <div class="fld"><label>Versión</label><div class="ss-wrap" id="ss-version"><input class="ss-input" id="version-inp" placeholder="— Elegir versión —" autocomplete="off" disabled oninput="ssFilter('version')" onfocus="ssOpen('version')" onkeydown="ssKey(event,'version')"><span class="ss-arrow">▼</span><div class="ss-drop" id="version-drop"></div></div></div>
-        <div class="fld"><label>Año</label><div class="ss-wrap" id="ss-anno"><input class="ss-input" id="anno-inp" placeholder="— Elegir año —" autocomplete="off" disabled oninput="ssFilter('anno')" onfocus="ssOpen('anno')" onkeydown="ssKey(event,'anno')"><span class="ss-arrow">▼</span><div class="ss-drop" id="anno-drop"></div></div></div>
+        <div class="fld"><label>Versión</label><div class="ss-wrap" id="ss-version" onclick="if(event.target.className==='ss-arrow')ssOpen('version')"><input class="ss-input" id="version-inp" placeholder="— Elegir versión —" autocomplete="off" disabled oninput="ssFilter('version')" onfocus="ssOpen('version')" onclick="ssOpen('version')" onkeydown="ssKey(event,'version')"><span class="ss-arrow">▼</span><div class="ss-drop" id="version-drop"></div></div></div>
+        <div class="fld"><label>Año</label><div class="ss-wrap" id="ss-anno" onclick="if(event.target.className==='ss-arrow')ssOpen('anno')"><input class="ss-input" id="anno-inp" placeholder="— Elegir año —" autocomplete="off" disabled oninput="ssFilter('anno')" onfocus="ssOpen('anno')" onclick="ssOpen('anno')" onkeydown="ssKey(event,'anno')"><span class="ss-arrow">▼</span><div class="ss-drop" id="anno-drop"></div></div></div>
       </div>
       <div class="fr f3">
         <div class="fld"><label>Color</label><input type="text" id="color" placeholder="Blanco" oninput="updR()"></div>
@@ -938,41 +938,2779 @@ const OKM_D=[
   {marca:"TOYOTA",    modelo:"HILUX",   version:"2.8 SRX AT 4X4",         anno:2025,precio:0,       color:"BLANCO",estado:"CONSULTAR"},
 ];
 const MKT={
-  "TOYOTA":{"HILUX":["2.4 DX CS 4X2","2.8 SR 4X4 MT","2.8 SRX AT 4X4","2.8 GR-SPORT 4X4"],"YARIS":["1.5 XLS MT","1.5 XLS CVT"],"YARIS CROSS":["1.5 S CVT","GR-SPORT CVT"],"COROLLA":["2.0 XEI CVT","2.0 SE-G CVT","1.8 XLI CVT"],"COROLLA CROSS":["2.0 XEI CVT","GR-SPORT 2.0 CVT"],"SW4":["2.8 TDI SR AT 4X2","2.8 TDI SRX AT 4X4"],"ETIOS":["1.5 XLS MT","1.5 CROSS MT"]},
-  "VOLKSWAGEN":{"AMAROK":["2.0 TDI 140HP 4X2","2.0 TDI 140HP 4X4","HIGHLINE AT 180HP","V6 EXTREME 4X4"],"TAOS":["1.4 TSI COMFORTLINE MT","1.4 TSI HIGHLINE AT"],"POLO":["1.0 TSI TRACK MT","TSI GTS AT"],"NIVUS":["1.0 TSI COMFORTLINE AT","1.0 TSI HIGHLINE AT"],"GOL":["1.6 5P TRENDLINE","1.6 5P COMFORTLINE"],"VIRTUS":["1.0 TSI MT","1.6 HIGHLINE AT"],"SAVEIRO":["1.6 S/EXT MT","1.6 C/EXT MT"]},
-  "CHEVROLET":{"TRACKER":["1.2T PREMIERE AT","1.0T LT MT","1.2T LTZ AT"],"ONIX":["1.0T MT 5P","1.0T PREMIER AT","1.0T LT MT"],"ONIX PLUS":["1.0T LT AT","1.0T PREMIER AT"],"S10":["2.8TD CD 4X2 LS","2.8TD CD 4X4 LTZ AT"],"MONTANA":["1.2T PREMIER AT"]},
-  "FORD":{"RANGER":["2.0T XL CD 4X2","2.0T XLS CD 4X4 AT","3.0T RAPTOR 4X4","2.0T LIMITED 4X4 AT"],"TERRITORY":["1.5T SE AT","1.5T TITANIUM AT"],"KA":["1.5 S MT","1.5 SE AT"],"ECOSPORT":["1.5 S MT","2.0 TITANIUM AT"]},
-  "FIAT":{"CRONOS":["1.3 PRECISION CVT","1.3 DRIVE MT","1.3 LIKE MT"],"ARGO":["1.0 DRIVE MT","1.3 PRECISION MT"],"STRADA":["WORKING 1.4 CS MT","VOLCANO 1.3T CD AT"],"TORO":["VOLCANO 2.0 DIESEL 4X4 AT9","ENDURANCE 1.3T 4X2 AT"],"MOBI":["1.0 EASY MT","1.0 EASY PACK TOP"],"PALIO":["1.4 ATTRACTIVE MT"]},
-  "RENAULT":{"KWID":["1.0 LIFE MT","1.0 ZEN MT","1.0 OUTSIDER MT"],"KARDIAN":["1.0T INTENS CVT","1.0T ZEN MT"],"DUSTER":["1.6 ZEN MT","1.3T INTENS CVT"],"OROCH":["1.6 ZEN MT","1.3T OUTSIDER AT"],"SANDERO":["1.6 ZEN MT","STEPWAY 1.6 MT"],"KANGOO":["1.5 DCI FURGON"]},
-  "BYD":{"ATTO 2":["STANDARD RANGE","LONG RANGE"],"DOLPHIN MINI":["COMFORT","PREMIUM"],"SHARK":["6X AWD PHEV"],"YUAN PRO":["STANDARD","LONG RANGE"]},
-  "PEUGEOT":{"208":["1.2T LIKE MT","1.2T ALLURE AT","1.2T GT TIPTRONIC"],"2008":["1.0T ACTIVE AT6","1.2T ALLURE AT","1.2T GT AT"],"3008":["1.6T ALLURE AT","1.6T GT AT"],"PARTNER":["1.6 FURGON MT"]},
-  "CITROEN":{"C3":["1.6 VTI FEEL MT","1.6 VTI SHINE MT"],"BASALT":["1.0T FEEL AT6","1.0T SHINE AT6"],"BERLINGO":["FURGON 1.6 BUSINESS","MULTISPACE 1.6"]},
-  "NISSAN":{"KICKS":["1.6 ADVANCE CVT","1.6 EXCLUSIVE CVT"],"FRONTIER":["2.3 TDI LE AT 4X4","2.3 TDI PRO-4X AT"],"SENTRA":["2.0 EXCLUSIVE CVT"],"VERSA":["1.6 ADVANCE CVT"]},
-  "HONDA":{"HR-V":["1.5T EXL CVT","1.5T LX CVT"],"WR-V":["1.0T EX CVT"],"CIVIC":["2.0 EX CVT"]},
-  "JEEP":{"COMPASS":["2.4 LONGITUDE AT","1.3T TRAILHAWK AT"],"RENEGADE":["1.8 SPORT AT","1.8 LONGITUDE AT"]},
-  "HYUNDAI":{"CRETA":["1.0T GL AT","1.0T GLS AT"],"TUCSON":["2.0 GL MT","2.0 GLS AT"]},
-  "KIA":{"SPORTAGE":["2.0 EX MT","1.6T GT-LINE AT"],"SELTOS":["1.4T SX AT"]},
-  "MITSUBISHI":{"L200":["2.4 DID GL MT 4X2","2.4 DID HPE MT 4X4"],"ECLIPSE CROSS":["1.5T CVT"]},
+  "3-STAR":{
+    "SXZ1047":[]
+  },
+  "AC":{
+    "BRISTOL":[]
+  },
+  "ACURA":{
+    "INTEGRA":[],
+    "LEGEND":[]
+  },
+  "ADELMO":{
+    "OTROS":[]
+  },
+  "AGRALE":{
+    "COMIL PIA":[],
+    "MA 10.0":["AGRALE MA 10.0"],
+    "MA 15.0":[],
+    "MA 7.5 T":[],
+    "MA 8.5":[],
+    "MA 8.7":["SIN ASIGNAR"],
+    "MARRUA":["AGRALE MARRUA"],
+    "MT 12.0 LE":[],
+    "MT 15.0 LE":[],
+    "MT 17.0 LE":[],
+    "NEOBUS THUNDER":[],
+    "OTROS":[],
+    "VOLARE A8":[]
+  },
+  "AGRALE/COMIL":{
+    "MA 8.5/PIA":[]
+  },
+  "AGRALE/NEOBUS":{
+    "THUNDER PLUS":[]
+  },
+  "ALEKO":{
+    "2141":[],
+    "2335":[]
+  },
+  "ALFA ROMEO":{
+    "145":[],
+    "146":[],
+    "147":[],
+    "155":[],
+    "156":[],
+    "159":[],
+    "162":[],
+    "164":[],
+    "166":[],
+    "1750":[],
+    "2000":[],
+    "2600":[],
+    "33":[],
+    "75":[],
+    "ALFA":[],
+    "ALFASUD":[],
+    "ALFETTA":[],
+    "ALFETTA GT":[],
+    "ALFETTA GTV":[],
+    "BRERA":[],
+    "GIULIA":["ALFA ROMEO GIULIA"],
+    "GIULIETTA":[],
+    "GT":[],
+    "GTV":[],
+    "MITO":[],
+    "MONTREAL":[],
+    "OTROS":[],
+    "SPIDER":[],
+    "SPRINT":[],
+    "STELVIO":["ALFA ROMEO STELVIO"],
+    "SZ":[],
+    "T SPARK":[],
+    "TONALE":["SIN ASIGNAR"]
+  },
+  "AM":{
+    "GENERAL AM 35":[]
+  },
+  "AMC":{
+    "CONCORD":[],
+    "OTROS":[],
+    "PACER":[],
+    "WAGONNER":[]
+  },
+  "ARCFOX":{
+    "T5":["SIN ASIGNAR"]
+  },
+  "ARGENTA":{
+    "OTROS":[]
+  },
+  "ARO":{
+    "10 SPARTANA":[],
+    "10.1":[],
+    "10.4":[],
+    "10.6":[],
+    "10.9":[],
+    "243":[],
+    "244":[],
+    "320":[]
+  },
+  "ASIA":{
+    "AM 725":[],
+    "AM 815":[],
+    "AM 825":[],
+    "COMBI":[],
+    "OTROS":[],
+    "R2 VAN":[],
+    "ROCSTA":[],
+    "TOPIC":[],
+    "TOWNER":[]
+  },
+  "ASTON":{
+    "MARTIN DB4":[],
+    "MARTIN DB9":[],
+    "MARTIN OTROS":[],
+    "MARTIN VANTAGE":[]
+  },
+  "AUDI":{
+    "100":[],
+    "80":[],
+    "A1":["AUDI A1"],
+    "A3":["AUDI A3"],
+    "A4":["AUDI A4"],
+    "A5":["AUDI A5"],
+    "A6":["AUDI A6"],
+    "A7":["AUDI A7"],
+    "A8":[],
+    "ALLROAD":[],
+    "E-TRON":["SIN ASIGNAR"],
+    "GT":[],
+    "OTROS":[],
+    "Q2":["AUDI Q2"],
+    "Q3":["AUDI Q3"],
+    "Q5":["AUDI Q5"],
+    "Q7":["AUDI Q7"],
+    "Q8":["SIN ASIGNAR"],
+    "R8":[],
+    "RS3":["SIN ASIGNAR"],
+    "RS4":[],
+    "RS5":[],
+    "RS6":[],
+    "RS7":[],
+    "RSQ3":["SIN ASIGNAR"],
+    "RSQ8":["SIN ASIGNAR"],
+    "S3":["AUDI S3"],
+    "S4":[],
+    "S5":[],
+    "S6":[],
+    "S7":[],
+    "SQ5":["SIN ASIGNAR"],
+    "TT":[],
+    "TTS":[]
+  },
+  "AUSTIN":{
+    "250":[],
+    "ALLEGRO":[],
+    "HEALEY 3000":[],
+    "MINI":[],
+    "MORRIS 575":[],
+    "MORRIS ALLEGRO":[],
+    "MORRIS MINI":[],
+    "MORRIS MINI 1000":[],
+    "OTROS":[],
+    "SEVEN SPECIAL":[]
+  },
+  "AUTO":{
+    "BIANCHI Y 10":[],
+    "UNION 1000 S":[],
+    "UNION OTROS":[]
+  },
+  "AUTOAR":{
+    "OTROS":[]
+  },
+  "BAIC":{
+    "BJ30":["SIN ASIGNAR"],
+    "BJ40":["SIN ASIGNAR"],
+    "BJ60":["SIN ASIGNAR"],
+    "D20":[],
+    "EU5":["SIN ASIGNAR"],
+    "U5 PLUS":["SIN ASIGNAR"],
+    "X25":[],
+    "X35":["BAIC X35"],
+    "X55":["BAIC X55"],
+    "X65":[]
+  },
+  "BAMBI":{
+    "OTROS":[]
+  },
+  "BAQUEANO":{
+    "IKA TA":[]
+  },
+  "BEDFORD":{
+    "J6LC1":[],
+    "OTROS":[]
+  },
+  "BEIJING":{
+    "BJ 2020":[]
+  },
+  "BENTLEY":{
+    "CONTINENTAL":["SIN ASIGNAR"],
+    "MARK VI":[],
+    "OTROS":[]
+  },
+  "BERTONE":{
+    "FREECLIMBER 2":[]
+  },
+  "BISCAYNE":{
+    "ROADSTER COBRA":[],
+    "ROADSTER COBRA 351":[]
+  },
+  "BMW":{
+    "116":[],
+    "118":["BMW 118"],
+    "120":[],
+    "125":[],
+    "130":[],
+    "135":[],
+    "1M":[],
+    "2002 TII":[],
+    "218":[],
+    "220":["BMW 220"],
+    "2800":[],
+    "315":[],
+    "316":[],
+    "318":[],
+    "320":["BMW 320"],
+    "323":[],
+    "324":[],
+    "325":[],
+    "328":[],
+    "330":["BMW 330"],
+    "335":[],
+    "428":[],
+    "430":["SIN ASIGNAR"],
+    "435":[],
+    "440":[],
+    "518":[],
+    "520":[],
+    "523":[],
+    "524":[],
+    "525":[],
+    "528":[],
+    "530":[],
+    "535":[],
+    "540":[],
+    "545":[],
+    "550":["BMW 550"],
+    "628":[],
+    "633":[],
+    "635":[],
+    "640":[],
+    "645":[],
+    "650":[],
+    "728":[],
+    "730":[],
+    "732":[],
+    "733":[],
+    "735":[],
+    "740":[],
+    "745":[],
+    "750":["BMW 750"],
+    "760I":["SIN ASIGNAR"],
+    "850":[],
+    "I8":[],
+    "ISETTA":[],
+    "IX2":["SIN ASIGNAR"],
+    "M135":["BMW M135"],
+    "M140":[],
+    "M2":["SIN ASIGNAR"],
+    "M235":["BMW M235"],
+    "M240":["SIN ASIGNAR"],
+    "M3":["BMW M3"],
+    "M340":["SIN ASIGNAR"],
+    "M4":["BMW M4"],
+    "M440":["SIN ASIGNAR"],
+    "M5":["BMW M5"],
+    "M6":[],
+    "M850":[],
+    "OTROS":[],
+    "X1":["BMW X1"],
+    "X2":["SIN ASIGNAR"],
+    "X3":["BMW X3"],
+    "X4":["BMW X4"],
+    "X5":["BMW X5"],
+    "X6":["BMW X6"],
+    "X7":["SIN ASIGNAR"],
+    "Z1":[],
+    "Z3":[],
+    "Z4":["BMW Z4"],
+    "Z8":[]
+  },
+  "BORGWARD":{
+    "B-611":[],
+    "BX7":[],
+    "ISABELLA":[],
+    "OTROS":[]
+  },
+  "BUGATTI":{
+    "TIPO 57":[]
+  },
+  "BUICK":{
+    "LE SABRE":[],
+    "OTROS":[],
+    "REGAL":[],
+    "SKYLARK":[]
+  },
+  "BYD":{
+    "DOLPHIN MINI":["SIN ASIGNAR"],
+    "SONG PRO":["SIN ASIGNAR"],
+    "YUAN PRO":["SIN ASIGNAR"]
+  },
+  "CADILLAC":{
+    "ALLANTE":[],
+    "BROUGHAM":[],
+    "DEVILLE":[],
+    "EL DORADO":[],
+    "ESCALADE":["SIN ASIGNAR"],
+    "FLEETWOOD":[],
+    "OTROS":[],
+    "SEDAN DE VILLE":[],
+    "SEVILLE":[]
+  },
+  "CARROCERIAS":{
+    "OSCARCITO AMI 8":[]
+  },
+  "CHANG":{
+    "FEI MD 6601":[],
+    "FEI MD 6601D-001":[]
+  },
+  "CHANGAN":{
+    "CS15":[],
+    "CS55":["SIN ASIGNAR"],
+    "CS75":[],
+    "M201":[],
+    "MD201":["SIN ASIGNAR"],
+    "SC 5013":[],
+    "SC1010":[]
+  },
+  "CHERY":{
+    "ARRIZO 3":[],
+    "ARRIZO 5":[],
+    "FACE":[],
+    "FULWIN":[],
+    "QQ":["CHERY QQ"],
+    "SKIN":[],
+    "TIGGO":[],
+    "TIGGO 2":["SIN ASIGNAR"],
+    "TIGGO 3":[],
+    "TIGGO 4":["SIN ASIGNAR"],
+    "TIGGO 5":[],
+    "TIGGO 7":["SIN ASIGNAR"],
+    "TIGGO 8":["SIN ASIGNAR"]
+  },
+  "CHEVROLET":{
+    "11369":[],
+    "11527":[],
+    "11569":[],
+    "14000":[],
+    "244":[],
+    "2500 SILVERADO":[],
+    "258":[],
+    "269":[],
+    "3100":["CHEVROLET 3100"],
+    "3104":[],
+    "3500":[],
+    "400":[],
+    "469":[],
+    "5C11AN":[],
+    "5C11JN":[],
+    "610":[],
+    "6403":[],
+    "ACOPLADO/SEMIRREMOLQUE":[],
+    "AGILE":[],
+    "ASTRA":[],
+    "ASTRO":[],
+    "AVALANCHE":[],
+    "AVEO":[],
+    "BEL AIR":[],
+    "BERETTA":[],
+    "BLAZER":[],
+    "BOLT":["SIN ASIGNAR"],
+    "BONANZA":[],
+    "C-10":[],
+    "C-10703":[],
+    "C-14":[],
+    "C-1403":[],
+    "C-1404":[],
+    "C-1434":[],
+    "C-20":[],
+    "C-30":[],
+    "C-40":[],
+    "CAMARO":["CHEVROLET CAMARO"],
+    "CAPRICE":[],
+    "CAPTIVA":["CHEVROLET CAPTIVA"],
+    "CC 10703":[],
+    "CELTA":[],
+    "CHEVELLE":[],
+    "CHEVETTE":[],
+    "CHEVY":[],
+    "CHEVY 500":[],
+    "CHEYENNE":[],
+    "CITATION":[],
+    "CK 10703":[],
+    "CLASSIC":[],
+    "CLASSIC CARGO":[],
+    "COBALT":[],
+    "CONQUEST":[],
+    "CORSA":[],
+    "CORSA CARGO":[],
+    "CORSA COMBO":[],
+    "CORVETTE":["CHEVROLET CORVETTE"],
+    "COUPE":[],
+    "CRUZE":["CHEVROLET CRUZE"],
+    "CS 10":[],
+    "CS 1003":[],
+    "CS 10703":[],
+    "CS 10704":[],
+    "CS 10734":[],
+    "CS 10743":[],
+    "CS 31003":[],
+    "CS-10704":[],
+    "CUSTOM":[],
+    "CUSTOM DE LUXE":[],
+    "D-20":[],
+    "D-21":[],
+    "D-40":[],
+    "D6803-H":[],
+    "EL CAMINO":[],
+    "EQUINOX":["SIN ASIGNAR"],
+    "EXPRESS":[],
+    "FLEETMASTER":[],
+    "FLEETSIDE":[],
+    "GRAND BLAZER":[],
+    "GRAND VITARA":[],
+    "GROOVE":["SIN ASIGNAR"],
+    "HD 3500":[],
+    "IMPALA":[],
+    "IPANEMA":[],
+    "K 3500":[],
+    "K-1500":[],
+    "K30":[],
+    "KADETT":[],
+    "KALOS":[],
+    "KINGSWOOD":[],
+    "LUMINA":[],
+    "LUV":[],
+    "M1009":[],
+    "MALIBU":[],
+    "MERIVA":[],
+    "METRO":[],
+    "MONTANA":["CHEVROLET MONTANA"],
+    "MONTE CARLO":[],
+    "MONZA":[],
+    "OMEGA":[],
+    "ONIX":["CHEVROLET ONIX","JOY"],
+    "ONIX JOY":[],
+    "OTROS":["CHEVROLET OTROS"],
+    "P-10":[],
+    "PRISMA":["CHEVROLET PRISMA"],
+    "PS 1042":[],
+    "PS 10742":[],
+    "RALLY SPORT":[],
+    "S10":["CHEVROLET S10"],
+    "SEDAN SP.246":[],
+    "SILVERADO":["CHEVROLET SILVERADO"],
+    "SONIC":[],
+    "SPARK":["CHEVROLET SPARK"],
+    "SPECIAL":[],
+    "SPIN":["CHEVROLET SPIN"],
+    "SPORT VAN":[],
+    "STEP":[],
+    "SUBURBAN":[],
+    "SUPER SPORT":[],
+    "SUPREMA":[],
+    "TAHOE":[],
+    "TFR":[],
+    "TFS 16 HDL":[],
+    "TIGRA":[],
+    "TRACKER":["CHEVROLET TRACKER"],
+    "TRAILBLAZER":["CHEVROLET TRAILBLAZER"],
+    "VECTRA":[],
+    "VENTURE":[],
+    "VERANEIO":[],
+    "VITARA":[],
+    "ZAFIRA":[]
+  },
+  "CHRYSLER":{
+    "300":[],
+    "300C":[],
+    "CARAVAN":[],
+    "CHEROKEE":[],
+    "CROSSFIRE":[],
+    "DAKOTA":[],
+    "GRAND CARAVAN":[],
+    "GRAND CHEROKEE":[],
+    "GRAND VOYAGER":[],
+    "IMPERIAL":[],
+    "INTREPID":[],
+    "LE BARON":[],
+    "NEON":[],
+    "NEW YORKER":[],
+    "OTROS":["CHRYSLER OTROS"],
+    "PT CRUISER":[],
+    "RAM":[],
+    "ROADSTER":[],
+    "SEBRING":[],
+    "SPIRIT":[],
+    "STRATUS":[],
+    "TALON":[],
+    "TOWN & COUNTRY":[],
+    "VALIANT":[],
+    "VOYAGER":[],
+    "WINDSOR":[]
+  },
+  "CISITALIA":{
+    "OTROS":[],
+    "SPYDER":[]
+  },
+  "CITROEN":{
+    "2CV":[],
+    "3CV":[],
+    "AIRCROSS":["SIN ASIGNAR"],
+    "AK 400":[],
+    "AK-M28":[],
+    "AKM":[],
+    "AM-M28":[],
+    "AMI 8":[],
+    "AX":[],
+    "AZ":[],
+    "BASALT":["SIN ASIGNAR"],
+    "BERLINGO":["CITROEN BERLINGO","FURGON"],
+    "BERLINGO FURGON":[],
+    "BX":[],
+    "C-ELYSEE":[],
+    "C1":[],
+    "C15":[],
+    "C2":[],
+    "C25":[],
+    "C3":["CITROEN C3"],
+    "C3 AIRCROSS":["CITROEN C3 AIRCROSS"],
+    "C3 PICASSO":[],
+    "C4":[],
+    "C4 AIRCROSS":[],
+    "C4 CACTUS":["SIN ASIGNAR"],
+    "C4 LOUNGE":["CITROEN C4 LOUNGE"],
+    "C4 PICASSO":[],
+    "C4 SPACETOURER":[],
+    "C5":[],
+    "C5 AIRCROSS":["SIN ASIGNAR"],
+    "C6":[],
+    "CX":[],
+    "DIANE 6":[],
+    "DS20":[],
+    "DS21M":[],
+    "DS3":[],
+    "DS4":[],
+    "DYANE":[],
+    "EVASION":[],
+    "GRAND C4 PICASSO":[],
+    "GRAND C4 SPACETOURER":[],
+    "GS":[],
+    "GSA":[],
+    "JUMPER":["CITROEN JUMPER"],
+    "JUMPY":["SIN ASIGNAR"],
+    "MEHARI":[],
+    "NUEVO C3":[],
+    "NUEVO C4 PICASSO":[],
+    "NUEVO GRAND C4 PICASSO":[],
+    "OTROS":[],
+    "PALLAS":[],
+    "SAXO":[],
+    "SPACETOURER":[],
+    "VISA":[],
+    "XANTIA":[],
+    "XSARA":[],
+    "XSARA PICASSO":[],
+    "ZX":[]
+  },
+  "CLASICOS":{
+    "Y ESPECIALES CYE CYE S":["SIN ASIGNAR"],
+    "Y ESPECIALES CYE CYE S1":["SIN ASIGNAR"]
+  },
+  "CMC":{
+    "VARICA":[]
+  },
+  "COBRA":{
+    "MOTORSPORT ARGENTINA COBRA AC 302":["COBRA MOTORSPORT ARGENTINA COBRA AC 302"],
+    "MOTORSPORT ARGENTINA COBRA AC 351 AT":["SIN ASIGNAR"]
+  },
+  "CONTINENTAL":{
+    "OTROS":[]
+  },
+  "CORADIR":{
+    "CHIKI":["SIN ASIGNAR"],
+    "TITA":["S2-100","S2-300","S4-100"],
+    "TITA S2-100":[],
+    "TITA S2-300":[],
+    "TITA S4-100":[],
+    "TITO":["S2-100","S5-100","S5-300"],
+    "TITO S2-100":[],
+    "TITO S5-100":[],
+    "TITO S5-300":[]
+  },
+  "DACIA":{
+    "1304 TLX":[],
+    "1310 TLX":[],
+    "1410 TLX":[],
+    "325":[],
+    "DUSTER":[],
+    "R1.6 4X4":[],
+    "TLX":[]
+  },
+  "DAEWOO":{
+    "CIELO":[],
+    "DAMAS":[],
+    "ESPERO":[],
+    "KALOS":[],
+    "LABO":[],
+    "LANOS":[],
+    "LEGANZA":[],
+    "MATIZ":[],
+    "MAX CUORE":[],
+    "NUBIRA":[],
+    "RACER":[],
+    "TACUMA":[],
+    "TICO":[]
+  },
+  "DAIHATSU":{
+    "A40":[],
+    "APPLAUSE":[],
+    "CHARADE":[],
+    "CHARMANT":[],
+    "CUORE":[],
+    "DELTA":[],
+    "F20L-J":[],
+    "F25":[],
+    "F300":[],
+    "F55":[],
+    "FEROZA":[],
+    "G10":[],
+    "HIJET":[],
+    "L 40 L-EKD":[],
+    "L 55 L":[],
+    "L55":[],
+    "MAX CUORE":[],
+    "MIRA":[],
+    "MOVE":[],
+    "OTROS":[],
+    "ROCKY":[],
+    "S-85":[],
+    "S60":[],
+    "S60 L":[],
+    "SIRION":[],
+    "TAFT":[],
+    "TERIOS":[],
+    "WIDE 55":[]
+  },
+  "DAIMLER":{
+    "BENZ OTROS":[]
+  },
+  "DATSUN":{
+    "180":[],
+    "200":[],
+    "240":[],
+    "280 ZX":[],
+    "720":[],
+    "BLUEBIRD":[],
+    "HLC 230":[],
+    "HLC 230VACL1":[],
+    "HLGS130BC":[],
+    "HLJC31HFCL":[],
+    "KHLGS":[],
+    "KHLS":[],
+    "KLN":[],
+    "KPL 720":[],
+    "LN":[],
+    "MJL 910":[],
+    "MLJ 910 C":[],
+    "OTROS":[],
+    "PLG 720":[],
+    "SLG 720":[]
+  },
+  "DE":{
+    "CARLO 600":[],
+    "CARLO 700":[],
+    "CARLO GLAMOUR":[],
+    "CARLO OTROS":[],
+    "SOTO ACOPLADO/SEMIRREMOLQUES":[],
+    "SOTO D-100":[],
+    "SOTO OTROS":[],
+    "TOMASO PANTERA":[]
+  },
+  "DELAGE":{
+    "OTROS":[]
+  },
+  "DELAHAYE":{
+    "PENNOCK":[]
+  },
+  "DESOTO":{
+    "D-100":[],
+    "OTROS":[]
+  },
+  "DEUTZ-AGRALE":{
+    "DYNAMIC-01":[],
+    "DYNAMIC-10":[]
+  },
   "DFSK":{
-    "K01H":["MINI TRUCK","FURGON CERRADO","FURGON REFRIGERADO"],
-    "C31":["ESTANDAR","BOX","BOX REFRIGERADO"],
+    "C31":["BOX","BOX REFRIGERADO","ESTANDAR"],
     "C32":["ESTANDAR"],
     "C35":["ESTANDAR"],
-    "EC":["35/31 FURGON MT"],
-    "GLORY 580":["7 PLAZAS"],
-    "GLORY 500":["5 PLAZAS"],
     "E5":["HIBRIDA ENCHUFABLE"],
+    "EC":["35/31 FURGON MT"],
+    "EC31":["SIN ASIGNAR"],
+    "EC35":["SIN ASIGNAR"],
+    "GLORY 500":["5 PLAZAS"],
+    "GLORY 580":["7 PLAZAS"],
+    "K01H":["FURGON CERRADO","FURGON REFRIGERADO","MINI TRUCK"]
+  },
+  "DIMEX":{
+    "D 1116A":[],
+    "D 1622 T":[],
+    "D 916":[]
+  },
+  "DINARG":{
+    "OTROS":[]
+  },
+  "DKW":{
+    "AUTO UNION":[],
+    "OTROS":[]
+  },
+  "DODGE":{
+    "1500":[],
+    "AVENGER":[],
+    "B-150":[],
+    "B-200":[],
+    "B-350":[],
+    "CARAVAN":[],
+    "CHALLENGER":[],
+    "CHARGER":[],
+    "CHARGER 500":[],
+    "CHRYS.DODGE":[],
+    "CORONADO":[],
+    "CORONET":[],
+    "CUSTOM":[],
+    "D-100":[],
+    "D-150":[],
+    "D-200":[],
+    "D-400":[],
+    "DAKOTA":[],
+    "DART":[],
+    "DAYTONA":[],
+    "DD-1000":[],
+    "DP-100":[],
+    "DP-200":[],
+    "DURANGO":["DODGE DURANGO"],
+    "E-150":[],
+    "GRAN TURISMO":[],
+    "GRAND CARAVAN":[],
+    "GT":[],
+    "GTX":[],
+    "INTREPID":[],
+    "JOURNEY":[],
+    "NEON":[],
+    "OTROS":["DODGE OTROS"],
+    "POLARA":[],
+    "RAIDER RAM":[],
+    "RAM":[],
+    "RAM 1500":[],
+    "RAM 2500":[],
+    "RAM 350":[],
+    "RAM 6500":[],
+    "RAM HIGH TOP":[],
+    "SHADOW":[],
+    "SPIRIT":[],
+    "SPORTSMAN":[],
+    "STEALTH":[],
+    "STRATUS":[],
+    "VALIANT":[]
+  },
+  "DODGE/CHRYSLER":{
+    "OTROS":[]
+  },
+  "DOMY":{
+    "K2":["SIN ASIGNAR"],
+    "V1":["SIN ASIGNAR"]
+  },
+  "DONGFENG":{
+    "CAPTAIN V 312":["SIN ASIGNAR"],
+    "CAPTAIN V 312L":["SIN ASIGNAR"],
+    "CAPTAIN V 414":["SIN ASIGNAR"],
+    "CAPTAIN W 310":["SIN ASIGNAR"],
+    "CAPTAIN W 412 DC":["SIN ASIGNAR"],
+    "CAPTAIN W 412 SC":["SIN ASIGNAR"]
+  },
+  "DS":{
+    "DS3":["SIN ASIGNAR"],
+    "DS3 CROSSBACK":["SIN ASIGNAR"],
+    "DS4":["SIN ASIGNAR"],
+    "DS7":["SIN ASIGNAR"],
+    "DS7 CROSSBACK":["SIN ASIGNAR"],
+    "DS9":["SIN ASIGNAR"]
+  },
+  "DUJUAN":{
+    "MD 6601":[]
+  },
+  "DURANT":{
+    "OTROS":[]
+  },
+  "EAGLE":{
+    "TALON":[]
+  },
+  "ENGERAUTO":{
+    "PAMPA":[]
+  },
+  "ENIAK":{
+    "ANTIQUE":[],
+    "DURANGO":[]
+  },
+  "ERSKINE":{
+    "OTROS":[]
+  },
+  "ESSEX":{
+    "OTROS":[]
+  },
+  "EUROCAR":{
+    "VANETTE":[]
+  },
+  "FARGO":{
+    "ACOPLADO/SEMIRREMOLQUE":[],
+    "D-100":[],
+    "OTROS":[]
+  },
+  "FAW":{
+    "ACTIS":["SIN ASIGNAR"],
+    "T33":["SIN ASIGNAR"],
+    "X40":["FAW X40"]
+  },
+  "FERESA":{
+    "AV-120":[]
+  },
+  "FERRARI":{
+    "250":[],
+    "296":["SIN ASIGNAR"],
+    "308":[],
+    "308 GTSI":[],
+    "328":[],
+    "330":[],
+    "348 TB":[],
+    "360":[],
+    "365":[],
+    "430":[],
+    "456":[],
+    "458":[],
+    "488":[],
+    "599":[],
+    "812":["FERRARI 812"],
+    "CALIFORNIA":[],
+    "DINO":[],
+    "ENZO":[],
+    "F12":[],
+    "F355":[],
+    "F355 F1 B":[],
+    "F430":[],
+    "F8":["SIN ASIGNAR"],
+    "MONDIAL":[],
+    "OTROS":[],
+    "PORTOFINO":["SIN ASIGNAR"],
+    "PUROSANGUE":["SIN ASIGNAR"],
+    "ROMA":["SIN ASIGNAR"],
+    "SF90":["SIN ASIGNAR"]
+  },
+  "FIAT":{
+    "100 E":[],
+    "1100":[],
+    "1200":[],
+    "125":[],
+    "127":[],
+    "128":[],
+    "130":[],
+    "131":[],
+    "132":[],
+    "133":[],
+    "147":[],
+    "1500":[],
+    "160":[],
+    "1600":[],
+    "1966":[],
+    "2100":[],
+    "500":[],
+    "500L":[],
+    "500X":[],
+    "500X CROSS":[],
+    "501":["SIN ASIGNAR"],
+    "514":[],
+    "600":["FIAT 600"],
+    "770":[],
+    "800":[],
+    "ARGO":["SIN ASIGNAR"],
+    "BARCHETTA":[],
+    "BRAVA":[],
+    "BRAVO":[],
+    "BRIO":[],
+    "CAMPAGNOLA":[],
+    "CROMA":[],
+    "CRONOS":["FIAT CRONOS"],
+    "DINO":[],
+    "DOBLO":[],
+    "DOBLO CARGO":[],
+    "DUCATO":["FIAT DUCATO"],
+    "DUNA":[],
+    "ELBA":[],
+    "EUROPA":[],
+    "FASTBACK":["SIN ASIGNAR"],
+    "FIORINO":["FIAT FIORINO"],
+    "FIORINO QUBO":[],
+    "GRAND SIENA":[],
+    "IDEA":[],
+    "IVECO DAILY":[],
+    "LINEA":[],
+    "MAREA":[],
+    "MILLE":[],
+    "MOBI":["SIN ASIGNAR"],
+    "MULTICARGA":[],
+    "NUEVO FIORINO":[],
+    "NUEVO UNO CARGO":[],
+    "OTROS":[],
+    "PALIO":[],
+    "PANDA":[],
+    "PREMIO":[],
+    "PULSE":["SIN ASIGNAR"],
+    "PUNTO":[],
+    "QUBO":[],
+    "REGATTA":[],
+    "SE":[],
+    "SIENA":[],
+    "SPAZIO":[],
+    "STILO":[],
+    "STRADA":["FIAT STRADA"],
+    "TEMPRA":[],
+    "TIPO":[],
+    "TITANO":["SIN ASIGNAR"],
+    "TORO":["SIN ASIGNAR"],
+    "UNO":[],
+    "UNO CARGO":[],
+    "UNO VAN":[],
+    "VIVACE":[],
+    "X 1/9":[]
+  },
+  "FLYING":{
+    "OTROS":[]
+  },
+  "FONIX":{
+    "GOMOTO":["SIN ASIGNAR"],
+    "K5MS":["SIN ASIGNAR"]
+  },
+  "FORD":{
+    "A":["FORD A"],
+    "AEROSTAR":[],
+    "BABY":[],
+    "BRONCO":["SIN ASIGNAR"],
+    "BRONCO I":[],
+    "BRONCO II":[],
+    "BRONCO SPORT":["FORD BRONCO SPORT"],
+    "BRONCO WILDTRAK":["SIN ASIGNAR"],
+    "CAPRI":[],
+    "CARGO VAN":[],
+    "CHATEAU":[],
+    "CLUB WAGON":[],
+    "CONSUL MARK II":[],
+    "CONTOUR":[],
+    "COURIER":["FORD COURIER"],
+    "CUSTOMLINE":[],
+    "E-100":[],
+    "E-150":[],
+    "E-250":[],
+    "E-350":[],
+    "E-450":[],
+    "E-TRANSIT":["SIN ASIGNAR"],
+    "ECON/VAN":[],
+    "ECONOLINE":[],
+    "ECOSPORT":["FORD ECOSPORT"],
+    "EDGE":[],
+    "ESCAPE":[],
+    "ESCORT":["FORD ESCORT"],
+    "EVEREST":["SIN ASIGNAR"],
+    "EXCURSION":[],
+    "EXP":[],
+    "EXPEDITION":[],
+    "EXPLORER":["FORD EXPLORER"],
+    "F-100":[],
+    "F-1000":[],
+    "F-150":["FORD F-150"],
+    "F-250":["FORD F-250"],
+    "F-350":["FORD F-350"],
+    "F-379":[],
+    "F-400":[],
+    "F-4000":[],
+    "F-450":[],
+    "F-550":[],
+    "F-600":[],
+    "F-700":[],
+    "F-7000":[],
+    "FAETON":[],
+    "FAIRLANE":[],
+    "FAIRMONT":[],
+    "FALCON":[],
+    "FESTIVA":[],
+    "FIESTA":[],
+    "FIESTA KINETIC":[],
+    "FLEX":[],
+    "FOCUS":[],
+    "FOCUS II":[],
+    "FUSION":[],
+    "GALAXY":[],
+    "GRANADA":[],
+    "KA":["FORD KA"],
+    "KUGA":["FORD KUGA"],
+    "LASER":[],
+    "LOBO":[],
+    "LT 9501":[],
+    "LTD II":[],
+    "MAVERICK":["FORD MAVERICK"],
+    "MERCURY":[],
+    "MONDEO":[],
+    "MUSTANG":["FORD MUSTANG"],
+    "ORION":[],
+    "OTROS":["FORD OTROS"],
+    "PREFECT":[],
+    "PROBE":[],
+    "PUMA":[],
+    "RANCHERO":[],
+    "RANGER":["FORD RANGER"],
+    "S-MAX":[],
+    "SIERRA":[],
+    "T":[],
+    "TAUNUS":[],
+    "TEMPO":[],
+    "TERRITORY":["FORD TERRITORY"],
+    "THUNDERBIRD":[],
+    "TRANSIT":["FORD TRANSIT"],
+    "TUDOR":[],
+    "V8":[],
+    "VICTORIA":[],
+    "WINDSTAR":[]
   },
   "FOTON":{
-    "TM1 NACIONAL":["CAB SIMPLE","CAB DOBLE"],
-    "TM1 IMPORT":["CAB SIMPLE","CAB DOBLE"],
-    "TM2":["BOX CARGO","BOX CARGO REFRIGERADO"],
-    "Z-TRUCK":["CAB SIMPLE","CAB DOBLE"],
-    "WONDER":["CAB SIMPLE","CAB DOBLE","CS BOX"],
-    "G7":["4X2 MT","4X2 AT","4X4 MT","4X4 AT"],
+    "AUMARK":["SIN ASIGNAR"],
+    "AUMARK S3":["1016 CHASIS","615 CHASIS","916 CHASIS","916 FLATBED"],
     "BLUELINE":["V9 4X4 AT"],
-    "AUMARK S3":["615 CHASIS","916 CHASIS","916 FLATBED","1016 CHASIS"],
-    "E-AUMARK L6":["CHASIS","FLATBED","BOX","BOX REFRIGERADO"],
+    "E-AUMARK L6":["BOX","BOX REFRIGERADO","CHASIS","FLATBED"],
+    "G7":["4X2 AT","4X2 MT","4X4 AT","4X4 MT"],
+    "GRATOUR T3":["SIN ASIGNAR"],
+    "GRATOUR V5":[],
+    "TM1":["FOTON TM1"],
+    "TM1 IMPORT":["CAB DOBLE","CAB SIMPLE"],
+    "TM1 NACIONAL":["CAB DOBLE","CAB SIMPLE"],
+    "TM2":["BOX CARGO","BOX CARGO REFRIGERADO"],
+    "TUNLAND":["FOTON TUNLAND"],
+    "VIEW":[],
+    "WONDER":["CAB DOBLE","CAB SIMPLE","CS BOX"],
+    "Z-TRUCK":["CAB DOBLE","CAB SIMPLE"]
+  },
+  "FREIGHTLINER":{
+    "FL-50":[]
+  },
+  "FSO":{
+    "1.9 D":[],
+    "DC 1.9":[],
+    "LB 1.9":[],
+    "POLONEZ":[],
+    "TRUCK":[]
+  },
+  "GAC":{
+    "MOTOR EMKOO":["SIN ASIGNAR"],
+    "MOTOR GS3 EMZOOM":["SIN ASIGNAR"],
+    "MOTOR GS8":["SIN ASIGNAR"]
+  },
+  "GALLOPER":{
+    "EXCEED":[],
+    "INNOVATION":[],
+    "SANTAMO":[],
+    "TURBO WAGON":[]
+  },
+  "GAMMA":{
+    "GTS800":[]
+  },
+  "GAZ":{
+    "2705":[],
+    "2705-24":[],
+    "3302":[]
+  },
+  "GEELY":{
+    "515":[],
+    "EMGRAND FE 3":[],
+    "EMGRAND GS":[],
+    "EMGRAND X7":[],
+    "LC":[]
+  },
+  "GENERAL":{
+    "MOTORS OTROS":[]
+  },
+  "GEO":{
+    "OTROS":[],
+    "PRIZM":[],
+    "TRACKER":[]
+  },
+  "GMC":{
+    "500":[],
+    "5C11AN":[],
+    "5C11JN":[],
+    "5C11JP":[],
+    "5C80JM":[],
+    "5C80JN":[],
+    "ACADIA":[],
+    "CHEVETTE":[],
+    "D-20":[],
+    "HUMMER":["SIN ASIGNAR"],
+    "K-1500":[],
+    "OTROS":[],
+    "RALLY":[],
+    "SC11JN":[],
+    "SC80JN":[],
+    "SIERRA":[],
+    "SUBURBAN":[],
+    "TFR54HDL":[],
+    "VANDURA":[],
+    "YUKON":[]
+  },
+  "GRAHAM":{
+    "PAIGE 612":[],
+    "PAIGE OTROS":["GRAHAM PAIGE OTROS"]
+  },
+  "GREAT WALL":{
+    "HAVAL H1":[],
+    "HAVAL H2":[],
+    "ORA 03":["SIN ASIGNAR"],
+    "POER":["SIN ASIGNAR"],
+    "TANK 300":["SIN ASIGNAR"],
+    "WINGLE 5":[],
+    "WINGLE 6":[],
+    "WINGLE 7":["SIN ASIGNAR"]
+  },
+  "GROSSPAL":{
+    "OTROS":[]
+  },
+  "GRUMMAN":{
+    "OLSON RS ROUTE STAR":[]
+  },
+  "HAN":{
+    "JIANG SFJ 1010":[]
+  },
+  "HANSA":{
+    "1100":[],
+    "OTROS":[]
+  },
+  "HAVAL":{
+    "H1":[],
+    "H2":[],
+    "H6":["SIN ASIGNAR"],
+    "JOLION":["SIN ASIGNAR"]
+  },
+  "HEI":{
+    "BAO HB 1605":[]
+  },
+  "HEINEKEL":{
+    "OTROS":[]
+  },
+  "HENSCHEL":{
+    "OTROS":[]
+  },
+  "HILLMAN":{
+    "OTROS":[]
+  },
+  "HOLIDAY":{
+    "RAMBLER OTROS":[]
+  },
+  "HONDA":{
+    "ACCORD":["HONDA ACCORD"],
+    "CITY":[],
+    "CIVIC":["HONDA CIVIC"],
+    "CRV":["HONDA CRV"],
+    "CRX":[],
+    "FIT":[],
+    "HR-V":["HONDA HR-V"],
+    "INTEGRA":[],
+    "JAZZ":[],
+    "LEGEND":[],
+    "NSX":[],
+    "ODYSSEY":[],
+    "OTROS":[],
+    "PASSPORT":[],
+    "PILOT":["HONDA PILOT"],
+    "PRELUDE":[],
+    "S2000":[],
+    "STREAM":[],
+    "TN ACTY":[],
+    "WR-V":["SIN ASIGNAR"],
+    "ZR-V":["SIN ASIGNAR"]
+  },
+  "HUDSON":{
+    "OTROS":[],
+    "TERRAPLANE":[]
+  },
+  "HUMBER":{
+    "OTROS":[]
+  },
+  "HUMMER":{
+    "H2":["HUMMER H2"],
+    "H3":[],
+    "OTROS":[]
+  },
+  "HUPMOBILE":{
+    "OTROS":[]
+  },
+  "HYUNDAI":{
+    "ACCENT":[],
+    "ATOS":[],
+    "ATOZ":[],
+    "AVANTE":[],
+    "CHORUS":[],
+    "COUNTY":[],
+    "COUPE":[],
+    "CRETA":["SIN ASIGNAR"],
+    "ELANTRA":[],
+    "EXCEL":[],
+    "GALLOPER":[],
+    "GENESIS":[],
+    "GETZ":[],
+    "GRACE":[],
+    "GRAND I 10":[],
+    "GRAND SANTA FE":[],
+    "H-1":["HYUNDAI H-1"],
+    "H-100":[],
+    "H350":[],
+    "HB 20":["SIN ASIGNAR"],
+    "HB 20 S":["SIN ASIGNAR"],
+    "HD72":[],
+    "I 10":[],
+    "I 30":[],
+    "IONIQ":[],
+    "KONA":[],
+    "MATRIX":[],
+    "NEW TUCSON":[],
+    "OTROS":[],
+    "PONY":[],
+    "PORTER":[],
+    "S COUPE":[],
+    "SANTA FE":["HYUNDAI SANTA FE"],
+    "SANTAMO":[],
+    "SCOUPE LS":[],
+    "SONATA":[],
+    "STAREX":[],
+    "STARIA":["SIN ASIGNAR"],
+    "TERRACAN":[],
+    "TIBURON":[],
+    "TRAJET":[],
+    "TUCSON":["HYUNDAI TUCSON"],
+    "VELOSTER":[],
+    "VERACRUZ":[],
+    "VERNA":[]
+  },
+  "IES":{
+    "3 CV":[],
+    "CARGA":[],
+    "GRINGA":[],
+    "OTROS":[],
+    "SAFARI":[]
+  },
+  "IKA":{
+    "BAQUEANO":[],
+    "BERGANTIN":[],
+    "CARABELA":[],
+    "ESTANCIERA":[],
+    "GORDINI":[],
+    "JA-2PA":[],
+    "JA-2PB":[],
+    "JA-3UB":[],
+    "JEEP":[],
+    "JEEP FRONTAL":[],
+    "JEEP GLADIATOR":[],
+    "OTROS":[],
+    "RA-3D":[],
+    "RAMBLER":[],
+    "TORINO":[],
+    "UA-1RB":[]
+  },
+  "IME":{
+    "ACOPLADO/SEMIRREMOLQUE":[],
+    "C-66":[],
+    "C-76":[],
+    "F71 CAMION":[],
+    "OTROS":[],
+    "P-62":[],
+    "P-67":[],
+    "P-68":[],
+    "P-69":[],
+    "P-70":[],
+    "RASTROJERO":[],
+    "X-78":[]
+  },
+  "INFINITI":{
+    "FX35":[]
+  },
+  "INNOCENTI":{
+    "ELBA":[]
+  },
+  "INTERNATIONAL":{
+    "DIFFERENT 99":[],
+    "OTROS":[]
+  },
+  "ISARD":{
+    "K-700":[],
+    "OTROS":[],
+    "T-300":[],
+    "T-700":[]
+  },
+  "ISETTA":{
+    "300":[],
+    "OTROS":[]
+  },
+  "ISUZU":{
+    "2.5 DIESEL CABINA DOBLE":[],
+    "2.5 DIESEL CABINA SIMPLE":[],
+    "2.8 TD 4X2 CABINA DOBLE":[],
+    "2.8 TD 4X4 CABINA DOBLE":[],
+    "AMIGO":[],
+    "D-MAX":["SIN ASIGNAR"],
+    "DLX":[],
+    "DMAX":[],
+    "HOMBRE":[],
+    "KB 20":[],
+    "KB 21":[],
+    "KB 25":[],
+    "KB 26":[],
+    "KB 30":[],
+    "KB 35":[],
+    "KB 40":[],
+    "KB 41":[],
+    "KBD 20":[],
+    "KBD 25":[],
+    "KBD 41":[],
+    "NHR":[],
+    "OTROS":[],
+    "PICK-UP":[],
+    "RODEO":[],
+    "SPACE":[],
+    "TFR":[],
+    "TFR 16 H00":[],
+    "TFR 54 20":[],
+    "TFR 54 H00":[],
+    "TFR 54 H10":[],
+    "TFR 54 H20":[],
+    "TFR 54 HDAL":[],
+    "TFR 54 HLP":[],
+    "TFR 54 HLS":[],
+    "TFR 55 H00":[],
+    "TFR 55 H10":[],
+    "TFR 55 H20":[],
+    "TFR 55 HDAL":[],
+    "TFR 55 HDAP":[],
+    "TFR 55 HSAL":[],
+    "TFR 69 HDEI":[],
+    "TFR 69 HPEI":[],
+    "TFR 69 HSEI":[],
+    "TFR 69 HSI":[],
+    "TFS":[],
+    "TFS 54 F00":[],
+    "TFS 54 FLS":[],
+    "TFS 54 FSL":[],
+    "TFS 54 H10":[],
+    "TFS 54 H20":[],
+    "TFS 55 H00":[],
+    "TFS 55 H10":[],
+    "TFS 55 H20":[],
+    "TFS 69 HDE":[],
+    "TFS 69 HDEI":[],
+    "TFS 69 HPEI":[],
+    "TFS 69 HSEI":[],
+    "TRF 69 HDEI":[],
+    "TROOPER":["ISUZU TROOPER"],
+    "UBS":[]
+  },
+  "IVECO":{
+    "10-190":["SIN ASIGNAR"],
+    "40.8":[],
+    "49.10":[],
+    "DAILY":["IVECO DAILY"],
+    "DC 4910":[],
+    "MASSIF":[],
+    "TURBO DAILY":[]
+  },
+  "IZH":{
+    "2715":[],
+    "27151":[]
+  },
+  "JAC":{
+    "E30X":["SIN ASIGNAR"],
+    "HFC 6600":[],
+    "HFC 6702":[],
+    "J3":[],
+    "JACX200":["SIN ASIGNAR"],
+    "JS2":["SIN ASIGNAR"],
+    "JS4":["SIN ASIGNAR"],
+    "JS6":["SIN ASIGNAR"],
+    "JS8":["SIN ASIGNAR"],
+    "S2":["SIN ASIGNAR"],
+    "S3":["SIN ASIGNAR"],
+    "S5":[],
+    "S7":[],
+    "T6":["SIN ASIGNAR"],
+    "T8":["SIN ASIGNAR"],
+    "T9":["SIN ASIGNAR"],
+    "X200":["SIN ASIGNAR"]
+  },
+  "JAGUAR":{
+    "E-TYPE":[],
+    "F-PACE":[],
+    "F-TYPE":[],
+    "MK1":[],
+    "MK2":[],
+    "OTROS":[],
+    "S-TYPE":[],
+    "SS 100":[],
+    "X-TYPE":[],
+    "XE":[],
+    "XF":[],
+    "XFR":[],
+    "XJ":[],
+    "XJ SUPER":[],
+    "XJ6":[],
+    "XJ8":[],
+    "XJR8":[],
+    "XK":[],
+    "XK-150":[],
+    "XKE":[],
+    "XKR":[]
+  },
+  "JEEP":{
+    "CHEROKEE":[],
+    "CJ-2AA":[],
+    "COMANCHE":[],
+    "COMMANDER":["JEEP COMMANDER"],
+    "COMPASS":["JEEP COMPASS"],
+    "ESTANCIERA":[],
+    "GLADIATOR":["JEEP GLADIATOR"],
+    "GRAND CHEROKEE":["JEEP GRAND CHEROKEE"],
+    "IKA":[],
+    "IKA JA-2PB":[],
+    "IKA JA-3UB":[],
+    "JA-2PB":[],
+    "JEEP/PICK-UP":[],
+    "LIBERTY":[],
+    "OTROS":[],
+    "PATRIOT":[],
+    "RENEGADE":["SIN ASIGNAR"],
+    "T-1000":[],
+    "T-80":[],
+    "WAGONEER":[],
+    "WRANGLER":["JEEP WRANGLER"]
+  },
+  "JETOUR":{
+    "DASHING":["SIN ASIGNAR"],
+    "T1":["SIN ASIGNAR"],
+    "T2":["SIN ASIGNAR"],
+    "X50":["SIN ASIGNAR"],
+    "X70":["JETOUR X70"]
+  },
+  "JMC":{
+    "GRAND AVENUE":["SIN ASIGNAR"]
+  },
+  "JMEV":{
+    "EASY 3":["SIN ASIGNAR"]
+  },
+  "JOWETT":{
+    "JAVELIN":[]
+  },
+  "KAISER":{
+    "CARABELA":[],
+    "M606":[],
+    "OTROS":[]
+  },
+  "KAIYI":{
+    "X3":["SIN ASIGNAR"],
+    "X7":["SIN ASIGNAR"]
+  },
+  "KAMA":{
+    "X1":["SIN ASIGNAR"]
+  },
+  "KIA":{
+    "AVELLA":[],
+    "BESTA":[],
+    "CAPITAL":[],
+    "CARENS":["KIA CARENS"],
+    "CARNIVAL":["KIA CARNIVAL"],
+    "CERATO":["KIA CERATO"],
+    "CERES":[],
+    "CLARUS":[],
+    "FORTE":[],
+    "FRONTIER":[],
+    "GRAND CARNIVAL":[],
+    "GRAND SPORTAGE":[],
+    "K2400":[],
+    "K2500":["KIA K2500"],
+    "K2700":[],
+    "K2900":[],
+    "K3":["SIN ASIGNAR"],
+    "K3500":[],
+    "MAGENTIS":[],
+    "MOHAVE":[],
+    "MORNING":["SIN ASIGNAR"],
+    "NIRO":["SIN ASIGNAR"],
+    "OPIRUS":[],
+    "OTROS":[],
+    "PICANTO":["KIA PICANTO"],
+    "PREGIO":[],
+    "PRIDE":[],
+    "RIO":["KIA RIO"],
+    "RONDO":[],
+    "SEDONA":[],
+    "SELTOS":["SIN ASIGNAR"],
+    "SEPHIA":["KIA SEPHIA"],
+    "SORENTO":["KIA SORENTO"],
+    "SOUL":[],
+    "SPORTAGE":["KIA SPORTAGE"],
+    "TOPIC":[],
+    "VISTO":[]
+  },
+  "KING":{
+    "OTROS":[]
+  },
+  "KYC":{
+    "MAMUT":["KYC MAMUT"]
+  },
+  "LADA":{
+    "21043":[],
+    "AFALINA":[],
+    "LAIKA":[],
+    "NIVA":[],
+    "OTROS":[],
+    "SAMARA":[]
+  },
+  "LAMBORGHINI":{
+    "400 GT":[],
+    "AVENTADOR":[],
+    "GALLARDO":[],
+    "HURACAN":["SIN ASIGNAR"],
+    "MIURA":[],
+    "OTROS":[],
+    "URUS":["SIN ASIGNAR"]
+  },
+  "LANCIA":{
+    "2000":[],
+    "BETA":[],
+    "DEDRA":[],
+    "DELTA":[],
+    "FLAVIA":[],
+    "FULVIA":[],
+    "OTROS":[],
+    "THEMA":[]
+  },
+  "LAND ROVER":{
+    "109":[],
+    "88":[],
+    "DEFENDER":["LAND ROVER DEFENDER"],
+    "DISCOVERY":[],
+    "FREELANDER":[],
+    "FREELANDER 2":[],
+    "OTROS":[],
+    "RANGE ROVER":["LAND ROVER RANGE ROVER"],
+    "RANGE ROVER EVOQUE":["LAND ROVER RANGE ROVER EVOQUE"],
+    "RANGE ROVER SPORT":["LAND ROVER RANGE ROVER SPORT"],
+    "RANGE ROVER VELAR":[],
+    "SANTANA":[]
+  },
+  "LASALLE":{
+    "OTROS":[]
+  },
+  "LEXUS":{
+    "ES":["LEXUS ES"],
+    "GS":[],
+    "GX":["LEXUS GX"],
+    "IS":["LEXUS IS"],
+    "LBX":["SIN ASIGNAR"],
+    "LC":["SIN ASIGNAR"],
+    "LS":[],
+    "LX":["SIN ASIGNAR"],
+    "NX":["SIN ASIGNAR"],
+    "OTROS":[],
+    "RC":["SIN ASIGNAR"],
+    "RX":["LEXUS RX"],
+    "SC":[],
+    "UX":["SIN ASIGNAR"]
+  },
+  "LEYLAND":{
+    "SHERPA":[]
+  },
+  "LGP":{
+    "68":[],
+    "70":[],
+    "OTROS":[]
+  },
+  "LIFAN":{
+    "FOISON":[],
+    "LF5028XXY":[],
+    "M7":[],
+    "MYWAY":["SIN ASIGNAR"],
+    "X50":[],
+    "X60":[],
+    "X70":[]
+  },
+  "LINCOLN":{
+    "CONTINENTAL":[],
+    "NAVIGATOR":[],
+    "OTROS":[],
+    "TOWN CAR":[]
+  },
+  "LO":{
+    "GIUDICE PACE OTROS":[]
+  },
+  "LOTUS":{
+    "ELISE SPORT":[],
+    "EMIRA":["SIN ASIGNAR"],
+    "OTROS":[],
+    "SEVEN":[]
+  },
+  "MAESTRO":{
+    "MAESTRO":[]
+  },
+  "MAHINDRA":{
+    "CABINA DOBLE":[],
+    "CL 340":[],
+    "MM 540":[],
+    "MM 540 DP":[],
+    "MM 900":[]
+  },
+  "MAN":{
+    "OTROS":[]
+  },
+  "MARCOPOLO":{
+    "VOLARE":[]
+  },
+  "MARUTI":{
+    "ALTO GL 1.0":[],
+    "GYPSY":[]
+  },
+  "MASERATI":{
+    "3200 GT":[],
+    "3500 GTI SEBRING":[],
+    "GHIBILI":[],
+    "GRANTURISMO":[],
+    "INDY":[],
+    "LEVANTE":[],
+    "OTROS":[],
+    "QUATTROPORTE":[],
+    "SPYDER":[]
+  },
+  "MAXUS":{
+    "EDELIVER 9":["SIN ASIGNAR"],
+    "T90":["SIN ASIGNAR"]
+  },
+  "MAZDA":{
+    "121":[],
+    "323":[],
+    "626":[],
+    "929":[],
+    "ARTIS":[],
+    "B1800":[],
+    "B2000":[],
+    "B2500":[],
+    "B2600":[],
+    "B2900":[],
+    "E1600":[],
+    "E1800":[],
+    "E2200":[],
+    "E3000":[],
+    "FB1800":[],
+    "MIATA":[],
+    "MILLENIA":[],
+    "MPV":[],
+    "MX3":[],
+    "MX5":[],
+    "MX6":[],
+    "OTROS":[],
+    "RX7":[],
+    "UF26":[],
+    "UF97":[]
+  },
+  "MCLAREN":{
+    "750S":["SIN ASIGNAR"]
+  },
+  "MERCEDES":{
+    "BENZ/COMIL LO 915":[],
+    "BENZ/COMIL PIA":[],
+    "BENZ/MARCOPOLO LO 915":[],
+    "BENZ/NEOBUS THUNDER+":[]
+  },
+  "MERCEDES BENZ":{
+    "1214":[],
+    "130":[],
+    "170":[],
+    "170 D":[],
+    "170 SD":[],
+    "180":[],
+    "190":[],
+    "190 D":[],
+    "200":[],
+    "200 SE":[],
+    "207 D":[],
+    "220":[],
+    "220 D":[],
+    "220 E":[],
+    "220 SE":[],
+    "220/27":[],
+    "230":[],
+    "230 C":[],
+    "230 G":[],
+    "230 S":[],
+    "230 TE":[],
+    "240":[],
+    "240 D":[],
+    "250":[],
+    "250 S":[],
+    "260 E":[],
+    "280":[],
+    "280 SLC":[],
+    "300":[],
+    "300 CE":[],
+    "300 G":[],
+    "300 TD":[],
+    "320":[],
+    "350":[],
+    "380":[],
+    "380 SEC":[],
+    "450":[],
+    "500":[],
+    "500 SEC":[],
+    "560":[],
+    "608":[],
+    "709":[],
+    "710":[],
+    "A160":[],
+    "A170":[],
+    "A180":[],
+    "A190":[],
+    "A200":["MERCEDES BENZ A200"],
+    "A250":["MERCEDES BENZ A250"],
+    "AMG A35":["SIN ASIGNAR"],
+    "AMG A45":["MERCEDES BENZ AMG A45"],
+    "AMG C43":["SIN ASIGNAR"],
+    "AMG CLE 53":["SIN ASIGNAR"],
+    "AMG G 63":["SIN ASIGNAR"],
+    "AMG GLC 43":["SIN ASIGNAR"],
+    "AMG GLC 63":[],
+    "AMG GLE 53":["SIN ASIGNAR"],
+    "AMG GLE 63 S":[],
+    "AMG GT 63 S":["SIN ASIGNAR"],
+    "AMG GT R":[],
+    "AMG GT S":[],
+    "AMG GTC":[],
+    "AMG SL 63":["SIN ASIGNAR"],
+    "AMG SLC 43":[],
+    "B170":[],
+    "B180":[],
+    "B200":[],
+    "BMO 390":[],
+    "BMO 688":[],
+    "C180":[],
+    "C200":[],
+    "C220":[],
+    "C230":[],
+    "C240":[],
+    "C250":[],
+    "C270":[],
+    "C280":[],
+    "C300":["SIN ASIGNAR"],
+    "C320":[],
+    "C350":[],
+    "C400":[],
+    "C63":[],
+    "CL500":[],
+    "CLA200":["MERCEDES BENZ CLA200"],
+    "CLA250":[],
+    "CLA45":[],
+    "CLASE C":[],
+    "CLASE CLK":[],
+    "CLASE E":[],
+    "CLC 230":[],
+    "CLC 250":[],
+    "CLC 350":[],
+    "CLK 200":[],
+    "CLK 230":[],
+    "CLK 320":[],
+    "CLK 350":[],
+    "CLK 430":[],
+    "CLK 500":[],
+    "CLS 350":[],
+    "CLS 500":[],
+    "CLS 63":[],
+    "D 170":[],
+    "E200":[],
+    "E220":[],
+    "E230":[],
+    "E240":[],
+    "E250":[],
+    "E270":[],
+    "E280":[],
+    "E290":[],
+    "E300":[],
+    "E320":[],
+    "E350":[],
+    "E400":[],
+    "E420":[],
+    "E430":[],
+    "E450":["MERCEDES BENZ E450"],
+    "E500":[],
+    "E53":["SIN ASIGNAR"],
+    "E55 AMG":[],
+    "E63":[],
+    "EQA 350":["SIN ASIGNAR"],
+    "EQE 500":["SIN ASIGNAR"],
+    "G500":["SIN ASIGNAR"],
+    "GL 500":[],
+    "GLA 200":["MERCEDES BENZ GLA 200"],
+    "GLA 250":["MERCEDES BENZ GLA 250"],
+    "GLA 45":[],
+    "GLB 200":["SIN ASIGNAR"],
+    "GLB 250":["SIN ASIGNAR"],
+    "GLC 200":["SIN ASIGNAR"],
+    "GLC 300":["SIN ASIGNAR"],
+    "GLC 350":[],
+    "GLE 400":[],
+    "GLE 450":["SIN ASIGNAR"],
+    "GLK 280":[],
+    "GLK 300":[],
+    "GLS 500":[],
+    "L 1215":[],
+    "L 1518":[],
+    "L 1620":[],
+    "L 1621":[],
+    "L 608D":[],
+    "LD 608":[],
+    "LFU 608":[],
+    "LO 1112":[],
+    "LO 1114":[],
+    "LO 608":[],
+    "LO 812":[],
+    "LO 813":[],
+    "LO 814":[],
+    "LO 911":[],
+    "LO 914":[],
+    "LO 915":[],
+    "LO 916":["SIN ASIGNAR"],
+    "MB 100 D":[],
+    "MB 130":[],
+    "MB 140":[],
+    "MB 180 D":[],
+    "MB D":[],
+    "ML 230":[],
+    "ML 270":[],
+    "ML 320":[],
+    "ML 350":[],
+    "ML 400":[],
+    "ML 430":[],
+    "ML 500":[],
+    "ML 63":[],
+    "OF 1417":[],
+    "OH 1315":[],
+    "OM 621 II":[],
+    "OTROS":[],
+    "S220":[],
+    "S280":[],
+    "S320":[],
+    "S350":[],
+    "S400":[],
+    "S420":[],
+    "S430":[],
+    "S500":["MERCEDES BENZ S500"],
+    "SL 280":[],
+    "SL 320":[],
+    "SL 350":[],
+    "SL 500":[],
+    "SL 55":[],
+    "SL 600":[],
+    "SLK 200":[],
+    "SLK 230":[],
+    "SLK 250":[],
+    "SLK 320":[],
+    "SLK 350":[],
+    "SLK 55":[],
+    "SLR MCLAREN":[],
+    "SLS AMG":[],
+    "SPECTRUM ROAD":[],
+    "SPRINTER":["MERCEDES BENZ SPRINTER","SIN ASIGNAR"],
+    "U 416":[],
+    "UNIMOG":[],
+    "V230":[],
+    "VIANO":[],
+    "VITO":["MERCEDES BENZ VITO"]
+  },
+  "MERCURY":{
+    "CAPRI":[],
+    "MONTERREY":[],
+    "MOUNTAINEER":[],
+    "OTROS":[],
+    "VILLAGER WAGON":[]
+  },
+  "MESSERSCHMIT":{
+    "KR201":[],
+    "OTROS":[]
+  },
+  "METRO":{
+    "MD 660":[],
+    "MD 6601D":[]
+  },
+  "MG":{
+    "A":[],
+    "B":[],
+    "BH-613":[],
+    "C":[],
+    "MG3":["SIN ASIGNAR"],
+    "MGB":[],
+    "MGF":[],
+    "MIDGET":[],
+    "OTROS":[],
+    "ZS":["SIN ASIGNAR"]
+  },
+  "MGB":{
+    "OTROS":[],
+    "TOURER":[]
+  },
+  "MILES":{
+    "GT40":["SIN ASIGNAR"]
+  },
+  "MINI":{
+    "CLUBMAN":[],
+    "COUNTRYMAN":["MINI COUNTRYMAN"],
+    "JOHN COOPER WORKS":["MINI JOHN COOPER WORKS"],
+    "MINI COOPER":["MINI MINI COOPER"],
+    "ONE":[]
+  },
+  "MITSUBISHI":{
+    "3000 GT":[],
+    "CELESTE":[],
+    "COLT":[],
+    "ECLIPSE":[],
+    "EXPO":[],
+    "GALANT":[],
+    "GTO":[],
+    "L100":[],
+    "L200":["MITSUBISHI L200"],
+    "L300":[],
+    "LANCER":[],
+    "MIRAGE":[],
+    "MONTERO":[],
+    "NATIVA":[],
+    "OTROS":[],
+    "OUTLANDER":["MITSUBISHI OUTLANDER"],
+    "PAJERO":[],
+    "SAPPORO":[],
+    "SPACE RUNNER":[],
+    "SPACE WAGON":[]
+  },
+  "MONTENEGRO":{
+    "A-25R-BM":[]
+  },
+  "MORGAN":{
+    "PLUS FOUR":[]
+  },
+  "MORRIS":{
+    "BM-612":[],
+    "MINI COOPER S":[],
+    "OTROS":[]
+  },
+  "NAKAI":{
+    "CHANGAN":[],
+    "SC 1011":[]
+  },
+  "NASH":{
+    "LAFAYETTE":[],
+    "OTROS":[]
+  },
+  "NISSAN":{
+    "200":[],
+    "240 SX":[],
+    "300 ZX":[],
+    "350Z":[],
+    "370Z":[],
+    "400 Z":["SIN ASIGNAR"],
+    "4X2":[],
+    "720":[],
+    "AD WAGON":[],
+    "ALG 720":[],
+    "ALG720T3":[],
+    "ALTIMA":[],
+    "ARMADA":[],
+    "BAYAL":[],
+    "BLUEBIRD":[],
+    "CABINA DOBLE":[],
+    "CABINA SIMPLE":[],
+    "CABINA Y MEDIA":[],
+    "D21":[],
+    "FRONTIER":["NISSAN FRONTIER"],
+    "GD 21":[],
+    "GT-R":[],
+    "HAYAL":[],
+    "HLJ30GAERCS-F1":[],
+    "KICKS":["SIN ASIGNAR"],
+    "KML160SDP":[],
+    "LEAF":["NISSAN LEAF"],
+    "MARCH":[],
+    "MAXIMA":[],
+    "MICRA":[],
+    "MURANO":[],
+    "NAVARA":["NISSAN NAVARA"],
+    "NISSAN":[],
+    "NOTE":[],
+    "NP300 FRONTIER":[],
+    "NX":[],
+    "OTROS":[],
+    "PATHFINDER":[],
+    "PATROL":[],
+    "PICK-UP":[],
+    "PRIMASTAR":[],
+    "PRIMERA":[],
+    "QASHQAI":[],
+    "QLGD212SF":[],
+    "QUEST":[],
+    "SENTRA":["NISSAN SENTRA"],
+    "SERENA":[],
+    "SKYLINE":[],
+    "STANZA":[],
+    "SUNNY":[],
+    "TAYAL":[],
+    "TEANA":[],
+    "TERRANO":[],
+    "TERRANO II":[],
+    "TIIDA":[],
+    "TITAN":[],
+    "TL 720T":[],
+    "TLG 720":[],
+    "TRADE":[],
+    "UAL 720":[],
+    "UAL720T3":[],
+    "VAL 720":[],
+    "VANETTE":[],
+    "VERSA":["NISSAN VERSA"],
+    "X-TERRA":[],
+    "X-TRAIL":["NISSAN X-TRAIL"]
+  },
+  "NSU":{
+    "OTROS":[],
+    "PRINZ":[]
+  },
+  "OLDSMOBILE":{
+    "CUTLASS":[],
+    "DELTA":[],
+    "OTROS":[]
+  },
+  "OLTCIT":{
+    "CLUB 11":[],
+    "CLUB 12":[]
+  },
+  "OM":{
+    "OTROS":[],
+    "SUPER ORIONE":[]
+  },
+  "OPEL":{
+    "ASTRA":[],
+    "ASTRA CARAVAN":[],
+    "CALIBRA":[],
+    "CORSA":[],
+    "FRONTERA":[],
+    "K 180":[],
+    "KADETT":[],
+    "MERIVA":[],
+    "OMEGA":[],
+    "OPEL":[],
+    "OTROS":[],
+    "REKORD":[],
+    "TIGRA":[],
+    "VECTRA":[],
+    "ZAFIRA":[]
+  },
+  "OTROS":{
+    "ACOPLADO/SEMIRREMOLQUE":[],
+    "OTROS":["OTROS OTROS"]
+  },
+  "OVERLAND":{
+    "DOBLE PHAETON":[],
+    "OTROS":[]
+  },
+  "P":{
+    "& H OTROS":[]
+  },
+  "PACKARD":{
+    "OTROS":[]
+  },
+  "PAGANI":{
+    "OTROS":[]
+  },
+  "PEUGEOT":{
+    "1007":[],
+    "106":[],
+    "2008":["SIN ASIGNAR"],
+    "205":[],
+    "206":[],
+    "207":[],
+    "207 COMPACT":[],
+    "208":["PEUGEOT 208"],
+    "3008":["PEUGEOT 3008"],
+    "301":[],
+    "306":[],
+    "307":[],
+    "308":[],
+    "308S":[],
+    "309":[],
+    "4008":[],
+    "403":[],
+    "404":[],
+    "405":[],
+    "406":[],
+    "407":[],
+    "408":[],
+    "5008":["PEUGEOT 5008"],
+    "504":[],
+    "505":[],
+    "508":[],
+    "604":[],
+    "605":[],
+    "607":[],
+    "806":[],
+    "807":[],
+    "BOXER":["PEUGEOT BOXER"],
+    "E-2008":["SIN ASIGNAR"],
+    "EXPERT":["PEUGEOT EXPERT"],
+    "EXPERT TEPEE":[],
+    "HOGGAR":[],
+    "J5":[],
+    "NUEVO 3008":["SIN ASIGNAR"],
+    "NUEVO 408":["SIN ASIGNAR"],
+    "NUEVO 5008":["SIN ASIGNAR"],
+    "OTROS":[],
+    "PARTNER":["FURGON","PEUGEOT PARTNER"],
+    "PARTNER FURGON":[],
+    "RCZ":[],
+    "SEDAN 4 PUERTAS":[],
+    "T4B":[],
+    "TRAVELLER":[]
+  },
+  "PIAGGIO":{
+    "PORTER":[]
+  },
+  "PLYMOUTH":{
+    "1937":[],
+    "GRAND VOYAGER":[],
+    "NEON":[],
+    "OTROS":[],
+    "ROAD RUNNER":[],
+    "VOYAGER":[]
+  },
+  "POLARIS":{
+    "RANGER":[],
+    "RANGER 4X4":[],
+    "RANGER XP":[]
+  },
+  "PONTIAC":{
+    "CATALINA":[],
+    "FIREBIRD":[],
+    "GTO":[],
+    "OTROS":["PONTIAC OTROS"],
+    "SOLSTICE":[],
+    "TRANS SPORT":[],
+    "TRANS-AM":[],
+    "VIBE":[]
+  },
+  "PORSCHE":{
+    "356":[],
+    "356 A":[],
+    "718":["SIN ASIGNAR"],
+    "911":["PORSCHE 911"],
+    "912":[],
+    "914":[],
+    "924":[],
+    "928":[],
+    "944":[],
+    "987":[],
+    "993":[],
+    "BOXSTER":[],
+    "CARRERA":[],
+    "CAYENNE":["PORSCHE CAYENNE"],
+    "CAYMAN":[],
+    "GT3":[],
+    "MACAN":["PORSCHE MACAN"],
+    "OTROS":[],
+    "PANAMERA":["PORSCHE PANAMERA"],
+    "SPYDER":[],
+    "TAYCAN":["SIN ASIGNAR"]
+  },
+  "PRATI-FRUEHAUF":{
+    "PB F2 HD":[]
+  },
+  "PROTON":{
+    "415 GLSI":[],
+    "420":[],
+    "WIRA":[]
+  },
+  "PUELCHE":{
+    "PUELCHE":[]
+  },
+  "PUMA":{
+    "GTE 1600":[],
+    "OTROS":[]
+  },
+  "RAM":{
+    "1500":["RAM 1500"],
+    "2500":["RAM 2500"],
+    "DAKOTA":["SIN ASIGNAR"],
+    "RAMPAGE":["SIN ASIGNAR"]
+  },
+  "RAMBLER":{
+    "AMBASSADOR":[],
+    "CLASSIC":[],
+    "CLASSIC CROSS COUNTRY":[],
+    "OTROS":[]
+  },
+  "RANQUEL":{
+    "1.3 T":[],
+    "OTROS":[]
+  },
+  "RASTROJERO":{
+    "DIESEL C-66":[],
+    "DIESEL C-76":[],
+    "DIESEL F-71":[],
+    "DIESEL F-81":[],
+    "DIESEL M-91":[],
+    "DIESEL NC-62":[],
+    "DIESEL NP-62":[],
+    "DIESEL NP-66":[],
+    "DIESEL NP-92":[],
+    "DIESEL OTROS":[],
+    "DIESEL P-63":[],
+    "DIESEL P-64":[],
+    "DIESEL P-67":[],
+    "DIESEL P-68":[],
+    "DIESEL P-69":[],
+    "DIESEL P-70":[],
+    "DIESEL P-71":[],
+    "DIESEL X-78":[]
+  },
+  "RAUDA":{
+    "DISCOLO JM":["SIN ASIGNAR"]
+  },
+  "RENAULT":{
+    "11":[],
+    "12":[],
+    "17":[],
+    "18":[],
+    "19":[],
+    "20":[],
+    "21":[],
+    "25":[],
+    "30":[],
+    "3110/60":[],
+    "4":[],
+    "5":[],
+    "6":[],
+    "850":[],
+    "9":[],
+    "ALASKAN":["SIN ASIGNAR"],
+    "ALLIANCE":[],
+    "ARKANA":["SIN ASIGNAR"],
+    "CAPTUR":["SIN ASIGNAR"],
+    "CLIO":["RENAULT CLIO"],
+    "CLIO MIO":[],
+    "CLIO WORK":[],
+    "D 19 WIDE":[],
+    "D16":[],
+    "D19":[],
+    "DA-1V":[],
+    "DAUPHINE":[],
+    "DUSTER":["RENAULT DUSTER"],
+    "DUSTER OROCH":["SIN ASIGNAR"],
+    "EA-R4F":[],
+    "ESPACE":[],
+    "ESTANCIERA":[],
+    "EXPRESS":[],
+    "FLUENCE":[],
+    "FUEGO":[],
+    "GALA":[],
+    "GORDINI":[],
+    "GRAND SCENIC":[],
+    "JEEP":[],
+    "KANGOO":["FURGON","RENAULT KANGOO"],
+    "KANGOO FURGON":[],
+    "KANGOO II":["SIN ASIGNAR"],
+    "KARDIAN":["SIN ASIGNAR"],
+    "KOLEOS":["RENAULT KOLEOS"],
+    "KWID":["RENAULT KWID"],
+    "LAGUNA":[],
+    "LATITUDE":[],
+    "LOGAN":["RENAULT LOGAN"],
+    "MASTER":["RENAULT MASTER"],
+    "MEDALLION":[],
+    "MEGANE":["RENAULT MEGANE"],
+    "MEGANE II":[],
+    "MEGANE III":[],
+    "NUEVO LOGAN":[],
+    "NUEVO MASTER":[],
+    "NUEVO SANDERO":["RENAULT NUEVO SANDERO"],
+    "OROCH":["SIN ASIGNAR"],
+    "OTROS":[],
+    "RODEO":[],
+    "SAFRANE":[],
+    "SANDERO":["RENAULT SANDERO"],
+    "SCENIC":[],
+    "STEPWAY":["SIN ASIGNAR"],
+    "SYMBOL":[],
+    "TA 8PB":[],
+    "TORINO":[],
+    "TRAFIC":[],
+    "TWINGO":[],
+    "TYPE AG1":[],
+    "VIVA GRAND SPORT":[]
+  },
+  "RILEY":{
+    "BM-631":[],
+    "OTROS":[]
+  },
+  "ROLLS":{
+    "ROYCE OTROS":[],
+    "ROYCE SILVER CLOUD II":[],
+    "ROYCE SILVER SHADOW":[],
+    "ROYCE SILVER SPIRIT":[],
+    "ROYCE SILVER WRAITH II":[]
+  },
+  "ROVER":{
+    "200":[],
+    "214":[],
+    "216":[],
+    "218":[],
+    "220":[],
+    "414":[],
+    "416":[],
+    "420":[],
+    "618":[],
+    "620":[],
+    "623":[],
+    "820":[],
+    "MINI":[],
+    "MINI COOPER":[],
+    "MINI CORD":[],
+    "OTROS":[],
+    "R25":[],
+    "R45":[],
+    "R75":[]
+  },
+  "RUGBY":{
+    "OTROS":[]
+  },
+  "SAAB":{
+    "9.3":[],
+    "9.5":[],
+    "900":[],
+    "9000":[]
+  },
+  "SANTANA":{
+    "SAMURAI":[],
+    "VITARA":[]
+  },
+  "SATURN":{
+    "L200":[],
+    "SC":[]
+  },
+  "SCANIA":{
+    "K112":[],
+    "K113":[]
+  },
+  "SEAT":{
+    "131":[],
+    "ALHAMBRA":[],
+    "ALTEA":[],
+    "ALTEA FREETRACK":[],
+    "ATECA":["SIN ASIGNAR"],
+    "CORDOBA":[],
+    "IBIZA":[],
+    "INCA":[],
+    "LEON":[],
+    "MARBELLA":[],
+    "TERRA":[],
+    "TOLEDO":[]
+  },
+  "SERO":{
+    "CARGO BAJO":["SIN ASIGNAR"],
+    "SEDAN":["SERO SEDAN"]
+  },
+  "SHINERAY":{
+    "G01":["SHINERAY G01"],
+    "G03F":["SIN ASIGNAR"],
+    "M7":["SIN ASIGNAR"],
+    "T30":["SIN ASIGNAR"],
+    "T32":["SHINERAY T32"],
+    "X30":[],
+    "X7":["SIN ASIGNAR"]
+  },
+  "SIAM":{
+    "DI TELLA 1500":[],
+    "DI TELLA ARGENTA":[],
+    "DI TELLA MAGNETTE":[],
+    "DI TELLA MAGNETTE II":[],
+    "DI TELLA OTROS":[],
+    "DI TELLA TRAVELLER":[]
+  },
+  "SIMCA":{
+    "ARONDE":[],
+    "OTROS":[]
+  },
+  "SIN":{
+    "MARCA OTROS":[],
+    "MARCA QF302":["SIN ASIGNAR"],
+    "MARCA QF302-300":["SIN ASIGNAR"],
+    "MARCA QF302-390":["SIN ASIGNAR"]
+  },
+  "SKODA":{
+    "FABIA":[],
+    "FELICIA":[],
+    "OTROS":[]
+  },
+  "SKYWELL":{
+    "BE11":["SIN ASIGNAR"],
+    "ET5":["SIN ASIGNAR"]
+  },
+  "SMART":{
+    "FORFOUR":[],
+    "FORTWO":[],
+    "PASSION":[],
+    "PURE":[]
+  },
+  "SOUEAST":{
+    "DX3":[]
+  },
+  "SSANGYONG":{
+    "ACTYON":[],
+    "ISTANA":[],
+    "KORANDO":[],
+    "MUSSO":[],
+    "OTROS":[],
+    "REXTON":[],
+    "RODIUS":[]
+  },
+  "STUDEBAKER":{
+    "CHAMP":[],
+    "OTROS":[],
+    "SPECIAL CHAMP":[]
+  },
+  "SUBARU":{
+    "1300":[],
+    "1600":[],
+    "1800":[],
+    "600":[],
+    "AF2-L":[],
+    "ALL NEW FORESTER":["SIN ASIGNAR"],
+    "ALL NEW IMPREZA":["SIN ASIGNAR"],
+    "CROSSTREK":["SIN ASIGNAR"],
+    "FORESTER":["SUBARU FORESTER"],
+    "IMPREZA":[],
+    "J12":[],
+    "JUSTY":[],
+    "K77":[],
+    "K87":[],
+    "K87L":[],
+    "LEGACY":[],
+    "LEONE":[],
+    "OTROS":[],
+    "OUTBACK":["SUBARU OUTBACK"],
+    "SVX":[],
+    "TRIBECA":[],
+    "WRX":["SUBARU WRX"],
+    "XV":["SUBARU XV"]
+  },
+  "SUZUKI":{
+    "ALTO":[],
+    "BALENO":[],
+    "CARRY":[],
+    "ESTEEM":[],
+    "FUN":[],
+    "GRAND NOMADE":[],
+    "GRAND VITARA":[],
+    "GRAND VITARA JIII":[],
+    "HEJ 574":[],
+    "JIMNY":["SUZUKI JIMNY"],
+    "LAK 625 LM 19K01":[],
+    "LJ80":[],
+    "LJ81":[],
+    "LPL 665":[],
+    "OTROS":[],
+    "SAMURAI":[],
+    "SANTANA":[],
+    "SC 100":[],
+    "SE 416":[],
+    "SEL 634":[],
+    "SIDEKICK":[],
+    "SPRESSO":["SIN ASIGNAR"],
+    "SS80":[],
+    "ST90":[],
+    "SUPER CARRY":[],
+    "SWIFT":[],
+    "VITARA":[],
+    "WAGON R+":[],
+    "X-90":[]
+  },
+  "TATA":{
+    "SAFARI":[],
+    "SUMO":[],
+    "TATAMOBILE":[],
+    "TELCOLINE":[]
+  },
+  "TAVRIA":{
+    "1102":[]
+  },
+  "TESLA":{
+    "CYBERTRUCK":["SIN ASIGNAR"]
+  },
+  "TIANJIN":{
+    "TJ 1043":[]
+  },
+  "TOYOTA":{
+    "4 RUNNER":[],
+    "86 FT":[],
+    "86 GT":[],
+    "AVENSIS":[],
+    "AYGO":[],
+    "C-HR":["TOYOTA C-HR"],
+    "CAMRY":[],
+    "CARINA":[],
+    "CELICA":[],
+    "COASTER":[],
+    "COROLLA":["TOYOTA COROLLA"],
+    "COROLLA CROSS":["TOYOTA COROLLA CROSS"],
+    "CORONA":[],
+    "CRESSIDA":[],
+    "CROWN":["TOYOTA CROWN"],
+    "ESTIMA":[],
+    "ETIOS":["TOYOTA ETIOS"],
+    "EXTRACAB":[],
+    "FJ CRUISER":[],
+    "GR 86":["SIN ASIGNAR"],
+    "HDJ 80":[],
+    "HIACE":["TOYOTA HIACE"],
+    "HILUX":["TOYOTA HILUX"],
+    "HILUX SW4":["TOYOTA HILUX SW4"],
+    "INNOVA":[],
+    "LAND CRUISER":["TOYOTA LAND CRUISER"],
+    "LAND CRUISER PRADO":[],
+    "LITE ACE":[],
+    "MR2":[],
+    "OTROS":[],
+    "PASEO":[],
+    "PICK UP":[],
+    "PREVIA":[],
+    "PRIUS":[],
+    "RAIZE":["SIN ASIGNAR"],
+    "RAV4":["TOYOTA RAV4"],
+    "SEQUOIA":[],
+    "SIENNA":[],
+    "SR 5":[],
+    "STARLET":[],
+    "STOUT":[],
+    "SUPRA":[],
+    "SW4":["TOYOTA SW4"],
+    "T100":[],
+    "TACOMA":[],
+    "TERCEL":[],
+    "TUNDRA":["TOYOTA TUNDRA"],
+    "VAN":[],
+    "YARIS":["SIN ASIGNAR"],
+    "YARIS CROSS":["SIN ASIGNAR"]
+  },
+  "TRIUMPH":{
+    "OTROS":[],
+    "SPITFIRE":[],
+    "TR-3":[],
+    "TR-7":[]
+  },
+  "UAZ":{
+    "315126":[],
+    "374106":[],
+    "452":[],
+    "469":[],
+    "OTROS":[]
+  },
+  "UTILITY":{
+    "OTROS":[]
+  },
+  "VALIANT":{
+    "I":[],
+    "II":[],
+    "III":[],
+    "IV":[],
+    "OTROS":[],
+    "V-200":[],
+    "V-270":[]
+  },
+  "VAUXHALL":{
+    "OTROS":[]
+  },
+  "VOLKSWAGEN":{
+    "113":[],
+    "1200":[],
+    "1300":[],
+    "1303":[],
+    "1500":[],
+    "1600":[],
+    "17210":[],
+    "18310":[],
+    "18320":[],
+    "204":[],
+    "211":[],
+    "25320":[],
+    "253TB2":[],
+    "261":[],
+    "9140":[],
+    "9150":[],
+    "AMAROK":["VOLKSWAGEN AMAROK"],
+    "AMAZON":[],
+    "BEETLE":[],
+    "BORA":[],
+    "BRASILIA":[],
+    "CADDY":[],
+    "CALIFORNIA":[],
+    "CAMPING":[],
+    "CARAT":[],
+    "CARAVELLE":[],
+    "CORRADO":[],
+    "DELUXE":[],
+    "DERBY":[],
+    "FOX":[],
+    "FURGON TIPO II":[],
+    "FUSCA":[],
+    "GACEL":[],
+    "GOL":[],
+    "GOL TREND":["VOLKSWAGEN GOL TREND"],
+    "GOLF":[],
+    "JETTA":[],
+    "KARMANN":[],
+    "KOMBI":[],
+    "KOMBI TIPO II":[],
+    "LT28":[],
+    "MULTIVAN":[],
+    "NEW BEETLE":[],
+    "NIVUS":["SIN ASIGNAR"],
+    "NUEVO POLO":[],
+    "NUEVO VIRTUS":["SIN ASIGNAR"],
+    "OTROS":[],
+    "PARATI":[],
+    "PASSAT":[],
+    "POINTER":[],
+    "POLO":["VOLKSWAGEN POLO"],
+    "QUANTUM":[],
+    "RABBIT":[],
+    "SANTANA":[],
+    "SAVEIRO":["VOLKSWAGEN SAVEIRO"],
+    "SCIROCCO":[],
+    "SENDA":[],
+    "SHARAN":[],
+    "SP2":[],
+    "SPACEFOX":[],
+    "SURAN":[],
+    "SYNCRO":[],
+    "T-CROSS":["SIN ASIGNAR"],
+    "TAOS":["SIN ASIGNAR"],
+    "TERA":["SIN ASIGNAR"],
+    "THE BEETLE":[],
+    "TIGUAN":["VOLKSWAGEN TIGUAN"],
+    "TOUAREG":[],
+    "TOURAN":[],
+    "TRANSPORTER":[],
+    "UP!":[],
+    "VANAGON":[],
+    "VARIANT":[],
+    "VENTO":["VOLKSWAGEN VENTO"],
+    "VIRTUS":["SIN ASIGNAR"],
+    "VOYAGE":[]
+  },
+  "VOLT":{
+    "MOTORS E1":["VOLT MOTORS E1"]
+  },
+  "VOLVO":{
+    "122":[],
+    "240":[],
+    "242":[],
+    "244":[],
+    "245":[],
+    "264":[],
+    "740":[],
+    "745":[],
+    "760":[],
+    "850":[],
+    "940":[],
+    "960":[],
+    "C202":[],
+    "C30":[],
+    "C40":["VOLVO C40"],
+    "C70":[],
+    "EX30":["SIN ASIGNAR"],
+    "GL 345":[],
+    "OTROS":[],
+    "P-13234":[],
+    "P-44404":[],
+    "P-54404":[],
+    "P-54406":[],
+    "P120":[],
+    "P1800":[],
+    "PV444":[],
+    "S40":[],
+    "S60":[],
+    "S70":[],
+    "S80":[],
+    "S90":[],
+    "V40":[],
+    "V50":[],
+    "V60":[],
+    "V70":[],
+    "XC40":["SIN ASIGNAR"],
+    "XC60":["VOLVO XC60"],
+    "XC70":[],
+    "XC90":["VOLVO XC90"]
+  },
+  "WANDERER":{
+    "OTROS":[]
+  },
+  "WHIPET":{
+    "AUTOMOVIL":[]
+  },
+  "WHIPPET":{
+    "OTROS":["WHIPPET OTROS"]
+  },
+  "WILLYS":{
+    "ARMY M-38":[],
+    "HURRICANE":[],
+    "JEEP":["WILLYS JEEP"],
+    "OTROS":[],
+    "OVERLAND":[]
+  },
+  "WOLSELEY":{
+    "OTROS":[]
+  },
+  "WULING":{
+    "LZW 1010":[],
+    "LZW1010PL":[],
+    "LZW1010VHW":[],
+    "LZW6320H":[]
+  },
+  "XEV":{
+    "YOYO":["SIN ASIGNAR"]
+  },
+  "YAMAHA":{
+    "RHINO 700 FI SPECIAL EDITION 4X4":[],
+    "RHINO 700 FI SPORT EDITION 4X4":[],
+    "YXR700F RHINO":[]
+  },
+  "YUEJIN":{
+    "HQ1608":[],
+    "NJ 6604":[],
+    "NJ1062DCW (CABINA Y MEDIA)":[]
+  },
+  "ZANELLA":{
+    "Z TRUCK":["SIN ASIGNAR"],
+    "Z TRUCK DUO":["SIN ASIGNAR"]
+  },
+  "ZANELLO":{
+    "BOGGIE":[],
+    "UZAB 134":[]
+  },
+  "ZUNDER":{
+    "OTROS":[]
   },
 };
 
@@ -1213,29 +3951,57 @@ function disEl(id){
   const drop=$$(id+'-drop'); if(drop){drop.innerHTML='';drop.classList.remove('open');}
 }
 
+// Helpers para modo mercado: unión de stk + okm + MKT
+function mktMarcas(){
+  const deMkt=Object.keys(MKT);
+  const deStk=[...new Set(stk.map(u=>u.marca))];
+  const deOkm=[...new Set(okm.map(u=>u.marca))];
+  return [...new Set([...deStk,...deOkm,...deMkt])].sort();
+}
+function mktModelos(ma){
+  const deMkt=Object.keys(MKT[ma]||{});
+  const deStk=[...new Set(stk.filter(u=>u.marca===ma).map(u=>u.modelo))];
+  const deOkm=[...new Set(okm.filter(u=>u.marca===ma).map(u=>u.modelo))];
+  return [...new Set([...deStk,...deOkm,...deMkt])].sort();
+}
+function mktVersiones(ma,mo){
+  const deMkt=(MKT[ma]||{})[mo]||[];
+  const deStk=[...new Set(stk.filter(u=>u.marca===ma&&u.modelo===mo).map(u=>u.version))];
+  const deOkm=[...new Set(okm.filter(u=>u.marca===ma&&u.modelo===mo).map(u=>u.version))];
+  return [...new Set([...deStk,...deOkm,...deMkt])].sort();
+}
+function mktAnnos(ma,mo,v){
+  const deStk=[...new Set(stk.filter(u=>u.marca===ma&&u.modelo===mo&&u.version===v).map(u=>u.anno))];
+  const deOkm=[...new Set(okm.filter(u=>u.marca===ma&&u.modelo===mo&&u.version===v).map(u=>u.anno))];
+  const base=[...new Set([...deStk,...deOkm])].sort((a,b)=>b-a);
+  // Si no hay registros en stock, ofrecer rango de años genérico
+  if(!base.length) return Array.from({length:13},(_,i)=>new Date().getFullYear()-i);
+  return base;
+}
+
 function onTipo(){
   ['marca','modelo','version','anno'].forEach(disEl);
   $$('ar').style.display='none'; $$('ar-al').innerHTML='';
   const t=$$('tipo').value; if(!t)return;
-  const ms=t==='usado'?[...new Set(stk.map(u=>u.marca))].sort():t==='okm'?[...new Set(okm.map(u=>u.marca))].sort():Object.keys(MKT).sort();
+  const ms=t==='usado'?[...new Set(stk.map(u=>u.marca))].sort():t==='okm'?[...new Set(okm.map(u=>u.marca))].sort():mktMarcas();
   selOpts('marca',ms,'— Elegir marca —');
 }
 function onMarca(){
   ['modelo','version','anno'].forEach(disEl);
   const t=$$('tipo').value,ma=ssVal('marca'); if(!ma)return;
-  const ms=t==='usado'?[...new Set(stk.filter(u=>u.marca===ma).map(u=>u.modelo))].sort():t==='okm'?[...new Set(okm.filter(u=>u.marca===ma).map(u=>u.modelo))].sort():Object.keys(MKT[ma]||{}).sort();
+  const ms=t==='usado'?[...new Set(stk.filter(u=>u.marca===ma).map(u=>u.modelo))].sort():t==='okm'?[...new Set(okm.filter(u=>u.marca===ma).map(u=>u.modelo))].sort():mktModelos(ma);
   selOpts('modelo',ms,'— Elegir modelo —');
 }
 function onModelo(){
   ['version','anno'].forEach(disEl);
   const t=$$('tipo').value,ma=ssVal('marca'),mo=ssVal('modelo'); if(!mo)return;
-  const vs=t==='usado'?[...new Set(stk.filter(u=>u.marca===ma&&u.modelo===mo).map(u=>u.version))].sort():t==='okm'?[...new Set(okm.filter(u=>u.marca===ma&&u.modelo===mo).map(u=>u.version))].sort():(MKT[ma]||{})[mo]||[];
+  const vs=t==='usado'?[...new Set(stk.filter(u=>u.marca===ma&&u.modelo===mo).map(u=>u.version))].sort():t==='okm'?[...new Set(okm.filter(u=>u.marca===ma&&u.modelo===mo).map(u=>u.version))].sort():mktVersiones(ma,mo);
   selOpts('version',vs,'— Elegir versión —');
 }
 function onVer(){
   disEl('anno');
   const t=$$('tipo').value,ma=ssVal('marca'),mo=ssVal('modelo'),v=ssVal('version'); if(!v)return;
-  const as=t==='usado'?[...new Set(stk.filter(u=>u.marca===ma&&u.modelo===mo&&u.version===v).map(u=>u.anno))].sort((a,b)=>b-a):t==='okm'?[...new Set(okm.filter(u=>u.marca===ma&&u.modelo===mo&&u.version===v).map(u=>u.anno))].sort((a,b)=>b-a):Array.from({length:13},(_,i)=>new Date().getFullYear()-i);
+  const as=t==='usado'?[...new Set(stk.filter(u=>u.marca===ma&&u.modelo===mo&&u.version===v).map(u=>u.anno))].sort((a,b)=>b-a):t==='okm'?[...new Set(okm.filter(u=>u.marca===ma&&u.modelo===mo&&u.version===v).map(u=>u.anno))].sort((a,b)=>b-a):mktAnnos(ma,mo,v);
   selOpts('anno',as,'— Elegir año —');
 }
 function onAuto(){
@@ -2146,6 +4912,11 @@ function ssOpen(id){
   const drop=$$(id+'-drop');
   ssBuild(id,inp._opts||[],'');
   inp.value=''; // mostrar todas al hacer foco si ya hay selección
+  // Posicionar el drop con position:fixed respecto al viewport
+  const rect=inp.getBoundingClientRect();
+  drop.style.top=(rect.bottom+3)+'px';
+  drop.style.left=rect.left+'px';
+  drop.style.width=rect.width+'px';
   drop.classList.add('open');
 }
 
@@ -2153,6 +4924,10 @@ function ssFilter(id){
   const inp=$$(id+'-inp'); if(!inp) return;
   const drop=$$(id+'-drop');
   ssBuild(id,inp._opts||[],inp.value||'');
+  const rect=inp.getBoundingClientRect();
+  drop.style.top=(rect.bottom+3)+'px';
+  drop.style.left=rect.left+'px';
+  drop.style.width=rect.width+'px';
   drop.classList.add('open');
 }
 
