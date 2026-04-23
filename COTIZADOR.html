@@ -6,6 +6,20 @@
 <title>ALMAR — Cotizador</title>
 <style>
 /* Fuentes del sistema — sin dependencia de internet */
+
+/* ── Searchable select ── */
+.ss-wrap{position:relative;width:100%}
+.ss-input{width:100%;background:var(--inp);border:1.5px solid var(--bdr);border-radius:6px;color:var(--t);font-family:var(--font);font-size:14px;padding:8px 28px 8px 10px;box-sizing:border-box;cursor:pointer;transition:border-color var(--trs)}
+.ss-input:focus{outline:none;border-color:var(--r)}
+.ss-input:disabled{opacity:.22;cursor:not-allowed}
+.ss-arrow{position:absolute;right:10px;top:50%;transform:translateY(-50%);pointer-events:none;font-size:10px;color:#888}
+.ss-drop{position:absolute;top:calc(100% + 3px);left:0;right:0;background:var(--s2);border:1.5px solid var(--bdr);border-radius:6px;max-height:220px;overflow-y:auto;z-index:999;display:none;box-shadow:0 4px 16px rgba(0,0,0,.25)}
+.ss-drop.open{display:block}
+.ss-item{padding:8px 12px;font-size:13px;cursor:pointer;color:var(--t);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ss-item:hover,.ss-item.focused{background:var(--s3)}
+.ss-item.placeholder{color:var(--m);font-style:italic}
+.ss-none{padding:8px 12px;font-size:13px;color:var(--m);font-style:italic}
+html.light .ss-drop{box-shadow:0 4px 16px rgba(0,0,0,.12)}
 </style>
 <script>
 // Cargar SheetJS solo cuando se necesita (importar Excel)
@@ -630,12 +644,12 @@ input[type=text]#p-obs{background:#F5F7FA!important;border:1px solid #D5DCE6!imp
         </div>
       </div>
       <div class="fr f2">
-        <div class="fld"><label>Marca <span class="req">*</span></label><select id="marca" onchange="onMarca()" disabled><option value="">—</option></select></div>
-        <div class="fld"><label>Modelo <span class="req">*</span></label><select id="modelo" onchange="onModelo()" disabled><option value="">—</option></select></div>
+        <div class="fld"><label>Marca <span class="req">*</span></label><div class="ss-wrap" id="ss-marca"><input class="ss-input" id="marca-inp" placeholder="— Elegir marca —" autocomplete="off" disabled oninput="ssFilter('marca')" onfocus="ssOpen('marca')" onkeydown="ssKey(event,'marca')"><span class="ss-arrow">▼</span><div class="ss-drop" id="marca-drop"></div></div></div>
+        <div class="fld"><label>Modelo <span class="req">*</span></label><div class="ss-wrap" id="ss-modelo"><input class="ss-input" id="modelo-inp" placeholder="— Elegir modelo —" autocomplete="off" disabled oninput="ssFilter('modelo')" onfocus="ssOpen('modelo')" onkeydown="ssKey(event,'modelo')"><span class="ss-arrow">▼</span><div class="ss-drop" id="modelo-drop"></div></div></div>
       </div>
       <div class="fr f2">
-        <div class="fld"><label>Versión</label><select id="version" onchange="onVer()" disabled><option value="">—</option></select></div>
-        <div class="fld"><label>Año</label><select id="anno" onchange="onAuto()" disabled><option value="">—</option></select></div>
+        <div class="fld"><label>Versión</label><div class="ss-wrap" id="ss-version"><input class="ss-input" id="version-inp" placeholder="— Elegir versión —" autocomplete="off" disabled oninput="ssFilter('version')" onfocus="ssOpen('version')" onkeydown="ssKey(event,'version')"><span class="ss-arrow">▼</span><div class="ss-drop" id="version-drop"></div></div></div>
+        <div class="fld"><label>Año</label><div class="ss-wrap" id="ss-anno"><input class="ss-input" id="anno-inp" placeholder="— Elegir año —" autocomplete="off" disabled oninput="ssFilter('anno')" onfocus="ssOpen('anno')" onkeydown="ssKey(event,'anno')"><span class="ss-arrow">▼</span><div class="ss-drop" id="anno-drop"></div></div></div>
       </div>
       <div class="fr f3">
         <div class="fld"><label>Color</label><input type="text" id="color" placeholder="Blanco" oninput="updR()"></div>
@@ -1187,8 +1201,17 @@ function bBN(){
 }
 
 // ── CASCADA (selector de vehículo) ───────────────────────────────────────────
-function selOpts(id,opts,ph){const s=$$(id);s.innerHTML=`<option value="">${ph}</option>`;opts.forEach(v=>s.add(new Option(v,v)));s.disabled=false}
-function disEl(id){$$(id).innerHTML='<option value="">—</option>';$$(id).disabled=true}
+function selOpts(id,opts,ph){
+  const inp=$$(id+'-inp'); if(!inp) return;
+  inp._opts=opts; inp._ph=ph; inp._val='';
+  inp.value=''; inp.placeholder=ph; inp.disabled=false;
+  ssBuild(id,opts,'');
+}
+function disEl(id){
+  const inp=$$(id+'-inp'); if(!inp) return;
+  inp._opts=[]; inp._val=''; inp.value=''; inp.placeholder='—'; inp.disabled=true;
+  const drop=$$(id+'-drop'); if(drop){drop.innerHTML='';drop.classList.remove('open');}
+}
 
 function onTipo(){
   ['marca','modelo','version','anno'].forEach(disEl);
@@ -1199,24 +1222,24 @@ function onTipo(){
 }
 function onMarca(){
   ['modelo','version','anno'].forEach(disEl);
-  const t=$$('tipo').value,ma=$$('marca').value; if(!ma)return;
+  const t=$$('tipo').value,ma=ssVal('marca'); if(!ma)return;
   const ms=t==='usado'?[...new Set(stk.filter(u=>u.marca===ma).map(u=>u.modelo))].sort():t==='okm'?[...new Set(okm.filter(u=>u.marca===ma).map(u=>u.modelo))].sort():Object.keys(MKT[ma]||{}).sort();
   selOpts('modelo',ms,'— Elegir modelo —');
 }
 function onModelo(){
   ['version','anno'].forEach(disEl);
-  const t=$$('tipo').value,ma=$$('marca').value,mo=$$('modelo').value; if(!mo)return;
+  const t=$$('tipo').value,ma=ssVal('marca'),mo=ssVal('modelo'); if(!mo)return;
   const vs=t==='usado'?[...new Set(stk.filter(u=>u.marca===ma&&u.modelo===mo).map(u=>u.version))].sort():t==='okm'?[...new Set(okm.filter(u=>u.marca===ma&&u.modelo===mo).map(u=>u.version))].sort():(MKT[ma]||{})[mo]||[];
   selOpts('version',vs,'— Elegir versión —');
 }
 function onVer(){
   disEl('anno');
-  const t=$$('tipo').value,ma=$$('marca').value,mo=$$('modelo').value,v=$$('version').value; if(!v)return;
+  const t=$$('tipo').value,ma=ssVal('marca'),mo=ssVal('modelo'),v=ssVal('version'); if(!v)return;
   const as=t==='usado'?[...new Set(stk.filter(u=>u.marca===ma&&u.modelo===mo&&u.version===v).map(u=>u.anno))].sort((a,b)=>b-a):t==='okm'?[...new Set(okm.filter(u=>u.marca===ma&&u.modelo===mo&&u.version===v).map(u=>u.anno))].sort((a,b)=>b-a):Array.from({length:13},(_,i)=>new Date().getFullYear()-i);
   selOpts('anno',as,'— Elegir año —');
 }
 function onAuto(){
-  const t=$$('tipo').value,ma=$$('marca').value,mo=$$('modelo').value,v=$$('version').value,a=parseInt($$('anno').value);
+  const t=$$('tipo').value,ma=ssVal('marca'),mo=ssVal('modelo'),v=ssVal('version'),a=parseInt(ssVal('anno'));
   updR();
   const aral=$$('ar-al'); aral.innerHTML='';
   if(t==='usado'){
@@ -1262,7 +1285,7 @@ function updEstado(estado){
   ep.textContent=c.txt;
 }
 function updR(){
-  const ma=$$('marca').value,mo=$$('modelo').value,v=$$('version').value,a=$$('anno').value;
+  const ma=ssVal('marca'),mo=ssVal('modelo'),v=ssVal('version'),a=ssVal('anno');
   if(!ma||!mo){$$('ar').style.display='none';$$('ar-al').innerHTML='';return}
   $$('ar').style.display='flex';
   $$('rn').textContent=[ma,mo,v].filter(Boolean).join(' ');
@@ -1274,7 +1297,7 @@ function updR(){
 function buscar(){
   const q=$$('busq').value.toLowerCase().trim(); if(q.length<2)return;
   const r=stk.find(u=>(u.modelo+' '+u.version).toLowerCase().includes(q));
-  if(r&&!$$('tipo').value){$$('tipo').value='usado';onTipo();setTimeout(()=>{$$('marca').value=r.marca;onMarca();setTimeout(()=>{$$('modelo').value=r.modelo;onModelo()},80)},50)}
+  if(r&&!$$('tipo').value){$$('tipo').value='usado';onTipo();setTimeout(()=>{ssSet('marca',r.marca);onMarca();setTimeout(()=>{ssSet('modelo',r.modelo);onModelo()},80)},50)}
 }
 
 // ── CALCULADORA CRÉDITO INTEGRADA (Columna B) ─────────────────────────────────
@@ -1381,7 +1404,7 @@ function addEx(col){
 
 function resetP(){
   if(!confirm('¿Limpiar toda la propuesta para una nueva operación?'))return;
-  ['tipo','marca','modelo','version','anno','color','km','tveh'].forEach(id=>{const el=$$(id);if(el){el.value='';if(el.tagName==='SELECT')el.disabled=['marca','modelo','version','anno'].includes(id)}});
+  ['tipo','color','km','tveh'].forEach(id=>{const el=$$(id);if(el)el.value=''});['marca','modelo','version','anno'].forEach(id=>disEl(id));
   ['pa1','pa2','pa3','pa4','pa5','pa6','pb1','pb2','pb3','pb4','pb5','pb6'].forEach(id=>{const el=$$(id);if(el)el.value=''});
   ['p-cli','p-dni','p-tel','p-email','p-obs'].forEach(id=>{const el=$$(id);if(el)el.value=''});
   $$('exa').innerHTML=''; $$('exb').innerHTML='';
@@ -1394,7 +1417,7 @@ function resetP(){
 // ── WhatsApp ──────────────────────────────────────────────────────────────────
 function gWA(){
   const u=CU||{name:'Almar'}, cli=$$('p-cli').value||'Cliente';
-  const nom=[$$('marca').value,$$('modelo').value,$$('version').value,$$('anno').value].filter(Boolean).join(' ')||'la unidad';
+  const nom=[ssVal('marca'),ssVal('modelo'),ssVal('version'),ssVal('anno')].filter(Boolean).join(' ')||'la unidad';
   const cv=credCampId?camp.find(c=>c.id===credCampId):null;
   const mt=parseFloat($$('pb1').value)||0;
   const pr=parseFloat($$('pa1').value)||0;
@@ -1412,7 +1435,7 @@ function prtP(){$$('phf').textContent=tod();$$('phv').textContent=CU?CU.name:'';
 function gCot(){
   if(!CU){alert('Iniciá sesión primero.');return}
   if(esGerencia(CU)){alert('Gerencia no carga propuestas. Iniciá sesión como vendedor.');return}
-  const nom=[$$('marca').value,$$('modelo').value,$$('version').value,$$('anno').value].filter(Boolean).join(' ');
+  const nom=[ssVal('marca'),ssVal('modelo'),ssVal('version'),ssVal('anno')].filter(Boolean).join(' ');
   if(!nom){alert('Elegí una unidad primero.');return}
   const cv=credCampId?camp.find(c=>c.id===credCampId):null;
   const mt=parseFloat($$('pb1').value)||0;
@@ -1773,7 +1796,7 @@ function emailStock(){
 // ── EMAIL PROPUESTA ───────────────────────────────────────────────────────────
 function emailPropuesta(){
   const cli=$$('p-cli').value||'Cliente';
-  const nom=[$$('marca').value,$$('modelo').value,$$('version').value,$$('anno').value].filter(Boolean).join(' ')||'la unidad';
+  const nom=[ssVal('marca'),ssVal('modelo'),ssVal('version'),ssVal('anno')].filter(Boolean).join(' ')||'la unidad';
   const cv=credCampId?camp.find(c=>c.id===credCampId):null;
   const pr=parseFloat($$('pa1').value)||0;
   const mt=parseFloat($$('pb1').value)||0;
@@ -2088,6 +2111,95 @@ function guardarDriveCfg(){
   if(bar){ bar.style.display='block'; bar.style.background='rgba(39,174,96,.12)'; bar.style.color='var(--g)'; bar.textContent='✓ URLs guardadas. Ahora podés usar el botón "Actualizar desde Drive".'; }
 }
 // ── FIN CONFIGURAR DRIVE ──────────────────────────────────────────────────────
+
+
+// ── Searchable select engine ─────────────────────────────────────────────────
+const SS_CBS={'marca':onMarca,'modelo':onModelo,'version':onVer,'anno':onAuto};
+const SS_FIELDS=['marca','modelo','version','anno'];
+
+// Shim: permite leer $$('marca').value etc. desde el código existente
+SS_FIELDS.forEach(id=>{
+  Object.defineProperty(document,'_ss_'+id,{writable:true,value:''});
+});
+function ssVal(id){const inp=$$(id+'-inp');return inp?inp._val||'':($$('#'+id)||{value:''}).value;}
+
+// Parche para que el código viejo que lee $$('marca').value etc. siga funcionando
+// — usamos Proxy sobre el input real
+SS_FIELDS.forEach(id=>{
+  const inp=document.getElementById(id+'-inp');
+  if(!inp) return;
+  inp._val='';
+});
+
+function ssBuild(id,opts,filter){
+  const drop=$$(id+'-drop'); if(!drop) return;
+  const f=filter.toUpperCase().trim();
+  const filtered=f?opts.filter(o=>String(o).toUpperCase().includes(f)):opts;
+  if(!filtered.length){drop.innerHTML='<div class="ss-none">Sin resultados</div>';return;}
+  drop.innerHTML=filtered.map((o,i)=>`<div class="ss-item" data-val="${o}" data-idx="${i}" onmousedown="ssPick('${id}',this)">${o}</div>`).join('');
+}
+
+function ssOpen(id){
+  // cerrar otros
+  SS_FIELDS.forEach(oid=>{if(oid!==id){const d=$$(oid+'-drop');if(d)d.classList.remove('open');}});
+  const inp=$$(id+'-inp'); if(!inp||inp.disabled) return;
+  const drop=$$(id+'-drop');
+  ssBuild(id,inp._opts||[],'');
+  inp.value=''; // mostrar todas al hacer foco si ya hay selección
+  drop.classList.add('open');
+}
+
+function ssFilter(id){
+  const inp=$$(id+'-inp'); if(!inp) return;
+  const drop=$$(id+'-drop');
+  ssBuild(id,inp._opts||[],inp.value||'');
+  drop.classList.add('open');
+}
+
+function ssPick(id,el){
+  const val=el.dataset.val;
+  const inp=$$(id+'-inp'); if(!inp) return;
+  inp._val=val; inp.value=val;
+  const drop=$$(id+'-drop');
+  drop.classList.remove('open');
+  // disparar el callback cascada
+  const cb=SS_CBS[id]; if(cb) cb();
+}
+
+function ssKey(e,id){
+  const drop=$$(id+'-drop');
+  const items=drop?drop.querySelectorAll('.ss-item'):[];
+  if(!items.length) return;
+  const focused=drop.querySelector('.ss-item.focused');
+  let idx=focused?parseInt(focused.dataset.idx):- 1;
+  if(e.key==='ArrowDown'){e.preventDefault();idx=Math.min(idx+1,items.length-1);}
+  else if(e.key==='ArrowUp'){e.preventDefault();idx=Math.max(idx-1,0);}
+  else if(e.key==='Enter'&&focused){e.preventDefault();ssPick(id,focused);return;}
+  else if(e.key==='Escape'){drop.classList.remove('open');return;}
+  else return;
+  items.forEach(i=>i.classList.remove('focused'));
+  if(items[idx]){items[idx].classList.add('focused');items[idx].scrollIntoView({block:'nearest'});}
+}
+
+function ssSet(id,val){
+  const inp=$$(id+'-inp'); if(!inp) return;
+  inp._val=val; inp.value=val;
+}
+// Cerrar al hacer click fuera
+document.addEventListener('mousedown',function(e){
+  SS_FIELDS.forEach(id=>{
+    const wrap=$$(id+'-inp')?.closest('.ss-wrap');
+    if(wrap&&!wrap.contains(e.target)){
+      const drop=$$(id+'-drop');
+      if(drop) drop.classList.remove('open');
+      // restaurar valor seleccionado en el input si se escribió sin elegir
+      const inp=$$(id+'-inp');
+      if(inp) inp.value=inp._val||'';
+    }
+  });
+});
+
+// Parche: reescribir las funciones de lectura de valor para usar ssVal()
 
 // ── INIT ─────────────────────────────────────────────────────────────────────
 bLogin();
