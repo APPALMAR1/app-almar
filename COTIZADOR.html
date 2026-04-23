@@ -326,16 +326,16 @@ select option{background:var(--s2)}
 /* CRÉDITO INTEGRADO en columna B */
 .cred-box{background:var(--bg);border:1.5px solid var(--b);border-radius:var(--rad);padding:10px;margin-top:8px;margin-bottom:6px}
 .cred-box-tit{font-family:var(--hf);font-weight:800;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--b);margin-bottom:8px;display:flex;align-items:center;gap:5px}
-.cg-mini{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:8px}
-.cc-mini{background:var(--s2);border:1.5px solid var(--bdr);border-radius:6px;padding:7px 9px;cursor:pointer;transition:all var(--trs);position:relative}
-.cc-mini::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:3px 0 0 3px}
+.cg-mini{display:grid;grid-template-columns:1fr 1fr;gap:3px;margin-bottom:6px}
+.cc-mini{background:var(--s2);border:1px solid var(--bdr);border-radius:4px;padding:5px 7px;cursor:pointer;transition:all var(--trs);position:relative}
+.cc-mini::before{content:'';position:absolute;left:0;top:0;bottom:0;width:2px;border-radius:2px 0 0 2px}
 .cc-mini.icbc::before{background:var(--r)}.cc-mini.bbva::before{background:var(--b)}.cc-mini.otro::before{background:var(--y)}
 .cc-mini.sel{border-color:var(--b);background:rgba(36,113,163,.1)}
-.cc-mini .mba{font-size:7px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--m)}
-.cc-mini .mno{font-family:var(--hf);font-weight:700;font-size:11px;color:var(--w)}
-.cc-mini .mtn{font-family:var(--hf);font-weight:900;font-size:16px;color:var(--r)}
+.cc-mini .mba{font-size:7px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--m)}
+.cc-mini .mno{font-family:var(--hf);font-weight:700;font-size:10px;color:var(--w)}
+.cc-mini .mtn{font-family:var(--hf);font-weight:900;font-size:13px;color:var(--r)}
 .cc-mini.bbva .mtn{color:var(--b)}
-.cc-mini .mch{position:absolute;top:4px;right:5px;font-size:9px;display:none;color:var(--b)}
+.cc-mini .mch{position:absolute;top:2px;right:4px;font-size:8px;display:none;color:var(--b)}
 .cc-mini.sel .mch{display:block}
 .qg-mini{display:grid;grid-template-columns:repeat(3,1fr);gap:5px}
 @media(max-width:400px){.qg-mini{grid-template-columns:repeat(2,1fr)}}
