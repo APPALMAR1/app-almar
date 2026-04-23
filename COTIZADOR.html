@@ -2378,9 +2378,9 @@ function parseDrv(csv){
     if(!dom||ndom==='DOMINIO')continue;
     const anio=parseInt(gc(c,iAno).replace(/[^0-9]/g,''))||0;
     if(anio<1990||anio>2030)continue;
-    const inf=gc(c,iInf);
-    // DEBUG fila: mostrar primeras filas con su valor en col INFO TOMA
-    if(autos.length<3) console.log('FILA '+autos.length+' col['+iInf+']="'+inf+'" | cols total:'+c.length+' | dom:'+dom+' | raw:'+c.slice(9,13).join('|'));
+    // Leer INFO TOMA: primero col iInf, si vacía revisar col anterior (K puede estar sin encabezado)
+    let inf=gc(c,iInf);
+    if(!inf && iInf>0) inf=gc(c,iInf-1);
     let est='DISPONIBLE';
     if(/se[nñ]ado|seniado/i.test(inf))          est='SENIADO';
     else if(/a recibir|recibir/i.test(inf))      est='A RECIBIR';
