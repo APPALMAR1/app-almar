@@ -20,6 +20,18 @@
 .ss-item.placeholder{color:var(--m);font-style:italic}
 .ss-none{padding:8px 12px;font-size:13px;color:var(--m);font-style:italic}
 html.light .ss-drop{box-shadow:0 4px 16px rgba(0,0,0,.12)}
+
+/* ── Modal estado unidad ── */
+#estado-overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:2000;display:none;align-items:center;justify-content:center;padding:20px}
+.ec-box{background:var(--s1);border:1.5px solid var(--bdr);border-radius:12px;padding:28px 24px;max-width:340px;width:100%;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,.4)}
+.ec-emoji{font-size:40px;display:block;margin-bottom:10px}
+.ec-label{font-family:var(--hf);font-size:18px;font-weight:900;letter-spacing:1px;display:block;margin-bottom:10px}
+.ec-msg{font-size:14px;color:var(--m);display:block;margin-bottom:22px;line-height:1.5}
+.ec-btns{display:flex;gap:10px;justify-content:center}
+.ec-btn{padding:10px 22px;border-radius:7px;border:none;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font);transition:opacity .15s}
+.ec-btn.yes{background:var(--r);color:#fff}
+.ec-btn.no{background:var(--s3);color:var(--t)}
+.ec-btn:hover{opacity:.85}
 </style>
 <script>
 // Cargar SheetJS solo cuando se necesita (importar Excel)
@@ -4036,13 +4048,15 @@ function onAuto(){
       if(u.color)$$('color').value=u.color;
       // Mostrar estado
       updEstado(u.estado);
-      // Alerta según estado
-      if(u.estado==='A RECIBIR')
-        aral.innerHTML='<div class="al info">📦 Este vehículo está <strong>A RECIBIR</strong> — aún no ingresó al concesionario. Podés cotizarlo y generar la propuesta normalmente.</div>';
+      // Alerta con confirmación según estado
+      if(u.estado==='SENIADO')
+        showEstadoConfirm('SEÑADO','🔴','Esta unidad ya tiene una seña registrada. ¿Deseás continuar igual con la cotización?','var(--r)');
       else if(u.estado==='EN PREPARACION')
-        aral.innerHTML='<div class="al warn">🔧 Este vehículo está <strong>EN PREPARACIÓN</strong> — ya ingresó pero no está listo para entrega. Podés cotizarlo normalmente.</div>';
-      else if(u.estado==='SENIADO')
-        aral.innerHTML='<div class="al err">🔴 Este vehículo está <strong>SEÑADO</strong>. Verificá disponibilidad antes de cotizar.</div>';
+        showEstadoConfirm('EN PREPARACIÓN','🔧','Esta unidad está en preparación y aún no está lista para entrega. ¿Deseás continuar igual?','var(--y)');
+      else if(u.estado==='A RECIBIR')
+        showEstadoConfirm('A RECIBIR','📦','Esta unidad aún no ingresó al concesionario. ¿Deseás continuar igual con la cotización?','var(--b)');
+      else
+        aral.innerHTML='';
     }
   }
   else if(t==='okm'){
@@ -4453,7 +4467,7 @@ function impX(e){
         for(let i=0;i<rows.length;i++){if(rows[i].some(c=>String(c).toUpperCase().includes('DOMINIO'))){hdrIdx=i;break}}
         if(hdrIdx<0){alert('❌ No se encontró la columna DOMINIO.');return}
         const hdr=rows[hdrIdx].map(c=>String(c).toUpperCase().trim());
-        const ci={dom:hdr.findIndex(h=>h.includes('DOMINIO')),uni:hdr.findIndex(h=>h.includes('UNIDAD')),col:hdr.findIndex(h=>h.includes('COLOR')),ano:hdr.findIndex(h=>h.includes('A'+'N'+'O')||h.includes('AÑO')||h.includes('AÑO')),km:hdr.findIndex(h=>h==='KM'),pre:hdr.findIndex(h=>h.includes('PUBLICO')||h.includes('PRECIO')),est:hdr.findIndex(h=>h.includes('INFO TOMA')||h.includes('ESTADO'))};
+        const ci={dom:hdr.findIndex(h=>h.includes('DOMINIO')),uni:hdr.findIndex(h=>h.includes('UNIDAD')),col:hdr.findIndex(h=>h.includes('COLOR')),ano:hdr.findIndex(h=>h.includes('A'+'N'+'O')||h.includes('AÑO')||h.includes('AÑO')),km:hdr.findIndex(h=>h==='KM'),pre:hdr.findIndex(h=>h.includes('PUBLICO')||h.includes('PRECIO')),est:hdr.findIndex(h=>h.includes('INFO TOMA')||h.includes('ESTADO')||h.includes('OBSERV')||h.includes('NOTA')||h.includes('SEGU'))};
         const isDom=v=>/^[A-Za-z]{2,3}\d{3,4}[A-Za-z]{0,2}$/.test(String(v).trim());
         let marcaActual='', nuevos=[];
         for(let i=hdrIdx+1;i<rows.length;i++){
@@ -4467,11 +4481,11 @@ function impX(e){
           let modelo=partes[0]||'', version=partes.slice(1).join(' ');
           if(['HILUX','COROLLA','YARIS','LAND'].includes(partes[0]?.toUpperCase())&&partes[1]&&['DC','CS','CROSS','CRUISER'].includes(partes[1]?.toUpperCase())){modelo=partes.slice(0,2).join(' ');version=partes.slice(2).join(' ');}
           let precio=0; const praw=String(row[ci.pre]||'').replace(/[^0-9.]/g,''); if(praw) precio=Math.round(parseFloat(praw))||0;
-          const eraw=String(row[ci.est]||'').toLowerCase().trim();
+          const eraw=String(row[ci.est>=0?ci.est:7]||'').toLowerCase().trim();
           let estado='DISPONIBLE';
           if(eraw.includes('preparac')) estado='EN PREPARACION';
           else if(eraw.includes('recibir')) estado='A RECIBIR';
-          else if(eraw.includes('seña')||eraw.includes('senia')) estado='SENIADO';
+          else if(eraw.includes('seña')||eraw.includes('senia')||eraw.startsWith('señado')) estado='SENIADO';
           nuevos.push({dominio:v.toUpperCase(),marca:marcaActual,modelo:modelo.toUpperCase(),version:version.toUpperCase(),anno:parseInt(row[ci.ano])||0,km:parseInt(row[ci.km])||0,precio,color:String(row[ci.col]||'').toUpperCase().trim(),estado});
         }
         if(!nuevos.length){alert('❌ No se encontraron vehículos.');return}
@@ -4804,7 +4818,7 @@ function parseDriveCSV(csv, esHoja2){
     ano: hdr.findIndex(h=>h.includes('AÑO')||h==='ANO'||h.includes('AÑO')),
     km:  hdr.findIndex(h=>h==='KM'),
     pre: hdr.findIndex(h=>h.includes('PUBLICO')||h.includes('PRECIO')),
-    inf: hdr.findIndex(h=>h.includes('INFO TOMA')),
+    inf: hdr.findIndex(h=>h.includes('INFO TOMA')||h.includes('ESTADO')||h.includes('OBSERV')||h.includes('NOTA')||h.includes('SEGUIM')||h==='H'),
     vto: hdr.findIndex(h=>h.includes('VALOR TOMA')),
     rea: hdr.findIndex(h=>h.includes('REACON')),
     cto: hdr.findIndex(h=>h.includes('COSTO TOTAL')),
@@ -4855,12 +4869,12 @@ function parseDriveCSV(csv, esHoja2){
 
     const kmNum = parseInt(get(ci.km).replace(/[^0-9]/g,''))||0;
     const precio = pNum(get(ci.pre));
-    const infoToma = get(ci.inf);
+    const infoToma = get(ci.inf >= 0 ? ci.inf : 7);
 
     let estado = 'DISPONIBLE';
-    if(/señado|seniado/i.test(infoToma))        estado='SENIADO';
-    else if(/recibir/i.test(infoToma))           estado='A RECIBIR';
-    else if(/preparac|taller/i.test(infoToma))   estado='EN PREPARACION';
+    if(/señado|seniado|seña/i.test(infoToma))             estado='SENIADO';
+    else if(/recibir|a recibir/i.test(infoToma))           estado='A RECIBIR';
+    else if(/preparac|taller|en prep/i.test(infoToma))     estado='EN PREPARACION';
 
     const partes = unidad.split(' ');
     const modelo  = partes[0]||unidad;
@@ -5045,6 +5059,41 @@ document.addEventListener('mousedown',function(e){
 
 // Parche: reescribir las funciones de lectura de valor para usar ssVal()
 
+
+// ── Modal confirmación estado unidad ─────────────────────────────────────────
+function showEstadoConfirm(label, emoji, msg, color){
+  const overlay = document.getElementById('estado-overlay');
+  if(!overlay) return;
+  overlay.querySelector('.ec-emoji').textContent = emoji;
+  overlay.querySelector('.ec-label').textContent = 'UNIDAD ' + label;
+  overlay.querySelector('.ec-label').style.color = color;
+  overlay.querySelector('.ec-msg').textContent = msg;
+  overlay.style.display = 'flex';
+  // Limpiar alerta de texto (el modal la reemplaza)
+  const aral = $$('ar-al'); if(aral) aral.innerHTML='';
+}
+function cerrarEstadoConfirm(continuar){
+  const overlay = document.getElementById('estado-overlay');
+  if(overlay) overlay.style.display = 'none';
+  if(!continuar){
+    // Limpiar selección — volver al inicio
+    ['marca','modelo','version','anno'].forEach(disEl);
+    $$('tipo').value='';
+    $$('pa1').value='';
+    $$('km').value='';
+    $$('color').value='';
+    updEstado('');
+    cP();
+  } else {
+    // Continuar — mostrar aviso suave en el panel
+    const aral = $$('ar-al');
+    if(aral){
+      const l = document.getElementById('estado-overlay').querySelector('.ec-label').textContent;
+      aral.innerHTML='<div class="al warn">⚠️ Continuando con unidad '+l+'. Verificá disponibilidad antes de confirmar la operación.</div>';
+    }
+  }
+}
+
 // ── INIT ─────────────────────────────────────────────────────────────────────
 bLogin();
 </script>
@@ -5088,5 +5137,19 @@ bLogin();
     </div>
   </div>
 </div>
+
+<!-- Modal confirmación estado unidad -->
+<div id="estado-overlay">
+  <div class="ec-box">
+    <span class="ec-emoji">⚠️</span>
+    <span class="ec-label">UNIDAD SEÑADA</span>
+    <span class="ec-msg">Esta unidad ya tiene una seña registrada.</span>
+    <div class="ec-btns">
+      <button class="ec-btn no" onclick="cerrarEstadoConfirm(false)">← Volver</button>
+      <button class="ec-btn yes" onclick="cerrarEstadoConfirm(true)">Continuar igual</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
