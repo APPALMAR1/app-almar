@@ -4824,8 +4824,8 @@ function parseDriveCSV(csv, esHoja2){
     col: hdr.findIndex(h=>h.includes('COLOR')),
     ano: hdr.findIndex(h=>h.includes('AÑO')||h==='ANO'||h.includes('AÑO')),
     km:  hdr.findIndex(h=>h==='KM'),
-    pre: hdr.findIndex(h=>h.includes('PUBLICO')||h.includes('PRECIO')),
-    inf: 9, // Columna J (índice 9) — sin encabezado, contiene estados: "Señado X", "A recibir", etc.
+    pre: 9,  // índice 9 = PUBLICO ABRIL
+    inf: 10, // índice 10 = estado ("Señado X", "A recibir", vacío=DISPONIBLE)
     vto: hdr.findIndex(h=>h.includes('VALOR TOMA')),
     rea: hdr.findIndex(h=>h.includes('REACON')),
     cto: hdr.findIndex(h=>h.includes('COSTO TOTAL')),
