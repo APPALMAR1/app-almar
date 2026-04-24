@@ -4825,7 +4825,7 @@ function parseDriveCSV(csv, esHoja2){
     ano: hdr.findIndex(h=>h.includes('AÑO')||h==='ANO'||h.includes('AÑO')),
     km:  hdr.findIndex(h=>h==='KM'),
     pre: hdr.findIndex(h=>h.includes('PUBLICO')||h.includes('PRECIO')),
-    inf: hdr.findIndex(h=>h.includes('INFO TOMA')||h.includes('ESTADO')||h.includes('OBSERV')||h.includes('NOTA')||h.includes('SEGUIM')||h==='H'),
+    inf: 9, // Columna J (índice 9) — sin encabezado, contiene estados: "Señado X", "A recibir", etc.
     vto: hdr.findIndex(h=>h.includes('VALOR TOMA')),
     rea: hdr.findIndex(h=>h.includes('REACON')),
     cto: hdr.findIndex(h=>h.includes('COSTO TOTAL')),
@@ -4876,7 +4876,7 @@ function parseDriveCSV(csv, esHoja2){
 
     const kmNum = parseInt(get(ci.km).replace(/[^0-9]/g,''))||0;
     const precio = pNum(get(ci.pre));
-    const infoToma = get(ci.inf >= 0 ? ci.inf : 7);
+    const infoToma = get(ci.inf);
 
     let estado = 'DISPONIBLE';
     if(/señado|seniado|seña/i.test(infoToma))             estado='SENIADO';
