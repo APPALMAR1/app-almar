@@ -4398,8 +4398,16 @@ function rStk(){
     const eLabel={'DISPONIBLE':'DISPONIBLE','EN PREPARACION':'EN PREPARACION','SENIADO':'SE\u00d1ADO','A RECIBIR':'A RECIBIR'};
     const tagTxt=eLabel[u.estado]||u.estado;
     const d=document.createElement('div'); d.className='hi';
+    // Margen de negociación: columna H en miles de pesos (× 1000)
+    let pctPesosHtml = '';
+    if(u._pctToma){
+      const margen = parseInt(String(u._pctToma).replace(/[^0-9]/g,'')) * 1000;
+      if(!isNaN(margen) && margen > 0){
+        pctPesosHtml = ' · <span style="color:var(--y)">Margen: ' + fmt(margen) + '</span>';
+      }
+    }
     const tomaHtml = puedeVerToma && u._valorToma
-      ? '<div style="font-size:9px;color:var(--y);margin-top:1px">Toma: '+fmt(u._valorToma)+(u._costoTotal?' · Costo: '+fmt(u._costoTotal):'')+(u._pctToma?' · '+u._pctToma:'')+'</div>'
+      ? '<div style="font-size:9px;color:var(--y);margin-top:1px">Toma: '+fmt(u._valorToma)+(u._costoTotal?' · Costo: '+fmt(u._costoTotal):'')+pctPesosHtml+'</div>'
       : '';
     const empHtml = u.empresa ? '<span style="font-size:9px;opacity:.45;margin-left:4px">['+u.empresa+']</span>' : '';
     const pr = u.precio ? fmt(u.precio) : 'Consultar';
@@ -4829,7 +4837,7 @@ function parseDriveCSV(csv, esHoja2){
     vto: hdr.findIndex(h=>h.includes('VALOR TOMA')),
     rea: hdr.findIndex(h=>h.includes('REACON')),
     cto: hdr.findIndex(h=>h.includes('COSTO TOTAL')),
-    pct: hdr.findIndex(h=>h.includes('% DE')||h.includes('%DE')||h.includes('% MB')),
+    pct: 7, // columna H = % de margen sobre precio (para negociación)
   };
 
   const MARCAS = new Set(['CITROEN','CITROËN','CHERY','CHEVROLET','DS','FIAT','FORD',
