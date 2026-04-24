@@ -21,6 +21,38 @@
 .ss-none{padding:8px 12px;font-size:13px;color:var(--m);font-style:italic}
 html.light .ss-drop{box-shadow:0 4px 16px rgba(0,0,0,.12)}
 
+/* ── Screen Listas ── */
+.lista-card{background:var(--s2);border:1.5px solid var(--bdr);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:8px;transition:border-color .15s}
+.lista-card:hover{border-color:var(--b)}
+.lista-marca{font-family:var(--hf);font-size:15px;font-weight:900;color:var(--t)}
+.lista-mes{font-size:10px;color:var(--m);letter-spacing:.5px;text-transform:uppercase}
+.lista-btns{display:flex;gap:6px;margin-top:2px}
+.lista-btn{flex:1;padding:8px 4px;border-radius:6px;border:none;font-size:11px;font-weight:700;cursor:pointer;font-family:var(--font);transition:opacity .15s}
+.lista-btn:hover{opacity:.85}
+.lista-btn.ver{background:var(--b);color:#fff}
+.lista-btn.print{background:var(--s3);color:var(--t)}
+.lista-btn.sin{background:var(--s3);color:var(--m);cursor:default;opacity:.5}
+.lista-admin-row{display:grid;grid-template-columns:120px 1fr auto;gap:8px;align-items:center;margin-bottom:8px}
+.lista-admin-row input{background:var(--inp);border:1.5px solid var(--bdr);border-radius:6px;color:var(--t);font-size:12px;padding:5px 8px;width:100%;box-sizing:border-box}
+.lista-admin-row input:focus{outline:none;border-color:var(--b)}
+/* ── Modal Gadea import ── */
+#gadea-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:2001;display:none;align-items:center;justify-content:center;padding:20px}
+.gadea-box{background:var(--s1);border:1.5px solid var(--bdr);border-radius:12px;padding:24px;max-width:420px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,.4)}
+.gadea-title{font-family:var(--hf);font-size:16px;font-weight:900;color:var(--t);margin-bottom:4px}
+.gadea-sub{font-size:11px;color:var(--m);margin-bottom:16px}
+.gadea-row{display:flex;flex-direction:column;gap:4px;margin-bottom:12px}
+.gadea-label{font-size:11px;font-weight:700;color:var(--m);text-transform:uppercase;letter-spacing:.5px}
+.gadea-file-btn{display:flex;align-items:center;gap:8px;background:var(--s2);border:1.5px solid var(--bdr);border-radius:6px;padding:8px 12px;cursor:pointer;font-size:12px;color:var(--t);transition:border-color .15s}
+.gadea-file-btn:hover{border-color:var(--y)}
+.gadea-file-btn.loaded{border-color:var(--g);color:var(--g)}
+.gadea-dolar-row{display:flex;align-items:center;gap:8px;margin-bottom:16px}
+.gadea-dolar-row label{font-size:11px;font-weight:700;color:var(--m);text-transform:uppercase;white-space:nowrap}
+.gadea-dolar-input{background:var(--s2);border:1.5px solid var(--bdr);border-radius:6px;color:var(--t);font-size:14px;font-weight:700;padding:6px 10px;width:120px;text-align:right}
+.gadea-btns{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
+.gadea-btn{padding:9px 20px;border-radius:7px;border:none;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font)}
+.gadea-btn.go{background:var(--y);color:#000}
+.gadea-btn.cancel{background:var(--s3);color:var(--t)}
+.gadea-progress{font-size:12px;color:var(--m);margin-top:8px;min-height:18px}
 /* ── Modal estado unidad ── */
 #estado-overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:2000;display:none;align-items:center;justify-content:center;padding:20px}
 .ec-box{background:var(--s1);border:1.5px solid var(--bdr);border-radius:12px;padding:28px 24px;max-width:340px;width:100%;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,.4)}
@@ -843,7 +875,7 @@ input[type=text]#p-obs{background:#F5F7FA!important;border:1px solid #D5DCE6!imp
 
 <!-- STOCK OKM -->
 <div id="screen-okm" class="scr">
-<div class="page"><div class="sh"><div><div class="st2">Stock 0 km</div><div class="ss2">Unidades nuevas</div></div></div><div class="card" id="ol" style="padding:0;overflow:hidden"></div></div>
+<div class="page"><div class="sh"><div><div class="st2">Stock 0 km</div><div class="ss2">Unidades nuevas</div></div><div style="display:flex;align-items:center;gap:6px"><span style="font-size:11px;color:var(--m);font-weight:600">Precio:</span><div style="display:flex;border:1.5px solid var(--bdr);border-radius:6px;overflow:hidden"><button id="okm-btn-ars" onclick="setOkmMoneda('ARS')" style="padding:5px 10px;font-size:11px;font-weight:700;border:none;cursor:pointer;background:var(--b);color:#fff;font-family:var(--font)">$ ARS</button><button id="okm-btn-usd" onclick="setOkmMoneda('USD')" style="padding:5px 10px;font-size:11px;font-weight:700;border:none;cursor:pointer;background:var(--s2);color:var(--m);font-family:var(--font)">USD</button></div></div></div><div class="card" id="ol" style="padding:0;overflow:hidden"></div></div>
 </div>
 
 <!-- GERENCIA -->
@@ -898,8 +930,11 @@ input[type=text]#p-obs{background:#F5F7FA!important;border:1px solid #D5DCE6!imp
     <button class="btn btn-ghost btn-sm" onclick="document.getElementById('impf').click()">📥 Importar JSON</button>
     <button class="btn btn-sm" onclick="document.getElementById('impx').click()" style="background:none;border:1.5px solid var(--g);color:var(--g);font-family:var(--hf);font-weight:700;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;padding:5px 10px;border-radius:6px;cursor:pointer">📊 Importar Excel Usados</button>
     <button class="btn btn-sm" onclick="document.getElementById('impxo').click()" style="background:none;border:1.5px solid var(--b);color:var(--b);font-family:var(--hf);font-weight:700;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;padding:5px 10px;border-radius:6px;cursor:pointer">🏎 Importar Excel 0km</button>
-    <button class="btn btn-sm" onclick="dlgPlantillaOkm()" style="background:none;border:1.5px solid var(--m);color:var(--m);font-family:var(--hf);font-weight:700;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;padding:5px 10px;border-radius:6px;cursor:pointer">📋 Plantilla 0km</button>
+    <button class="btn btn-sm" onclick="dlgGadea()" style="background:none;border:1.5px solid var(--y);color:var(--y);font-family:var(--hf);font-weight:700;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;padding:5px 10px;border-radius:6px;cursor:pointer">🚛 Importar Gadea (FOTON/DFSK)</button>
+    <button class="btn btn-sm" onclick="dlgPlantillaOkm()"  style="background:none;border:1.5px solid var(--m);color:var(--m);font-family:var(--hf);font-weight:700;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;padding:5px 10px;border-radius:6px;cursor:pointer">📋 Plantilla 0km</button>
     <input type="file" id="impf"  accept=".json"      style="display:none" onchange="impD(event)">
+    <input type="file" id="gadea-foton" accept=".xlsx,.xls" style="display:none" onchange="gadeaFileLoaded('foton',event)">
+    <input type="file" id="gadea-dfsk"  accept=".xlsx,.xls" style="display:none" onchange="gadeaFileLoaded('dfsk',event)">
     <input type="file" id="impx"  accept=".xlsx,.xls" style="display:none" onchange="impX(event)">
     <input type="file" id="impxo" accept=".xlsx,.xls" style="display:none" onchange="impXO(event)">
   </div>
@@ -907,6 +942,28 @@ input[type=text]#p-obs{background:#F5F7FA!important;border:1px solid #D5DCE6!imp
 </div>
 
 </div><!-- /main -->
+
+<!-- SCREEN LISTAS -->
+<div id="screen-listas" class="scr" style="display:none">
+  <div class="page">
+    <div class="sh">
+      <div><div class="st2">Listas de Precios</div><div class="ss2">Ver e imprimir por marca</div></div>
+      <button onclick="abrirAdminListas()" id="btn-admin-listas" style="display:none;background:none;border:1.5px solid var(--m);color:var(--m);border-radius:6px;padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:var(--font)">⚙ Gestionar</button>
+    </div>
+    <!-- Grid de marcas -->
+    <div id="listas-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px"></div>
+    <!-- Panel admin (solo supervisor/gerencia) -->
+    <div id="listas-admin-panel" style="display:none">
+      <div class="card" style="padding:14px">
+        <div style="font-family:var(--hf);font-size:13px;font-weight:800;color:var(--t);margin-bottom:12px">⚙ Gestionar listas de precios</div>
+        <div id="listas-admin-rows"></div>
+        <button onclick="listasAgregarMarca()" style="margin-top:10px;background:none;border:1.5px solid var(--g);color:var(--g);border-radius:6px;padding:6px 14px;font-size:11px;font-weight:700;cursor:pointer;font-family:var(--font)">+ Agregar marca</button>
+        <button onclick="listasGuardar()" style="margin-top:10px;margin-left:8px;background:var(--r);border:none;color:#fff;border-radius:6px;padding:6px 14px;font-size:11px;font-weight:700;cursor:pointer;font-family:var(--font)">💾 Guardar cambios</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div id="bn"></div>
 
 <script>
@@ -3939,12 +3996,14 @@ function bBN(){
     {s:'gerencia',i:'📊',l:'Gerencia',sup:true},
     {s:'stock',i:'🚗',l:'Stock'},
     {s:'okm',i:'🏎',l:'0 km'},
+    {s:'listas',i:'📄',l:'Listas'},
   ]:[
     {s:'propuesta',i:'📋',l:'Propuesta'},
     {s:'historial',i:'🕐',l:'Historial'},
     ...(esSupervisor(CU)?[{s:'supervisor',i:'📊',l:'Supervisor',sup:true}]:[]),
     {s:'stock',i:'🚗',l:'Stock'},
     {s:'okm',i:'🏎',l:'0 km'},
+    {s:'listas',i:'📄',l:'Listas'},
   ];
   const first=esGerencia(CU)?'gerencia':'propuesta';
   items.forEach(x=>{
@@ -4417,7 +4476,36 @@ function rStk(){
     el.appendChild(d);
   });
 }
-function rOkm(){const el=$$('ol');el.innerHTML='';okm.forEach(u=>{const d=document.createElement('div');d.className='hi';d.innerHTML=`<div class="hico" style="background:var(--b)">🏎</div><div class="hinf"><div class="haut">${u.marca} ${u.modelo} ${u.version}</div><div class="hdet">${u.anno} · ${u.color||'—'}</div></div><div class="hr2"><div class="hcuo">${u.precio?fmt(u.precio):'Consultar'}</div><div class="hfec">${u.estado||'—'}</div></div>`;el.appendChild(d)})}
+function rOkm(){
+  const el=$$('ol'); el.innerHTML='';
+  const moneda = localStorage.getItem('almar_okm_moneda')||'ARS';
+  okm.forEach(u=>{
+    const d=document.createElement('div'); d.className='hi';
+    let precioStr;
+    if(moneda==='USD' && u._precioUSD){
+      precioStr = 'USD '+u._precioUSD.toLocaleString('es-AR');
+    } else if(u.precio){
+      precioStr = fmt(u.precio);
+    } else {
+      precioStr = 'Consultar';
+    }
+    const obsHtml = u.obs ? '<div style="font-size:9px;color:var(--m);margin-top:1px">'+u.obs+'</div>' : '';
+    d.innerHTML=`<div class="hico" style="background:var(--b)">🏎</div><div class="hinf"><div class="haut">${u.marca} ${u.modelo} ${u.version}</div><div class="hdet">${u.anno} · ${u.color||'—'}</div>${obsHtml}</div><div class="hr2"><div class="hcuo" style="color:${moneda==='USD'&&u._precioUSD?'var(--y)':'var(--b)'}">${precioStr}</div><div class="hfec">${u.estado||'—'}</div></div>`;
+    el.appendChild(d);
+  });
+}
+
+function setOkmMoneda(m){
+  localStorage.setItem('almar_okm_moneda', m);
+  const bArs=$$('okm-btn-ars'), bUsd=$$('okm-btn-usd');
+  if(bArs&&bUsd){
+    bArs.style.background=m==='ARS'?'var(--b)':'var(--s2)';
+    bArs.style.color=m==='ARS'?'#fff':'var(--m)';
+    bUsd.style.background=m==='USD'?'var(--b)':'var(--s2)';
+    bUsd.style.color=m==='USD'?'#fff':'var(--m)';
+  }
+  rOkm();
+}
 
 // ── ADMIN ────────────────────────────────────────────────────────────────────
 function rAdm(){
@@ -5109,8 +5197,284 @@ function cerrarEstadoConfirm(continuar){
   }
 }
 
+
+// ── IMPORTAR GADEA (FOTON / DFSK) ────────────────────────────────────────────
+const _gadeaFiles = {foton: null, dfsk: null};
+
+function dlgGadea(){
+  _gadeaFiles.foton = null; _gadeaFiles.dfsk = null;
+  document.getElementById('gadea-foton-btn').className = 'gadea-file-btn';
+  document.getElementById('gadea-foton-btn').innerHTML = '📂 Seleccionar archivo TRUCKS (FOTON)';
+  document.getElementById('gadea-dfsk-btn').className = 'gadea-file-btn';
+  document.getElementById('gadea-dfsk-btn').innerHTML = '📂 Seleccionar archivo DFSK';
+  document.getElementById('gadea-progress').textContent = '';
+  const saved = localStorage.getItem('almar_dolar') || '1385';
+  document.getElementById('gadea-dolar').value = saved;
+  document.getElementById('gadea-overlay').style.display = 'flex';
+}
+
+function cerrarGadea(){
+  document.getElementById('gadea-overlay').style.display = 'none';
+}
+
+function gadeaFileLoaded(tipo, e){
+  const f = e.target.files[0]; if(!f) return;
+  _gadeaFiles[tipo] = f;
+  const btn = document.getElementById('gadea-'+tipo+'-btn');
+  btn.className = 'gadea-file-btn loaded';
+  btn.innerHTML = '✅ ' + f.name;
+  e.target.value = '';
+}
+
+function procesarGadea(){
+  const dolarStr = document.getElementById('gadea-dolar').value.replace(/[^0-9.]/g,'');
+  const DOLAR = parseFloat(dolarStr);
+  if(!DOLAR || DOLAR < 100){ alert('⚠️ Ingresá un tipo de cambio válido.'); return; }
+  localStorage.setItem('almar_dolar', dolarStr);
+
+  const prog = document.getElementById('gadea-progress');
+  const EN_PESOS = new Set(['G7','V9','BLUELINE']);
+
+  if(!_gadeaFiles.foton && !_gadeaFiles.dfsk){
+    alert('⚠️ Seleccioná al menos un archivo.'); return;
+  }
+
+  prog.textContent = 'Procesando...';
+
+  loadXLSX(() => {
+    const unidades = [];
+    let pendientes = 0;
+    if(_gadeaFiles.foton) pendientes++;
+    if(_gadeaFiles.dfsk) pendientes++;
+
+    function parseFoton(data){
+      try {
+        const wb = XLSX.read(data, {type:'binary'});
+        // Buscar hoja ESTRUCTURA DE COSTOS
+        const shName = wb.SheetNames.find(s => s.toUpperCase().includes('ESTRUCTURA')) || wb.SheetNames[0];
+        const ws = wb.Sheets[shName];
+        const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
+
+        let modeloActual = '';
+        const SKIP = new Set(['','NAN','LINEA TUNLAND','LINEA AUMARK','LINEA WONDER',
+          'LINEA Z-TRUCK','LINEA TM1','AUMAN C (CONSTRUCCIÓN)','AUMAN R (RUTA)',
+          'BLUELINE','MODELOS','VERSION']);
+
+        for(let i=6; i<rows.length; i++){
+          const row = rows[i];
+          const c1 = String(row[1]||'').trim();
+          const c2 = String(row[2]||'').trim();
+          const c13 = parseFloat(row[13]);
+          const c14 = parseFloat(row[14]);
+          if(isNaN(c13)) continue;
+          if(c1 && !SKIP.has(c1.toUpperCase()) && !c1.toUpperCase().includes('LINEA') && !c1.includes('factur')){
+            modeloActual = c1;
+          }
+          if(!modeloActual) continue;
+          const version = c2 && !SKIP.has(c2.toUpperCase()) ? c2 : '';
+          const enPesos = EN_PESOS.has(modeloActual.toUpperCase());
+          const precioLista = enPesos ? Math.round(c13) : Math.round(c13 * DOLAR);
+          const precioObsv  = enPesos ? Math.round(c14) : Math.round(c14 * DOLAR);
+          if(precioLista <= 0) continue;
+          unidades.push({
+            marca:'FOTON', modelo:modeloActual, version, anno:2026,
+            precio:precioLista, color:'BLANCO',
+            estado:'DISPONIBLE',
+            obs:'Lista: $'+precioLista.toLocaleString('es-AR')+' | Bonif: $'+precioObsv.toLocaleString('es-AR')
+          });
+        }
+      } catch(err){ console.error('parseFoton:', err); }
+    }
+
+    function parseDFSK(data){
+      try {
+        const wb = XLSX.read(data, {type:'binary'});
+        const shName = wb.SheetNames.find(s => s.toUpperCase().includes('PROGRAMA')) || wb.SheetNames[0];
+        const ws = wb.Sheets[shName];
+        const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
+
+        // Buscar filas con modelo/version/precio
+        let modeloActual = '';
+        for(let i=3; i<rows.length; i++){
+          const row = rows[i];
+          const c0 = String(row[0]||'').trim();
+          const c1 = String(row[1]||'').trim();
+          const c2 = parseFloat(row[2]);
+          if(!c0 && !c1) continue;
+          if(c0 && isNaN(c2)){
+            // Es un modelo o encabezado
+            if(!['NAN','','ULTRALIVIANOS','PICKUPS','LINEA AUMARK','ANEXO','VERSIONES',
+                  'ALMAR','MODELOS'].some(s=>c0.toUpperCase().includes(s))){
+              modeloActual = c0;
+            }
+            continue;
+          }
+          // c0 vacío + c1 es versión
+          const modelo = c0 || modeloActual;
+          const version = c0 ? c1 : c1;
+          const precio = isNaN(c2) ? 0 : Math.round(c2);
+          if(!modelo || precio <= 0) continue;
+          modeloActual = modelo;
+          unidades.push({
+            marca:'DFSK', modelo, version, anno:2026,
+            precio, color:'BLANCO', estado:'DISPONIBLE', obs:''
+          });
+        }
+      } catch(err){ console.error('parseDFSK:', err); }
+    }
+
+    function finalizar(){
+      pendientes--;
+      if(pendientes > 0) return;
+      if(!unidades.length){ prog.textContent = '❌ No se encontraron vehículos.'; return; }
+      const ok = confirm('✅ Se encontraron '+unidades.length+' vehículos 0km (FOTON+DFSK).\n\n¿Reemplazar el stock 0km actual?');
+      if(!ok){ prog.textContent = ''; cerrarGadea(); return; }
+      okm = unidades;
+      rAdm(); rOkm();
+      cerrarGadea();
+      prog.textContent = '';
+      alert('✅ Stock 0km actualizado con '+unidades.length+' unidades.\nRecordá exportar el JSON.');
+    }
+
+    function leerArchivo(f, parseFn){
+      const r = new FileReader();
+      r.onload = ev => { parseFn(ev.target.result); finalizar(); };
+      r.readAsBinaryString(f);
+    }
+
+    if(_gadeaFiles.foton) leerArchivo(_gadeaFiles.foton, parseFoton);
+    if(_gadeaFiles.dfsk)  leerArchivo(_gadeaFiles.dfsk,  parseDFSK);
+  });
+}
+
+
+// ── LISTAS DE PRECIOS ─────────────────────────────────────────────────────────
+let listasData = JSON.parse(localStorage.getItem('almar_listas') || JSON.stringify([
+  {marca:'FOTON',     mes:'',  url:'', tipo:'foton'},
+  {marca:'DFSK',      mes:'',  url:'', tipo:'dfsk'},
+  {marca:'TOYOTA',    mes:'',  url:'', tipo:''},
+  {marca:'VOLKSWAGEN',mes:'',  url:'', tipo:''},
+  {marca:'CHEVROLET', mes:'',  url:'', tipo:''},
+  {marca:'FIAT',      mes:'',  url:'', tipo:''},
+  {marca:'FORD',      mes:'',  url:'', tipo:''},
+  {marca:'RENAULT',   mes:'',  url:'', tipo:''},
+  {marca:'PEUGEOT',   mes:'',  url:'', tipo:''},
+  {marca:'CITROEN',   mes:'',  url:'', tipo:''},
+  {marca:'HONDA',     mes:'',  url:'', tipo:''},
+  {marca:'JEEP',      mes:'',  url:'', tipo:''},
+]));
+
+function rListas(){
+  const grid = $$('listas-grid');
+  if(!grid) return;
+  grid.innerHTML = '';
+
+  // Mostrar botón admin solo a supervisor/gerencia
+  const btnAdm = $$('btn-admin-listas');
+  if(btnAdm) btnAdm.style.display = (esSupervisor(CU)||esGerencia(CU)) ? '' : 'none';
+
+  listasData.forEach((item, idx) => {
+    const card = document.createElement('div');
+    card.className = 'lista-card';
+    const tieneLink = !!item.url;
+    card.innerHTML = `
+      <div class="lista-marca">${item.marca}</div>
+      <div class="lista-mes">${item.mes || 'Sin fecha'}</div>
+      <div class="lista-btns">
+        <button class="lista-btn ${tieneLink?'ver':'sin'}" onclick="${tieneLink?`abrirLista(${idx})`:'void(0)'}">
+          ${tieneLink?'🔗 Ver lista':'Sin lista'}
+        </button>
+        <button class="lista-btn ${tieneLink?'print':'sin'}" onclick="${tieneLink?`imprimirLista(${idx})`:'void(0)'}">
+          ${tieneLink?'🖨 Imprimir':'—'}
+        </button>
+      </div>`;
+    grid.appendChild(card);
+  });
+}
+
+function abrirLista(idx){
+  const item = listasData[idx];
+  if(!item||!item.url) return;
+  window.open(item.url, '_blank');
+}
+
+function imprimirLista(idx){
+  const item = listasData[idx];
+  if(!item||!item.url) return;
+  // Intentar abrir en vista de impresión de Drive
+  let url = item.url;
+  if(url.includes('drive.google.com') || url.includes('docs.google.com')){
+    // Convertir a URL de previsualización imprimible
+    url = url.replace('/edit','/preview').replace('/view','/preview');
+  }
+  const w = window.open(url, '_blank');
+  if(w) setTimeout(()=>{ try{ w.print(); }catch(e){} }, 1500);
+}
+
+function abrirAdminListas(){
+  const panel = $$('listas-admin-panel');
+  if(!panel) return;
+  const visible = panel.style.display !== 'none';
+  panel.style.display = visible ? 'none' : '';
+  if(!visible) rListasAdmin();
+}
+
+function rListasAdmin(){
+  const cont = $$('listas-admin-rows');
+  if(!cont) return;
+  cont.innerHTML = '';
+  listasData.forEach((item, idx) => {
+    const row = document.createElement('div');
+    row.className = 'lista-admin-row';
+    row.innerHTML = `
+      <input value="${item.marca}" placeholder="Marca" id="ladm-marca-${idx}">
+      <input value="${item.url}" placeholder="Link de Google Drive (compartir → Copiar link)" id="ladm-url-${idx}">
+      <div style="display:flex;flex-direction:column;gap:4px">
+        <input value="${item.mes}" placeholder="Ej: Abril 2026" id="ladm-mes-${idx}" style="width:110px">
+        <button onclick="listasEliminar(${idx})" style="background:none;border:1px solid var(--r);color:var(--r);border-radius:4px;padding:2px 6px;font-size:10px;cursor:pointer">✕ Quitar</button>
+      </div>`;
+    cont.appendChild(row);
+  });
+}
+
+function listasAgregarMarca(){
+  listasData.push({marca:'NUEVA MARCA', mes:'', url:'', tipo:''});
+  rListasAdmin();
+}
+
+function listasEliminar(idx){
+  if(!confirm('¿Quitar esta marca de las listas?')) return;
+  listasData.splice(idx, 1);
+  rListasAdmin();
+}
+
+function listasGuardar(){
+  listasData.forEach((item, idx) => {
+    item.marca = ($$('ladm-marca-'+idx)||{}).value || item.marca;
+    item.url   = ($$('ladm-url-'+idx)  ||{}).value || '';
+    item.mes   = ($$('ladm-mes-'+idx)  ||{}).value || '';
+  });
+  localStorage.setItem('almar_listas', JSON.stringify(listasData));
+  const panel = $$('listas-admin-panel');
+  if(panel) panel.style.display = 'none';
+  rListas();
+  alert('✅ Listas guardadas correctamente.');
+}
+
 // ── INIT ─────────────────────────────────────────────────────────────────────
 bLogin();
+
+// Restaurar selector de moneda OKM
+(function(){
+  const m = localStorage.getItem('almar_okm_moneda')||'ARS';
+  const bArs=$$('okm-btn-ars'), bUsd=$$('okm-btn-usd');
+  if(bArs&&bUsd){
+    bArs.style.background=m==='ARS'?'var(--b)':'var(--s2)';
+    bArs.style.color=m==='ARS'?'#fff':'var(--m)';
+    bUsd.style.background=m==='USD'?'var(--b)':'var(--s2)';
+    bUsd.style.color=m==='USD'?'#fff':'var(--m)';
+  }
+})();
 
 // Restaurar cartel de última sincronización con Drive
 (function(){
@@ -5177,6 +5541,40 @@ bLogin();
       <button class="ec-btn no" onclick="cerrarEstadoConfirm(false)">← Volver</button>
       <button class="ec-btn yes" onclick="cerrarEstadoConfirm(true)">Continuar igual</button>
     </div>
+  </div>
+</div>
+
+
+<!-- Modal Gadea Import -->
+<div id="gadea-overlay">
+  <div class="gadea-box">
+    <div class="gadea-title">🚛 Importar precios Gadea</div>
+    <div class="gadea-sub">Seleccioná las planillas de FOTON y/o DFSK de este mes. Se actualizará el stock 0km.</div>
+
+    <div class="gadea-row">
+      <div class="gadea-label">Planilla ALMAR TRUCKS (FOTON)</div>
+      <div class="gadea-file-btn" id="gadea-foton-btn" onclick="document.getElementById('gadea-foton').click()">
+        📂 Seleccionar archivo TRUCKS (FOTON)
+      </div>
+    </div>
+
+    <div class="gadea-row">
+      <div class="gadea-label">Planilla DFSK</div>
+      <div class="gadea-file-btn" id="gadea-dfsk-btn" onclick="document.getElementById('gadea-dfsk').click()">
+        📂 Seleccionar archivo DFSK
+      </div>
+    </div>
+
+    <div class="gadea-dolar-row">
+      <label>💵 Tipo de cambio (USD):</label>
+      <input class="gadea-dolar-input" id="gadea-dolar" type="number" value="1385" min="1" step="1">
+    </div>
+
+    <div class="gadea-btns">
+      <button class="gadea-btn cancel" onclick="cerrarGadea()">Cancelar</button>
+      <button class="gadea-btn go" onclick="procesarGadea()">⚡ Procesar y actualizar</button>
+    </div>
+    <div class="gadea-progress" id="gadea-progress"></div>
   </div>
 </div>
 
