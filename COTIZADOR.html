@@ -479,6 +479,9 @@ select option{background:var(--s2)}
 /* Ocultar todo excepto propuesta */
 #tb,#bn,#dr,#ov,#login,#thm,.no-print,.scr{display:none!important}
 #screen-propuesta{display:block!important}
+#screen-listas.on{display:block!important}
+#screen-stock.on{display:block!important}
+#screen-okm.on{display:block!important}
 
 /* Modo impresión stock — clase en body */
 body.print-stock #screen-propuesta{display:none!important}
@@ -944,7 +947,7 @@ input[type=text]#p-obs{background:#F5F7FA!important;border:1px solid #D5DCE6!imp
 </div><!-- /main -->
 
 <!-- SCREEN LISTAS -->
-<div id="screen-listas" class="scr" style="display:none">
+<div id="screen-listas" class="scr">
   <div class="page">
     <div class="sh">
       <div><div class="st2">Listas de Precios</div><div class="ss2">Ver e imprimir por marca</div></div>
@@ -3936,6 +3939,7 @@ const SC={
   stock:      {t:'Stock Usados',           s:'Inventario Almar'},
   okm:        {t:'Stock 0 km',             s:'Unidades nuevas'},
   admin:      {t:'Panel Admin',            s:'Solo administrador'},
+  listas:     {t:'Listas de Precios',      s:'Ver e imprimir por marca'},
 };
 function goTo(n){
   clD();
@@ -5366,14 +5370,16 @@ let listasData = JSON.parse(localStorage.getItem('almar_listas') || JSON.stringi
 ]));
 
 function rListas(){
+  try{
   const grid = $$('listas-grid');
-  if(!grid) return;
+  if(!grid){ console.error('listas-grid no encontrado'); return; }
   grid.innerHTML = '';
 
   // Mostrar botón admin solo a supervisor/gerencia
   const btnAdm = $$('btn-admin-listas');
   if(btnAdm) btnAdm.style.display = (esSupervisor(CU)||esGerencia(CU)) ? '' : 'none';
 
+  console.log('rListas: listasData=', listasData);
   listasData.forEach((item, idx) => {
     const card = document.createElement('div');
     card.className = 'lista-card';
@@ -5391,6 +5397,7 @@ function rListas(){
       </div>`;
     grid.appendChild(card);
   });
+  }catch(e){ console.error('rListas error:', e); }
 }
 
 function abrirLista(idx){
