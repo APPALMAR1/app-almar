@@ -4768,7 +4768,7 @@ function syncDrive(){
 
       const ts = new Date().toLocaleDateString('es-AR')+' '+
                  new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
-      bar.style.background='rgba(39,174,96,.12)';
+      bar.style.display='block'; bar.style.background='rgba(39,174,96,.12)';
       bar.style.color='var(--g)';
       bar.textContent = '✓ '+todos.length+' vehículos actualizados (H1:'+autos1.length+' H2:'+soloH2.length+') · '+ts;
       btn.textContent='☁ Actualizar desde Drive'; btn.disabled=false;
@@ -5096,6 +5096,20 @@ function cerrarEstadoConfirm(continuar){
 
 // ── INIT ─────────────────────────────────────────────────────────────────────
 bLogin();
+
+// Restaurar cartel de última sincronización con Drive
+(function(){
+  const ts = localStorage.getItem('almar_stk_ts');
+  if(!ts) return;
+  const bar = $$('drive-sync-bar');
+  if(!bar) return;
+  bar.style.display = 'block';
+  bar.style.background = 'rgba(39,174,96,.12)';
+  bar.style.color = 'var(--g)';
+  // Contar cuántas unidades hay en stock
+  const total = (typeof stk !== 'undefined' ? stk.length : 0);
+  bar.textContent = '✓ Última sincronización: ' + ts + (total ? ' · ' + total + ' vehículos en stock' : '');
+})();
 </script>
 
 <!-- MODAL DRIVE -->
