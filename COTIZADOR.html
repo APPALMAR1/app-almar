@@ -4724,8 +4724,11 @@ function syncDrive(){
   // Verificar si estamos en localhost (bat) o file://
   const esLocal = location.protocol === 'http:' || location.protocol === 'https:';
   if(!esLocal){
-    const msg = '⚠️ Para usar la sincronización automática, abrí el cotizador con el archivo ABRIR_COTIZADOR.bat (doble clic).\n\nEso levanta un servidor local desde donde el botón funciona perfectamente.';
-    alert(msg);
+    bar.style.display='block';
+    bar.style.background='rgba(192,57,43,.12)';
+    bar.style.color='var(--r)';
+    bar.textContent='⚠️ Para sincronizar con Drive abrí el cotizador con ABRIR_COTIZADOR.bat (doble clic en el archivo BAT).';
+    btn.disabled=false;
     return;
   }
 
@@ -4735,9 +4738,12 @@ function syncDrive(){
   bar.style.background = 'rgba(26,82,118,.15)';
   bar.style.color = 'var(--b)';
   bar.textContent = 'Conectando con Google Drive…';
+  console.log('[SYNC] Iniciando. URL H1:', DRIVE_URL_H1);
+  console.log('[SYNC] Protocolo:', location.protocol);
 
   // Leer hoja 1 (obligatoria)
-  const p1 = fetch(DRIVE_URL_H1 + '&t=' + Date.now(), {cache:'no-store'}).then(r=>{
+  const p1 = fetch(DRIVE_URL_H1 + '&t=' + Date.now(), {cache:'no-store', redirect:'follow'}).then(r=>{
+    console.log('[SYNC] H1 status:', r.status, r.ok);
     if(!r.ok) throw new Error('Hoja 1: HTTP '+r.status);
     return r.text();
   });
@@ -4778,9 +4784,10 @@ function syncDrive(){
     })
     .catch(err=>{
       console.error('syncDrive:', err);
+      bar.style.display='block';
       bar.style.background='rgba(192,57,43,.12)';
       bar.style.color='var(--r)';
-      bar.textContent='✕ '+err.message+'. Abrí el cotizador con ABRIR_COTIZADOR.bat y verificá tu conexión.';
+      bar.textContent='✕ Error al conectar: '+err.message+'. Verificá que el BAT esté corriendo y la URL del Drive esté correcta.';
       btn.textContent='☁ Reintentar'; btn.disabled=false;
     });
 }
