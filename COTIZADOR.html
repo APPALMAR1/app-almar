@@ -936,34 +936,166 @@ const CAMP_D=[
   {id:15,banco:"SANTANDER", nombre:"LINEA GREEN",             tipo:"TRAD",tna:39.9, comision:4,  plazoMax:60,ltv:80,activa:true,  marca:null, coefBase:100000,coefs:{12:[10242.1,10242.1],18:[7472.12,7472.12],24:[6113.37,6113.37],36:[4805.18,4805.18],48:[4198.43,4198.43],60:[3868.53,3868.53]}},
   {id:16,banco:"SANTANDER", nombre:"CAMIONES/UTILITARIOS",    tipo:"TRAD",tna:47.9, comision:4,  plazoMax:60,ltv:80,activa:true,  marca:null, coefBase:100000,coefs:{12:[10650.07,10650.07],18:[7893.98,7893.98],24:[6553.09,6553.09],36:[5282.59,5282.59],48:[4711.49,4711.49],60:[4413.21,4413.21]}},
   // ── CAMPAÑAS DE MARCA ───────────────────────────────────────────────────
-  // GPAT — Chevrolet
-  {id:20,banco:"GPAT",      nombre:"ONIX — PROMOCIONAL",      tipo:"TRAD",tna:0,    comision:15.8,plazoMax:36,ltv:70,activa:true,  marca:"CHEVROLET",modelos:["ONIX","ONIX PLUS"]},
-  {id:21,banco:"GPAT",      nombre:"ONIX — EXCLUSIVO 0%",     tipo:"TRAD",tna:0,    comision:16.2,plazoMax:24,ltv:70,activa:true,  marca:"CHEVROLET",modelos:["ONIX","ONIX PLUS"]},
-  {id:22,banco:"GPAT",      nombre:"TRACKER — PROMOCIONAL",   tipo:"TRAD",tna:0,    comision:15.8,plazoMax:36,ltv:70,activa:true,  marca:"CHEVROLET",modelos:["TRACKER"]},
-  {id:23,banco:"GPAT",      nombre:"TRACKER — EXCLUSIVO 0%",  tipo:"TRAD",tna:0,    comision:16.2,plazoMax:24,ltv:70,activa:true,  marca:"CHEVROLET",modelos:["TRACKER"]},
-  {id:24,banco:"GPAT",      nombre:"SPIN / MONTANA",          tipo:"TRAD",tna:0,    comision:15.8,plazoMax:30,ltv:70,activa:true,  marca:"CHEVROLET",modelos:["SPIN","MONTANA"]},
-  {id:25,banco:"GPAT",      nombre:"S10 / TRAILBLAZER",       tipo:"TRAD",tna:0,    comision:15.8,plazoMax:30,ltv:70,activa:true,  marca:"CHEVROLET",modelos:["S10","TRAILBLAZER"]},
-  {id:26,banco:"GPAT",      nombre:"CAPTIVA PHEV",            tipo:"TRAD",tna:0,    comision:17,  plazoMax:30,ltv:70,activa:true,  marca:"CHEVROLET",modelos:["CAPTIVA"]},
-  {id:27,banco:"GPAT",      nombre:"SPARK EUV",               tipo:"TRAD",tna:0,    comision:15.8,plazoMax:30,ltv:70,activa:true,  marca:"CHEVROLET",modelos:["SPARK EUV"]},
-  // FCA — Fiat y Jeep
-  {id:30,banco:"FCA",       nombre:"FIAT — TODOS LOS MODELOS",tipo:"TRAD",tna:0,    comision:11,  plazoMax:36,ltv:80,activa:true,  marca:"FIAT",     modelos:null, coefBase:1000,coefs:{12:[84.33,84.33],18:[56.22,56.22],24:[45.80,45.32],36:[38.87,37.55]}},
-  {id:31,banco:"FCA",       nombre:"FIAT TITANO — 30 MESES",  tipo:"TRAD",tna:34.9, comision:10,  plazoMax:30,ltv:80,activa:true,  marca:"FIAT",     modelos:["TITANO"]},
-  {id:32,banco:"FCA",       nombre:"JEEP/RAM — TODOS",        tipo:"TRAD",tna:0,    comision:11,  plazoMax:36,ltv:80,activa:true,  marca:"JEEP",     modelos:null},
-  {id:33,banco:"FCA",       nombre:"JEEP DAKOTA — 30 MESES",  tipo:"TRAD",tna:27.9, comision:10,  plazoMax:30,ltv:80,activa:true,  marca:"JEEP",     modelos:["DAKOTA"]},
-  // PSA Finance — Peugeot y Citroën (Circular 434-2026 Abril 2026)
-  {id:40,banco:"PSA Finance",nombre:"PEUGEOT — TASA EXPRESS",   tipo:"TRAD",tna:0,    comision:12,  plazoMax:36,ltv:80,activa:true,  marca:"PEUGEOT",  modelos:null, coefBase:1000,coefs:{12:[83.33,83.33],18:[55.56,55.56],24:[46.56,46.56],36:[40.60,40.60]}},
-  {id:41,banco:"PSA Finance",nombre:"PEUGEOT — EXCLUSIVA 208/2008",tipo:"TRAD",tna:0, comision:12,  plazoMax:36,ltv:80,activa:true,  marca:"PEUGEOT",  modelos:["208","2008"], coefBase:1000,coefs:{12:[83.33,83.33],18:[55.56,55.56],24:[41.67,41.67],36:[37.22,37.22]}},
-  {id:42,banco:"PSA Finance",nombre:"PEUGEOT — TASA SIMPLE",    tipo:"TRAD",tna:11.9, comision:10,  plazoMax:36,ltv:80,activa:true,  marca:"PEUGEOT",  modelos:null},
-  {id:43,banco:"PSA Finance",nombre:"PEUGEOT — TODA LA GAMA",   tipo:"TRAD",tna:16,   comision:8,   plazoMax:48,ltv:80,activa:true,  marca:"PEUGEOT",  modelos:null, coefBase:1000,coefs:{12:[93.53,93.53],18:[73.57,73.57],24:[63.24,63.24],36:[53.60,53.60],48:[49.85,49.85]}},
-  {id:44,banco:"PSA Finance",nombre:"CITROËN — TASA EXPRESS",   tipo:"TRAD",tna:0,    comision:12,  plazoMax:36,ltv:80,activa:true,  marca:"CITROEN",  modelos:null},
-  {id:45,banco:"PSA Finance",nombre:"CITROËN — TASA SIMPLE",    tipo:"TRAD",tna:11.9, comision:10,  plazoMax:36,ltv:80,activa:true,  marca:"CITROEN",  modelos:null},
+  // GPAT — Chevrolet (Vigencia 19/03/2026)
+  {id:300,banco:"GPAT",nombre:"ONIX PROMO 12c",tipo:"TRAD",tna:0.0,comision:15.8,plazoMax:12,ltv:70,activa:true,marca:"CHEVROLET",modelos:["ONIX", "ONIX PLUS"]},
+  {id:301,banco:"GPAT",nombre:"ONIX PROMO 18c",tipo:"TRAD",tna:9.9,comision:15.8,plazoMax:18,ltv:70,activa:true,marca:"CHEVROLET",modelos:["ONIX", "ONIX PLUS"]},
+  {id:302,banco:"GPAT",nombre:"ONIX PROMO 18c ALT",tipo:"TRAD",tna:15.9,comision:15.8,plazoMax:18,ltv:70,activa:true,marca:"CHEVROLET",modelos:["ONIX", "ONIX PLUS"]},
+  {id:303,banco:"GPAT",nombre:"ONIX PROMO 24c",tipo:"TRAD",tna:20.9,comision:15.8,plazoMax:24,ltv:70,activa:true,marca:"CHEVROLET",modelos:["ONIX", "ONIX PLUS"]},
+  {id:304,banco:"GPAT",nombre:"ONIX PROMO 30c",tipo:"TRAD",tna:24.9,comision:15.8,plazoMax:30,ltv:70,activa:true,marca:"CHEVROLET",modelos:["ONIX", "ONIX PLUS"]},
+  {id:305,banco:"GPAT",nombre:"ONIX PROMO 36c",tipo:"TRAD",tna:24.9,comision:15.8,plazoMax:36,ltv:70,activa:true,marca:"CHEVROLET",modelos:["ONIX", "ONIX PLUS"]},
+  {id:306,banco:"GPAT",nombre:"ONIX EXCLUSIVO 18c",tipo:"TRAD",tna:0.0,comision:16.2,plazoMax:18,ltv:70,activa:true,marca:"CHEVROLET",modelos:["ONIX", "ONIX PLUS"]},
+  {id:307,banco:"GPAT",nombre:"ONIX EXCLUSIVO 24c",tipo:"TRAD",tna:0.0,comision:16.2,plazoMax:24,ltv:70,activa:true,marca:"CHEVROLET",modelos:["ONIX", "ONIX PLUS"]},
+  {id:308,banco:"GPAT",nombre:"ONIX DIFERIDO 12c",tipo:"TRAD",tna:0.0,comision:15.8,plazoMax:12,ltv:70,activa:true,marca:"CHEVROLET",modelos:["ONIX", "ONIX PLUS"]},
+  {id:309,banco:"GPAT",nombre:"TRACKER PROMO 12c",tipo:"TRAD",tna:0.0,comision:15.8,plazoMax:12,ltv:70,activa:true,marca:"CHEVROLET",modelos:["TRACKER"]},
+  {id:310,banco:"GPAT",nombre:"TRACKER PROMO 18c",tipo:"TRAD",tna:9.9,comision:15.8,plazoMax:18,ltv:70,activa:true,marca:"CHEVROLET",modelos:["TRACKER"]},
+  {id:311,banco:"GPAT",nombre:"TRACKER PROMO 36c",tipo:"TRAD",tna:24.9,comision:15.8,plazoMax:36,ltv:70,activa:true,marca:"CHEVROLET",modelos:["TRACKER"]},
+  {id:312,banco:"GPAT",nombre:"S10 PROMO 12c",tipo:"TRAD",tna:0.0,comision:15.8,plazoMax:12,ltv:70,activa:true,marca:"CHEVROLET",modelos:["S10"]},
+  {id:313,banco:"GPAT",nombre:"S10 PROMO 18c",tipo:"TRAD",tna:14.9,comision:15.8,plazoMax:18,ltv:70,activa:true,marca:"CHEVROLET",modelos:["S10"]},
+  {id:314,banco:"GPAT",nombre:"S10 PROMO 24c",tipo:"TRAD",tna:25.9,comision:15.8,plazoMax:24,ltv:70,activa:true,marca:"CHEVROLET",modelos:["S10"]},
+  {id:315,banco:"GPAT",nombre:"S10 PROMO 30c",tipo:"TRAD",tna:29.9,comision:15.8,plazoMax:30,ltv:70,activa:true,marca:"CHEVROLET",modelos:["S10"]},
+  {id:316,banco:"GPAT",nombre:"CAPTIVA PHEV 12c",tipo:"TRAD",tna:0.0,comision:17.0,plazoMax:12,ltv:70,activa:true,marca:"CHEVROLET",modelos:["CAPTIVA"]},
+  {id:317,banco:"GPAT",nombre:"CAPTIVA PHEV 18c",tipo:"TRAD",tna:9.9,comision:17.0,plazoMax:18,ltv:70,activa:true,marca:"CHEVROLET",modelos:["CAPTIVA"]},
+  {id:318,banco:"GPAT",nombre:"CAPTIVA PHEV 24c",tipo:"TRAD",tna:19.9,comision:17.0,plazoMax:24,ltv:70,activa:true,marca:"CHEVROLET",modelos:["CAPTIVA"]},
+  {id:319,banco:"GPAT",nombre:"SPARK EUV 12c",tipo:"TRAD",tna:0.0,comision:15.8,plazoMax:12,ltv:70,activa:true,marca:"CHEVROLET",modelos:["SPARK EUV"]},
+  {id:320,banco:"GPAT",nombre:"SPARK EUV 18c",tipo:"TRAD",tna:14.9,comision:15.8,plazoMax:18,ltv:70,activa:true,marca:"CHEVROLET",modelos:["SPARK EUV"]},
+  {id:321,banco:"GPAT",nombre:"SPARK EUV 24c",tipo:"TRAD",tna:25.9,comision:15.8,plazoMax:24,ltv:70,activa:true,marca:"CHEVROLET",modelos:["SPARK EUV"]},
+  {id:322,banco:"GPAT",nombre:"SPARK EUV 30c",tipo:"TRAD",tna:29.9,comision:15.8,plazoMax:30,ltv:70,activa:true,marca:"CHEVROLET",modelos:["SPARK EUV"]},
+  // FCA — Fiat/Jeep (Vigencia 30/04/2026)
+  {id:400,banco:"FCA",nombre:"FIAT TASA 0 18M 18c",tipo:"TRAD",tna:0.0,comision:11.0,plazoMax:18,ltv:80,activa:true,marca:"FIAT",modelos:null},
+  {id:401,banco:"FCA",nombre:"FIAT TASA FIJA 18M 24c",tipo:"TRAD",tna:10.9,comision:11.0,plazoMax:24,ltv:80,activa:true,marca:"FIAT",modelos:null},
+  {id:402,banco:"FCA",nombre:"FIAT TASA FIJA 18M 36c",tipo:"TRAD",tna:20.9,comision:11.0,plazoMax:36,ltv:80,activa:true,marca:"FIAT",modelos:null},
+  {id:403,banco:"FCA",nombre:"FIAT TASA 0 24M 12c",tipo:"TRAD",tna:0.0,comision:11.0,plazoMax:12,ltv:80,activa:true,marca:"FIAT",modelos:null},
+  {id:404,banco:"FCA",nombre:"FIAT TASA FIJA 24M 18c",tipo:"TRAD",tna:8.9,comision:11.0,plazoMax:18,ltv:80,activa:true,marca:"FIAT",modelos:null},
+  {id:405,banco:"FCA",nombre:"FIAT TASA FIJA 24M 24c",tipo:"TRAD",tna:17.9,comision:11.0,plazoMax:24,ltv:80,activa:true,marca:"FIAT",modelos:null},
+  {id:406,banco:"FCA",nombre:"FIAT TASA FIJA 24M 36c",tipo:"TRAD",tna:25.9,comision:11.0,plazoMax:36,ltv:80,activa:true,marca:"FIAT",modelos:null},
+  {id:407,banco:"FCA",nombre:"FIAT TASA 0 26M 12c",tipo:"TRAD",tna:0.0,comision:12.0,plazoMax:12,ltv:80,activa:true,marca:"FIAT",modelos:null},
+  {id:408,banco:"FCA",nombre:"FIAT TASA 0 26M 18c",tipo:"TRAD",tna:0.0,comision:12.0,plazoMax:18,ltv:80,activa:true,marca:"FIAT",modelos:null},
+  {id:409,banco:"FCA",nombre:"FIAT TASA FIJA 26M 24c",tipo:"TRAD",tna:5.9,comision:12.0,plazoMax:24,ltv:80,activa:true,marca:"FIAT",modelos:null},
+  {id:410,banco:"FCA",nombre:"FIAT TASA FIJA 26M 36c",tipo:"TRAD",tna:16.9,comision:12.0,plazoMax:36,ltv:80,activa:true,marca:"FIAT",modelos:null},
+  {id:411,banco:"FCA",nombre:"UVA FIAT 30M TASA 0 12c",tipo:"TRAD",tna:0.0,comision:10.0,plazoMax:12,ltv:80,activa:true,marca:"FIAT",modelos:null},
+  {id:412,banco:"FCA",nombre:"UVA FIAT 30M TASA 0 24c",tipo:"TRAD",tna:0.0,comision:10.0,plazoMax:24,ltv:80,activa:true,marca:"FIAT",modelos:null},
+  {id:413,banco:"FCA",nombre:"UVA FIAT 30M TASA 0 36c",tipo:"TRAD",tna:0.0,comision:10.0,plazoMax:36,ltv:80,activa:true,marca:"FIAT",modelos:null},
+  {id:414,banco:"FCA",nombre:"UVA FIAT 30M 48c",tipo:"TRAD",tna:5.9,comision:10.0,plazoMax:48,ltv:80,activa:true,marca:"FIAT",modelos:null},
+  {id:415,banco:"FCA",nombre:"UVA FIAT 30M 60c",tipo:"TRAD",tna:9.9,comision:10.0,plazoMax:60,ltv:80,activa:true,marca:"FIAT",modelos:null},
+  {id:416,banco:"FCA",nombre:"TITANO TASA 0 12c",tipo:"TRAD",tna:0.0,comision:10.0,plazoMax:12,ltv:80,activa:true,marca:"FIAT",modelos:["TITANO"]},
+  {id:417,banco:"FCA",nombre:"TITANO TASA FIJA 18c",tipo:"TRAD",tna:13.9,comision:10.0,plazoMax:18,ltv:80,activa:true,marca:"FIAT",modelos:["TITANO"]},
+  {id:418,banco:"FCA",nombre:"TITANO TASA FIJA 24c",tipo:"TRAD",tna:21.9,comision:10.0,plazoMax:24,ltv:80,activa:true,marca:"FIAT",modelos:["TITANO"]},
+  {id:419,banco:"FCA",nombre:"TITANO TASA FIJA 36c",tipo:"TRAD",tna:28.9,comision:10.0,plazoMax:36,ltv:80,activa:true,marca:"FIAT",modelos:["TITANO"]},
+  {id:420,banco:"FCA",nombre:"TITANO TASA FIJA 48c",tipo:"TRAD",tna:31.9,comision:10.0,plazoMax:48,ltv:80,activa:true,marca:"FIAT",modelos:["TITANO"]},
+  {id:421,banco:"FCA",nombre:"TITANO TASA FIJA 60c",tipo:"TRAD",tna:34.9,comision:10.0,plazoMax:60,ltv:80,activa:true,marca:"FIAT",modelos:["TITANO"]},
+  {id:422,banco:"FCA",nombre:"600 HYBRID TASA 0 12c",tipo:"TRAD",tna:0.0,comision:11.0,plazoMax:12,ltv:80,activa:true,marca:"FIAT",modelos:["FIAT 600"]},
+  {id:423,banco:"FCA",nombre:"600 HYBRID TASA FIJA 18c",tipo:"TRAD",tna:13.9,comision:11.0,plazoMax:18,ltv:80,activa:true,marca:"FIAT",modelos:["FIAT 600"]},
+  {id:424,banco:"FCA",nombre:"600 HYBRID TASA FIJA 36c",tipo:"TRAD",tna:28.9,comision:11.0,plazoMax:36,ltv:80,activa:true,marca:"FIAT",modelos:["FIAT 600"]},
+  {id:425,banco:"FCA",nombre:"600 HYBRID TASA FIJA 48c",tipo:"TRAD",tna:32.9,comision:11.0,plazoMax:48,ltv:80,activa:true,marca:"FIAT",modelos:["FIAT 600"]},
+  {id:426,banco:"FCA",nombre:"USADOS TASA FIJA 12c",tipo:"TRAD",tna:9.9,comision:10.0,plazoMax:12,ltv:80,activa:true,marca:"FIAT",modelos:null,usados:true},
+  {id:427,banco:"FCA",nombre:"USADOS TASA FIJA 18c",tipo:"TRAD",tna:22.9,comision:10.0,plazoMax:18,ltv:80,activa:true,marca:"FIAT",modelos:null,usados:true},
+  {id:428,banco:"FCA",nombre:"USADOS TASA FIJA 24c",tipo:"TRAD",tna:29.9,comision:10.0,plazoMax:24,ltv:80,activa:true,marca:"FIAT",modelos:null,usados:true},
+  {id:429,banco:"FCA",nombre:"USADOS TASA FIJA 36c",tipo:"TRAD",tna:35.9,comision:10.0,plazoMax:36,ltv:80,activa:true,marca:"FIAT",modelos:null,usados:true},
+  // PSA Finance — Peugeot/Citroën 0km (Abril 2026)
+  {id:500,banco:"PSA Finance",nombre:"TASA EXPRESS 12c",tipo:"TRAD",tna:0.0,comision:12.0,plazoMax:12,ltv:80,activa:true,marca:"PEUGEOT",modelos:null},
+  {id:501,banco:"PSA Finance",nombre:"CITROËN — TASA EXPRESS 12c",tipo:"TRAD",tna:0.0,comision:12.0,plazoMax:12,ltv:80,activa:true,marca:"CITROEN",modelos:null},
+  {id:502,banco:"PSA Finance",nombre:"TASA EXPRESS 18c",tipo:"TRAD",tna:0.0,comision:12.0,plazoMax:18,ltv:80,activa:true,marca:"PEUGEOT",modelos:null},
+  {id:503,banco:"PSA Finance",nombre:"CITROËN — TASA EXPRESS 18c",tipo:"TRAD",tna:0.0,comision:12.0,plazoMax:18,ltv:80,activa:true,marca:"CITROEN",modelos:null},
+  {id:504,banco:"PSA Finance",nombre:"TASA EXPRESS 24c",tipo:"TRAD",tna:7.9,comision:11.0,plazoMax:24,ltv:80,activa:true,marca:"PEUGEOT",modelos:null},
+  {id:505,banco:"PSA Finance",nombre:"CITROËN — TASA EXPRESS 24c",tipo:"TRAD",tna:7.9,comision:11.0,plazoMax:24,ltv:80,activa:true,marca:"CITROEN",modelos:null},
+  {id:506,banco:"PSA Finance",nombre:"TASA EXPRESS 36c",tipo:"TRAD",tna:19.9,comision:11.0,plazoMax:36,ltv:80,activa:true,marca:"PEUGEOT",modelos:null},
+  {id:507,banco:"PSA Finance",nombre:"CITROËN — TASA EXPRESS 36c",tipo:"TRAD",tna:19.9,comision:11.0,plazoMax:36,ltv:80,activa:true,marca:"CITROEN",modelos:null},
+  {id:508,banco:"PSA Finance",nombre:"TASA EXCLUSIVA 208-2008 12c",tipo:"TRAD",tna:0.0,comision:12.0,plazoMax:12,ltv:80,activa:true,marca:"PEUGEOT",modelos:["208", "2008"]},
+  {id:509,banco:"PSA Finance",nombre:"CITROËN — TASA EXCLUSIVA 208-2008 12c",tipo:"TRAD",tna:0.0,comision:12.0,plazoMax:12,ltv:80,activa:true,marca:"CITROEN",modelos:["208", "2008"]},
+  {id:510,banco:"PSA Finance",nombre:"TASA EXCLUSIVA 208-2008 18c",tipo:"TRAD",tna:0.0,comision:12.0,plazoMax:18,ltv:80,activa:true,marca:"PEUGEOT",modelos:["208", "2008"]},
+  {id:511,banco:"PSA Finance",nombre:"CITROËN — TASA EXCLUSIVA 208-2008 18c",tipo:"TRAD",tna:0.0,comision:12.0,plazoMax:18,ltv:80,activa:true,marca:"CITROEN",modelos:["208", "2008"]},
+  {id:512,banco:"PSA Finance",nombre:"TASA EXCLUSIVA 208-2008 24c",tipo:"TRAD",tna:0.0,comision:12.0,plazoMax:24,ltv:80,activa:true,marca:"PEUGEOT",modelos:["208", "2008"]},
+  {id:513,banco:"PSA Finance",nombre:"CITROËN — TASA EXCLUSIVA 208-2008 24c",tipo:"TRAD",tna:0.0,comision:12.0,plazoMax:24,ltv:80,activa:true,marca:"CITROEN",modelos:["208", "2008"]},
+  {id:514,banco:"PSA Finance",nombre:"TASA EXCLUSIVA 208-2008 36c",tipo:"TRAD",tna:14.9,comision:12.0,plazoMax:36,ltv:80,activa:true,marca:"PEUGEOT",modelos:["208", "2008"]},
+  {id:515,banco:"PSA Finance",nombre:"CITROËN — TASA EXCLUSIVA 208-2008 36c",tipo:"TRAD",tna:14.9,comision:12.0,plazoMax:36,ltv:80,activa:true,marca:"CITROEN",modelos:["208", "2008"]},
+  {id:516,banco:"PSA Finance",nombre:"TASA SIMPLE 18c",tipo:"TRAD",tna:11.9,comision:10.0,plazoMax:18,ltv:80,activa:true,marca:"PEUGEOT",modelos:null},
+  {id:517,banco:"PSA Finance",nombre:"CITROËN — TASA SIMPLE 18c",tipo:"TRAD",tna:11.9,comision:10.0,plazoMax:18,ltv:80,activa:true,marca:"CITROEN",modelos:null},
+  {id:518,banco:"PSA Finance",nombre:"TASA SIMPLE 24c",tipo:"TRAD",tna:21.9,comision:10.0,plazoMax:24,ltv:80,activa:true,marca:"PEUGEOT",modelos:null},
+  {id:519,banco:"PSA Finance",nombre:"CITROËN — TASA SIMPLE 24c",tipo:"TRAD",tna:21.9,comision:10.0,plazoMax:24,ltv:80,activa:true,marca:"CITROEN",modelos:null},
+  {id:520,banco:"PSA Finance",nombre:"TASA SIMPLE 36c",tipo:"TRAD",tna:31.9,comision:10.0,plazoMax:36,ltv:80,activa:true,marca:"PEUGEOT",modelos:null},
+  {id:521,banco:"PSA Finance",nombre:"CITROËN — TASA SIMPLE 36c",tipo:"TRAD",tna:31.9,comision:10.0,plazoMax:36,ltv:80,activa:true,marca:"CITROEN",modelos:null},
+  {id:522,banco:"PSA Finance",nombre:"TODA GAMA 12c",tipo:"TRAD",tna:16.0,comision:8.0,plazoMax:12,ltv:80,activa:true,marca:"PEUGEOT",modelos:null},
+  {id:523,banco:"PSA Finance",nombre:"CITROËN — TODA GAMA 12c",tipo:"TRAD",tna:16.0,comision:8.0,plazoMax:12,ltv:80,activa:true,marca:"CITROEN",modelos:null},
+  {id:524,banco:"PSA Finance",nombre:"TODA GAMA 18c",tipo:"TRAD",tna:28.0,comision:8.0,plazoMax:18,ltv:80,activa:true,marca:"PEUGEOT",modelos:null},
+  {id:525,banco:"PSA Finance",nombre:"CITROËN — TODA GAMA 18c",tipo:"TRAD",tna:28.0,comision:8.0,plazoMax:18,ltv:80,activa:true,marca:"CITROEN",modelos:null},
+  {id:526,banco:"PSA Finance",nombre:"TODA GAMA 24c",tipo:"TRAD",tna:33.0,comision:8.0,plazoMax:24,ltv:80,activa:true,marca:"PEUGEOT",modelos:null},
+  {id:527,banco:"PSA Finance",nombre:"CITROËN — TODA GAMA 24c",tipo:"TRAD",tna:33.0,comision:8.0,plazoMax:24,ltv:80,activa:true,marca:"CITROEN",modelos:null},
+  {id:528,banco:"PSA Finance",nombre:"TODA GAMA 36c",tipo:"TRAD",tna:38.0,comision:8.0,plazoMax:36,ltv:80,activa:true,marca:"PEUGEOT",modelos:null},
+  {id:529,banco:"PSA Finance",nombre:"CITROËN — TODA GAMA 36c",tipo:"TRAD",tna:38.0,comision:8.0,plazoMax:36,ltv:80,activa:true,marca:"CITROEN",modelos:null},
+  {id:530,banco:"PSA Finance",nombre:"TODA GAMA 48c",tipo:"TRAD",tna:41.0,comision:8.0,plazoMax:48,ltv:80,activa:true,marca:"PEUGEOT",modelos:null},
+  {id:531,banco:"PSA Finance",nombre:"CITROËN — TODA GAMA 48c",tipo:"TRAD",tna:41.0,comision:8.0,plazoMax:48,ltv:80,activa:true,marca:"CITROEN",modelos:null},
+  {id:532,banco:"PSA Finance",nombre:"UVA 208-PARTNER 12c",tipo:"TRAD",tna:0.0,comision:6.0,plazoMax:12,ltv:80,activa:true,marca:"PEUGEOT",modelos:["208", "NUEVO 408", "PARTNER"]},
+  {id:533,banco:"PSA Finance",nombre:"CITROËN — UVA 208-PARTNER 12c",tipo:"TRAD",tna:0.0,comision:6.0,plazoMax:12,ltv:80,activa:true,marca:"CITROEN",modelos:["208", "NUEVO 408", "PARTNER"]},
+  {id:534,banco:"PSA Finance",nombre:"UVA 208-PARTNER 24c",tipo:"TRAD",tna:0.0,comision:6.0,plazoMax:24,ltv:80,activa:true,marca:"PEUGEOT",modelos:["208", "NUEVO 408", "PARTNER"]},
+  {id:535,banco:"PSA Finance",nombre:"CITROËN — UVA 208-PARTNER 24c",tipo:"TRAD",tna:0.0,comision:6.0,plazoMax:24,ltv:80,activa:true,marca:"CITROEN",modelos:["208", "NUEVO 408", "PARTNER"]},
+  {id:536,banco:"PSA Finance",nombre:"UVA 208-PARTNER 36c",tipo:"TRAD",tna:6.9,comision:6.0,plazoMax:36,ltv:80,activa:true,marca:"PEUGEOT",modelos:["208", "NUEVO 408", "PARTNER"]},
+  {id:537,banco:"PSA Finance",nombre:"CITROËN — UVA 208-PARTNER 36c",tipo:"TRAD",tna:6.9,comision:6.0,plazoMax:36,ltv:80,activa:true,marca:"CITROEN",modelos:["208", "NUEVO 408", "PARTNER"]},
+  {id:538,banco:"PSA Finance",nombre:"UVA 208-PARTNER 48c",tipo:"TRAD",tna:9.9,comision:6.0,plazoMax:48,ltv:80,activa:true,marca:"PEUGEOT",modelos:["208", "NUEVO 408", "PARTNER"]},
+  {id:539,banco:"PSA Finance",nombre:"CITROËN — UVA 208-PARTNER 48c",tipo:"TRAD",tna:9.9,comision:6.0,plazoMax:48,ltv:80,activa:true,marca:"CITROEN",modelos:["208", "NUEVO 408", "PARTNER"]},
+  {id:540,banco:"PSA Finance",nombre:"TRADICIONAL VN 0% 60c",tipo:"TRAD",tna:52.0,comision:0.0,plazoMax:60,ltv:80,activa:true,marca:"PEUGEOT",modelos:null},
+  {id:541,banco:"PSA Finance",nombre:"CITROËN — TRADICIONAL VN 0% 60c",tipo:"TRAD",tna:52.0,comision:0.0,plazoMax:60,ltv:80,activa:true,marca:"CITROEN",modelos:null},
+  {id:542,banco:"PSA Finance",nombre:"TRADICIONAL VN 10% 60c",tipo:"TRAD",tna:42.5,comision:10.0,plazoMax:60,ltv:80,activa:true,marca:"PEUGEOT",modelos:null},
+  {id:543,banco:"PSA Finance",nombre:"CITROËN — TRADICIONAL VN 10% 60c",tipo:"TRAD",tna:42.5,comision:10.0,plazoMax:60,ltv:80,activa:true,marca:"CITROEN",modelos:null},
+  {id:544,banco:"PSA Finance",nombre:"TRADICIONAL VN 15% 60c",tipo:"TRAD",tna:38.5,comision:15.0,plazoMax:60,ltv:80,activa:true,marca:"PEUGEOT",modelos:null},
+  {id:545,banco:"PSA Finance",nombre:"CITROËN — TRADICIONAL VN 15% 60c",tipo:"TRAD",tna:38.5,comision:15.0,plazoMax:60,ltv:80,activa:true,marca:"CITROEN",modelos:null},
+  // PSA Finance — Usados todas las marcas (año 2016-2026, max $12M PROMO / $17M UVA VO)
+  {id:600,banco:"PSA Finance",nombre:"USADOS PROMO 12c",tipo:"TRAD",tna:10.9,comision:10.0,plazoMax:12,ltv:80,activa:true,marca:null,modelos:null,usados:true,montoMax:12000000},
+  {id:601,banco:"PSA Finance",nombre:"USADOS PROMO 18c",tipo:"TRAD",tna:22.9,comision:10.0,plazoMax:18,ltv:80,activa:true,marca:null,modelos:null,usados:true,montoMax:12000000},
+  {id:602,banco:"PSA Finance",nombre:"USADOS PROMO 24c",tipo:"TRAD",tna:29.9,comision:10.0,plazoMax:24,ltv:80,activa:true,marca:null,modelos:null,usados:true,montoMax:12000000},
+  {id:603,banco:"PSA Finance",nombre:"USADOS PROMO 36c",tipo:"TRAD",tna:35.9,comision:10.0,plazoMax:36,ltv:80,activa:true,marca:null,modelos:null,usados:true,montoMax:12000000},
+  {id:604,banco:"PSA Finance",nombre:"UVA VO PROMO 12c",tipo:"TRAD",tna:0.0,comision:6.0,plazoMax:12,ltv:80,activa:true,marca:null,modelos:null,usados:true,montoMax:12000000},
+  {id:605,banco:"PSA Finance",nombre:"UVA VO PROMO 24c",tipo:"TRAD",tna:6.9,comision:6.0,plazoMax:24,ltv:80,activa:true,marca:null,modelos:null,usados:true,montoMax:12000000},
+  {id:606,banco:"PSA Finance",nombre:"UVA VO PROMO 36c",tipo:"TRAD",tna:9.9,comision:6.0,plazoMax:36,ltv:80,activa:true,marca:null,modelos:null,usados:true,montoMax:17000000},
   // MOBILIZE — Renault (Política Comercial MFS 01/04/2026)
-  {id:50,banco:"MOBILIZE",   nombre:"RENAULT — TASA 0%",        tipo:"TRAD",tna:0,    comision:9,   plazoMax:24,ltv:70,activa:true,  marca:"RENAULT",  modelos:null},
-  {id:51,banco:"MOBILIZE",   nombre:"RENAULT — LINEA ESTÁNDAR", tipo:"TRAD",tna:34.9, comision:12,  plazoMax:60,ltv:70,activa:true,  marca:"RENAULT",  modelos:null},
-  {id:52,banco:"MOBILIZE",   nombre:"RENAULT — CLASSIC",        tipo:"TRAD",tna:64.9, comision:5,   plazoMax:60,ltv:70,activa:true,  marca:"RENAULT",  modelos:null},
-  // DFSK/Santander y Foton/Santander
-  {id:60,banco:"DFSK/SANTANDER",nombre:"DFSK — TODOS LOS MODELOS",tipo:"TRAD",tna:47.9,comision:4,plazoMax:60,ltv:80,activa:true, marca:"DFSK",     modelos:null},
-  {id:61,banco:"FOTON/SANTANDER",nombre:"FOTON — TODOS LOS MODELOS",tipo:"TRAD",tna:47.9,comision:4,plazoMax:60,ltv:80,activa:true,marca:"FOTON",    modelos:null},
+  {id:700,banco:"MOBILIZE",nombre:"KWID 16 MARS TASA 0",tipo:"TRAD",tna:0.0,comision:9.0,plazoMax:12,ltv:70,activa:true,marca:"RENAULT",modelos:["KWID"]},
+  {id:701,banco:"MOBILIZE",nombre:"KWID 14 MARS TASA 0",tipo:"TRAD",tna:0.0,comision:9.0,plazoMax:18,ltv:70,activa:true,marca:"RENAULT",modelos:["KWID"]},
+  {id:702,banco:"MOBILIZE",nombre:"KWID 12 MARS TASA 0",tipo:"TRAD",tna:0.0,comision:9.0,plazoMax:24,ltv:70,activa:true,marca:"RENAULT",modelos:["KWID"]},
+  {id:703,banco:"MOBILIZE",nombre:"KWID 10 MARS TASA 0",tipo:"TRAD",tna:0.0,comision:9.0,plazoMax:24,ltv:70,activa:true,marca:"RENAULT",modelos:["KWID"]},
+  {id:704,banco:"MOBILIZE",nombre:"LINEA KWID",tipo:"TRAD",tna:34.9,comision:12.0,plazoMax:60,ltv:70,activa:true,marca:"RENAULT",modelos:["KWID"]},
+  {id:705,banco:"MOBILIZE",nombre:"LINEA LOGAN TASA 0",tipo:"TRAD",tna:0.0,comision:9.0,plazoMax:18,ltv:70,activa:true,marca:"RENAULT",modelos:["LOGAN"]},
+  {id:706,banco:"MOBILIZE",nombre:"LINEA LOGAN",tipo:"TRAD",tna:34.9,comision:12.0,plazoMax:60,ltv:70,activa:true,marca:"RENAULT",modelos:["LOGAN"]},
+  {id:707,banco:"MOBILIZE",nombre:"LINEA SANDERO",tipo:"TRAD",tna:34.9,comision:12.0,plazoMax:60,ltv:70,activa:true,marca:"RENAULT",modelos:["SANDERO"]},
+  {id:708,banco:"MOBILIZE",nombre:"LINEA STEPWAY",tipo:"TRAD",tna:34.9,comision:12.0,plazoMax:60,ltv:70,activa:true,marca:"RENAULT",modelos:["STEPWAY"]},
+  {id:709,banco:"MOBILIZE",nombre:"KARDIAN 20 MARS TASA 0",tipo:"TRAD",tna:0.0,comision:9.0,plazoMax:12,ltv:70,activa:true,marca:"RENAULT",modelos:["KARDIAN"]},
+  {id:710,banco:"MOBILIZE",nombre:"LINEA KARDIAN 20 MARS",tipo:"TRAD",tna:44.9,comision:12.0,plazoMax:60,ltv:70,activa:true,marca:"RENAULT",modelos:["KARDIAN"]},
+  {id:711,banco:"MOBILIZE",nombre:"KARDIAN 16 MARS TASA 0",tipo:"TRAD",tna:0.0,comision:9.0,plazoMax:18,ltv:70,activa:true,marca:"RENAULT",modelos:["KARDIAN"]},
+  {id:712,banco:"MOBILIZE",nombre:"LINEA KARDIAN 16 MARS",tipo:"TRAD",tna:34.9,comision:12.0,plazoMax:60,ltv:70,activa:true,marca:"RENAULT",modelos:["KARDIAN"]},
+  {id:713,banco:"MOBILIZE",nombre:"KARDIAN 11 MARS TASA 0",tipo:"TRAD",tna:0.0,comision:9.0,plazoMax:24,ltv:70,activa:true,marca:"RENAULT",modelos:["KARDIAN"]},
+  {id:714,banco:"MOBILIZE",nombre:"KARDIAN EVO 16 MARS TASA 0",tipo:"TRAD",tna:0.0,comision:9.0,plazoMax:24,ltv:70,activa:true,marca:"RENAULT",modelos:["KARDIAN EVO"]},
+  {id:715,banco:"MOBILIZE",nombre:"LINEA KARDIAN EVO 16 MARS",tipo:"TRAD",tna:15.9,comision:12.0,plazoMax:36,ltv:70,activa:true,marca:"RENAULT",modelos:["KARDIAN EVO"]},
+  {id:716,banco:"MOBILIZE",nombre:"KARDIAN EVO 12 MARS TASA 0",tipo:"TRAD",tna:0.0,comision:9.0,plazoMax:36,ltv:70,activa:true,marca:"RENAULT",modelos:["KARDIAN EVO"]},
+  {id:717,banco:"MOBILIZE",nombre:"KVP 15 MARS TASA 0",tipo:"TRAD",tna:0.0,comision:9.0,plazoMax:12,ltv:70,activa:true,marca:"RENAULT",modelos:["BOREAL"]},
+  {id:718,banco:"MOBILIZE",nombre:"KVP 13 MARS TASA 0",tipo:"TRAD",tna:0.0,comision:9.0,plazoMax:18,ltv:70,activa:true,marca:"RENAULT",modelos:["BOREAL"]},
+  {id:719,banco:"MOBILIZE",nombre:"KVP 11 MARS TASA 0",tipo:"TRAD",tna:0.0,comision:9.0,plazoMax:24,ltv:70,activa:true,marca:"RENAULT",modelos:["BOREAL"]},
+  {id:720,banco:"MOBILIZE",nombre:"LINEA KVP",tipo:"TRAD",tna:34.9,comision:12.0,plazoMax:60,ltv:70,activa:true,marca:"RENAULT",modelos:["BOREAL"]},
+  {id:721,banco:"MOBILIZE",nombre:"DUSTER 15 MARS TASA 0",tipo:"TRAD",tna:0.0,comision:9.0,plazoMax:18,ltv:70,activa:true,marca:"RENAULT",modelos:["DUSTER"]},
+  {id:722,banco:"MOBILIZE",nombre:"LINEA DUSTER 15 MARS",tipo:"TRAD",tna:34.9,comision:12.0,plazoMax:60,ltv:70,activa:true,marca:"RENAULT",modelos:["DUSTER"]},
+  {id:723,banco:"MOBILIZE",nombre:"LINEA DUSTER 20 MARS",tipo:"TRAD",tna:34.9,comision:12.0,plazoMax:60,ltv:70,activa:true,marca:"RENAULT",modelos:["DUSTER"]},
+  {id:724,banco:"MOBILIZE",nombre:"ARKANA 25 MARS TASA 0",tipo:"TRAD",tna:0.0,comision:9.0,plazoMax:12,ltv:70,activa:true,marca:"RENAULT",modelos:["ARKANA"]},
+  {id:725,banco:"MOBILIZE",nombre:"ARKANA 20 MARS TASA 0",tipo:"TRAD",tna:0.0,comision:9.0,plazoMax:18,ltv:70,activa:true,marca:"RENAULT",modelos:["ARKANA"]},
+  {id:726,banco:"MOBILIZE",nombre:"LINEA ARKANA 25 MARS",tipo:"TRAD",tna:24.9,comision:12.0,plazoMax:24,ltv:70,activa:true,marca:"RENAULT",modelos:["ARKANA"]},
+  {id:727,banco:"MOBILIZE",nombre:"BOREAL 20 MARS TASA 0",tipo:"TRAD",tna:0.0,comision:9.0,plazoMax:12,ltv:70,activa:true,marca:"RENAULT",modelos:["BOREAL"]},
+  {id:728,banco:"MOBILIZE",nombre:"BOREAL 15 MARS TASA 0",tipo:"TRAD",tna:0.0,comision:9.0,plazoMax:18,ltv:70,activa:true,marca:"RENAULT",modelos:["BOREAL"]},
+  {id:729,banco:"MOBILIZE",nombre:"LINEA BOREAL 20 MARS",tipo:"TRAD",tna:34.9,comision:12.0,plazoMax:60,ltv:70,activa:true,marca:"RENAULT",modelos:["BOREAL"]},
+  {id:730,banco:"MOBILIZE",nombre:"LINEA BOREAL 15 MARS",tipo:"TRAD",tna:34.9,comision:12.0,plazoMax:60,ltv:70,activa:true,marca:"RENAULT",modelos:["BOREAL"]},
+  {id:731,banco:"MOBILIZE",nombre:"LINEA NUEVO KOLEOS",tipo:"TRAD",tna:14.9,comision:12.0,plazoMax:18,ltv:70,activa:true,marca:"RENAULT",modelos:["KOLEOS"]},
+  {id:732,banco:"MOBILIZE",nombre:"LINEA ALASKAN 22 MARS",tipo:"TRAD",tna:34.9,comision:12.0,plazoMax:60,ltv:70,activa:true,marca:"RENAULT",modelos:["ALASKAN"]},
+  {id:733,banco:"MOBILIZE",nombre:"LINEA ALASKAN 18 MARS",tipo:"TRAD",tna:34.9,comision:12.0,plazoMax:60,ltv:70,activa:true,marca:"RENAULT",modelos:["ALASKAN"]},
+  {id:734,banco:"MOBILIZE",nombre:"LINEA OROCH TASA 0",tipo:"TRAD",tna:0.0,comision:9.0,plazoMax:24,ltv:70,activa:true,marca:"RENAULT",modelos:["OROCH"]},
+  {id:735,banco:"MOBILIZE",nombre:"LINEA OROCH",tipo:"TRAD",tna:34.9,comision:12.0,plazoMax:60,ltv:70,activa:true,marca:"RENAULT",modelos:["OROCH"]},
+  {id:736,banco:"MOBILIZE",nombre:"KVU 20 MARS TASA 0",tipo:"TRAD",tna:0.0,comision:9.0,plazoMax:12,ltv:70,activa:true,marca:"RENAULT",modelos:["KANGOO"]},
+  {id:737,banco:"MOBILIZE",nombre:"KVU 18 MARS TASA 0",tipo:"TRAD",tna:0.0,comision:9.0,plazoMax:18,ltv:70,activa:true,marca:"RENAULT",modelos:["KANGOO"]},
+  {id:738,banco:"MOBILIZE",nombre:"KVU 16 MARS TASA 0",tipo:"TRAD",tna:0.0,comision:9.0,plazoMax:24,ltv:70,activa:true,marca:"RENAULT",modelos:["KANGOO"]},
+  {id:739,banco:"MOBILIZE",nombre:"LINEA KVU 16 MARS",tipo:"TRAD",tna:34.9,comision:12.0,plazoMax:60,ltv:70,activa:true,marca:"RENAULT",modelos:["KANGOO"]},
+  {id:740,banco:"MOBILIZE",nombre:"LINEA KVU 19 MARS",tipo:"TRAD",tna:34.9,comision:12.0,plazoMax:60,ltv:70,activa:true,marca:"RENAULT",modelos:["KANGOO"]},
+  {id:741,banco:"MOBILIZE",nombre:"LINEA MASTER 16 MARS",tipo:"TRAD",tna:49.9,comision:12.0,plazoMax:60,ltv:70,activa:true,marca:"RENAULT",modelos:["MASTER"]},
+  {id:742,banco:"MOBILIZE",nombre:"LINEA MASTER 23 MARS",tipo:"TRAD",tna:49.9,comision:12.0,plazoMax:60,ltv:70,activa:true,marca:"RENAULT",modelos:["MASTER"]},
+  {id:743,banco:"MOBILIZE",nombre:"CLASSIC",tipo:"TRAD",tna:64.9,comision:5.0,plazoMax:60,ltv:70,activa:true,marca:"RENAULT",modelos:null},
+  {id:744,banco:"MOBILIZE",nombre:"LEASING",tipo:"TRAD",tna:67.9,comision:0.0,plazoMax:60,ltv:70,activa:true,marca:"RENAULT",modelos:null},
+  {id:745,banco:"MOBILIZE",nombre:"PRESTAMO PV VN",tipo:"TRAD",tna:0.0,comision:0.0,plazoMax:12,ltv:70,activa:true,marca:"RENAULT",modelos:null},
+  {id:746,banco:"MOBILIZE",nombre:"PRESTAMO PV VO",tipo:"TRAD",tna:0.0,comision:0.0,plazoMax:12,ltv:70,activa:true,marca:"RENAULT",modelos:null},
+  {id:747,banco:"MOBILIZE",nombre:"UVA VN",tipo:"TRAD",tna:25.9,comision:0.0,plazoMax:48,ltv:70,activa:true,marca:"RENAULT",modelos:null},
+  {id:748,banco:"MOBILIZE",nombre:"UVA VO",tipo:"TRAD",tna:26.7,comision:0.0,plazoMax:48,ltv:70,activa:true,marca:"RENAULT",modelos:null},
 ];
 
 // Mapeo marca → financiera de marca
@@ -1730,38 +1862,73 @@ function filtrarPrecios(){
   el.innerHTML=html_p||'<div class="empty"><div class="eico">🔍</div><div class="ettl">Sin resultados</div></div>';
 }
 
+// LTV y monto máximo PSA Finance para usados según año del vehículo
+function ltvPSAUsados(anno){
+  const hoy=new Date().getFullYear();
+  const ant=hoy-anno;
+  if(ant<3)  return {ltv:80,montoMax:50000000,plazoMax:60};
+  if(ant<7)  return {ltv:75,montoMax:30000000,plazoMax:60};
+  if(ant===7||ant===8) return {ltv:50,montoMax:15000000,plazoMax:48};
+  if(ant===9) return {ltv:50,montoMax:15000000,plazoMax:36};
+  if(ant===10) return {ltv:50,montoMax:15000000,plazoMax:24};
+  return null; // Más de 10 años: no financia PSA
+}
+
 function rCampMini(){
   window._subMenuAbierto=false;
   const g=$$('cg-mini');
   g.innerHTML='';
   const t=$$('tipo')?.value||'';
   const ma=($$('marca')?.value||'').toUpperCase();
+  const mo=($$('modelo')?.value||'').toUpperCase();
   const anno=parseInt($$('anno')?.value)||0;
   const act=camp.filter(c=>c.activa);
+  const esUsado=t==='usado'||t==='mercado_usado';
 
-  // Bancos generales (sin marca)
-  const bancos=act.filter(c=>!c.marca);
+  // ── REGLA 1: BANCOS GENERALES (siempre al final, sin marca ni usados) ────
+  const bancos=act.filter(c=>!c.marca&&!c.usados);
 
-  // Campañas de marca según tipo
+  // ── REGLA 2: FINANCIERAS DE MARCA ────────────────────────────────────────
   let deMarca=[];
-  if(t==='mercado_usado'){
-    // Multimarcas Usado: solo PSA Finance si año entre 2016 y 2026, sin importar la marca
-    // Nunca mostrar FCA, GPAT, MOBILIZE ni otras financieras de marca
-    if(anno>=2016&&anno<=2026){
-      deMarca=act.filter(c=>c.banco==='PSA Finance');
+  if(esUsado){
+    // USADOS: solo campañas con usados:true (PSA USADOS, FCA USADOS)
+    // Filtrar por antigüedad según PDF PSA
+    const ltvInfo=ltvPSAUsados(anno);
+    if(ltvInfo){
+      deMarca=act.filter(c=>c.usados===true&&c.plazoMax<=ltvInfo.plazoMax);
+    }
+    // Adicionalmente: FCA usados solo si marca es FIAT o JEEP
+    if(ma&&ma!==''){
+      deMarca=deMarca.filter(c=>{
+        if(c.banco==='FCA') return ma==='FIAT'||ma==='JEEP';
+        return true; // PSA aparece para todas las marcas en usados
+      });
     }
   } else {
-    // Usado Stock, 0km Stock, Multimarcas 0km: financiera según marca
-    deMarca=act.filter(c=>c.marca&&c.marca===ma);
+    // 0KM: financiera exacta de la marca (PEUGEOT→PSA PEUGEOT, CITROEN→PSA CITROEN, RENAULT→MOBILIZE, etc.)
+    // Filtrar solo campañas donde c.marca === marca elegida (coincidencia exacta)
+    const campsMarca=act.filter(c=>c.marca&&c.marca===ma&&!c.usados);
+    if(mo&&campsMarca.length){
+      // Filtrar por modelo si la campaña tiene lista de modelos específicos
+      const especificas=campsMarca.filter(c=>{
+        if(!c.modelos) return true; // sin restricción → aplica a toda la gama
+        return c.modelos.some(m=>mo.includes(m.toUpperCase())||m.toUpperCase().includes(mo));
+      });
+      deMarca=especificas.length?especificas:campsMarca;
+    } else {
+      deMarca=campsMarca;
+    }
   }
 
-  // Obtener bancos únicos
+  // Obtener bancos únicos (financieras primero, bancos después)
   const bancosUnicos=[...new Set(bancos.map(c=>c.banco))];
-  // Obtener financieras únicas
   const marcaUnicas=[...new Set(deMarca.map(c=>c.banco))];
 
   function crearBotonBanco(nombreBanco, esMarca){
-    const campsDeBanco=act.filter(c=>c.banco===nombreBanco);
+    // Solo mostrar campañas relevantes para este banco
+    let campsDeBanco=act.filter(c=>c.banco===nombreBanco);
+    if(esUsado) campsDeBanco=campsDeBanco.filter(c=>c.usados===true);
+    else campsDeBanco=campsDeBanco.filter(c=>!c.usados);
     const seleccionado=campsDeBanco.some(c=>c.id===credCampId);
     const d=document.createElement('div');
     const color=esMarca?'#ef7d00':'var(--b)';
@@ -1803,6 +1970,11 @@ function rCampMini(){
 }
 
 function mostrarSubCampanas(banco, camps){
+  // Filtrar campañas según contexto
+  const t=$$('tipo')?.value||'';
+  const esUsado=t==='usado'||t==='mercado_usado';
+  camps=camps.filter(c=>esUsado?c.usados===true:!c.usados);
+  if(!camps.length) return;
   window._subMenuAbierto=true;
   // Usar div separado para el submenu, fuera del flujo de calcCred
   let sub=$$('sub-camp-menu');
