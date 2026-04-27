@@ -2560,13 +2560,10 @@ function parseDrv(csv){
   const iAno=fi('ANO');
   const iKm=fi('KM');
   const iPre=fi('PUBLICO');
-  // Columna K (índice 10) = INFO TOMA / estado. Si no tiene encabezado, usar posición fija.
-  let iInf=nh.findIndex(h=>h.includes('INFO')&&h.includes('TOMA')&&!h.includes('MARZO')&&!h.includes('ABRIL'));
-  if(iInf<0) iInf=nh.findIndex(h=>h.includes('ESTADO')||h.includes('STATUS')||h.includes('OBS'));
-  if(iInf<0) iInf=11; // Columna L por posición fija (INFO TOMA está en L, K está oculta/vacía)
-  // DEBUG: mostrar columnas detectadas
-  console.log('COLUMNAS CSV:', nh.map((h,i)=>i+':'+h).join(' | '));
-  console.log('iInf (INFO TOMA):', iInf, '= columna:', nh[iInf]);
+  // La columna de estado/comentarios es SIEMPRE la columna K (índice 10)
+  // aunque tenga el encabezado vacío en el CSV del Drive.
+  // "INFO TOMA" en el encabezado (índice 11) es el VALOR TOMA en pesos → ignorar para estado.
+  const iInf=10; // Columna K fija — contiene los estados: Señado, A recibir, Nuevo ingreso, etc.
   const iVToma=nh.findIndex(h=>h.includes('VALOR')&&h.includes('TOMA'));
   const iCosto=nh.findIndex(h=>h.includes('COSTO')&&h.includes('TOTAL'));
   const gc=(c,i)=>i>=0&&i<c.length?c[i].trim():'';
@@ -2580,9 +2577,8 @@ function parseDrv(csv){
     if(!dom||ndom==='DOMINIO')continue;
     const anio=parseInt(gc(c,iAno).replace(/[^0-9]/g,''))||0;
     if(anio<1990||anio>2030)continue;
-    // Leer INFO TOMA: primero col iInf, si vacía revisar col anterior (K puede estar sin encabezado)
-    let inf=gc(c,iInf);
-    if(!inf && iInf>0) inf=gc(c,iInf-1);
+    // Leer estado desde columna K (índice 10 fijo)
+    const inf=gc(c,iInf);
     let est='DISPONIBLE';
     if(/se[nñ]ado|seniado/i.test(inf))          est='SENIADO';
     else if(/a recibir|recibir/i.test(inf))      est='A RECIBIR';
