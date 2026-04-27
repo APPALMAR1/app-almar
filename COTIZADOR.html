@@ -2139,14 +2139,13 @@ function rStk(){
     el.innerHTML='<div class="empty"><div class="eico">🚗</div><div class="ettl">Sin unidades</div></div>';
     return;
   }
-  // Ordenar: DISPONIBLE/NUEVO INGRESO primero, luego EN PREPARACION, A RECIBIR, SENIADO
-  const orden={'DISPONIBLE':0,'NUEVO INGRESO':0,'EN CAMINO':1,'EN PREPARACION':2,'A RECIBIR':3,'SENIADO':4,'RESERVADO':4};
+  // Ordenar: alfabético por marca → modelo → versión (estado mezclado)
   const sorted=[...visible].sort((a,b)=>{
-    const oa=orden[a.estado]??5, ob=orden[b.estado]??5;
-    if(oa!==ob) return oa-ob;
     const ma=(a.marca||'').localeCompare(b.marca||'','es');
     if(ma!==0) return ma;
-    return (a.modelo||'').localeCompare(b.modelo||'','es');
+    const mo=(a.modelo||'').localeCompare(b.modelo||'','es');
+    if(mo!==0) return mo;
+    return (a.version||'').localeCompare(b.version||'','es');
   });
   const eCol={'DISPONIBLE':'var(--g)','NUEVO INGRESO':'#0069b4','EN PREPARACION':'var(--y)','A RECIBIR':'#164194','EN CAMINO':'#41c0f0','SENIADO':'#C0392B','RESERVADO':'#C0392B'};
   const eTag={'DISPONIBLE':'tag-g','NUEVO INGRESO':'tag-b','EN PREPARACION':'tag-y','A RECIBIR':'tag-b','EN CAMINO':'tag-b','SENIADO':'tag-r','RESERVADO':'tag-r'};
