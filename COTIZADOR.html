@@ -824,6 +824,20 @@ input[type=text]#p-obs{background:#F5F7FA!important;border:1px solid #D5DCE6!imp
 <div class="page"><div class="sh"><div><div class="st2">Stock 0 km</div><div class="ss2">Unidades nuevas</div></div></div><div class="card" id="ol" style="padding:0;overflow:hidden"></div></div>
 </div>
 
+
+<!-- PRECIOS OKM -->
+<div id="screen-precios" class="scr">
+<div class="page">
+  <div class="sh">
+    <div><div class="st2">💰 Precios 0km</div><div class="ss2">Lista oficial Abril 2026</div></div>
+    <button class="btn btn-r btn-sm" onclick="syncPrecios()" style="margin-left:auto">☁ Actualizar</button>
+  </div>
+  <div id="precios-content">
+    <div class="empty"><div class="eico">💰</div><div class="ettl">Lista de precios</div><div class="esub">Tocá "Actualizar" para cargar los precios desde Drive.</div></div>
+  </div>
+</div>
+</div>
+
 <!-- GERENCIA -->
 <div id="screen-gerencia" class="scr">
 <div class="page">
@@ -1343,6 +1357,7 @@ function bBN(){
     ...(esSupervisor(CU)?[{s:'supervisor',i:'📊',l:'Supervisor',sup:true}]:[]),
     {s:'stock',i:'🚗',l:'Stock'},
     {s:'okm',i:'🏎',l:'0 km'},
+    {s:'precios',i:'💰',l:'Precios'},
   ];
   const first=esGerencia(CU)?'gerencia':'propuesta';
   items.forEach(x=>{
@@ -1533,6 +1548,100 @@ function buscar(){
 }
 
 // ── CALCULADORA CRÉDITO INTEGRADA (Columna B) ─────────────────────────────────
+// ── PRECIOS OKM DESDE DRIVE ──────────────────────────────────────────────────
+const PRECIOS_URL='https://docs.google.com/spreadsheets/d/e/2PACX-1vSU1sIw1-Fv3zisHUzsFuwZ47ZSgCH2ApVMY-LgxXuhyn9q1RnmOESFoMyMWrn-cI7Y24L9TxNitH5t/pub?gid=1475982203&single=true&output=csv';
+
+function syncPrecios(){
+  const el=$$('precios-content');
+  el.innerHTML='<div class="empty"><div class="eico">⏳</div><div class="ettl">Cargando...</div><div class="esub">Conectando con Drive.</div></div>';
+  fetch(PRECIOS_URL+'&t='+Date.now(),{cache:'no-store'})
+    .then(r=>r.text())
+    .then(csv=>{
+      const data=parsePreciosCSV(csv);
+      rPrecios(data);
+    })
+    .catch(()=>{
+      el.innerHTML='<div class="empty"><div class="eico">❌</div><div class="ettl">Sin conexión</div><div class="esub">Verificá tu conexión a internet.</div></div>';
+    });
+}
+
+function parsePreciosCSV(csv){
+  const lines=csv.split(/\r?\n/);
+  const result=[]; // [{marca, modelos: [{modelo, precio}]}]
+  let marcaActual=null;
+  for(let i=0;i<lines.length;i++){
+    const l=lines[i].trim();
+    if(!l) continue;
+    const cols=l.split(',');
+    // Detectar marca: una sola celda sin coma con precio, sin $ 
+    const c0=cols[0].trim(); const c1=(cols[1]||'').trim();
+    if(c0&&!c1&&!c0.startsWith('$')&&!c0.includes('MODELO')&&!c0.includes('PRECIO')&&!c0.includes('Lista')&&!c0.includes('Precios')&&!c0.includes('Vigencia')){
+      marcaActual={marca:c0, modelos:[]};
+      result.push(marcaActual);
+    } else if(marcaActual&&c0&&c1&&c1.startsWith('$')){
+      marcaActual.modelos.push({modelo:c0, precio:c1});
+    }
+  }
+  return result.filter(m=>m.modelos.length>0);
+}
+
+function rPrecios(data){
+  const el=$$('precios-content');
+  if(!data||!data.length){
+    el.innerHTML='<div class="empty"><div class="eico">📭</div><div class="ettl">Sin datos</div><div class="esub">No se encontraron precios.</div></div>';
+    return;
+  }
+  // Filtro de búsqueda
+  let html_p=`<div style="padding:8px 0 4px">
+    <input type="text" id="precios-filtro" placeholder="🔍 Buscar modelo..." oninput="filtrarPrecios()" 
+    style="width:100%;padding:8px 12px;border:1.5px solid var(--bdr);border-radius:8px;background:var(--s2);color:var(--t);font-size:13px;box-sizing:border-box">
+  </div>`;
+  html_p+=`<div id="precios-lista">`;
+  for(const m of data){
+    html_p+=`<div class="card" style="margin-bottom:8px;overflow:hidden">
+      <div class="ch" style="background:linear-gradient(90deg,rgba(22,65,148,.18) 0%,transparent 100%);border-left:3px solid #0069b4">
+        <div class="ct" style="font-size:12px;letter-spacing:1px">🏎 ${m.marca}</div>
+      </div>`;
+    for(const mod of m.modelos){
+      html_p+=`<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 12px;border-bottom:1px solid var(--bdr)">
+        <span style="font-size:11px;color:var(--t);flex:1">${mod.modelo}</span>
+        <span style="font-size:12px;font-weight:700;color:#0069b4;white-space:nowrap;margin-left:8px">${mod.precio}</span>
+      </div>`;
+    }
+    html_p+=`</div>`;
+  }
+  html_p+=`</div>`;
+  el.innerHTML=html_p;
+  window._preciosData=data;
+}
+
+function filtrarPrecios(){
+  const q=($$('precios-filtro')?.value||'').toLowerCase().trim();
+  if(!window._preciosData) return;
+  if(!q){ rPrecios(window._preciosData); $$('precios-filtro').value=q; return; }
+  const filtrado=window._preciosData.map(m=>{
+    const mods=m.modelos.filter(x=>x.modelo.toLowerCase().includes(q)||m.marca.toLowerCase().includes(q));
+    return mods.length?{...m,modelos:mods}:null;
+  }).filter(Boolean);
+  const el=$$('precios-lista');
+  if(!el) return;
+  let html_p='';
+  for(const m of filtrado){
+    html_p+=`<div class="card" style="margin-bottom:8px;overflow:hidden">
+      <div class="ch" style="background:linear-gradient(90deg,rgba(22,65,148,.18) 0%,transparent 100%);border-left:3px solid #0069b4">
+        <div class="ct" style="font-size:12px;letter-spacing:1px">🏎 ${m.marca}</div>
+      </div>`;
+    for(const mod of m.modelos){
+      html_p+=`<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 12px;border-bottom:1px solid var(--bdr)">
+        <span style="font-size:11px;color:var(--t);flex:1">${mod.modelo}</span>
+        <span style="font-size:12px;font-weight:700;color:#0069b4;white-space:nowrap;margin-left:8px">${mod.precio}</span>
+      </div>`;
+    }
+    html_p+=`</div>`;
+  }
+  el.innerHTML=html_p||'<div class="empty"><div class="eico">🔍</div><div class="ettl">Sin resultados</div></div>';
+}
+
 function rCampMini(){
   window._subMenuAbierto=false;
   const g=$$('cg-mini');
