@@ -1658,7 +1658,7 @@ function cotizarDesdePrecios(marca, modeloCompleto, precioStr){
     if(sub){ sub.value=''; }
 
     setTimeout(()=>{
-      // Setear marca — onMarca() ya llama a rCampMini() internamente
+      // Setear marca
       const elMarca=$$('marca');
       if(elMarca){
         const opts=[...elMarca.options];
@@ -1667,20 +1667,30 @@ function cotizarDesdePrecios(marca, modeloCompleto, precioStr){
       }
 
       setTimeout(()=>{
-        // Setear precio
-        if(precio>0) $$('pa1').value=precio;
-        // Setear año actual
-        const elAnno=$$('anno');
-        if(elAnno){
-          selOpts('anno',[new Date().getFullYear(),new Date().getFullYear()-1],'— Elegir año —');
-          elAnno.value=new Date().getFullYear();
+        // Setear modelo — onMarca() ya cargó las opciones
+        const elModelo=$$('modelo');
+        if(elModelo){
+          const optsM=[...elModelo.options];
+          const optM=optsM.find(o=>o.value.toUpperCase()===mejorModelo.toUpperCase());
+          if(optM){ elModelo.value=optM.value; onModelo(); }
         }
-        // Mostrar info
-        const aral=$$('ar-al');
-        if(aral) aral.innerHTML=`<div class="al info">💰 <strong>${marca} — ${modeloCompleto}</strong><br><span style="font-size:10px;color:var(--m)">Precio de lista · Completar versión y año si es necesario</span></div>`;
-        cP();
-        // Refrescar campañas con marca y tipo ya seteados → aplica reglas de Multimarcas 0km
-        rCampMini();
+
+        setTimeout(()=>{
+          // Setear precio
+          if(precio>0) $$('pa1').value=precio;
+          // Setear año actual
+          const elAnno=$$('anno');
+          if(elAnno){
+            selOpts('anno',[new Date().getFullYear(),new Date().getFullYear()-1],'— Elegir año —');
+            elAnno.value=new Date().getFullYear();
+          }
+          // Mostrar info
+          const aral=$$('ar-al');
+          if(aral) aral.innerHTML=`<div class="al info">💰 <strong>${marca} — ${modeloCompleto}</strong><br><span style="font-size:10px;color:var(--m)">Precio de lista · Completar versión y año si es necesario</span></div>`;
+          cP();
+          // Refrescar campañas con marca y tipo ya seteados
+          rCampMini();
+        },150);
       },150);
     },150);
   },100);
