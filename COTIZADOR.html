@@ -1653,37 +1653,35 @@ function cotizarDesdePrecios(marca, modeloCompleto, precioStr){
     // Setear tipo Multimarcas 0km
     const tipo=$$('tipo');
     if(tipo){ tipo.value='mercado'; onTipo(); }
-    
+    // Limpiar subtipo (sin filtro Auto/Utilitario)
+    const sub=$$('subtipo');
+    if(sub){ sub.value=''; }
+
     setTimeout(()=>{
-      // Setear marca
+      // Setear marca — onMarca() ya llama a rCampMini() internamente
       const elMarca=$$('marca');
       if(elMarca){
-        // Buscar la marca en las opciones
         const opts=[...elMarca.options];
         const opt=opts.find(o=>o.value.toUpperCase()===marca.toUpperCase());
         if(opt){ elMarca.value=opt.value; onMarca(); }
       }
-      
-      // Setear precio directamente
-      if(precio>0){
-        setTimeout(()=>{
-          $$('pa1').value=precio;
-          // Setear año actual
-          const elAnno=$$('anno');
-          if(elAnno){ 
-            selOpts('anno',[new Date().getFullYear(),new Date().getFullYear()-1],'— Elegir año —');
-            elAnno.value=new Date().getFullYear();
-          }
-          // Setear tipo de vehículo  
-          $$('tipo-v')&&($$('tipo-v').value='Auto / Utilitario');
-          // Mostrar info en ar-al
-          const aral=$$('ar-al');
-          if(aral) aral.innerHTML=`<div class="al info">💰 <strong>${marca} — ${modeloCompleto}</strong><br><span style="font-size:10px;color:var(--m)">Precio de lista Abril 2026 · Versión: completar si es necesario</span></div>`;
-          cP();
-          // Actualizar campañas por marca
-          rCampMini();
-        },150);
-      }
+
+      setTimeout(()=>{
+        // Setear precio
+        if(precio>0) $$('pa1').value=precio;
+        // Setear año actual
+        const elAnno=$$('anno');
+        if(elAnno){
+          selOpts('anno',[new Date().getFullYear(),new Date().getFullYear()-1],'— Elegir año —');
+          elAnno.value=new Date().getFullYear();
+        }
+        // Mostrar info
+        const aral=$$('ar-al');
+        if(aral) aral.innerHTML=`<div class="al info">💰 <strong>${marca} — ${modeloCompleto}</strong><br><span style="font-size:10px;color:var(--m)">Precio de lista · Completar versión y año si es necesario</span></div>`;
+        cP();
+        // Refrescar campañas con marca y tipo ya seteados → aplica reglas de Multimarcas 0km
+        rCampMini();
+      },150);
     },150);
   },100);
 }
