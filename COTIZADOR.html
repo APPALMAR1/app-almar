@@ -1398,7 +1398,6 @@ function onMarca(){
     const filtrados=(MKT_TIPOS[ma]||{})[sub]||[];
     ms=sub?todos.filter(m=>filtrados.includes(m)).sort():todos.sort();
   } else if(t==='mercado_usado'){
-    // Todos los modelos de la marca en MKT_TIPOS (Auto + Utilitario/Pickup)
     const tipos=MKT_TIPOS[ma]||{};
     const todos=[...(tipos['Auto']||[]),...(tipos['Utilitario/Pickup']||[])];
     ms=[...new Set(todos)].sort();
@@ -1406,6 +1405,8 @@ function onMarca(){
     ms=t==='usado'?[...new Set(stk.filter(u=>u.marca===ma).map(u=>u.modelo))].sort():t==='okm'?[...new Set(okm.filter(u=>u.marca===ma).map(u=>u.modelo))].sort():Object.keys(MKT[ma]||{}).sort();
   }
   selOpts('modelo',ms,'— Elegir modelo —');
+  // Actualizar campañas para mostrar financiera de la marca si corresponde
+  if(t==='mercado'||t==='mercado_usado') rCampMini();
 }
 function onModelo(){
   ['version','anno'].forEach(disEl);
@@ -1416,12 +1417,14 @@ function onModelo(){
 function onVer(){
   disEl('anno');
   const t=$$('tipo').value,ma=$$('marca').value,mo=$$('modelo').value,v=$$('version').value; if(!v)return;
-  const as=t==='usado'?[...new Set(stk.filter(u=>u.marca===ma&&u.modelo===mo&&u.version===v).map(u=>u.anno))].sort((a,b)=>b-a):t==='okm'?[...new Set(okm.filter(u=>u.marca===ma&&u.modelo===mo&&u.version===v).map(u=>u.anno))].sort((a,b)=>b-a):Array.from({length:25},(_,i)=>new Date().getFullYear()-i);
+  const as=t==='usado'?[...new Set(stk.filter(u=>u.marca===ma&&u.modelo===mo&&u.version===v).map(u=>u.anno))].sort((a,b)=>b-a):t==='okm'?[...new Set(okm.filter(u=>u.marca===ma&&u.modelo===mo&&u.version===v).map(u=>u.anno))].sort((a,b)=>b-a):t==='mercado'?[new Date().getFullYear(),new Date().getFullYear()-1]:t==='mercado_usado'?Array.from({length:25},(_,i)=>new Date().getFullYear()-i):Array.from({length:25},(_,i)=>new Date().getFullYear()-i);
   selOpts('anno',as,'— Elegir año —');
 }
 function onAuto(){
   const t=$$('tipo').value,ma=$$('marca').value,mo=$$('modelo').value,v=$$('version').value,a=parseInt($$('anno').value);
   updR();
+  // Refrescar campañas al elegir año (PSA Finance en Multimarcas Usado depende del año)
+  if(t==='mercado_usado') rCampMini();
   const aral=$$('ar-al'); aral.innerHTML='';
   if(t==='usado'){
     const u=stk.find(x=>x.marca===ma&&x.modelo===mo&&x.version===v&&x.anno===a);
@@ -1534,17 +1537,30 @@ function rCampMini(){
   window._subMenuAbierto=false;
   const g=$$('cg-mini');
   g.innerHTML='';
+  const t=$$('tipo')?.value||'';
   const ma=($$('marca')?.value||'').toUpperCase();
-  const financiera=MARCA_FINANCIERA[ma]||null;
+  const anno=parseInt($$('anno')?.value)||0;
   const act=camp.filter(c=>c.activa);
 
-  // Agrupar bancos por nombre de banco
+  // Bancos generales (sin marca)
   const bancos=act.filter(c=>!c.marca);
-  const deMarca=act.filter(c=>c.marca&&c.marca===ma);
+
+  // Campañas de marca según tipo
+  let deMarca=[];
+  if(t==='mercado_usado'){
+    // Multimarcas Usado: solo PSA Finance si año entre 2016 y 2026, sin importar la marca
+    // Nunca mostrar FCA, GPAT, MOBILIZE ni otras financieras de marca
+    if(anno>=2016&&anno<=2026){
+      deMarca=act.filter(c=>c.banco==='PSA Finance');
+    }
+  } else {
+    // Usado Stock, 0km Stock, Multimarcas 0km: financiera según marca
+    deMarca=act.filter(c=>c.marca&&c.marca===ma);
+  }
 
   // Obtener bancos únicos
   const bancosUnicos=[...new Set(bancos.map(c=>c.banco))];
-  // Obtener financieras de marca únicas
+  // Obtener financieras únicas
   const marcaUnicas=[...new Set(deMarca.map(c=>c.banco))];
 
   function crearBotonBanco(nombreBanco, esMarca){
