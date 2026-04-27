@@ -1653,9 +1653,12 @@ function cotizarDesdePrecios(marca, modeloCompleto, precioStr){
     // Setear tipo Multimarcas 0km
     const tipo=$$('tipo');
     if(tipo){ tipo.value='mercado'; onTipo(); }
-    // Limpiar subtipo (sin filtro Auto/Utilitario)
+    // Forzar subtipo vacío y cargar todas las marcas del MKT directamente
+    // (saltear el bloqueo que espera que el usuario elija Auto/Utilitario)
     const sub=$$('subtipo');
     if(sub){ sub.value=''; }
+    // Cargar marcas manualmente sin esperar subtipo
+    selOpts('marca', Object.keys(MKT).sort(), '— Elegir marca —');
 
     setTimeout(()=>{
       // Setear marca
