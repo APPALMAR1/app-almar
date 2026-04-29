@@ -809,6 +809,7 @@ input[type=text]#p-obs{background:#F5F7FA!important;border:1px solid #D5DCE6!imp
     <div><div class="st2">Stock Usados</div><div class="ss2">Inventario Almar</div></div>
     <div class="brow no-print" style="margin:0;gap:5px">
       <button class="btn btn-r btn-sm" id="btn-drive-sync" onclick="syncDrive()">☁ Actualizar Drive</button>
+      <button class="btn btn-r btn-sm" onclick="guardarPropuesta()" style="background:#1E8449">💾 Guardar propuesta</button>
       <button class="btn btn-ghost btn-sm" onclick="pdfStock()">🖨 Imprimir / PDF</button>
       <button class="btn btn-ghost btn-sm" onclick="emailStock()">📧 Email</button>
     </div>
@@ -834,6 +835,19 @@ input[type=text]#p-obs{background:#F5F7FA!important;border:1px solid #D5DCE6!imp
   </div>
   <div id="precios-content">
     <div class="empty"><div class="eico">💰</div><div class="ettl">Lista de precios</div><div class="esub">Tocá "Actualizar" para cargar los precios desde Drive.</div></div>
+  </div>
+</div>
+</div>
+
+<!-- PROPUESTAS GUARDADAS -->
+<div id="screen-propguard" class="scr">
+<div class="page">
+  <div class="sh">
+    <div><div class="st2">📋 Propuestas guardadas</div><div class="ss2">Historial del equipo</div></div>
+    <button class="btn btn-r btn-sm" onclick="cargarPropuestasGuardadas()" style="margin-left:auto">↻ Actualizar</button>
+  </div>
+  <div id="prop-lista">
+    <div class="empty"><div class="eico">📋</div><div class="ettl">Propuestas guardadas</div><div class="esub">Tocá Actualizar para cargar.</div></div>
   </div>
 </div>
 </div>
@@ -1495,6 +1509,7 @@ function bBN(){
     {s:'okm',i:'🏎',l:'0 km'},
     {s:'precios',i:'💰',l:'Precios'},
   ];
+  if(esSupervisor(CU)||esGerencia(CU)) items.splice(-1,0,{s:'propguard',i:'📋',l:'Guardadas',sup:true});
   const first=esGerencia(CU)?'gerencia':'propuesta';
   items.forEach(x=>{
     const d=document.createElement('div');
@@ -1685,7 +1700,185 @@ function buscar(){
 
 // ── CALCULADORA CRÉDITO INTEGRADA (Columna B) ─────────────────────────────────
 // ── PRECIOS OKM DESDE DRIVE ──────────────────────────────────────────────────
+const PROPUESTAS_URL='https://script.google.com/macros/s/AKfycbxxYqhSxGsASIGVkUHXAly58T8Ch9ioxdoLBn_Wwfhu97t2oR1w6yhF1BttOOpZ4KHh/exec';
 const PRECIOS_URL='https://docs.google.com/spreadsheets/d/e/2PACX-1vSU1sIw1-Fv3zisHUzsFuwZ47ZSgCH2ApVMY-LgxXuhyn9q1RnmOESFoMyMWrn-cI7Y24L9TxNitH5t/pub?gid=1475982203&single=true&output=csv';
+
+// ── PROPUESTAS — GUARDAR Y CARGAR ────────────────────────────────────────────
+function guardarPropuesta(){
+  // Recopilar datos de la propuesta actual
+  const ma=$$('marca')?.value||'';
+  const mo=$$('modelo')?.value||'';
+  const v=$$('version')?.value||'';
+  const a=$$('anno')?.value||'';
+  const km=$$('km')?.value||'0';
+  const pa1=parseFloat($$('pa1')?.value)||0;
+  const monto=parseFloat($$('pb1')?.value)||0;
+  const cliente=$$('cli-nom')?.value||'Sin nombre';
+  const dni=$$('cli-dni')?.value||'';
+  const tel=$$('cli-tel')?.value||'';
+
+  if(!ma||!mo){
+    alert('Completá el vehículo antes de guardar.');
+    return;
+  }
+
+  // Campaña seleccionada
+  const cv=camp.find(c=>c.id===credCampId);
+  const banco=cv?cv.banco:'Sin financiamiento';
+  const campana=cv?cv.nombre:'—';
+
+  // Cuota y plazo seleccionados
+  const cuotaEl=document.querySelector('.qm.picked .mcu, .qc.picked .cu');
+  const plazoEl=document.querySelector('.qm.picked .mpl, .qc.picked .pl');
+  const cuota=cuotaEl?cuotaEl.textContent.replace(/[^0-9]/g,''):'0';
+  const plazo=plazoEl?plazoEl.textContent.replace(/[^0-9]/g,''):'0';
+
+  // Total A
+  const totalEl=$$('ta');
+  const total=totalEl?totalEl.textContent.replace(/[^0-9]/g,''):'0';
+
+  const ahora=new Date();
+  const fecha=ahora.toLocaleDateString('es-AR');
+  const hora=ahora.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
+  const id='P'+Date.now();
+
+  const propuesta={
+    id, fecha, hora,
+    vendedor: CU?.name||'—',
+    cliente, dni, telefono:tel,
+    auto: [ma,mo,v,a].filter(Boolean).join(' '),
+    anno:a, km,
+    precio: pa1,
+    credito: monto,
+    banco, campana,
+    cuota, plazo,
+    total,
+    estado:'GUARDADA'
+  };
+
+  // Guardar en localStorage
+  const local=JSON.parse(localStorage.getItem('almar_propuestas')||'[]');
+  local.unshift(propuesta);
+  localStorage.setItem('almar_propuestas',JSON.stringify(local.slice(0,200)));
+
+  // Sincronizar con Google Drive (sin bloquear la UI)
+  fetch(PROPUESTAS_URL, {
+    method:'POST',
+    body:JSON.stringify(propuesta)
+  }).then(r=>r.json())
+    .then(()=>{
+      mostrarToast('✅ Propuesta guardada en Drive');
+    })
+    .catch(()=>{
+      mostrarToast('💾 Guardada localmente (sin conexión)');
+    });
+
+  mostrarToast('✅ Propuesta guardada');
+}
+
+function mostrarToast(msg){
+  let t=$$('almar-toast');
+  if(!t){
+    t=document.createElement('div');
+    t.id='almar-toast';
+    t.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#164194;color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;font-weight:700;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,.3);transition:opacity .3s';
+    document.body.appendChild(t);
+  }
+  t.textContent=msg;
+  t.style.opacity='1';
+  clearTimeout(t._to);
+  t._to=setTimeout(()=>t.style.opacity='0',2500);
+}
+
+function cargarPropuestasGuardadas(){
+  const el=$$('prop-lista');
+  if(!el) return;
+  el.innerHTML='<div style="text-align:center;padding:20px;color:var(--m)">⏳ Cargando...</div>';
+
+  const esSup=esSupervisor(CU)||esGerencia(CU);
+
+  // Cargar del Drive si es supervisor/gerencia
+  if(esSup){
+    fetch(PROPUESTAS_URL+'?t='+Date.now())
+      .then(r=>r.json())
+      .then(data=>renderPropuestas(data.reverse(), el, true))
+      .catch(()=>{
+        // Fallback a localStorage
+        const local=JSON.parse(localStorage.getItem('almar_propuestas')||'[]');
+        renderPropuestas(local, el, true);
+      });
+  } else {
+    // Vendedor: solo ve las suyas desde localStorage
+    const local=JSON.parse(localStorage.getItem('almar_propuestas')||'[]');
+    const mias=local.filter(p=>p.vendedor===CU?.name);
+    renderPropuestas(mias, el, false);
+  }
+}
+
+function renderPropuestas(data, el, verTodos){
+  if(!data||!data.length){
+    el.innerHTML='<div class="empty"><div class="eico">📋</div><div class="ettl">Sin propuestas</div><div class="esub">Las propuestas guardadas aparecerán acá.</div></div>';
+    return;
+  }
+  // Filtro de búsqueda
+  let html_p=`<div style="padding:4px 0 8px">
+    <input type="text" id="prop-filtro" placeholder="🔍 Buscar cliente, auto, vendedor..." oninput="filtrarPropuestas()"
+    style="width:100%;padding:8px 12px;border:1.5px solid var(--bdr);border-radius:8px;background:var(--s2);color:var(--t);font-size:13px;box-sizing:border-box">
+  </div>`;
+  html_p+=`<div id="prop-cards">`;
+  window._propuestasData=data;
+  for(const p of data){
+    const precio=parseInt(p.Precio||p.precio||0).toLocaleString('es-AR');
+    const total=parseInt(p.Total||p.total||0).toLocaleString('es-AR');
+    html_p+=`<div class="card" style="margin-bottom:8px;overflow:hidden">
+      <div class="ch" style="background:linear-gradient(90deg,rgba(22,65,148,.18) 0%,transparent 100%);border-left:3px solid #0069b4;display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <div class="ct" style="font-size:11px">${p.Auto||p.auto||'—'}</div>
+          <div style="font-size:9px;color:var(--m);margin-top:1px">${p.Fecha||p.fecha||'—'} ${p.Hora||p.hora||''} · ${p.Vendedor||p.vendedor||'—'}</div>
+        </div>
+        <div style="font-size:12px;font-weight:700;color:#0069b4">$${total||precio}</div>
+      </div>
+      <div style="padding:8px 12px;font-size:11px;color:var(--t)">
+        <div><strong>Cliente:</strong> ${p.Cliente||p.cliente||'—'} ${p.DNI||p.dni?'· DNI '+( p.DNI||p.dni):''}</div>
+        <div style="margin-top:3px"><strong>Banco:</strong> ${p.Banco||p.banco||'—'} · ${p.Campana||p.campana||'—'}</div>
+        ${p.Cuota&&p.Cuota!='0'?`<div style="margin-top:3px;color:#0069b4;font-weight:700">Cuota: $${parseInt(p.Cuota||p.cuota).toLocaleString('es-AR')} x ${p.Plazo||p.plazo}m</div>`:''}
+      </div>
+    </div>`;
+  }
+  html_p+=`</div>`;
+  el.innerHTML=html_p;
+}
+
+function filtrarPropuestas(){
+  const q=($$('prop-filtro')?.value||'').toLowerCase();
+  if(!window._propuestasData) return;
+  const filtrado=!q?window._propuestasData:window._propuestasData.filter(p=>{
+    const txt=[p.Auto,p.auto,p.Cliente,p.cliente,p.Vendedor,p.vendedor,p.Banco,p.banco].join(' ').toLowerCase();
+    return txt.includes(q);
+  });
+  const cards=$$('prop-cards');
+  if(!cards) return;
+  let html_p='';
+  for(const p of filtrado){
+    const precio=parseInt(p.Precio||p.precio||0).toLocaleString('es-AR');
+    const total=parseInt(p.Total||p.total||0).toLocaleString('es-AR');
+    html_p+=`<div class="card" style="margin-bottom:8px;overflow:hidden">
+      <div class="ch" style="background:linear-gradient(90deg,rgba(22,65,148,.18) 0%,transparent 100%);border-left:3px solid #0069b4;display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <div class="ct" style="font-size:11px">${p.Auto||p.auto||'—'}</div>
+          <div style="font-size:9px;color:var(--m);margin-top:1px">${p.Fecha||p.fecha||'—'} ${p.Hora||p.hora||''} · ${p.Vendedor||p.vendedor||'—'}</div>
+        </div>
+        <div style="font-size:12px;font-weight:700;color:#0069b4">$${total||precio}</div>
+      </div>
+      <div style="padding:8px 12px;font-size:11px;color:var(--t)">
+        <div><strong>Cliente:</strong> ${p.Cliente||p.cliente||'—'}</div>
+        <div style="margin-top:3px"><strong>Banco:</strong> ${p.Banco||p.banco||'—'} · ${p.Campana||p.campana||'—'}</div>
+        ${p.Cuota&&p.Cuota!='0'?`<div style="margin-top:3px;color:#0069b4;font-weight:700">Cuota: $${parseInt(p.Cuota||p.cuota).toLocaleString('es-AR')} x ${p.Plazo||p.plazo}m</div>`:''}
+      </div>
+    </div>`;
+  }
+  cards.innerHTML=html_p||'<div class="empty"><div class="eico">🔍</div><div class="ettl">Sin resultados</div></div>';
+}
 
 function syncPrecios(){
   const el=$$('precios-content');
