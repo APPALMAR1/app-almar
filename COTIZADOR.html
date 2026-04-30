@@ -1797,33 +1797,17 @@ function cargarPropuestasGuardadas(){
 
   const esSup=esSupervisor(CU)||esGerencia(CU);
 
-  // Cargar del Drive si es supervisor/gerencia — leer Sheet como CSV exportado
+  // Cargar del Drive via Apps Script (evita CORS)
   if(esSup){
-    const csvUrl='https://docs.google.com/spreadsheets/d/1w9X2erfefipZNjQJLK6qQIi1h0P0N02mmQSLRjcgvWk/export?format=csv&gid=0&t='+Date.now();
-    fetch(csvUrl,{cache:'no-store'})
-      .then(r=>r.text())
-      .then(csv=>{
-        const lineas=csv.split(/\r?\n/).filter(l=>l.trim());
-        if(lineas.length<=1){ renderPropuestas([], el, true); return; }
-        const headers=lineas[0].split(',').map(h=>h.replace(/"/g,'').trim());
-        const rows=lineas.slice(1).map(l=>{
-          const cols=[]; let cur=''; let inQ=false;
-          for(let i=0;i<l.length;i++){
-            if(l[i]==='"'){ inQ=!inQ; }
-            else if(l[i]===','&&!inQ){ cols.push(cur.trim()); cur=''; }
-            else cur+=l[i];
-          }
-          cols.push(cur.trim());
-          const obj={};
-          headers.forEach((h,i)=>obj[h]=(cols[i]||'').replace(/^"|"$/g,''));
-          return obj;
-        });
-        renderPropuestas(rows.reverse(), el, true);
+    fetch(PROPUESTAS_URL+'?action=get&t='+Date.now(),{cache:'no-store'})
+      .then(r=>r.json())
+      .then(rows=>{
+        if(!Array.isArray(rows)||!rows.length){ renderPropuestas([],el,true); return; }
+        renderPropuestas(rows.reverse(),el,true);
       })
       .catch(()=>{
-        // Fallback localStorage
         const local=JSON.parse(localStorage.getItem('almar_propuestas')||'[]');
-        renderPropuestas(local, el, true);
+        renderPropuestas(local,el,true);
       });
   } else {
     // Vendedor: solo ve las suyas desde localStorage
