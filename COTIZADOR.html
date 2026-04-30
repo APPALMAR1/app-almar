@@ -2414,17 +2414,21 @@ function rCampMini(){
   // ── REGLA 2: FINANCIERAS DE MARCA ────────────────────────────────────────
   let deMarca=[];
   if(esUsado){
-    // USADOS: solo campañas con usados:true (PSA USADOS, FCA USADOS)
-    // Filtrar por antigüedad según PDF PSA
-    const ltvInfo=ltvPSAUsados(anno);
+    // USADOS: campañas con usados:true (PSA USADOS, FCA USADOS)
+    const ltvInfo=anno>0?ltvPSAUsados(anno):null;
+    const masde10=anno>0&&!ltvInfo; // año cargado pero supera 10 años
     if(ltvInfo){
+      // Con año y dentro de rango: filtrar por plazoMax de LTV
       deMarca=act.filter(c=>c.usados===true&&c.plazoMax<=ltvInfo.plazoMax);
+    } else if(!masde10){
+      // Sin año definido: mostrar todas las campañas de usados (el año se validará al guardar)
+      deMarca=act.filter(c=>c.usados===true);
     }
-    // Adicionalmente: FCA usados solo si marca es FIAT o JEEP
+    // FCA usados solo si marca es FIAT o JEEP
     if(ma&&ma!==''){
       deMarca=deMarca.filter(c=>{
         if(c.banco==='FCA') return ma==='FIAT'||ma==='JEEP';
-        return true; // PSA aparece para todas las marcas en usados
+        return true;
       });
     }
   } else {
@@ -2448,10 +2452,14 @@ function rCampMini(){
   const marcaUnicas=[...new Set(deMarca.map(c=>c.banco))];
 
   function crearBotonBanco(nombreBanco, esMarca){
-    // Solo mostrar campañas relevantes para este banco
     let campsDeBanco=act.filter(c=>c.banco===nombreBanco);
-    if(esUsado) campsDeBanco=campsDeBanco.filter(c=>c.usados===true);
-    else campsDeBanco=campsDeBanco.filter(c=>!c.usados);
+    if(esMarca){
+      // Financieras de marca: filtrar por modo usado/0km
+      campsDeBanco=campsDeBanco.filter(c=>esUsado?c.usados===true:!c.usados);
+    } else {
+      // Bancos generales: no tienen usados:true, aplican siempre
+      campsDeBanco=campsDeBanco.filter(c=>!c.usados&&!c.marca);
+    }
     const seleccionado=campsDeBanco.some(c=>c.id===credCampId);
     const d=document.createElement('div');
     const color=esMarca?'#ef7d00':'var(--b)';
@@ -2468,6 +2476,14 @@ function rCampMini(){
     const ico=esMarca?'⭐':'🏦';
     d.innerHTML=`<span style="font-size:18px">${ico}</span><span style="font-weight:700;font-size:13px;color:${seleccionado?color:'var(--tx)'}">${nombreBanco}</span>${seleccionado?`<span style="margin-left:auto;font-size:10px;color:${color}">✓ Seleccionado</span>`:''}`;
     g.appendChild(d);
+  }
+
+  // Aviso si el auto tiene más de 10 años (PSA no financia)
+  if(esUsado&&anno>0&&!ltvPSAUsados(anno)){
+    const av=document.createElement('div');
+    av.style.cssText='padding:8px 12px;background:rgba(231,76,60,.1);border:1px solid #e74c3c;border-radius:6px;font-size:11px;color:#c0392b;margin-bottom:6px';
+    av.innerHTML='⚠️ PSA Finance no financia vehículos con más de 10 años. Solo disponibles bancos generales.';
+    g.appendChild(av);
   }
 
   // Campañas de marca primero
@@ -2493,10 +2509,18 @@ function rCampMini(){
 }
 
 function mostrarSubCampanas(banco, camps){
-  // Filtrar campañas según contexto
   const t=$$('tipo')?.value||'';
   const esUsado=t==='usado'||t==='mercado_usado';
-  camps=camps.filter(c=>esUsado?c.usados===true:!c.usados);
+  camps=camps.filter(c=>{
+    if(esUsado){
+      // En modo usado: mostrar campañas con usados:true (PSA Finance usados, FCA usados)
+      // O campañas de bancos generales sin marca y sin usados (ICBC, Santander, etc.)
+      return c.usados===true || (!c.marca&&!c.usados);
+    } else {
+      // En modo 0km: mostrar campañas sin usados
+      return !c.usados;
+    }
+  });
   if(!camps.length) return;
   window._subMenuAbierto=true;
   // Usar div separado para el submenu, fuera del flujo de calcCred
@@ -2597,17 +2621,21 @@ function calcCred(){
   if(!rs){rs=document.createElement('div');rs.id='cred-camp-resumen';$$('cred-box').insertBefore(rs,$$('ltv-al'));}
   const colorR=cv.marca?'#ef7d00':'var(--b)';
   rs.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-radius:8px;border:1.5px solid '+colorR+';background:rgba(0,105,180,.08);margin-bottom:6px';
-  rs.innerHTML=`<div><div style="font-weight:800;font-size:12px;color:${colorR}">${cv.banco} — ${cv.nombre}</div><div style="font-size:10px;color:#888;margin-top:1px">TNA ${cv.tna.toFixed(1).replace('.',',')}%${cv.comision>0?' · '+cv.comision+'% gastos':''} · hasta ${cv.plazoMax}m</div></div><button onclick="cambiarCampania()" style="background:none;border:1px solid var(--brd);color:var(--m);border-radius:6px;padding:4px 8px;font-size:10px;font-weight:700;cursor:pointer">✏️ Cambiar</button>`;
+  rs.innerHTML=`
+    <div>
+      <div style="font-weight:800;font-size:12px;color:${colorR}">${cv.banco} — ${cv.nombre}</div>
+      <div style="font-size:10px;color:#888;margin-top:1px">TNA ${cv.tna.toFixed(1).replace('.',',')}%${cv.comision>0?' · '+cv.comision+'% gastos':''} · hasta ${cv.plazoMax}m</div>
+    </div>
+    <button onclick="cambiarCampania()" style="background:${colorR};border:none;color:#fff;border-radius:8px;padding:7px 12px;font-size:11px;font-weight:800;cursor:pointer;white-space:nowrap;flex-shrink:0">🔄 Cambiar</button>`;
 
   // Cuotas
   $$('qg-mini-wrap').style.display='block';
   const g=$$('qg-mini'); g.innerHTML='';
-  // Usar coeficiente oficial del banco si disponible
   const data=PL.map(n=>{
     let c;
     if(cv.coefs&&cv.coefs[n]){
       const base=cv.coefBase||1000;
-      c=mt/base*cv.coefs[n][1]; // cuota promedio
+      c=mt/base*cv.coefs[n][1];
     } else {
       c=cuota(mt,cv.tna,n);
     }
@@ -2624,6 +2652,16 @@ function calcCred(){
     d.innerHTML=`<div class="mpl">${n}M${dis?' ✗':''}</div><div class="mcv">${fmt(c)}</div>${cv.coefs&&cv.coefs[n]?`<div class="mtt" style="font-size:9px;color:#aaa">1era: ${fmt(mt/(cv.coefBase||1000)*cv.coefs[n][0])}</div>`:''}${best?'<div class="mst">⭐</div>':''}`;
     g.appendChild(d);
   });
+
+  // Botón "Elegir otro banco" debajo de las cuotas
+  let btnOtro=$$('btn-elegir-otro');
+  if(!btnOtro){
+    btnOtro=document.createElement('div');
+    btnOtro.id='btn-elegir-otro';
+    $$('qg-mini-wrap').appendChild(btnOtro);
+  }
+  btnOtro.innerHTML=`<button onclick="cambiarCampania()" style="width:100%;margin-top:8px;padding:8px;background:none;border:1.5px solid var(--brd);color:var(--m);border-radius:8px;font-size:11px;font-weight:700;cursor:pointer">← Elegir otro banco o campaña</button>`;
+
   $$('clbl2').textContent=`${cv.banco} — ${cv.nombre} · TNA ${cv.tna.toFixed(2).replace('.',',')}%`;
 
   // UVA alert
