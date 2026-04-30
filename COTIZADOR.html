@@ -2427,6 +2427,8 @@ function rMH(){
           const precio=parseInt(p.Precio||p.precio||0);
           const total=parseInt(p.Total||p.total||0);
           const d=document.createElement('div'); d.className='hi';
+          d.style.cursor='pointer';
+          d.onclick=()=>abrirDetallePropuesta(p);
           d.innerHTML=`<div class="hico" style="background:#0069b4">🚗</div>
             <div class="hinf">
               <div class="haut">${p.Auto||p.auto||'—'}</div>
@@ -2434,7 +2436,7 @@ function rMH(){
             </div>
             <div class="hr2">
               <div class="hcuo">${total?fmt(total):fmt(precio)}</div>
-              <div class="hfec">${fmtFecha(p.Fecha||p.fecha)} · ${p.Vendedor||p.vendedor||'—'}</div>
+              <div class="hfec">${fmtFecha(p.Fecha||p.fecha)} · <span style="color:#41c0f0">👁 Ver</span></div>
             </div>`;
           el.appendChild(d);
         });
@@ -2519,17 +2521,42 @@ function calcCot(){
 // ── SUPERVISOR (ve vendedores solamente) ──────────────────────────────────────
 function rSup(){
   const vendedores=USERS.filter(u=>esVendedor(u)||esSupervisor(u));
-  let tot=0;vendedores.forEach(u=>tot+=gH(u.id).length);
-  const hoy=tod(),hC=vendedores.reduce((s,u)=>s+gH(u.id).filter(h=>h.fecha===hoy).length,0);
-  $$('sst').innerHTML=`<div class="stc"><div class="stn">${tot}</div><div class="stl">Total cotizaciones</div></div><div class="stc"><div class="stn" style="color:var(--g)">${hC}</div><div class="stl">Hoy</div></div><div class="stc"><div class="stn" style="color:var(--b)">${vendedores.filter(esVendedor).length}</div><div class="stl">Vendedores</div></div><div class="stc"><div class="stn" style="color:var(--y)">${camp.filter(c=>c.activa).length}</div><div class="stl">Campañas activas</div></div>`;
-  const vl=$$('vl');vl.innerHTML='';
-  vendedores.forEach(u=>{
-    const h=gH(u.id),hd=h.filter(x=>x.fecha===hoy).length;
-    const lbl=esSupervisor(u)?'Vendedor & Supervisor':'Vendedor';
-    const d=document.createElement('div');d.className='vr';d.onclick=()=>vVend(u.id,'dtit','dh');
-    d.innerHTML=`<div class="vav" style="background:${u.col}">${u.ini}</div><div class="vinf"><div class="vnm">${u.name}</div><div class="vst">${lbl} · ${hd} hoy</div></div><div class="vrt"><div class="vcot">${h.length}</div><div class="vlbl">Total</div></div>`;
-    vl.appendChild(d);
-  });
+  const hoy=tod();
+  // Actualizar contadores con propuestas del Drive
+  fetch(PROPUESTAS_URL+'?action=get&t='+Date.now(),{cache:'no-store'})
+    .then(r=>r.json())
+    .then(rows=>{
+      const tot=Array.isArray(rows)?rows.length:0;
+      const hC=Array.isArray(rows)?rows.filter(p=>{
+        const f=fmtFecha(p.Fecha||p.fecha);return f===hoy;
+      }).length:0;
+      $$('sst').innerHTML=`<div class="stc"><div class="stn">${tot}</div><div class="stl">Total propuestas</div></div><div class="stc"><div class="stn" style="color:var(--g)">${hC}</div><div class="stl">Hoy</div></div><div class="stc"><div class="stn" style="color:var(--b)">${vendedores.filter(esVendedor).length}</div><div class="stl">Vendedores</div></div><div class="stc"><div class="stn" style="color:var(--y)">${camp.filter(c=>c.activa).length}</div><div class="stl">Campanas activas</div></div>`;
+      // Contar por vendedor
+      const vl=$$('vl');vl.innerHTML='';
+      vendedores.forEach(u=>{
+        const propVend=Array.isArray(rows)?rows.filter(p=>(p.Vendedor||p.vendedor)===u.name):[];
+        const propHoy=propVend.filter(p=>fmtFecha(p.Fecha||p.fecha)===hoy).length;
+        const lbl=esSupervisor(u)?'Vendedor & Supervisor':'Vendedor';
+        const d=document.createElement('div');d.className='vr';
+        d.onclick=()=>vVendDrive(u.name, rows, 'dtit','dh');
+        d.innerHTML=`<div class="vav" style="background:${u.col}">${u.ini}</div><div class="vinf"><div class="vnm">${u.name}</div><div class="vst">${lbl} · ${propHoy} hoy</div></div><div class="vrt"><div class="vcot">${propVend.length}</div><div class="vlbl">Total</div></div>`;
+        vl.appendChild(d);
+      });
+    })
+    .catch(()=>{
+      // Fallback a localStorage
+      let tot=0;vendedores.forEach(u=>tot+=gH(u.id).length);
+      const hC=vendedores.reduce((s,u)=>s+gH(u.id).filter(h=>h.fecha===hoy).length,0);
+      $$('sst').innerHTML=`<div class="stc"><div class="stn">${tot}</div><div class="stl">Total propuestas</div></div><div class="stc"><div class="stn" style="color:var(--g)">${hC}</div><div class="stl">Hoy</div></div><div class="stc"><div class="stn" style="color:var(--b)">${vendedores.filter(esVendedor).length}</div><div class="stl">Vendedores</div></div><div class="stc"><div class="stn" style="color:var(--y)">${camp.filter(c=>c.activa).length}</div><div class="stl">Campanas activas</div></div>`;
+      const vl=$$('vl');vl.innerHTML='';
+      vendedores.forEach(u=>{
+        const h=gH(u.id),hd=h.filter(x=>x.fecha===hoy).length;
+        const lbl=esSupervisor(u)?'Vendedor & Supervisor':'Vendedor';
+        const d=document.createElement('div');d.className='vr';d.onclick=()=>vVend(u.id,'dtit','dh');
+        d.innerHTML=`<div class="vav" style="background:${u.col}">${u.ini}</div><div class="vinf"><div class="vnm">${u.name}</div><div class="vst">${lbl} · ${hd} hoy</div></div><div class="vrt"><div class="vcot">${h.length}</div><div class="vlbl">Total</div></div>`;
+        vl.appendChild(d);
+      });
+    });
 }
 
 // ── GERENCIA (ve todos los vendedores + supervisor) ───────────────────────────
@@ -2546,6 +2573,96 @@ function rGer(){
     d.innerHTML=`<div class="vav" style="background:${u.col}">${u.ini}</div><div class="vinf"><div class="vnm">${u.name}</div><div class="vst">${lbl} · ${hd} hoy</div></div><div class="vrt"><div class="vcot">${h.length}</div><div class="vlbl">Total</div></div>`;
     vl.appendChild(d);
   });
+}
+
+function vVendDrive(nombreVendedor, allRows, titId, listId){
+  const rows=Array.isArray(allRows)?allRows.filter(p=>(p.Vendedor||p.vendedor)===nombreVendedor):[];
+  $$(titId).textContent=`${nombreVendedor} — ${rows.length} propuestas`;
+  const el=$$(listId); el.innerHTML='';
+  if(!rows.length){
+    el.innerHTML='<div class="empty"><div class="eico">📋</div><div class="ettl">Sin propuestas</div></div>';
+    return;
+  }
+  rows.reverse().forEach(p=>{
+    const precio=parseInt(p.Precio||p.precio||0);
+    const total=parseInt(p.Total||p.total||0);
+    const d=document.createElement('div'); d.className='hi';
+    d.style.cursor='pointer';
+    d.onclick=()=>abrirDetallePropuesta(p);
+    d.innerHTML=`<div class="hico" style="background:#0069b4">🚗</div>
+      <div class="hinf">
+        <div class="haut">${p.Auto||p.auto||'—'}</div>
+        <div class="hdet">${p.Banco||p.banco||'—'} · ${p.Campana||p.campana||'—'}${p.Plazo||p.plazo?' · '+(p.Plazo||p.plazo)+'m':''} · ${p.Cliente||p.cliente||'Sin nombre'}</div>
+      </div>
+      <div class="hr2">
+        <div class="hcuo">${total?fmt(total):fmt(precio)}</div>
+        <div class="hfec">${fmtFecha(p.Fecha||p.fecha)} · <span style="color:#41c0f0">👁 Ver</span></div>
+      </div>`;
+    el.appendChild(d);
+  });
+}
+
+function abrirDetallePropuesta(p){
+  const precio=parseInt(p.Precio||p.precio||0);
+  const credito=parseInt(p.Credito||p.credito||0);
+  const total=parseInt(p.Total||p.total||0);
+  const cuota=parseInt(p.Cuota||p.cuota||0);
+  const plazo=p.Plazo||p.plazo||'—';
+  const html_det=`
+    <div style="position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px" onclick="this.remove()">
+      <div style="background:var(--s1);border-radius:12px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.5)" onclick="event.stopPropagation()">
+        <!-- Header -->
+        <div style="background:#164194;padding:14px 16px;border-radius:12px 12px 0 0;display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <div style="font-weight:900;font-size:14px;color:#fff;letter-spacing:.5px">PROPUESTA COMERCIAL</div>
+            <div style="font-size:10px;color:rgba(255,255,255,.6);margin-top:2px">${fmtFecha(p.Fecha||p.fecha)} ${p.Hora||p.hora||''} · ${p.Vendedor||p.vendedor||'—'}</div>
+          </div>
+          <button onclick="this.closest('[style*=fixed]').remove()" style="background:rgba(255,255,255,.15);border:none;color:#fff;border-radius:50%;width:28px;height:28px;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center">×</button>
+        </div>
+        <!-- Vehiculo -->
+        <div style="padding:14px 16px;border-bottom:1px solid var(--bdr)">
+          <div style="font-size:9px;letter-spacing:2px;color:var(--m);text-transform:uppercase;margin-bottom:4px">Vehiculo</div>
+          <div style="font-weight:800;font-size:15px;color:var(--t)">${p.Auto||p.auto||'—'}</div>
+          <div style="font-size:11px;color:var(--m);margin-top:2px">Ano ${p.Anno||p.anno||'—'} · ${parseInt(p.KM||p.km||0).toLocaleString('es-AR')} km</div>
+        </div>
+        <!-- Cliente -->
+        <div style="padding:14px 16px;border-bottom:1px solid var(--bdr)">
+          <div style="font-size:9px;letter-spacing:2px;color:var(--m);text-transform:uppercase;margin-bottom:4px">Cliente</div>
+          <div style="font-weight:700;font-size:13px;color:var(--t)">${p.Cliente||p.cliente||'Sin nombre'}</div>
+          ${p.DNI||p.dni?`<div style="font-size:11px;color:var(--m)">DNI: ${p.DNI||p.dni}</div>`:''}
+          ${p.Telefono||p.telefono?`<div style="font-size:11px;color:var(--m)">Tel: ${p.Telefono||p.telefono}</div>`:''}
+        </div>
+        <!-- Precio y credito -->
+        <div style="padding:14px 16px;border-bottom:1px solid var(--bdr);display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div>
+            <div style="font-size:9px;letter-spacing:2px;color:var(--m);text-transform:uppercase;margin-bottom:4px">Precio del vehiculo</div>
+            <div style="font-weight:800;font-size:16px;color:var(--t)">${fmt(precio)}</div>
+          </div>
+          <div>
+            <div style="font-size:9px;letter-spacing:2px;color:var(--m);text-transform:uppercase;margin-bottom:4px">Credito bancario</div>
+            <div style="font-weight:800;font-size:16px;color:#0069b4">${credito?fmt(credito):'Sin financiamiento'}</div>
+          </div>
+        </div>
+        <!-- Banco y cuota -->
+        ${credito?`<div style="padding:14px 16px;border-bottom:1px solid var(--bdr)">
+          <div style="font-size:9px;letter-spacing:2px;color:var(--m);text-transform:uppercase;margin-bottom:6px">Financiamiento</div>
+          <div style="font-weight:700;font-size:13px;color:var(--t)">${p.Banco||p.banco||'—'}</div>
+          <div style="font-size:11px;color:var(--m);margin-top:1px">${p.Campana||p.campana||'—'}</div>
+          ${cuota?`<div style="margin-top:8px;background:var(--s2);border-radius:8px;padding:8px 12px;display:flex;justify-content:space-between;align-items:center">
+            <div style="font-size:10px;color:var(--m)">Cuota mensual · ${plazo} meses</div>
+            <div style="font-weight:900;font-size:17px;color:#0069b4">${fmt(cuota)}</div>
+          </div>`:''}
+        </div>`:''}
+        <!-- Total -->
+        <div style="padding:14px 16px;background:rgba(22,65,148,.08);border-top:2px solid #0069b4;border-radius:0 0 12px 12px;display:flex;justify-content:space-between;align-items:center">
+          <div style="font-size:12px;font-weight:700;color:var(--t);text-transform:uppercase;letter-spacing:1px">Total a cubrir</div>
+          <div style="font-size:22px;font-weight:900;color:#0069b4">${fmt(total||precio)}</div>
+        </div>
+      </div>
+    </div>`;
+  const div=document.createElement('div');
+  div.innerHTML=html_det;
+  document.body.appendChild(div.firstElementChild);
 }
 
 function vVend(uid, titId='dtit', listId='dh'){
