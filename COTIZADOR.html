@@ -658,18 +658,34 @@ input[type=text]#p-obs{background:#F5F7FA!important;border:1px solid #D5DCE6!imp
   <div id="ar-al" style="margin-bottom:8px"></div>
 
   <!-- CLIENTE -->
-  <div class="card">
-    <div class="ch"><div class="ci b">👤</div><div class="ct">Cliente</div><div class="sn">Paso 2</div></div>
+  <div class="card" id="card-cliente">
+    <div class="ch"><div class="ci b">👤</div><div class="ct">Cliente</div><div class="sn">Paso 2 — Campos obligatorios</div></div>
     <div class="cb">
-      <div class="fr f2">
-        <div class="fld"><label>Nombre / Razón Social</label><input type="text" id="p-cli" placeholder="Nombre del cliente"></div>
-        <div class="fld"><label>DNI / CUIT</label><input type="text" id="p-dni"></div>
+      <!-- Sugerencia de cliente existente -->
+      <div id="cli-sugerencia" style="display:none;margin-bottom:8px;padding:10px 14px;background:rgba(239,125,0,.12);border:1.5px solid #ef7d00;border-radius:8px;cursor:pointer" onclick="usarClienteExistente()">
+        <div style="font-size:10px;font-weight:800;color:#ef7d00;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">⚠️ Cliente ya registrado — tocá para completar</div>
+        <div id="cli-sug-nom" style="font-weight:700;font-size:13px;color:var(--t)"></div>
+        <div id="cli-sug-det" style="font-size:11px;color:var(--m);margin-top:2px"></div>
       </div>
-      <div class="fr f3">
-        <div class="fld"><label>Teléfono</label><input type="text" id="p-tel"></div>
-        <div class="fld"><label>Email</label><input type="text" id="p-email"></div>
+      <!-- Error duplicado -->
+      <div id="cli-duplicado" style="display:none;margin-bottom:8px;padding:10px 14px;background:rgba(231,76,60,.12);border:1.5px solid #e74c3c;border-radius:8px">
+        <div style="font-size:10px;font-weight:800;color:#e74c3c;letter-spacing:1px;text-transform:uppercase">❌ Email o teléfono ya registrado para otro cliente</div>
+        <div id="cli-dup-det" style="font-size:11px;color:var(--m);margin-top:2px"></div>
+      </div>
+      <div class="fr f2">
+        <div class="fld"><label>Nombre <span style="color:#e74c3c">*</span></label><input type="text" id="p-nombre" placeholder="Nombre" oninput="buscarClienteExistente()" style="border-color:var(--bdr)" autocomplete="off"></div>
+        <div class="fld"><label>Apellido <span style="color:#e74c3c">*</span></label><input type="text" id="p-apellido" placeholder="Apellido" oninput="buscarClienteExistente()" style="border-color:var(--bdr)" autocomplete="off"></div>
+      </div>
+      <div class="fr f2">
+        <div class="fld"><label>Teléfono celular <span style="color:#e74c3c">*</span></label><input type="tel" id="p-tel" placeholder="Ej: 3764XXXXXXX" oninput="validarTel();buscarDuplicado()" maxlength="13" style="border-color:var(--bdr)"></div>
+        <div class="fld"><label>Email <span style="color:#e74c3c">*</span></label><input type="email" id="p-email" placeholder="correo@ejemplo.com" oninput="validarEmail();buscarDuplicado()" style="border-color:var(--bdr)"></div>
+      </div>
+      <div class="fr f2">
+        <div class="fld"><label>DNI / CUIT</label><input type="text" id="p-dni" placeholder="Opcional"></div>
         <div class="fld"><label>Vendedor</label><input type="text" id="p-vend" readonly style="opacity:.6"></div>
       </div>
+      <!-- Indicadores de validación -->
+      <div id="cli-val-msg" style="font-size:10px;color:#e74c3c;margin-top:2px;display:none"></div>
     </div>
   </div>
 
@@ -847,6 +863,36 @@ input[type=text]#p-obs{background:#F5F7FA!important;border:1px solid #D5DCE6!imp
   </div>
   <div id="prop-lista">
     <div class="empty"><div class="eico">📋</div><div class="ettl">Propuestas guardadas</div><div class="esub">Tocá Actualizar para cargar.</div></div>
+  </div>
+</div>
+</div>
+
+<!-- BASE DE DATOS CLIENTES -->
+<div id="screen-clientes" class="scr">
+<div class="page">
+  <div class="sh">
+    <div><div class="st2">👥 Clientes</div><div class="ss2">Base de datos ALMAR</div></div>
+    <button class="btn btn-r btn-sm" onclick="cargarClientes()" style="margin-left:auto">↻ Actualizar</button>
+  </div>
+  <!-- Buscador -->
+  <div class="card" style="padding:10px 14px;margin-bottom:8px">
+    <div class="fr f2" style="gap:8px;margin:0">
+      <input type="text" id="cli-busq-txt" placeholder="🔍 Nombre, apellido, email o teléfono..." oninput="filtrarClientes()" style="flex:1;margin:0">
+      <select id="cli-busq-fecha" onchange="filtrarClientes()" style="width:140px;margin:0">
+        <option value="">📅 Todas las fechas</option>
+      </select>
+    </div>
+    <div class="fr f2" style="gap:8px;margin-top:6px">
+      <select id="cli-busq-marca" onchange="filtrarClientes()" style="margin:0">
+        <option value="">🚗 Todas las marcas</option>
+      </select>
+      <select id="cli-busq-vendedor" onchange="filtrarClientes()" style="margin:0">
+        <option value="">👤 Todos los vendedores</option>
+      </select>
+    </div>
+  </div>
+  <div id="cli-lista">
+    <div class="empty"><div class="eico">👥</div><div class="ettl">Base de clientes</div><div class="esub">Tocá Actualizar para cargar.</div></div>
   </div>
 </div>
 </div>
@@ -1421,6 +1467,11 @@ function login(u){
   $$('p-vend').value=esGerencia(u)?'':u.name;
   $$('dfec').textContent=tod();
   bDr(); bBN(); rCampMini(); rCampCot(); uHB();
+  // Cargar cache de clientes para autocompletado (silencioso)
+  fetch(PROPUESTAS_URL+'?action=getClientes&t='+Date.now(),{cache:'no-store'})
+    .then(r=>r.json())
+    .then(data=>{_clientesCache=data.data||data||[];})
+    .catch(()=>{});
 }
 function logout(){
   CU=null;credCampId=null;credPlazo=null;cotCampId=null;
@@ -1440,6 +1491,8 @@ const SC={
   stock:      {t:'Stock Usados',           s:'Inventario Almar'},
   okm:        {t:'Stock 0 km',             s:'Unidades nuevas'},
   admin:      {t:'Panel Admin',            s:'Solo administrador'},
+  propguard:  {t:'Propuestas Guardadas',   s:'Historial del equipo · Ordenado por fecha'},
+  clientes:   {t:'Base de Clientes',       s:'Todos los clientes registrados'},
 };
 function goTo(n){
   clD();
@@ -1455,6 +1508,8 @@ function goTo(n){
   if(n==='stock')rStk();
   if(n==='okm')rOkm();
   if(n==='admin')rAdm();
+  if(n==='propguard')cargarPropuestasGuardadas();
+  if(n==='clientes'){cargarClientes();}
 }
 function tgD(){$$('dr').classList.toggle('on');$$('ov').classList.toggle('on')}
 function clD(){$$('dr').classList.remove('on');$$('ov').classList.remove('on')}
@@ -1508,7 +1563,10 @@ function bBN(){
     {s:'okm',i:'🏎',l:'0 km'},
     {s:'precios',i:'💰',l:'Precios'},
   ];
-  if(esSupervisor(CU)||esGerencia(CU)) items.splice(-1,0,{s:'propguard',i:'📋',l:'Guardadas',sup:true});
+  if(esSupervisor(CU)||esGerencia(CU)){
+    items.splice(-1,0,{s:'propguard',i:'📋',l:'Guardadas',sup:true});
+    items.splice(-1,0,{s:'clientes',i:'👥',l:'Clientes',sup:true});
+  }
   const first=esGerencia(CU)?'gerencia':'propuesta';
   items.forEach(x=>{
     const d=document.createElement('div');
@@ -1702,9 +1760,172 @@ function buscar(){
 const PROPUESTAS_URL='https://script.google.com/macros/s/AKfycbxxYqhSxGsASIGVkUHXAly58T8Ch9ioxdoLBn_Wwfhu97t2oR1w6yhF1BttOOpZ4KHh/exec';
 const PRECIOS_URL='https://docs.google.com/spreadsheets/d/e/2PACX-1vSU1sIw1-Fv3zisHUzsFuwZ47ZSgCH2ApVMY-LgxXuhyn9q1RnmOESFoMyMWrn-cI7Y24L9TxNitH5t/pub?gid=1475982203&single=true&output=csv';
 
+// ── CLIENTES — BASE DE DATOS ─────────────────────────────────────────────────
+let _clientesCache=[];
+let _clienteSugerido=null;
+
+function validarTel(){
+  const el=$$('p-tel'); if(!el) return;
+  const v=el.value.replace(/\D/g,'');
+  // Argentina: 10-13 dígitos (con/sin 0 y 15)
+  const ok=v.length>=10&&v.length<=13;
+  el.style.borderColor=v.length>0?(ok?'var(--g)':'#e74c3c'):'var(--bdr)';
+}
+
+function validarEmail(){
+  const el=$$('p-email'); if(!el) return;
+  const v=el.value.trim();
+  const ok=/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+  el.style.borderColor=v.length>0?(ok?'var(--g)':'#e74c3c'):'var(--bdr)';
+}
+
+function buscarClienteExistente(){
+  const nom=($$('p-nombre')?.value||'').trim().toLowerCase();
+  const ape=($$('p-apellido')?.value||'').trim().toLowerCase();
+  const sug=$$('cli-sugerencia');
+  if(!sug) return;
+  if(nom.length<2&&ape.length<2){sug.style.display='none';_clienteSugerido=null;return;}
+  const match=_clientesCache.find(c=>{
+    const cn=(c.Nombre||'').toLowerCase(), ca=(c.Apellido||'').toLowerCase();
+    return (nom.length>=2&&cn.includes(nom))||(ape.length>=2&&ca.includes(ape));
+  });
+  if(match){
+    _clienteSugerido=match;
+    $$('cli-sug-nom').textContent=(match.Nombre||'')+' '+(match.Apellido||'');
+    $$('cli-sug-det').textContent='📱 '+(match.Telefono||'—')+' · 📧 '+(match.Email||'—')+' · Última visita: '+(match.UltimaVisita||match.Fecha||'—');
+    sug.style.display='block';
+  } else {
+    sug.style.display='none';
+    _clienteSugerido=null;
+  }
+}
+
+function buscarDuplicado(){
+  const tel=($$('p-tel')?.value||'').replace(/\D/g,'');
+  const email=($$('p-email')?.value||'').trim().toLowerCase();
+  const dup=$$('cli-duplicado');
+  if(!dup) return;
+  if(!tel&&!email){dup.style.display='none';return;}
+  // Buscar si el tel o email ya existe para OTRO cliente
+  const nombre=($$('p-nombre')?.value||'').trim().toLowerCase();
+  const apellido=($$('p-apellido')?.value||'').trim().toLowerCase();
+  const match=_clientesCache.find(c=>{
+    const mismoNombre=(c.Nombre||'').toLowerCase()===nombre&&(c.Apellido||'').toLowerCase()===apellido;
+    if(mismoNombre) return false; // es el mismo cliente, no duplicado
+    const cTel=(c.Telefono||'').replace(/\D/g,'');
+    const cEmail=(c.Email||'').toLowerCase();
+    return (tel&&cTel===tel)||(email&&cEmail===email);
+  });
+  if(match){
+    $$('cli-dup-det').textContent='Ya existe: '+(match.Nombre||'')+' '+(match.Apellido||'')+' · 📱 '+(match.Telefono||'—');
+    dup.style.display='block';
+  } else {
+    dup.style.display='none';
+  }
+}
+
+function usarClienteExistente(){
+  if(!_clienteSugerido) return;
+  const c=_clienteSugerido;
+  if($$('p-nombre')) $$('p-nombre').value=c.Nombre||'';
+  if($$('p-apellido')) $$('p-apellido').value=c.Apellido||'';
+  if($$('p-tel')) $$('p-tel').value=c.Telefono||'';
+  if($$('p-email')) $$('p-email').value=c.Email||'';
+  if($$('p-dni')) $$('p-dni').value=c.DNI||'';
+  $$('cli-sugerencia').style.display='none';
+  validarTel(); validarEmail();
+  mostrarToast('✅ Cliente cargado');
+}
+
+function validarCamposCliente(){
+  const nombre=($$('p-nombre')?.value||'').trim();
+  const apellido=($$('p-apellido')?.value||'').trim();
+  const tel=($$('p-tel')?.value||'').replace(/\D/g,'');
+  const email=($$('p-email')?.value||'').trim();
+  const msgs=[];
+  if(!nombre) msgs.push('Nombre');
+  if(!apellido) msgs.push('Apellido');
+  if(!tel||tel.length<10) msgs.push('Teléfono válido (mín 10 dígitos)');
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) msgs.push('Email válido');
+  return msgs;
+}
+
+function cargarClientes(){
+  const el=$$('cli-lista'); if(!el) return;
+  el.innerHTML='<div style="text-align:center;padding:20px;color:var(--m)">⏳ Cargando clientes...</div>';
+  fetch(PROPUESTAS_URL+'?action=getClientes&t='+Date.now(),{cache:'no-store'})
+    .then(r=>r.json())
+    .then(data=>{
+      const rows=data.data||data||[];
+      _clientesCache=rows;
+      poblarFiltrosClientes(rows);
+      renderClientes(rows);
+    })
+    .catch(()=>{
+      el.innerHTML='<div class="empty"><div class="eico">⚠️</div><div class="ettl">Sin conexión</div><div class="esub">Verificá tu conexión a internet.</div></div>';
+    });
+}
+
+function poblarFiltrosClientes(rows){
+  const fechas=[...new Set(rows.map(r=>r.Fecha||r.fecha||'').filter(Boolean))].sort().reverse();
+  const marcas=[...new Set(rows.map(r=>r.UltimasMarca||r.Marca||'').filter(Boolean))].sort();
+  const vendedores=[...new Set(rows.map(r=>r.Vendedor||r.vendedor||'').filter(Boolean))].sort();
+  const sf=$$('cli-busq-fecha');
+  if(sf){sf.innerHTML='<option value="">📅 Todas las fechas</option>';fechas.slice(0,30).forEach(f=>{const o=document.createElement('option');o.value=f;o.textContent=f;sf.appendChild(o);});}
+  const sm=$$('cli-busq-marca');
+  if(sm){sm.innerHTML='<option value="">🚗 Todas las marcas</option>';marcas.forEach(m=>{const o=document.createElement('option');o.value=m;o.textContent=m;sm.appendChild(o);});}
+  const sv=$$('cli-busq-vendedor');
+  if(sv){sv.innerHTML='<option value="">👤 Todos los vendedores</option>';vendedores.forEach(v=>{const o=document.createElement('option');o.value=v;o.textContent=v;sv.appendChild(o);});}
+}
+
+function filtrarClientes(){
+  const txt=($$('cli-busq-txt')?.value||'').toLowerCase();
+  const fecha=$$('cli-busq-fecha')?.value||'';
+  const marca=$$('cli-busq-marca')?.value||'';
+  const vend=$$('cli-busq-vendedor')?.value||'';
+  let rows=_clientesCache;
+  if(txt) rows=rows.filter(r=>[r.Nombre,r.Apellido,r.Email,r.Telefono,r.DNI].join(' ').toLowerCase().includes(txt));
+  if(fecha) rows=rows.filter(r=>(r.Fecha||r.fecha||'')===fecha);
+  if(marca) rows=rows.filter(r=>(r.UltimasMarca||r.Marca||'')===marca);
+  if(vend) rows=rows.filter(r=>(r.Vendedor||r.vendedor||'')===vend);
+  renderClientes(rows);
+}
+
+function renderClientes(rows){
+  const el=$$('cli-lista'); if(!el) return;
+  if(!rows.length){el.innerHTML='<div class="empty"><div class="eico">🔍</div><div class="ettl">Sin resultados</div></div>';return;}
+  el.innerHTML=rows.map(c=>`
+    <div class="card" style="margin-bottom:8px;padding:12px 14px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <div style="font-weight:800;font-size:14px;color:var(--t)">${c.Nombre||''} ${c.Apellido||''}</div>
+          <div style="font-size:11px;color:var(--m);margin-top:2px">📱 ${c.Telefono||'—'} · 📧 ${c.Email||'—'}</div>
+          ${c.DNI?`<div style="font-size:10px;color:var(--m)">DNI/CUIT: ${c.DNI}</div>`:''}
+        </div>
+        <div style="text-align:right;font-size:10px;color:var(--m)">
+          <div>${c.UltimaVisita||c.Fecha||'—'}</div>
+          <div>${c.Vendedor||'—'}</div>
+          <div style="margin-top:3px;font-weight:700;color:var(--b)">${c.TotalPropuestas?c.TotalPropuestas+' prop.':''}</div>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
 // ── PROPUESTAS — GUARDAR Y CARGAR ────────────────────────────────────────────
 function guardarPropuesta(){
-  // Recopilar datos de la propuesta actual
+  // Validar campos cliente
+  const errores=validarCamposCliente();
+  if(errores.length){
+    alert('⚠️ Completá los campos obligatorios del cliente:\n\n• '+errores.join('\n• '));
+    $$('card-cliente')?.scrollIntoView({behavior:'smooth'});
+    return;
+  }
+  // Verificar duplicado bloqueante
+  if($$('cli-duplicado')?.style.display==='block'){
+    alert('❌ El email o teléfono ya pertenece a otro cliente. Verificá los datos antes de guardar.');
+    return;
+  }
+
   const ma=$$('marca')?.value||'';
   const mo=$$('modelo')?.value||'';
   const v=$$('version')?.value||'';
@@ -1712,29 +1933,50 @@ function guardarPropuesta(){
   const km=$$('km')?.value||'0';
   const pa1=parseFloat($$('pa1')?.value)||0;
   const monto=parseFloat($$('pb1')?.value)||0;
-  const cliente=$$('cli-nom')?.value||'Sin nombre';
-  const dni=$$('cli-dni')?.value||'';
-  const tel=$$('cli-tel')?.value||'';
+  const nombre=($$('p-nombre')?.value||'').trim();
+  const apellido=($$('p-apellido')?.value||'').trim();
+  const cliente=nombre+' '+apellido;
+  const dni=$$('p-dni')?.value||'';
+  const tel=$$('p-tel')?.value||'';
+  const email=$$('p-email')?.value||'';
 
   if(!ma||!mo){
     alert('Completá el vehículo antes de guardar.');
     return;
   }
 
-  // Campaña seleccionada
+  // Detalles columna A
+  const detalleA={
+    precio:pa1,
+    gestoria:parseFloat($$('pa2')?.value)||0,
+    gastosBancarios:parseFloat($$('pa3')?.value)||0,
+    gastosBancariosAd:parseFloat($$('pa3b')?.value)||0,
+    intereses:parseFloat($$('pa4')?.value)||0,
+    comisionBanco:parseFloat($$('pa5')?.value)||0,
+    seguro:parseFloat($$('pa6')?.value)||0,
+  };
+
+  // Detalles columna B
+  const detalleB={
+    credito:monto,
+    usadoPartePago:parseFloat($$('pb2')?.value)||0,
+    anticipo:parseFloat($$('pb3')?.value)||0,
+    cheques:parseFloat($$('pb4')?.value)||0,
+    saldo:parseFloat($$('pb5')?.value)||0,
+  };
+
   const cv=camp.find(c=>c.id===credCampId);
   const banco=cv?cv.banco:'Sin financiamiento';
   const campana=cv?cv.nombre:'—';
 
-  // Cuota y plazo seleccionados
   const cuotaEl=document.querySelector('.qm.picked .mcu, .qc.picked .cu');
   const plazoEl=document.querySelector('.qm.picked .mpl, .qc.picked .pl');
   const cuota=cuotaEl?cuotaEl.textContent.replace(/[^0-9]/g,''):'0';
   const plazo=plazoEl?plazoEl.textContent.replace(/[^0-9]/g,''):'0';
 
-  // Total A
   const totalEl=$$('ta');
   const total=totalEl?totalEl.textContent.replace(/[^0-9]/g,''):'0';
+  const totalB=$$('tb')?$$('tb').textContent.replace(/[^0-9]/g,''):total;
 
   const ahora=new Date();
   const fecha=ahora.toLocaleDateString('es-AR');
@@ -1743,34 +1985,35 @@ function guardarPropuesta(){
 
   const propuesta={
     id, fecha, hora,
-    vendedor: CU?.name||'—',
-    cliente, dni, telefono:tel,
-    auto: [ma,mo,v,a].filter(Boolean).join(' '),
+    vendedor:CU?.name||'—',
+    nombre, apellido, cliente,
+    dni, telefono:tel, email,
+    auto:[ma,mo,v,a].filter(Boolean).join(' '),
+    marca:ma, modelo:mo, version:v,
     anno:a, km,
-    precio: pa1,
-    credito: monto,
+    precio:pa1,
+    credito:monto,
     banco, campana,
     cuota, plazo,
-    total,
+    totalA:total,
+    totalB,
+    detalleA:JSON.stringify(detalleA),
+    detalleB:JSON.stringify(detalleB),
     estado:'GUARDADA'
   };
 
-  // Guardar en localStorage
+  // Guardar localmente
   const local=JSON.parse(localStorage.getItem('almar_propuestas')||'[]');
   local.unshift(propuesta);
   localStorage.setItem('almar_propuestas',JSON.stringify(local.slice(0,200)));
 
-  // Sincronizar con Google Drive (sin bloquear la UI)
-  fetch(PROPUESTAS_URL, {
+  // Sincronizar con Drive
+  fetch(PROPUESTAS_URL,{
     method:'POST',
     mode:'no-cors',
     headers:{'Content-Type':'text/plain'},
-    body:JSON.stringify(propuesta)
-  }).then(()=>{
-    mostrarToast('✅ Propuesta guardada en Drive');
-  }).catch(()=>{
-    mostrarToast('💾 Guardada localmente (sin conexion)');
-  });
+    body:JSON.stringify({action:'savePropuesta',...propuesta})
+  }).catch(()=>{});
 
   mostrarToast('✅ Propuesta guardada');
 }
@@ -1828,69 +2071,142 @@ function cargarPropuestasGuardadas(){
   }
 }
 
+function renderCardPropuesta(p){
+  const cliente=p.Cliente||p.cliente||p.nombre+' '+p.apellido||'Sin nombre';
+  const precio=parseInt(p.Precio||p.precio||0);
+  const totalA=parseInt(p.TotalA||p.Total||p.total||0);
+  const totalB=parseInt(p.TotalB||0);
+  // Parsear detalleA y detalleB si son strings JSON
+  let dA={},dB={};
+  try{dA=JSON.parse(p.DetalleA||p.detalleA||'{}');}catch(e){}
+  try{dB=JSON.parse(p.DetalleB||p.detalleB||'{}');}catch(e){}
+  const banco=p.Banco||p.banco||'';
+  const campana=p.Campana||p.campana||'';
+  const cuota=parseInt(p.Cuota||p.cuota||0);
+  const plazo=p.Plazo||p.plazo||'';
+  const email=p.Email||p.email||'';
+  const tel=p.Telefono||p.telefono||'';
+
+  const filaA=(lbl,val)=>val?`<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--bdr)"><span style="color:var(--m)">${lbl}</span><span style="font-weight:600">$${parseInt(val).toLocaleString('es-AR')}</span></div>`:'';
+
+  const detA=`
+    ${filaA('Precio del vehículo',dA.precio||precio)}
+    ${filaA('Gestoría / Patentamiento',dA.gestoria)}
+    ${filaA('Gastos bancarios campaña',dA.gastosBancarios)}
+    ${filaA('Gastos bancarios adicionales',dA.gastosBancariosAd)}
+    ${filaA('Intereses crédito',dA.intereses)}
+    ${filaA('Comisión banco',dA.comisionBanco)}
+    ${filaA('Seguro automotor',dA.seguro)}
+    ${totalA?`<div style="display:flex;justify-content:space-between;padding:4px 0;margin-top:2px"><span style="font-weight:800;color:var(--b)">TOTAL A</span><span style="font-weight:800;color:var(--b)">$${totalA.toLocaleString('es-AR')}</span></div>`:''}`;
+
+  const detB=`
+    ${filaA('Crédito bancario',dB.credito||parseInt(p.Credito||p.credito||0))}
+    ${filaA('Usado en parte de pago',dB.usadoPartePago)}
+    ${filaA('Anticipo en efectivo',dB.anticipo)}
+    ${filaA('Cheques',dB.cheques)}
+    ${filaA('Saldo',dB.saldo)}
+    ${cuota&&plazo?`<div style="display:flex;justify-content:space-between;padding:4px 0;margin-top:2px"><span style="font-weight:800;color:var(--g)">Cuota mensual</span><span style="font-weight:800;color:var(--g)">$${cuota.toLocaleString('es-AR')} x ${plazo}m</span></div>`:''}`;
+
+  return `<div class="card" style="margin-bottom:10px;overflow:hidden">
+    <!-- Header -->
+    <div style="background:linear-gradient(90deg,rgba(22,65,148,.18) 0%,transparent 100%);border-left:3px solid #0069b4;padding:10px 14px;display:flex;justify-content:space-between;align-items:flex-start">
+      <div>
+        <div style="font-weight:800;font-size:13px;color:var(--t)">${p.Auto||p.auto||'—'}</div>
+        <div style="font-size:10px;color:var(--m);margin-top:2px">${fmtFecha(p.Fecha||p.fecha)} ${p.Hora||p.hora||''} · ${p.Vendedor||p.vendedor||'—'}</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:13px;font-weight:800;color:#0069b4">$${totalA?totalA.toLocaleString('es-AR'):precio.toLocaleString('es-AR')}</div>
+        ${banco?`<div style="font-size:9px;color:var(--m)">${banco}</div>`:''}
+      </div>
+    </div>
+    <!-- Cliente -->
+    <div style="padding:8px 14px;background:var(--s2);border-bottom:1px solid var(--bdr)">
+      <div style="font-weight:700;font-size:12px;color:var(--t)">👤 ${cliente}</div>
+      <div style="font-size:10px;color:var(--m);margin-top:2px">${tel?'📱 '+tel:''} ${email?'· 📧 '+email:''} ${p.DNI||p.dni?'· DNI '+(p.DNI||p.dni):''}</div>
+    </div>
+    <!-- Detalle A y B en acordeón -->
+    <div style="padding:0 14px">
+      <div onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'"
+           style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;cursor:pointer;border-bottom:1px solid var(--bdr)">
+        <span style="font-size:11px;font-weight:800;color:var(--b)">📌 A — Qué incluye el precio</span>
+        <span style="font-size:10px;color:var(--m)">▼ ver detalle</span>
+      </div>
+      <div style="display:none;padding:4px 0 8px;font-size:11px">${detA}</div>
+      <div onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'"
+           style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;cursor:pointer">
+        <span style="font-size:11px;font-weight:800;color:var(--g)">✅ B — Cómo lo paga</span>
+        <span style="font-size:10px;color:var(--m)">▼ ver detalle</span>
+      </div>
+      <div style="display:none;padding:4px 0 8px;font-size:11px">${detB}
+        ${banco?`<div style="font-size:10px;color:var(--m);margin-top:4px">Banco: ${banco}${campana?' — '+campana:''}</div>`:''}
+      </div>
+    </div>
+  </div>`;
+}
+
 function renderPropuestas(data, el, verTodos){
   if(!data||!data.length){
     el.innerHTML='<div class="empty"><div class="eico">📋</div><div class="ettl">Sin propuestas</div><div class="esub">Las propuestas guardadas aparecerán acá.</div></div>';
     return;
   }
-  // Filtro de búsqueda
-  let html_p=`<div style="padding:4px 0 8px">
-    <input type="text" id="prop-filtro" placeholder="🔍 Buscar cliente, auto, vendedor..." oninput="filtrarPropuestas()"
-    style="width:100%;padding:8px 12px;border:1.5px solid var(--bdr);border-radius:8px;background:var(--s2);color:var(--t);font-size:13px;box-sizing:border-box">
-  </div>`;
-  html_p+=`<div id="prop-cards">`;
   window._propuestasData=data;
+
+  // Agrupar por fecha
+  const porFecha={};
   for(const p of data){
-    const precio=parseInt(p.Precio||p.precio||0).toLocaleString('es-AR');
-    const total=parseInt(p.Total||p.total||0).toLocaleString('es-AR');
-    html_p+=`<div class="card" style="margin-bottom:8px;overflow:hidden">
-      <div class="ch" style="background:linear-gradient(90deg,rgba(22,65,148,.18) 0%,transparent 100%);border-left:3px solid #0069b4;display:flex;justify-content:space-between;align-items:center">
-        <div>
-          <div class="ct" style="font-size:11px">${p.Auto||p.auto||'—'}</div>
-          <div style="font-size:9px;color:var(--m);margin-top:1px">${fmtFecha(p.Fecha||p.fecha)} ${p.Hora||p.hora||''} · ${p.Vendedor||p.vendedor||'—'}</div>
-        </div>
-        <div style="font-size:12px;font-weight:700;color:#0069b4">$${total||precio}</div>
-      </div>
-      <div style="padding:8px 12px;font-size:11px;color:var(--t)">
-        <div><strong>Cliente:</strong> ${p.Cliente||p.cliente||'—'} ${p.DNI||p.dni?'· DNI '+( p.DNI||p.dni):''}</div>
-        <div style="margin-top:3px"><strong>Banco:</strong> ${p.Banco||p.banco||'—'} · ${p.Campana||p.campana||'—'}</div>
-        ${p.Cuota&&p.Cuota!='0'?`<div style="margin-top:3px;color:#0069b4;font-weight:700">Cuota: $${parseInt(p.Cuota||p.cuota).toLocaleString('es-AR')} x ${p.Plazo||p.plazo}m</div>`:''}
-      </div>
-    </div>`;
+    const f=fmtFecha(p.Fecha||p.fecha)||'Sin fecha';
+    if(!porFecha[f]) porFecha[f]=[];
+    porFecha[f].push(p);
   }
-  html_p+=`</div>`;
-  el.innerHTML=html_p;
+
+  let html=`<div style="padding:4px 0 8px">
+    <input type="text" id="prop-filtro" placeholder="🔍 Buscar cliente, auto, vendedor, marca..." oninput="filtrarPropuestas()"
+    style="width:100%;padding:8px 12px;border:1.5px solid var(--bdr);border-radius:8px;background:var(--s2);color:var(--t);font-size:13px;box-sizing:border-box">
+  </div><div id="prop-cards">`;
+
+  // Ordenar fechas de más reciente a más antigua
+  const fechas=Object.keys(porFecha).sort((a,b)=>{
+    const pa=a.split('/').reverse().join(''), pb=b.split('/').reverse().join('');
+    return pb.localeCompare(pa);
+  });
+
+  for(const f of fechas){
+    const props=porFecha[f];
+    html+=`<div style="font-size:10px;font-weight:800;letter-spacing:1.5px;color:var(--m);text-transform:uppercase;padding:8px 0 4px">📅 ${f} — ${props.length} propuesta${props.length>1?'s':''}</div>`;
+    for(const p of props) html+=renderCardPropuesta(p);
+  }
+  html+=`</div>`;
+  el.innerHTML=html;
 }
 
 function filtrarPropuestas(){
   const q=($$('prop-filtro')?.value||'').toLowerCase();
   if(!window._propuestasData) return;
   const filtrado=!q?window._propuestasData:window._propuestasData.filter(p=>{
-    const txt=[p.Auto,p.auto,p.Cliente,p.cliente,p.Vendedor,p.vendedor,p.Banco,p.banco].join(' ').toLowerCase();
+    const txt=[p.Auto,p.auto,p.Cliente,p.cliente,p.Nombre,p.nombre,p.Apellido,p.apellido,
+               p.Vendedor,p.vendedor,p.Banco,p.banco,p.Marca,p.marca,p.Modelo,p.modelo,
+               p.Email,p.email,p.Telefono,p.telefono].join(' ').toLowerCase();
     return txt.includes(q);
   });
   const cards=$$('prop-cards');
   if(!cards) return;
-  let html_p='';
+  if(!filtrado.length){cards.innerHTML='<div class="empty"><div class="eico">🔍</div><div class="ettl">Sin resultados</div></div>';return;}
+  const porFecha={};
   for(const p of filtrado){
-    const precio=parseInt(p.Precio||p.precio||0).toLocaleString('es-AR');
-    const total=parseInt(p.Total||p.total||0).toLocaleString('es-AR');
-    html_p+=`<div class="card" style="margin-bottom:8px;overflow:hidden">
-      <div class="ch" style="background:linear-gradient(90deg,rgba(22,65,148,.18) 0%,transparent 100%);border-left:3px solid #0069b4;display:flex;justify-content:space-between;align-items:center">
-        <div>
-          <div class="ct" style="font-size:11px">${p.Auto||p.auto||'—'}</div>
-          <div style="font-size:9px;color:var(--m);margin-top:1px">${fmtFecha(p.Fecha||p.fecha)} ${p.Hora||p.hora||''} · ${p.Vendedor||p.vendedor||'—'}</div>
-        </div>
-        <div style="font-size:12px;font-weight:700;color:#0069b4">$${total||precio}</div>
-      </div>
-      <div style="padding:8px 12px;font-size:11px;color:var(--t)">
-        <div><strong>Cliente:</strong> ${p.Cliente||p.cliente||'—'}</div>
-        <div style="margin-top:3px"><strong>Banco:</strong> ${p.Banco||p.banco||'—'} · ${p.Campana||p.campana||'—'}</div>
-        ${p.Cuota&&p.Cuota!='0'?`<div style="margin-top:3px;color:#0069b4;font-weight:700">Cuota: $${parseInt(p.Cuota||p.cuota).toLocaleString('es-AR')} x ${p.Plazo||p.plazo}m</div>`:''}
-      </div>
-    </div>`;
+    const f=fmtFecha(p.Fecha||p.fecha)||'Sin fecha';
+    if(!porFecha[f]) porFecha[f]=[];
+    porFecha[f].push(p);
   }
-  cards.innerHTML=html_p||'<div class="empty"><div class="eico">🔍</div><div class="ettl">Sin resultados</div></div>';
+  const fechas=Object.keys(porFecha).sort((a,b)=>{
+    const pa=a.split('/').reverse().join(''), pb=b.split('/').reverse().join('');
+    return pb.localeCompare(pa);
+  });
+  let html='';
+  for(const f of fechas){
+    html+=`<div style="font-size:10px;font-weight:800;letter-spacing:1.5px;color:var(--m);text-transform:uppercase;padding:8px 0 4px">📅 ${f} — ${porFecha[f].length} propuesta${porFecha[f].length>1?'s':''}</div>`;
+    for(const p of porFecha[f]) html+=renderCardPropuesta(p);
+  }
+  cards.innerHTML=html;
 }
 
 function syncPrecios(){
@@ -2083,6 +2399,7 @@ function ltvPSAUsados(anno){
 function rCampMini(){
   window._subMenuAbierto=false;
   const g=$$('cg-mini');
+  if(!g) return; // pantalla de propuesta no está activa
   g.innerHTML='';
   const t=$$('tipo')?.value||'';
   const ma=($$('marca')?.value||'').toUpperCase();
@@ -2359,7 +2676,7 @@ function resetP(){
   if(!confirm('¿Limpiar toda la propuesta para una nueva operación?'))return;
   ['tipo','marca','modelo','version','anno','color','km','tveh'].forEach(id=>{const el=$$(id);if(el){el.value='';if(el.tagName==='SELECT')el.disabled=['marca','modelo','version','anno'].includes(id)}});
   ['pa1','pa2','pa3','pa3b','pa4','pa5','pa6','pb1','pb2','pb3','pb4','pb5','pb6'].forEach(id=>{const el=$$(id);if(el)el.value=''});
-  ['p-cli','p-dni','p-tel','p-email','p-obs'].forEach(id=>{const el=$$(id);if(el)el.value=''});
+  ['p-nombre','p-apellido','p-dni','p-tel','p-email','p-obs'].forEach(id=>{const el=$$(id);if(el)el.value=''});
   $$('exa').innerHTML=''; $$('exb').innerHTML='';
   $$('ar').style.display='none'; $$('ar-al').innerHTML=''; $$('cred-box').style.display='none';
   credCampId=null; credPlazo=null;
@@ -2372,14 +2689,14 @@ function resetP(){
 
 // ── WhatsApp ──────────────────────────────────────────────────────────────────
 function gWA(){
-  const u=CU||{name:'Almar'}, cli=$$('p-cli').value||'Cliente';
+  const u=CU||{name:'Almar'}, cli=($$('p-nombre')?.value||'') + ' ' + ($$('p-apellido')?.value||'')||'Cliente';
   const nom=[$$('marca').value,$$('modelo').value,$$('version').value,$$('anno').value].filter(Boolean).join(' ')||'la unidad';
   const cv=credCampId?camp.find(c=>c.id===credCampId):null;
   const mt=parseFloat($$('pb1').value)||0;
   const pr=parseFloat($$('pa1').value)||0;
   let cl='';
   if(cv&&mt>0){PL.filter(n=>n<=cv.plazoMax).forEach(n=>{cl+=`   • ${n} meses: ${fmt(cuota(mt,cv.tna,n))}/mes\n`})}
-  const obs=$$('p-obs').value;
+  const obs=$$('p-obs')?.value||'';
   return `Estimado/a *${cli}*, le acercamos la siguiente propuesta:\n\n*Unidad:* ${nom}\n${pr?`*Precio:* ${fmt(pr)}\n`:''}${mt?`*Crédito bancario:* ${fmt(mt)}\n`:''}${cv?`*Campaña:* ${cv.banco} — ${cv.nombre} · TNA ${cv.tna.toFixed(2).replace('.',',')}%\n`:''}\n*Opciones de cuotas:*\n${cl||'   (No configurado)'}\n${obs?`📋 ${obs}\n\n`:''}Quedamos a su disposición para coordinar el trámite.\n\n*${u.name} — ALMAR Concesionario Oficial*\nPosadas, Misiones`;
 }
 function cpWA(){const t=gWA();if(navigator.clipboard)navigator.clipboard.writeText(t).then(()=>alert('✅ Copiado. Pegalo en WhatsApp.')).catch(()=>fbCopy(t));else fbCopy(t)}
@@ -2405,7 +2722,7 @@ function gCot(){
   const pl=plFromCard||credPlazo||(cv?Math.min(60,cv.plazoMax):0);
   const c60=c60FromCard||(cv&&mt>0&&pl?Math.round(cuota(mt,cv.tna,pl)):0);
   const ahora=new Date();
-  const entrada={id:Date.now(),nom,pr,mt,banco:cv?cv.banco:'',campNom:cv?cv.nombre:'',tna:cv?cv.tna:0,plazo:pl,c60,cli:$$('p-cli').value||'',vId:CU.id,vNom:CU.name,fecha:tod(),hora:nw()};
+  const entrada={id:Date.now(),nom,pr,mt,banco:cv?cv.banco:'',campNom:cv?cv.nombre:'',tna:cv?cv.tna:0,plazo:pl,c60,cli:($$('p-nombre')?.value||'') + ' ' + ($$('p-apellido')?.value||'')||'',vId:CU.id,vNom:CU.name,fecha:tod(),hora:nw()};
   gH(CU.id).unshift(entrada);
   uHB();
   // Guardar tambien en Drive
@@ -2415,7 +2732,7 @@ function gCot(){
     fecha:ahora.toLocaleDateString('es-AR'),
     hora:ahora.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'}),
     vendedor:CU.name,
-    cliente:$$('p-cli')?.value||'Sin nombre',
+    cliente:(($$('p-nombre')?.value||'')+' '+($$('p-apellido')?.value||'')).trim()||'Sin nombre',
     dni:$$('p-dni')?.value||'',
     telefono:$$('p-tel')?.value||'',
     auto:nom,
@@ -3140,12 +3457,12 @@ function emailStock(){
 
 // ── EMAIL PROPUESTA ───────────────────────────────────────────────────────────
 function emailPropuesta(){
-  const cli=$$('p-cli').value||'Cliente';
+  const cli=($$('p-nombre')?.value||'') + ' ' + ($$('p-apellido')?.value||'')||'Cliente';
   const nom=[$$('marca').value,$$('modelo').value,$$('version').value,$$('anno').value].filter(Boolean).join(' ')||'la unidad';
   const cv=credCampId?camp.find(c=>c.id===credCampId):null;
   const pr=parseFloat($$('pa1').value)||0;
   const mt=parseFloat($$('pb1').value)||0;
-  const obs=$$('p-obs').value;
+  const obs=$$('p-obs')?.value||'';
 
   // Armar líneas de cuotas
   let cuotas='';
