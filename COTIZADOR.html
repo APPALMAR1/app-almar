@@ -809,7 +809,6 @@ input[type=text]#p-obs{background:#F5F7FA!important;border:1px solid #D5DCE6!imp
     <div><div class="st2">Stock Usados</div><div class="ss2">Inventario Almar</div></div>
     <div class="brow no-print" style="margin:0;gap:5px">
       <button class="btn btn-r btn-sm" id="btn-drive-sync" onclick="syncDrive()">☁ Actualizar Drive</button>
-      <button class="btn btn-r btn-sm" onclick="guardarPropuesta()" style="background:#1E8449">💾 Guardar propuesta</button>
       <button class="btn btn-ghost btn-sm" onclick="pdfStock()">🖨 Imprimir / PDF</button>
       <button class="btn btn-ghost btn-sm" onclick="emailStock()">📧 Email</button>
     </div>
@@ -2399,8 +2398,37 @@ function gCot(){
   const pr=parseFloat($$('pa1').value)||0;
   const pl=credPlazo||(cv?Math.min(60,cv.plazoMax):0);
   const c60=cv&&mt>0&&pl?Math.round(cuota(mt,cv.tna,pl)):0;
-  gH(CU.id).unshift({id:Date.now(),nom,pr,mt,banco:cv?cv.banco:'',campNom:cv?cv.nombre:'',tna:cv?cv.tna:0,plazo:pl,c60,cli:$$('p-cli').value||'',vId:CU.id,vNom:CU.name,fecha:tod(),hora:nw()});
-  uHB(); alert('✅ Cotización guardada.');
+  const ahora=new Date();
+  const entrada={id:Date.now(),nom,pr,mt,banco:cv?cv.banco:'',campNom:cv?cv.nombre:'',tna:cv?cv.tna:0,plazo:pl,c60,cli:$$('p-cli').value||'',vId:CU.id,vNom:CU.name,fecha:tod(),hora:nw()};
+  gH(CU.id).unshift(entrada);
+  uHB();
+  // Guardar tambien en Drive
+  const totalEl=$$('ta');
+  const propuesta={
+    id:'P'+Date.now(),
+    fecha:ahora.toLocaleDateString('es-AR'),
+    hora:ahora.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'}),
+    vendedor:CU.name,
+    cliente:$$('cli-nom')?.value||$$('p-cli')?.value||'Sin nombre',
+    dni:$$('cli-dni')?.value||'',
+    telefono:$$('cli-tel')?.value||'',
+    auto:nom,
+    anno:$$('anno')?.value||'',
+    km:$$('km')?.value||'0',
+    precio:pr,
+    credito:mt,
+    banco:cv?cv.banco:'Sin financiamiento',
+    campana:cv?cv.nombre:'—',
+    cuota:c60,
+    plazo:pl,
+    total:totalEl?totalEl.textContent.replace(/[^0-9]/g,''):'0',
+    estado:'GUARDADA'
+  };
+  fetch(PROPUESTAS_URL,{method:'POST',body:JSON.stringify(propuesta)})
+    .then(r=>r.json())
+    .then(()=>mostrarToast('✅ Propuesta guardada en Drive'))
+    .catch(()=>mostrarToast('💾 Guardada localmente (sin conexion)'));
+  mostrarToast('✅ Propuesta guardada');
 }
 function uHB(){if(!CU)return;const cnt=gH(CU.id).length;const nb=$$('nb-h');if(nb){nb.textContent=cnt;nb.style.display=cnt?'':'none'}}
 function mkHI(h){
@@ -2603,6 +2631,96 @@ function vVendDrive(nombreVendedor, allRows, titId, listId){
 }
 
 function abrirDetallePropuesta(p){
+  const precio=parseInt(p.Precio||p.precio||0);
+  const credito=parseInt(p.Credito||p.credito||0);
+  const total=parseInt(p.Total||p.total||0);
+  const cuotaV=parseInt(p.Cuota||p.cuota||0);
+  const plazo=p.Plazo||p.plazo||'';
+  const ann=p.Anno||p.anno||'';
+  const km=parseInt(p.KM||p.km||0);
+  const vendedor=p.Vendedor||p.vendedor||'—';
+  const cliente=p.Cliente||p.cliente||'Sin nombre';
+  const dni=p.DNI||p.dni||'';
+  const tel=p.Telefono||p.telefono||'';
+  const banco=p.Banco||p.banco||'';
+  const campana=p.Campana||p.campana||'';
+  const fecha=fmtFecha(p.Fecha||p.fecha);
+  const hora=p.Hora||p.hora||'';
+
+  const contenido=`
+  <div style="font-family:'Lato',sans-serif;background:#fff;color:#1A2332;padding:20px;border-radius:8px;max-width:440px;width:100%">
+    <!-- Header -->
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;padding-bottom:12px;border-bottom:2px solid #0069b4">
+      <div>
+        <div style="font-size:18px;font-weight:900;letter-spacing:3px;color:#164194">ALMAR</div>
+        <div style="font-size:8px;letter-spacing:2px;color:#9d9d9c;text-transform:uppercase">Cotizador</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:11px;font-weight:700;color:#1A2332">Propuesta Comercial</div>
+        <div style="font-size:9px;color:#9d9d9c">${fecha} ${hora}</div>
+        <div style="font-size:9px;color:#9d9d9c">Vendedor: ${vendedor}</div>
+      </div>
+    </div>
+    <!-- Vehiculo -->
+    <div style="margin-bottom:12px;padding:10px;background:#EEF3F8;border-radius:6px;border-left:3px solid #0069b4">
+      <div style="font-size:8px;letter-spacing:2px;color:#9d9d9c;text-transform:uppercase;margin-bottom:3px">Vehiculo</div>
+      <div style="font-size:14px;font-weight:900;color:#1A2332">${p.Auto||p.auto||'—'}</div>
+      <div style="font-size:10px;color:#4A5568;margin-top:2px">Ano ${ann} · ${km?km.toLocaleString('es-AR')+' km':'0 km'}</div>
+    </div>
+    <!-- Cliente -->
+    <div style="margin-bottom:12px;padding:10px;background:#EEF3F8;border-radius:6px;border-left:3px solid #ef7d00">
+      <div style="font-size:8px;letter-spacing:2px;color:#9d9d9c;text-transform:uppercase;margin-bottom:3px">Cliente</div>
+      <div style="font-size:13px;font-weight:700;color:#1A2332">${cliente}</div>
+      ${dni?'<div style="font-size:10px;color:#4A5568">DNI: '+dni+'</div>':''}
+      ${tel?'<div style="font-size:10px;color:#4A5568">Tel: '+tel+'</div>':''}
+    </div>
+    <!-- Precios -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+      <div style="padding:10px;background:#EEF3F8;border-radius:6px;text-align:center">
+        <div style="font-size:8px;letter-spacing:1px;color:#9d9d9c;text-transform:uppercase;margin-bottom:4px">Precio del vehiculo</div>
+        <div style="font-size:15px;font-weight:900;color:#1A2332">${fmt(precio)}</div>
+      </div>
+      <div style="padding:10px;background:#EEF3F8;border-radius:6px;text-align:center">
+        <div style="font-size:8px;letter-spacing:1px;color:#9d9d9c;text-transform:uppercase;margin-bottom:4px">Credito bancario</div>
+        <div style="font-size:15px;font-weight:900;color:#0069b4">${credito?fmt(credito):'Sin financ.'}</div>
+      </div>
+    </div>
+    <!-- Banco -->
+    ${banco?`<div style="margin-bottom:12px;padding:10px;background:#EEF3F8;border-radius:6px">
+      <div style="font-size:8px;letter-spacing:2px;color:#9d9d9c;text-transform:uppercase;margin-bottom:3px">Financiamiento</div>
+      <div style="font-size:12px;font-weight:700;color:#164194">${banco}</div>
+      <div style="font-size:10px;color:#4A5568">${campana}</div>
+      ${cuotaV?`<div style="margin-top:8px;display:flex;justify-content:space-between;align-items:center;background:#164194;border-radius:4px;padding:6px 10px">
+        <div style="font-size:9px;color:rgba(255,255,255,.7)">Cuota mensual · ${plazo} meses</div>
+        <div style="font-size:17px;font-weight:900;color:#fff">${fmt(cuotaV)}</div>
+      </div>`:''}
+    </div>`:''}
+    <!-- Total -->
+    <div style="padding:12px 14px;background:#0069b4;border-radius:6px;display:flex;justify-content:space-between;align-items:center">
+      <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,.8);text-transform:uppercase;letter-spacing:1px">Total a cubrir</div>
+      <div style="font-size:22px;font-weight:900;color:#fff">${fmt(total||precio)}</div>
+    </div>
+    <div style="margin-top:10px;font-size:8px;color:#9d9d9c;text-align:center">Propuesta sujeta a disponibilidad de stock y aprobacion crediticia · ALMAR Concesionario Oficial · Posadas, Misiones</div>
+  </div>`;
+
+  const overlay=document.createElement('div');
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;overflow-y:auto';
+  overlay.onclick=e=>{if(e.target===overlay)overlay.remove()};
+
+  const wrapper=document.createElement('div');
+  wrapper.style.cssText='position:relative;max-width:480px;width:100%';
+  wrapper.innerHTML=contenido;
+
+  const closeBtn=document.createElement('button');
+  closeBtn.innerHTML='×';
+  closeBtn.style.cssText='position:absolute;top:-12px;right:-12px;background:#164194;border:none;color:#fff;border-radius:50%;width:32px;height:32px;font-size:20px;cursor:pointer;z-index:1;box-shadow:0 2px 8px rgba(0,0,0,.3)';
+  closeBtn.onclick=()=>overlay.remove();
+  wrapper.appendChild(closeBtn);
+
+  overlay.appendChild(wrapper);
+  document.body.appendChild(overlay);
+}
+function _abrirDetallePropuesta_OLD(p){
   const precio=parseInt(p.Precio||p.precio||0);
   const credito=parseInt(p.Credito||p.credito||0);
   const total=parseInt(p.Total||p.total||0);
