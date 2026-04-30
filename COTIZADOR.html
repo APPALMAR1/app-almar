@@ -1764,14 +1764,14 @@ function guardarPropuesta(){
   // Sincronizar con Google Drive (sin bloquear la UI)
   fetch(PROPUESTAS_URL, {
     method:'POST',
+    mode:'no-cors',
+    headers:{'Content-Type':'text/plain'},
     body:JSON.stringify(propuesta)
-  }).then(r=>r.json())
-    .then(()=>{
-      mostrarToast('✅ Propuesta guardada en Drive');
-    })
-    .catch(()=>{
-      mostrarToast('💾 Guardada localmente (sin conexión)');
-    });
+  }).then(()=>{
+    mostrarToast('✅ Propuesta guardada en Drive');
+  }).catch(()=>{
+    mostrarToast('💾 Guardada localmente (sin conexion)');
+  });
 
   mostrarToast('✅ Propuesta guardada');
 }
@@ -1797,13 +1797,31 @@ function cargarPropuestasGuardadas(){
 
   const esSup=esSupervisor(CU)||esGerencia(CU);
 
-  // Cargar del Drive si es supervisor/gerencia
+  // Cargar del Drive si es supervisor/gerencia — leer Sheet como CSV exportado
   if(esSup){
-    fetch(PROPUESTAS_URL+'?t='+Date.now())
-      .then(r=>r.json())
-      .then(data=>renderPropuestas(data.reverse(), el, true))
+    const csvUrl='https://docs.google.com/spreadsheets/d/1w9X2erfefipZNjQJLK6qQIi1h0P0N02mmQSLRjcgvWk/export?format=csv&gid=0&t='+Date.now();
+    fetch(csvUrl,{cache:'no-store'})
+      .then(r=>r.text())
+      .then(csv=>{
+        const lineas=csv.split(/\r?\n/).filter(l=>l.trim());
+        if(lineas.length<=1){ renderPropuestas([], el, true); return; }
+        const headers=lineas[0].split(',').map(h=>h.replace(/"/g,'').trim());
+        const rows=lineas.slice(1).map(l=>{
+          const cols=[]; let cur=''; let inQ=false;
+          for(let i=0;i<l.length;i++){
+            if(l[i]==='"'){ inQ=!inQ; }
+            else if(l[i]===','&&!inQ){ cols.push(cur.trim()); cur=''; }
+            else cur+=l[i];
+          }
+          cols.push(cur.trim());
+          const obj={};
+          headers.forEach((h,i)=>obj[h]=(cols[i]||'').replace(/^"|"$/g,''));
+          return obj;
+        });
+        renderPropuestas(rows.reverse(), el, true);
+      })
       .catch(()=>{
-        // Fallback a localStorage
+        // Fallback localStorage
         const local=JSON.parse(localStorage.getItem('almar_propuestas')||'[]');
         renderPropuestas(local, el, true);
       });
