@@ -1776,6 +1776,18 @@ function guardarPropuesta(){
   mostrarToast('✅ Propuesta guardada');
 }
 
+function fmtFecha(f){
+  if(!f) return '—';
+  // Si ya es formato dd/mm/yyyy retornar igual
+  if(/^\d{2}\/\d{2}\/\d{4}$/.test(f)) return f;
+  // Si es ISO format convertir
+  try{
+    const d=new Date(f);
+    if(isNaN(d)) return f;
+    return d.toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'});
+  }catch(e){return f;}
+}
+
 function mostrarToast(msg){
   let t=$$('almar-toast');
   if(!t){
@@ -1836,7 +1848,7 @@ function renderPropuestas(data, el, verTodos){
       <div class="ch" style="background:linear-gradient(90deg,rgba(22,65,148,.18) 0%,transparent 100%);border-left:3px solid #0069b4;display:flex;justify-content:space-between;align-items:center">
         <div>
           <div class="ct" style="font-size:11px">${p.Auto||p.auto||'—'}</div>
-          <div style="font-size:9px;color:var(--m);margin-top:1px">${p.Fecha||p.fecha||'—'} ${p.Hora||p.hora||''} · ${p.Vendedor||p.vendedor||'—'}</div>
+          <div style="font-size:9px;color:var(--m);margin-top:1px">${fmtFecha(p.Fecha||p.fecha)} ${p.Hora||p.hora||''} · ${p.Vendedor||p.vendedor||'—'}</div>
         </div>
         <div style="font-size:12px;font-weight:700;color:#0069b4">$${total||precio}</div>
       </div>
@@ -1868,7 +1880,7 @@ function filtrarPropuestas(){
       <div class="ch" style="background:linear-gradient(90deg,rgba(22,65,148,.18) 0%,transparent 100%);border-left:3px solid #0069b4;display:flex;justify-content:space-between;align-items:center">
         <div>
           <div class="ct" style="font-size:11px">${p.Auto||p.auto||'—'}</div>
-          <div style="font-size:9px;color:var(--m);margin-top:1px">${p.Fecha||p.fecha||'—'} ${p.Hora||p.hora||''} · ${p.Vendedor||p.vendedor||'—'}</div>
+          <div style="font-size:9px;color:var(--m);margin-top:1px">${fmtFecha(p.Fecha||p.fecha)} ${p.Hora||p.hora||''} · ${p.Vendedor||p.vendedor||'—'}</div>
         </div>
         <div style="font-size:12px;font-weight:700;color:#0069b4">$${total||precio}</div>
       </div>
@@ -2399,8 +2411,44 @@ function mkHI(h){
 }
 function rMH(){
   if(!CU)return;
-  if(esGerencia(CU)){$$('hl').innerHTML='<div class="empty"><div class="eico">🔒</div><div class="ettl">Sin acceso</div><div class="esub">Gerencia usa el Panel Gerencia para ver los historiales.</div></div>';return}
-  const h=gH(CU.id),el=$$('hl');el.innerHTML='';if(!h.length){el.innerHTML='<div class="empty"><div class="eico">📋</div><div class="ettl">Sin cotizaciones</div><div class="esub">Las cotizaciones que guardes aparecerán aquí.</div></div>';return}h.forEach(x=>el.appendChild(mkHI(x)));
+  const el=$$('hl');
+  // Supervisor y Gerencia: ver propuestas guardadas del Drive
+  if(esSupervisor(CU)||esGerencia(CU)){
+    el.innerHTML='<div style="text-align:center;padding:20px;color:var(--m)">⏳ Cargando propuestas...</div>';
+    fetch(PROPUESTAS_URL+'?action=get&t='+Date.now(),{cache:'no-store'})
+      .then(r=>r.json())
+      .then(rows=>{
+        if(!Array.isArray(rows)||!rows.length){
+          el.innerHTML='<div class="empty"><div class="eico">📋</div><div class="ettl">Sin propuestas</div><div class="esub">Aun no hay propuestas guardadas por el equipo.</div></div>';
+          return;
+        }
+        el.innerHTML='';
+        rows.reverse().forEach(p=>{
+          const precio=parseInt(p.Precio||p.precio||0);
+          const total=parseInt(p.Total||p.total||0);
+          const d=document.createElement('div'); d.className='hi';
+          d.innerHTML=`<div class="hico" style="background:#0069b4">🚗</div>
+            <div class="hinf">
+              <div class="haut">${p.Auto||p.auto||'—'}</div>
+              <div class="hdet">${p.Banco||p.banco||'—'} · ${p.Campana||p.campana||'—'}${p.Plazo||p.plazo?' · '+(p.Plazo||p.plazo)+'m':''} · ${p.Cliente||p.cliente||'Sin nombre'}</div>
+            </div>
+            <div class="hr2">
+              <div class="hcuo">${total?fmt(total):fmt(precio)}</div>
+              <div class="hfec">${fmtFecha(p.Fecha||p.fecha)} · ${p.Vendedor||p.vendedor||'—'}</div>
+            </div>`;
+          el.appendChild(d);
+        });
+      })
+      .catch(()=>{
+        el.innerHTML='<div class="empty"><div class="eico">⚠️</div><div class="ettl">Sin conexion</div><div class="esub">No se pudieron cargar las propuestas. Verificar internet.</div></div>';
+      });
+    return;
+  }
+  // Vendedor: su propio historial local
+  const h=gH(CU.id);
+  el.innerHTML='';
+  if(!h.length){el.innerHTML='<div class="empty"><div class="eico">📋</div><div class="ettl">Sin cotizaciones</div><div class="esub">Las cotizaciones que guardes aparecerán aquí.</div></div>';return}
+  h.forEach(x=>el.appendChild(mkHI(x)));
 }
 function lmpH(){if(!CU)return;if(confirm('¿Eliminar tu historial?')){HG[CU.id]=[];uHB();rMH()}}
 
