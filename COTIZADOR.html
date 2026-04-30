@@ -2396,8 +2396,14 @@ function gCot(){
   const cv=credCampId?camp.find(c=>c.id===credCampId):null;
   const mt=parseFloat($$('pb1').value)||0;
   const pr=parseFloat($$('pa1').value)||0;
-  const pl=credPlazo||(cv?Math.min(60,cv.plazoMax):0);
-  const c60=cv&&mt>0&&pl?Math.round(cuota(mt,cv.tna,pl)):0;
+  // Obtener plazo y cuota de la tarjeta seleccionada
+  const qPicked=document.querySelector('.qm.picked, .qc.picked');
+  const plazoSelEl=qPicked?.querySelector('.mpl, .pl');
+  const cuotaSelEl=qPicked?.querySelector('.mcu, .cu');
+  const plFromCard=plazoSelEl?parseInt(plazoSelEl.textContent)||0:0;
+  const c60FromCard=cuotaSelEl?parseInt(cuotaSelEl.textContent.replace(/[^0-9]/g,''))||0:0;
+  const pl=plFromCard||credPlazo||(cv?Math.min(60,cv.plazoMax):0);
+  const c60=c60FromCard||(cv&&mt>0&&pl?Math.round(cuota(mt,cv.tna,pl)):0);
   const ahora=new Date();
   const entrada={id:Date.now(),nom,pr,mt,banco:cv?cv.banco:'',campNom:cv?cv.nombre:'',tna:cv?cv.tna:0,plazo:pl,c60,cli:$$('p-cli').value||'',vId:CU.id,vNom:CU.name,fecha:tod(),hora:nw()};
   gH(CU.id).unshift(entrada);
@@ -2409,9 +2415,9 @@ function gCot(){
     fecha:ahora.toLocaleDateString('es-AR'),
     hora:ahora.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'}),
     vendedor:CU.name,
-    cliente:$$('cli-nom')?.value||$$('p-cli')?.value||'Sin nombre',
-    dni:$$('cli-dni')?.value||'',
-    telefono:$$('cli-tel')?.value||'',
+    cliente:$$('p-cli')?.value||'Sin nombre',
+    dni:$$('p-dni')?.value||'',
+    telefono:$$('p-tel')?.value||'',
     auto:nom,
     anno:$$('anno')?.value||'',
     km:$$('km')?.value||'0',
@@ -2421,7 +2427,7 @@ function gCot(){
     campana:cv?cv.nombre:'—',
     cuota:c60,
     plazo:pl,
-    total:totalEl?totalEl.textContent.replace(/[^0-9]/g,''):'0',
+    total:pr+mt, // Total aproximado: precio + credito
     estado:'GUARDADA'
   };
   fetch(PROPUESTAS_URL,{method:'POST',body:JSON.stringify(propuesta)})
@@ -2633,7 +2639,7 @@ function vVendDrive(nombreVendedor, allRows, titId, listId){
 function abrirDetallePropuesta(p){
   const precio=parseInt(p.Precio||p.precio||0);
   const credito=parseInt(p.Credito||p.credito||0);
-  const total=parseInt(p.Total||p.total||0);
+  const total=parseInt(p.Total||p.total||0)||precio;
   const cuotaV=parseInt(p.Cuota||p.cuota||0);
   const plazo=p.Plazo||p.plazo||'';
   const ann=p.Anno||p.anno||'';
@@ -2647,80 +2653,90 @@ function abrirDetallePropuesta(p){
   const fecha=fmtFecha(p.Fecha||p.fecha);
   const hora=p.Hora||p.hora||'';
 
-  const contenido=`
-  <div style="font-family:'Lato',sans-serif;background:#fff;color:#1A2332;padding:20px;border-radius:8px;max-width:440px;width:100%">
-    <!-- Header -->
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;padding-bottom:12px;border-bottom:2px solid #0069b4">
+  const contenido=`<div style="font-family:'Lato',sans-serif;background:#fff;color:#1A2332;padding:20px 24px;max-width:480px;width:100%;border-radius:8px">
+    <!-- Header azul -->
+    <div style="background:#164194;margin:-20px -24px 16px;padding:14px 20px;border-radius:8px 8px 0 0;display:flex;justify-content:space-between;align-items:center">
       <div>
-        <div style="font-size:18px;font-weight:900;letter-spacing:3px;color:#164194">ALMAR</div>
-        <div style="font-size:8px;letter-spacing:2px;color:#9d9d9c;text-transform:uppercase">Cotizador</div>
+        <div style="font-size:20px;font-weight:900;letter-spacing:4px;color:#fff">ALMAR</div>
+        <div style="font-size:7px;letter-spacing:2px;color:rgba(255,255,255,.5);text-transform:uppercase">Cotizador</div>
       </div>
       <div style="text-align:right">
-        <div style="font-size:11px;font-weight:700;color:#1A2332">Propuesta Comercial</div>
-        <div style="font-size:9px;color:#9d9d9c">${fecha} ${hora}</div>
-        <div style="font-size:9px;color:#9d9d9c">Vendedor: ${vendedor}</div>
+        <div style="font-size:10px;font-weight:700;color:#fff">Propuesta Comercial</div>
+        <div style="font-size:9px;color:rgba(255,255,255,.6)">${fecha} ${hora}</div>
+        <div style="font-size:9px;color:rgba(255,255,255,.6)">Vendedor: ${vendedor}</div>
       </div>
     </div>
     <!-- Vehiculo -->
-    <div style="margin-bottom:12px;padding:10px;background:#EEF3F8;border-radius:6px;border-left:3px solid #0069b4">
+    <div style="margin-bottom:10px">
       <div style="font-size:8px;letter-spacing:2px;color:#9d9d9c;text-transform:uppercase;margin-bottom:3px">Vehiculo</div>
-      <div style="font-size:14px;font-weight:900;color:#1A2332">${p.Auto||p.auto||'—'}</div>
-      <div style="font-size:10px;color:#4A5568;margin-top:2px">Ano ${ann} · ${km?km.toLocaleString('es-AR')+' km':'0 km'}</div>
+      <div style="font-size:15px;font-weight:900;color:#164194">${p.Auto||p.auto||'—'}</div>
+      <div style="font-size:10px;color:#4A5568">Ano ${ann} · ${km?km.toLocaleString('es-AR')+' km':'—'}</div>
     </div>
+    <div style="height:1px;background:#EEF3F8;margin-bottom:10px"></div>
     <!-- Cliente -->
-    <div style="margin-bottom:12px;padding:10px;background:#EEF3F8;border-radius:6px;border-left:3px solid #ef7d00">
+    <div style="margin-bottom:10px">
       <div style="font-size:8px;letter-spacing:2px;color:#9d9d9c;text-transform:uppercase;margin-bottom:3px">Cliente</div>
       <div style="font-size:13px;font-weight:700;color:#1A2332">${cliente}</div>
       ${dni?'<div style="font-size:10px;color:#4A5568">DNI: '+dni+'</div>':''}
       ${tel?'<div style="font-size:10px;color:#4A5568">Tel: '+tel+'</div>':''}
     </div>
-    <!-- Precios -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
-      <div style="padding:10px;background:#EEF3F8;border-radius:6px;text-align:center">
-        <div style="font-size:8px;letter-spacing:1px;color:#9d9d9c;text-transform:uppercase;margin-bottom:4px">Precio del vehiculo</div>
-        <div style="font-size:15px;font-weight:900;color:#1A2332">${fmt(precio)}</div>
+    <div style="height:1px;background:#EEF3F8;margin-bottom:10px"></div>
+    <!-- A - Que incluye el precio -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+      <div>
+        <div style="font-size:8px;letter-spacing:2px;color:#9d9d9c;text-transform:uppercase;margin-bottom:6px">A — Que incluye el precio</div>
+        <div style="display:flex;justify-content:space-between;font-size:10px;padding:2px 0;border-bottom:1px solid #EEF3F8">
+          <span style="color:#4A5568">Precio del vehiculo</span><span style="font-weight:700">${precio?fmt(precio):'$ 0'}</span>
+        </div>
+        ${credito?'<div style="display:flex;justify-content:space-between;font-size:10px;padding:2px 0;border-bottom:1px solid #EEF3F8"><span style="color:#4A5568">Credito bancario</span><span style="font-weight:700;color:#0069b4">'+fmt(credito)+'</span></div>':''}
+        <div style="display:flex;justify-content:space-between;font-size:11px;padding:4px 0;margin-top:4px;background:#EEF3F8;padding:4px 6px;border-radius:4px">
+          <span style="font-weight:700;color:#164194">Total a cubrir</span><span style="font-weight:900;color:#164194">${fmt(total)}</span>
+        </div>
       </div>
-      <div style="padding:10px;background:#EEF3F8;border-radius:6px;text-align:center">
-        <div style="font-size:8px;letter-spacing:1px;color:#9d9d9c;text-transform:uppercase;margin-bottom:4px">Credito bancario</div>
-        <div style="font-size:15px;font-weight:900;color:#0069b4">${credito?fmt(credito):'Sin financ.'}</div>
+      <div>
+        <div style="font-size:8px;letter-spacing:2px;color:#9d9d9c;text-transform:uppercase;margin-bottom:6px">B — Como lo paga</div>
+        ${credito?`<div style="display:flex;justify-content:space-between;font-size:10px;padding:2px 0;border-bottom:1px solid #EEF3F8"><span style="color:#4A5568">Credito bancario</span><span style="font-weight:700;color:#0069b4">${fmt(credito)}</span></div>`:''}
+        <div style="display:flex;justify-content:space-between;font-size:11px;padding:4px 6px;margin-top:4px;background:#EEF3F8;border-radius:4px">
+          <span style="font-weight:700;color:#1E8449">Total cubierto</span><span style="font-weight:900;color:#1E8449">${fmt(credito)}</span>
+        </div>
       </div>
     </div>
-    <!-- Banco -->
-    ${banco?`<div style="margin-bottom:12px;padding:10px;background:#EEF3F8;border-radius:6px">
-      <div style="font-size:8px;letter-spacing:2px;color:#9d9d9c;text-transform:uppercase;margin-bottom:3px">Financiamiento</div>
-      <div style="font-size:12px;font-weight:700;color:#164194">${banco}</div>
-      <div style="font-size:10px;color:#4A5568">${campana}</div>
-      ${cuotaV?`<div style="margin-top:8px;display:flex;justify-content:space-between;align-items:center;background:#164194;border-radius:4px;padding:6px 10px">
-        <div style="font-size:9px;color:rgba(255,255,255,.7)">Cuota mensual · ${plazo} meses</div>
-        <div style="font-size:17px;font-weight:900;color:#fff">${fmt(cuotaV)}</div>
-      </div>`:''}
+    <!-- Financiamiento -->
+    ${banco&&banco!=='Sin financiamiento'?`<div style="height:1px;background:#EEF3F8;margin-bottom:10px"></div>
+    <div style="margin-bottom:10px">
+      <div style="font-size:8px;letter-spacing:2px;color:#9d9d9c;text-transform:uppercase;margin-bottom:6px">Financiamiento</div>
+      <div style="background:#EEF3F8;border-radius:6px;padding:10px;border-left:3px solid #0069b4">
+        <div style="font-size:12px;font-weight:700;color:#164194">${banco}</div>
+        <div style="font-size:10px;color:#4A5568;margin-top:2px">${campana}</div>
+        ${cuotaV?`<div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;background:#164194;border-radius:4px;padding:6px 10px">
+          <div style="font-size:9px;color:rgba(255,255,255,.7)">${plazo} cuotas de</div>
+          <div style="font-size:18px;font-weight:900;color:#fff">${fmt(cuotaV)}/mes</div>
+        </div>`:''}
+      </div>
     </div>`:''}
-    <!-- Total -->
-    <div style="padding:12px 14px;background:#0069b4;border-radius:6px;display:flex;justify-content:space-between;align-items:center">
-      <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,.8);text-transform:uppercase;letter-spacing:1px">Total a cubrir</div>
-      <div style="font-size:22px;font-weight:900;color:#fff">${fmt(total||precio)}</div>
+    <!-- Total final -->
+    <div style="background:#0069b4;border-radius:6px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center">
+      <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,.8);text-transform:uppercase;letter-spacing:1px">Total a cubrir</div>
+      <div style="font-size:22px;font-weight:900;color:#fff">${fmt(total)}</div>
     </div>
-    <div style="margin-top:10px;font-size:8px;color:#9d9d9c;text-align:center">Propuesta sujeta a disponibilidad de stock y aprobacion crediticia · ALMAR Concesionario Oficial · Posadas, Misiones</div>
+    <div style="margin-top:8px;font-size:8px;color:#9d9d9c;text-align:center">Propuesta sujeta a disponibilidad de stock y aprobacion crediticia · ALMAR Concesionario Oficial · Posadas, Misiones</div>
   </div>`;
 
   const overlay=document.createElement('div');
-  overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;overflow-y:auto';
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;overflow-y:auto';
   overlay.onclick=e=>{if(e.target===overlay)overlay.remove()};
-
   const wrapper=document.createElement('div');
-  wrapper.style.cssText='position:relative;max-width:480px;width:100%';
+  wrapper.style.cssText='position:relative;max-width:500px;width:100%';
   wrapper.innerHTML=contenido;
-
   const closeBtn=document.createElement('button');
   closeBtn.innerHTML='×';
-  closeBtn.style.cssText='position:absolute;top:-12px;right:-12px;background:#164194;border:none;color:#fff;border-radius:50%;width:32px;height:32px;font-size:20px;cursor:pointer;z-index:1;box-shadow:0 2px 8px rgba(0,0,0,.3)';
+  closeBtn.style.cssText='position:absolute;top:-14px;right:-14px;background:#164194;border:none;color:#fff;border-radius:50%;width:32px;height:32px;font-size:20px;cursor:pointer;z-index:1;box-shadow:0 2px 8px rgba(0,0,0,.4);line-height:1';
   closeBtn.onclick=()=>overlay.remove();
   wrapper.appendChild(closeBtn);
-
   overlay.appendChild(wrapper);
   document.body.appendChild(overlay);
 }
-function _abrirDetallePropuesta_OLD(p){
+function _old_unused(p){
   const precio=parseInt(p.Precio||p.precio||0);
   const credito=parseInt(p.Credito||p.credito||0);
   const total=parseInt(p.Total||p.total||0);
