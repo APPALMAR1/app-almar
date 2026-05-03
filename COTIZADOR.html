@@ -1768,7 +1768,7 @@ function buscar(){
 
 // ── CALCULADORA CRÉDITO INTEGRADA (Columna B) ─────────────────────────────────
 // ── PRECIOS OKM DESDE DRIVE ──────────────────────────────────────────────────
-const PROPUESTAS_URL='https://script.google.com/macros/s/AKfycbxxYqhSxGsASIGVkUHXAly58T8Ch9ioxdoLBn_Wwfhu97t2oR1w6yhF1BttOOpZ4KHh/exec';
+const PROPUESTAS_URL='https://script.google.com/macros/s/AKfycbyaJe1Vd8eRtGtMdrjEB1Y0vvkjQut7dsVn6EaSxGIiOhdrPT4EpLYcEOhcVmYJdd-g/exec';
 const PRECIOS_URL='https://docs.google.com/spreadsheets/d/e/2PACX-1vSU1sIw1-Fv3zisHUzsFuwZ47ZSgCH2ApVMY-LgxXuhyn9q1RnmOESFoMyMWrn-cI7Y24L9TxNitH5t/pub?gid=1475982203&single=true&output=csv';
 
 // ── CLIENTES — BASE DE DATOS ─────────────────────────────────────────────────
@@ -2034,12 +2034,45 @@ function guardarPropuesta(){
   local.unshift(propuesta);
   localStorage.setItem('almar_propuestas',JSON.stringify(local.slice(0,200)));
 
-  // Sincronizar con Drive
+  // Sincronizar propuesta con Drive
   fetch(PROPUESTAS_URL,{
     method:'POST',
     mode:'no-cors',
     headers:{'Content-Type':'text/plain'},
     body:JSON.stringify({action:'savePropuesta',...propuesta})
+  }).catch(()=>{});
+
+  // Guardar/actualizar cliente en base de datos
+  const clienteData={
+    action:'saveCliente',
+    nroCliente,
+    nombre, apellido,
+    telefono:tel,
+    email,
+    dni:$$('p-dni')?.value||'',
+    vendedor:CU?.name||'—',
+    fecha:propuesta.fecha,
+    ultimasMarca:ma,
+    ultimoModelo:mo,
+    totalPropuestas:1
+  };
+  fetch(PROPUESTAS_URL,{
+    method:'POST',
+    mode:'no-cors',
+    headers:{'Content-Type':'text/plain'},
+    body:JSON.stringify(clienteData)
+  }).then(()=>{
+    // Actualizar cache local de clientes
+    const idx=_clientesCache.findIndex(c=>{
+      const cTel=(c.Telefono||'').replace(/\D/g,'');
+      const cEmail=(c.Email||'').toLowerCase();
+      return (tel.replace(/\D/g,'')&&cTel===tel.replace(/\D/g,''))||(email&&cEmail===email.toLowerCase());
+    });
+    if(idx>=0){
+      _clientesCache[idx]={..._clientesCache[idx],UltimasMarca:ma,UltimoModelo:mo,UltimaVisita:propuesta.fecha};
+    } else {
+      _clientesCache.unshift({NroCliente:nroCliente,Nombre:nombre,Apellido:apellido,Telefono:tel,Email:email,DNI:$$('p-dni')?.value||'',Vendedor:CU?.name||'—',Fecha:propuesta.fecha});
+    }
   }).catch(()=>{});
 
   mostrarToast('✅ Propuesta guardada');
@@ -2864,7 +2897,31 @@ function uHB(){if(!CU)return;const cnt=gH(CU.id).length;const nb=$$('nb-h');if(n
 function mkHI(h){
   const u=USERS.find(x=>x.id===h.vId)||{col:'var(--r)',ini:'?'};
   const d=document.createElement('div');d.className='hi';
-  d.innerHTML=`<div class="hico" style="background:${u.col}">🚗</div><div class="hinf"><div class="haut">${h.nom}</div><div class="hdet">${h.banco?h.banco+' · ':''}${h.campNom||'—'}${h.plazo?' · '+h.plazo+'m':''}${h.cli?' · '+h.cli:''}</div></div><div class="hr2"><div class="hcuo">${h.c60?fmt(h.c60)+'/mes':fmt(h.pr)}</div><div class="hfec">${h.fecha} ${h.hora}</div></div>`;
+  d.style.cursor='pointer';
+  // Convertir objeto antiguo del cotizador al formato de propuesta completa
+  const pComp={
+    Auto: h.nom||'—',
+    Nombre: (h.cli||'').split(' ')[0]||'',
+    Apellido: (h.cli||'').split(' ').slice(1).join(' ')||'',
+    Cliente: h.cli||'Sin nombre',
+    Vendedor: h.vNom||'—',
+    Fecha: h.fecha,
+    Hora: h.hora,
+    Banco: h.banco||'',
+    Campana: h.campNom||'',
+    Plazo: h.plazo||'',
+    Cuota: h.c60||0,
+    // Columna A: solo precio del vehículo disponible
+    Precio: h.pr||0,
+    TotalA: h.pr||0,
+    detalleA: JSON.stringify({precio: h.pr||0}),
+    // Columna B: solo crédito disponible
+    Credito: h.mt||0,
+    TotalB: h.mt||0,
+    detalleB: JSON.stringify({credito: h.mt||0}),
+  };
+  d.onclick=()=>abrirDetallePropuesta(pComp);
+  d.innerHTML=`<div class="hico" style="background:${u.col}">🚗</div><div class="hinf"><div class="haut">${h.nom}</div><div class="hdet">${h.banco?h.banco+' · ':''}${h.campNom||'—'}${h.plazo?' · '+h.plazo+'m':''}${h.cli?' · '+h.cli:''}</div></div><div class="hr2"><div class="hcuo">${h.c60?fmt(h.c60)+'/mes':fmt(h.pr)}</div><div class="hfec">${h.fecha} ${h.hora} · <span style="color:#41c0f0">👁 Ver</span></div></div>`;
   return d;
 }
 function rMH(){
@@ -3089,8 +3146,10 @@ function abrirDetallePropuesta(p){
   const aIntereses=parseInt(dA.intereses||0);
   const aComision=parseInt(dA.comisionBanco||0);
   const aSeguro=parseInt(dA.seguro||0);
-  const totalA=parseInt(p.TotalA||p.totalA||p.Total||p.total||0)||
-    (aPrecio+aGestoria+aGastosBanc+aGastosBancAd+aIntereses+aComision+aSeguro);
+  const sumaA=aPrecio+aGestoria+aGastosBanc+aGastosBancAd+aIntereses+aComision+aSeguro;
+  // Proteger contra TotalA que sea un año (1990-2035) o menor que el precio
+  const rawTotalA=parseInt(p.TotalA||p.totalA||p.Total||p.total||0);
+  const totalA=(rawTotalA>50000)?rawTotalA:(sumaA||aPrecio);
 
   // Valores columna B — con fallback
   const bCredito=parseInt(dB.credito||p.Credito||p.credito||0);
@@ -3098,7 +3157,9 @@ function abrirDetallePropuesta(p){
   const bAnticipo=parseInt(dB.anticipo||0);
   const bCheques=parseInt(dB.cheques||0);
   const bSaldo=parseInt(dB.saldo||0);
-  const totalB=parseInt(p.TotalB||p.totalB||0)||(bCredito+bUsado+bAnticipo+bCheques+bSaldo);
+  const sumaB=bCredito+bUsado+bAnticipo+bCheques+bSaldo;
+  const rawTotalB=parseInt(p.TotalB||p.totalB||0);
+  const totalB=(rawTotalB>50000)?rawTotalB:(sumaB||bCredito);
 
   // Helper fila
   const fila=(lbl,val,color='#4A5568')=>val?
