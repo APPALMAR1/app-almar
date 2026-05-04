@@ -2047,7 +2047,20 @@ function guardarPropuesta(){
     estado:'GUARDADA'
   };
 
-  // Guardar localmente
+  // Guardar en historial local del vendedor (Mi Historial)
+  const cv2=camp.find(c=>c.id===credCampId);
+  const entrada={
+    id:Date.now(), nom:propuesta.auto, pr:pa1, mt:monto,
+    banco:banco, campNom:campana, tna:cv2?cv2.tna:0,
+    plazo:parseInt(plazo)||0, c60:parseInt(cuota)||0,
+    cli:cliente, vId:CU.id, vNom:CU?.name, fecha:propuesta.fecha, hora:propuesta.hora,
+    // Guardar también el objeto completo para poder verlo en detalle
+    _propuesta: propuesta
+  };
+  gH(CU.id).unshift(entrada);
+  uHB();
+
+  // Guardar en localStorage
   const local=JSON.parse(localStorage.getItem('almar_propuestas')||'[]');
   local.unshift(propuesta);
   localStorage.setItem('almar_propuestas',JSON.stringify(local.slice(0,200)));
@@ -2864,60 +2877,16 @@ function prtP(){$$('phf').textContent=tod();$$('phv').textContent=CU?CU.name:'';
 
 // ── HISTORIAL ────────────────────────────────────────────────────────────────
 function gCot(){
-  if(!CU){alert('Iniciá sesión primero.');return}
-  if(esGerencia(CU)){alert('Gerencia no carga propuestas. Iniciá sesión como vendedor.');return}
-  const nom=[$$('marca').value,$$('modelo').value,$$('version').value,$$('anno').value].filter(Boolean).join(' ');
-  if(!nom){alert('Elegí una unidad primero.');return}
-  const cv=credCampId?camp.find(c=>c.id===credCampId):null;
-  const mt=parseFloat($$('pb1').value)||0;
-  const pr=parseFloat($$('pa1').value)||0;
-  // Obtener plazo y cuota de la tarjeta seleccionada
-  const qPicked=document.querySelector('.qm.picked, .qc.picked');
-  const plazoSelEl=qPicked?.querySelector('.mpl, .pl');
-  const cuotaSelEl=qPicked?.querySelector('.mcu, .cu');
-  const plFromCard=plazoSelEl?parseInt(plazoSelEl.textContent)||0:0;
-  const c60FromCard=cuotaSelEl?parseInt(cuotaSelEl.textContent.replace(/[^0-9]/g,''))||0:0;
-  const pl=plFromCard||credPlazo||(cv?Math.min(60,cv.plazoMax):0);
-  const c60=c60FromCard||(cv&&mt>0&&pl?Math.round(cuota(mt,cv.tna,pl)):0);
-  const ahora=new Date();
-  const entrada={id:Date.now(),nom,pr,mt,banco:cv?cv.banco:'',campNom:cv?cv.nombre:'',tna:cv?cv.tna:0,plazo:pl,c60,cli:($$('p-nombre')?.value||'') + ' ' + ($$('p-apellido')?.value||'')||'',vId:CU.id,vNom:CU.name,fecha:tod(),hora:nw()};
-  gH(CU.id).unshift(entrada);
-  uHB();
-  // Guardar tambien en Drive
-  const totalEl=$$('ta');
-  const propuesta={
-    id:'P'+Date.now(),
-    fecha:ahora.toLocaleDateString('es-AR'),
-    hora:ahora.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'}),
-    vendedor:CU.name,
-    cliente:(($$('p-nombre')?.value||'')+' '+($$('p-apellido')?.value||'')).trim()||'Sin nombre',
-    dni:$$('p-dni')?.value||'',
-    telefono:$$('p-tel')?.value||'',
-    auto:nom,
-    anno:$$('anno')?.value||'',
-    km:$$('km')?.value||'0',
-    precio:pr,
-    credito:mt,
-    banco:cv?cv.banco:'Sin financiamiento',
-    campana:cv?cv.nombre:'—',
-    cuota:c60,
-    plazo:pl,
-    total:pr+mt, // Total aproximado: precio + credito
-    estado:'GUARDADA'
-  };
-  fetch(PROPUESTAS_URL,{method:'POST',body:JSON.stringify(propuesta)})
-    .then(r=>r.json())
-    .then(()=>mostrarToast('✅ Propuesta guardada en Drive'))
-    .catch(()=>mostrarToast('💾 Guardada localmente (sin conexion)'));
-  mostrarToast('✅ Propuesta guardada');
+  // Delegar todo a guardarPropuesta que tiene la lógica completa
+  guardarPropuesta();
 }
 function uHB(){if(!CU)return;const cnt=gH(CU.id).length;const nb=$$('nb-h');if(nb){nb.textContent=cnt;nb.style.display=cnt?'':'none'}}
 function mkHI(h){
   const u=USERS.find(x=>x.id===h.vId)||{col:'var(--r)',ini:'?'};
   const d=document.createElement('div');d.className='hi';
   d.style.cursor='pointer';
-  // Convertir objeto antiguo del cotizador al formato de propuesta completa
-  const pComp={
+  // Si tiene _propuesta completa, usarla directamente
+  const pComp=h._propuesta || {
     Auto: h.nom||'—',
     Nombre: (h.cli||'').split(' ')[0]||'',
     Apellido: (h.cli||'').split(' ').slice(1).join(' ')||'',
