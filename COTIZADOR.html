@@ -1982,6 +1982,8 @@ function guardarPropuesta(){
     comisionBanco:parseFloat($$('pa5')?.value)||0,
     seguro:parseFloat($$('pa6')?.value)||0,
   };
+  console.log('DEBUG detalleA:', JSON.stringify(detalleA));
+  console.log('DEBUG pa2 raw:', $$('pa2')?.value, 'pa3 raw:', $$('pa3')?.value);
 
   // Detalles columna B
   const detalleB={
