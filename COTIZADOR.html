@@ -1982,8 +1982,6 @@ function guardarPropuesta(){
     comisionBanco:parseFloat($$('pa5')?.value)||0,
     seguro:parseFloat($$('pa6')?.value)||0,
   };
-  console.log('DEBUG detalleA:', JSON.stringify(detalleA));
-  console.log('DEBUG pa2 raw:', $$('pa2')?.value, 'pa3 raw:', $$('pa3')?.value);
 
   // Detalles columna B
   const detalleB={
@@ -3105,9 +3103,17 @@ function vVendDrive(nombreVendedor, allRows, titId, listId){
 }
 
 function abrirDetallePropuesta(p){
-  // Datos base
+  // Datos base — proteger nombre para que no tome nroCliente ni campos numéricos
   const vendedor=p.Vendedor||p.vendedor||'—';
-  const cliente=((p.Nombre||p.nombre||'')+ ' '+(p.Apellido||p.apellido||'')).trim()||p.Cliente||p.cliente||'Sin nombre';
+  const rawNombre=(p.Nombre||p.nombre||'').trim();
+  const rawApellido=(p.Apellido||p.apellido||'').trim();
+  const rawCliente=(p.Cliente||p.cliente||'').trim();
+  // Si nombre parece un número (es nroCliente), ignorarlo
+  const esNumero=(s)=>/^\d+$/.test(s);
+  const nomFinal=esNumero(rawNombre)?'':rawNombre;
+  const apeFinal=esNumero(rawApellido)?'':rawApellido;
+  const cliFinal=esNumero(rawCliente)?'':rawCliente;
+  const cliente=(nomFinal+' '+apeFinal).trim()||cliFinal||'Sin nombre';
   const dni=p.DNI||p.dni||'';
   const tel=p.Telefono||p.telefono||'';
   const email=p.Email||p.email||'';
