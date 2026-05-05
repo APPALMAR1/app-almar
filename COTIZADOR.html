@@ -1887,11 +1887,13 @@ function buscarDuplicado(){
     let msgs=[];
     if(matchTel){
       const nro=matchTel.NroCliente||matchTel.nroCliente||'—';
-      msgs.push(`📱 El <strong>teléfono</strong> ya pertenece al <strong>Cliente N° ${nro}</strong>: ${matchTel.Nombre||''} ${matchTel.Apellido||''}`);
+      const nomTel=((matchTel.Nombre||'').trim()+' '+(matchTel.Apellido||'').trim()).trim().split(' ').slice(0,3).join(' ');
+      msgs.push(`📱 El <strong>teléfono</strong> ya pertenece al <strong>Cliente N° ${nro}</strong>: ${nomTel}`);
     }
     if(matchEmail&&(!matchTel||(matchEmail.NroCliente||matchEmail.nroCliente)!==(matchTel.NroCliente||matchTel.nroCliente))){
       const nro=matchEmail.NroCliente||matchEmail.nroCliente||'—';
-      msgs.push(`📧 El <strong>email</strong> ya pertenece al <strong>Cliente N° ${nro}</strong>: ${matchEmail.Nombre||''} ${matchEmail.Apellido||''}`);
+      const nomEmail=((matchEmail.Nombre||'').trim()+' '+(matchEmail.Apellido||'').trim()).trim().split(' ').slice(0,3).join(' ');
+      msgs.push(`📧 El <strong>email</strong> ya pertenece al <strong>Cliente N° ${nro}</strong>: ${nomEmail}`);
     }
     $$('cli-dup-det').innerHTML=msgs.join('<br>')+
       `<div style="margin-top:10px;display:flex;gap:8px">
