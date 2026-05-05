@@ -2946,13 +2946,41 @@ function rMH(){
       });
     return;
   }
-  // Vendedor: su propio historial local
-  const h=gH(CU.id);
+  // Vendedor: combinar HG (en memoria) con almar_propuestas (localStorage)
+  const hMem=gH(CU.id); // entradas en memoria (sesión actual)
+  // Leer propuestas del localStorage que pertenecen a este vendedor
+  const hLocal=JSON.parse(localStorage.getItem('almar_propuestas')||'[]')
+    .filter(p=>(p.vendedor===CU.name||p.Vendedor===CU.name));
+  // Combinar: las de memoria primero (tienen _propuesta completa), luego las del localStorage
+  // Deduplicar por id
+  const idsEnMem=new Set(hMem.map(x=>String(x.id)));
+  const hLocalExtra=hLocal.filter(p=>!idsEnMem.has(String(p.id)));
+  const hTotal=[...hMem, ...hLocalExtra];
   el.innerHTML='';
-  if(!h.length){el.innerHTML='<div class="empty"><div class="eico">📋</div><div class="ettl">Sin cotizaciones</div><div class="esub">Las cotizaciones que guardes aparecerán aquí.</div></div>';return}
-  h.forEach(x=>el.appendChild(mkHI(x)));
+  if(!hTotal.length){el.innerHTML='<div class="empty"><div class="eico">📋</div><div class="ettl">Sin cotizaciones</div><div class="esub">Las cotizaciones que guardes aparecerán aquí.</div></div>';return}
+  // Renderizar — las de localStorage tienen el objeto completo directamente
+  hTotal.forEach(x=>{
+    if(x._propuesta||x.auto||x.Auto){
+      // Es una propuesta completa del localStorage
+      const p=x._propuesta||x;
+      const u=USERS.find(u=>u.name===(p.vendedor||p.Vendedor))||{col:'var(--r)',ini:'?'};
+      const d=document.createElement('div');d.className='hi';d.style.cursor='pointer';
+      d.onclick=()=>abrirDetallePropuesta(p);
+      const nom=p.auto||p.Auto||'—';
+      const banco=p.banco||p.Banco||'';
+      const camp2=p.campana||p.Campana||'—';
+      const plazo=p.plazo||p.Plazo||'';
+      const cuota=parseInt(p.cuota||p.Cuota||0);
+      const cli=p.cliente||p.Cliente||((p.nombre||p.Nombre||'')+' '+(p.apellido||p.Apellido||'')).trim()||'—';
+      const totalA=parseInt(String(p.totalA||p.TotalA||p.precio||p.Precio||0).replace(/\./g,''));
+      d.innerHTML=`<div class="hico" style="background:${u.col}">🚗</div><div class="hinf"><div class="haut">${nom}</div><div class="hdet">${banco?banco+' · ':''}${camp2}${plazo?' · '+plazo+'m':''} · ${cli}</div></div><div class="hr2"><div class="hcuo">${cuota?fmt(cuota)+'/mes':fmt(totalA)}</div><div class="hfec">${fmtFecha(p.fecha||p.Fecha)} · <span style="color:#41c0f0">👁 Ver</span></div></div>`;
+      el.appendChild(d);
+    } else {
+      el.appendChild(mkHI(x));
+    }
+  });
 }
-function lmpH(){if(!CU)return;if(confirm('¿Eliminar tu historial?')){HG[CU.id]=[];uHB();rMH()}}
+function lmpH(){if(!CU)return;if(confirm('¿Eliminar tu historial?')){HG[CU.id]=[];localStorage.removeItem('almar_propuestas');uHB();rMH()}}
 
 // ── COTIZADOR RÁPIDO (drawer) ────────────────────────────────────────────────
 function rCampCot(){
@@ -3103,9 +3131,6 @@ function vVendDrive(nombreVendedor, allRows, titId, listId){
 }
 
 function abrirDetallePropuesta(p){
-  // DEBUG TEMPORAL
-  console.log('DEBUG p.aGestoria=',p.aGestoria,'p.detalleA=',p.detalleA,'p.cliente=',p.cliente);
-
   // Conversión segura a string — previene TypeError con campos numéricos
   const S=(v)=>String(v==null?'':v);
 
