@@ -670,12 +670,7 @@ input[type=text]#p-obs{background:#F5F7FA!important;border:1px solid #D5DCE6!imp
       <!-- Error duplicado -->
       <div id="cli-duplicado" style="display:none;margin-bottom:8px;padding:10px 14px;background:rgba(231,76,60,.12);border:1.5px solid #e74c3c;border-radius:8px">
         <div style="font-size:10px;font-weight:800;color:#e74c3c;letter-spacing:1px;text-transform:uppercase">⚠️ Coincidencia en base de clientes</div>
-        <div id="cli-dup-det" style="font-size:11px;color:var(--m);margin-top:4px;margin-bottom:8px;line-height:1.6"></div>
-        <div id="cli-dup-btns" style="display:flex;gap:8px;margin-top:6px">
-          <button onclick="confirmarDuplicado()" style="flex:1;padding:7px;background:#e74c3c;color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:800;cursor:pointer">✅ Sí, continuar igual</button>
-          <button onclick="corregirDuplicado()" style="flex:1;padding:7px;background:none;border:1.5px solid #e74c3c;color:#e74c3c;border-radius:6px;font-size:11px;font-weight:800;cursor:pointer">✏️ No, quiero corregir</button>
-        </div>
-        <div id="cli-dup-confirmado" style="display:none;font-size:10px;color:#e74c3c;font-weight:700;margin-top:4px">⚠️ Continuando con datos duplicados — revisá antes de guardar</div>
+        <div id="cli-dup-det" style="font-size:11px;color:var(--m);margin-top:4px;line-height:1.6"></div>
       </div>
       <div class="fr f2">
         <div class="fld"><label>Nombre <span style="color:#e74c3c">*</span></label><input type="text" id="p-nombre" placeholder="Nombre" oninput="buscarClienteExistente()" style="border-color:var(--bdr)" autocomplete="off"></div>
@@ -1453,19 +1448,41 @@ function checkPin(){
 }
 // Mauricio puede desbloquear a cualquier usuario desde el Panel Admin
 function desbloquear(uid){
+  if(!esMaster(CU)){
+    alert('⛔ Solo el usuario Master ALMAR puede desbloquear usuarios.');
+    return;
+  }
   pinAttempts[uid]=0;
   alert('✅ Usuario desbloqueado.');
 }
 
+function cambiarPin(uid){
+  if(!esMaster(CU)){
+    alert('⛔ Solo el usuario Master ALMAR puede cambiar PINs.');
+    return;
+  }
+  const u=USERS.find(x=>x.id===uid);
+  if(!u){alert('Usuario no encontrado.');return;}
+  const nuevo=prompt(`Nuevo PIN para ${u.name} (4 dígitos):`);
+  if(!nuevo)return;
+  if(!/^\d{4}$/.test(nuevo)){alert('❌ El PIN debe tener exactamente 4 dígitos.');return;}
+  const ocupado=USERS.find(x=>x.id!==uid&&x.pin===nuevo);
+  if(ocupado){alert(`❌ Ese PIN ya lo usa ${ocupado.name}.`);return;}
+  u.pin=nuevo;
+  alert(`✅ PIN de ${u.name} cambiado correctamente.`);
+}
+
 // ── LOGIN ─────────────────────────────────────────────────────────────────────
 function roleLbl(u){
-  if(esGerencia(u))  return 'Gerencia — Acceso total';
-  if(esSupervisor(u))return 'Vendedor & Supervisor';
+  if(esMaster(u))     return 'Master — Acceso total';
+  if(esGerencia(u))   return 'Gerencia — Solo lectura';
+  if(esSupervisor(u)) return 'Vendedor & Supervisor';
   return 'Vendedor';
 }
 function roleBadge(u){
-  if(esGerencia(u))  return {txt:'Gerencia',cls:'s'};
-  if(esSupervisor(u))return {txt:'Supervisor',cls:'s'};
+  if(esMaster(u))     return {txt:'Master',cls:'s'};
+  if(esGerencia(u))   return {txt:'Gerencia',cls:'s'};
+  if(esSupervisor(u)) return {txt:'Supervisor',cls:'s'};
   return {txt:'Vendedor',cls:'v'};
 }
 function bLogin(){
@@ -1570,7 +1587,9 @@ function bDr(){
 function bBN(){
   if(!CU)return;
   const b=$$('bn'); b.innerHTML='';
-  const items=esGerencia(CU)?[
+  // Master tiene acceso total — misma barra que supervisor + gerencia
+  const soloGerencia=esGerencia(CU)&&!esMaster(CU);
+  const items=soloGerencia?[
     {s:'gerencia',i:'📊',l:'Gerencia',sup:true},
     {s:'stock',i:'🚗',l:'Stock'},
     {s:'okm',i:'🏎',l:'0 km'},
@@ -1585,7 +1604,11 @@ function bBN(){
   if(esSupervisor(CU)||esGerencia(CU)){
     items.splice(-1,0,{s:'clientes',i:'👥',l:'Clientes',sup:true});
   }
-  const first=esGerencia(CU)?'gerencia':'propuesta';
+  // Master también ve Gerencia
+  if(esMaster(CU)){
+    items.splice(-1,0,{s:'gerencia',i:'📊',l:'Gerencia',sup:true});
+  }
+  const first=esMaster(CU)?'propuesta':soloGerencia?'gerencia':'propuesta';
   items.forEach(x=>{
     const d=document.createElement('div');
     d.className='bi'+(x.sup?' sup':'')+(x.s===first?' on':'');
@@ -3509,7 +3532,7 @@ function rAdm(){
     const blocked=(pinAttempts[u.id]||0)>=PIN_MAX;
     const d=document.createElement('div');
     d.style.cssText='display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--bdr)';
-    d.innerHTML=`<div style="width:32px;height:32px;border-radius:50%;background:${u.col};display:flex;align-items:center;justify-content:center;font-family:var(--hf);font-weight:900;font-size:13px;color:#fff;flex-shrink:0">${u.ini}</div><div style="flex:1"><div style="font-family:var(--hf);font-weight:700;font-size:13px;color:var(--w)">${u.name}</div><div style="font-size:9px;color:${blocked?'var(--r)':'var(--g)'}">${blocked?'🔒 BLOQUEADO':'✓ Activo'}</div></div>${blocked?`<button class="btn btn-r btn-sm" onclick="desbloquear('${u.id}');rAdm()">Desbloquear</button>`:'<span style="font-size:11px;color:var(--m)">Sin bloqueos</span>'}`;
+    d.innerHTML=`<div style="width:32px;height:32px;border-radius:50%;background:${u.col};display:flex;align-items:center;justify-content:center;font-family:var(--hf);font-weight:900;font-size:13px;color:#fff;flex-shrink:0">${u.ini}</div><div style="flex:1"><div style="font-family:var(--hf);font-weight:700;font-size:13px;color:var(--w)">${u.name}</div><div style="font-size:9px;color:${blocked?'var(--r)':'var(--g)'}">${blocked?'🔒 BLOQUEADO':'✓ Activo'}</div></div><div style="display:flex;gap:6px">${blocked?`<button class="btn btn-r btn-sm" onclick="desbloquear('${u.id}');rAdm()">🔓 Desbloquear</button>`:''}<button class="btn btn-ghost btn-sm" onclick="cambiarPin('${u.id}')" style="font-size:10px">🔑 PIN</button></div>`;
     bl.appendChild(d);
   });
 }
