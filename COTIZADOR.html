@@ -1827,13 +1827,16 @@ function buscarClienteExistente(){
   if(!sug) return;
   if(nom.length<2&&ape.length<2){sug.style.display='none';_clienteSugerido=null;return;}
   const match=_clientesCache.find(c=>{
-    const cn=(c.Nombre||'').toLowerCase(), ca=(c.Apellido||'').toLowerCase();
+    const cn=String(c.Nombre||c.nombre||'').toLowerCase();
+    const ca=String(c.Apellido||c.apellido||'').toLowerCase();
     return (nom.length>=2&&cn.includes(nom))||(ape.length>=2&&ca.includes(ape));
   });
   if(match){
     _clienteSugerido=match;
-    $$('cli-sug-nom').textContent=(match.Nombre||'')+' '+(match.Apellido||'');
-    $$('cli-sug-det').textContent='📱 '+(match.Telefono||'—')+' · 📧 '+(match.Email||'—')+' · Última visita: '+(match.UltimaVisita||match.Fecha||'—');
+    const tel=String(match.Telefono||match.telefono||'—');
+    const email=String(match.Email||match.email||'—');
+    $$('cli-sug-nom').textContent=String(match.Nombre||match.nombre||'')+' '+String(match.Apellido||match.apellido||'');
+    $$('cli-sug-det').textContent='📱 '+tel+' · 📧 '+email+' · Última visita: '+String(match.UltimaVisita||match.Fecha||match.fecha||'—');
     sug.style.display='block';
   } else {
     sug.style.display='none';
@@ -1873,10 +1876,10 @@ function buscarDuplicado(){
 
   let matchTel=null, matchEmail=null;
   for(const c of _clientesCache){
-    const mismoNombre=(c.Nombre||'').toLowerCase()===nombre&&(c.Apellido||'').toLowerCase()===apellido;
+    const mismoNombre=(c.Nombre||c.nombre||'').toLowerCase()===nombre&&(c.Apellido||c.apellido||'').toLowerCase()===apellido;
     if(mismoNombre) continue;
-    const cTel=(c.Telefono||'').replace(/\D/g,'');
-    const cEmail=(c.Email||'').toLowerCase().trim();
+    const cTel=String(c.Telefono||c.telefono||c.TELEFONO||'').replace(/\D/g,'');
+    const cEmail=String(c.Email||c.email||c.EMAIL||'').toLowerCase().trim();
     if(tel&&cTel&&cTel===tel&&!matchTel) matchTel=c;
     if(email&&cEmail&&cEmail===email&&!matchEmail) matchEmail=c;
   }
@@ -1886,13 +1889,13 @@ function buscarDuplicado(){
     if(window._dupConfirmado) return;
     let msgs=[];
     if(matchTel){
-      const nro=matchTel.NroCliente||matchTel.nroCliente||'—';
-      const nomTel=((matchTel.Nombre||'').trim()+' '+(matchTel.Apellido||'').trim()).trim().split(' ').slice(0,3).join(' ');
+      const nro=matchTel.NroCliente||matchTel.nroCliente||matchTel.ID||matchTel.id||'—';
+      const nomTel=((matchTel.Nombre||matchTel.nombre||'').trim()+' '+(matchTel.Apellido||matchTel.apellido||'').trim()).trim().split(' ').slice(0,3).join(' ');
       msgs.push(`📱 El <strong>teléfono</strong> ya pertenece al <strong>Cliente N° ${nro}</strong>: ${nomTel}`);
     }
-    if(matchEmail&&(!matchTel||(matchEmail.NroCliente||matchEmail.nroCliente)!==(matchTel.NroCliente||matchTel.nroCliente))){
-      const nro=matchEmail.NroCliente||matchEmail.nroCliente||'—';
-      const nomEmail=((matchEmail.Nombre||'').trim()+' '+(matchEmail.Apellido||'').trim()).trim().split(' ').slice(0,3).join(' ');
+    if(matchEmail&&(!matchTel||(matchEmail.NroCliente||matchEmail.nroCliente||matchEmail.ID)!==(matchTel.NroCliente||matchTel.nroCliente||matchTel.ID))){
+      const nro=matchEmail.NroCliente||matchEmail.nroCliente||matchEmail.ID||matchEmail.id||'—';
+      const nomEmail=((matchEmail.Nombre||matchEmail.nombre||'').trim()+' '+(matchEmail.Apellido||matchEmail.apellido||'').trim()).trim().split(' ').slice(0,3).join(' ');
       msgs.push(`📧 El <strong>email</strong> ya pertenece al <strong>Cliente N° ${nro}</strong>: ${nomEmail}`);
     }
     $$('cli-dup-det').innerHTML=msgs.join('<br>')+
