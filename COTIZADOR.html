@@ -1819,17 +1819,31 @@ function buscarDuplicado(){
   if(!tel&&!email){dup.style.display='none';return;}
   const nombre=($$('p-nombre')?.value||'').trim().toLowerCase();
   const apellido=($$('p-apellido')?.value||'').trim().toLowerCase();
-  const match=_clientesCache.find(c=>{
+
+  // Buscar coincidencia por teléfono
+  let matchTel=null, matchEmail=null;
+  for(const c of _clientesCache){
     const mismoNombre=(c.Nombre||'').toLowerCase()===nombre&&(c.Apellido||'').toLowerCase()===apellido;
-    if(mismoNombre) return false;
+    if(mismoNombre) continue; // mismo cliente, no es duplicado
     const cTel=(c.Telefono||'').replace(/\D/g,'');
-    const cEmail=(c.Email||'').toLowerCase();
-    return (tel&&cTel===tel)||(email&&cEmail===email);
-  });
-  if(match){
-    const nro=match.NroCliente||match.nroCliente||'—';
-    const campo=((tel&&(match.Telefono||'').replace(/\D/g,'')===tel)?'📱 teléfono':'📧 email');
-    $$('cli-dup-det').innerHTML=`El ${campo} ya pertenece al <strong>Cliente N° ${nro}</strong>: ${match.Nombre||''} ${match.Apellido||''}`;
+    const cEmail=(c.Email||'').toLowerCase().trim();
+    if(tel&&cTel&&cTel===tel&&!matchTel) matchTel=c;
+    if(email&&cEmail&&cEmail===email&&!matchEmail) matchEmail=c;
+  }
+
+  if(matchTel||matchEmail){
+    let msgs=[];
+    if(matchTel){
+      const nro=matchTel.NroCliente||matchTel.nroCliente||'—';
+      msgs.push(`📱 El teléfono ya pertenece al <strong>Cliente N° ${nro}</strong>: ${matchTel.Nombre||''} ${matchTel.Apellido||''}`);
+    }
+    if(matchEmail&&matchEmail!==matchTel){
+      const nro=matchEmail.NroCliente||matchEmail.nroCliente||'—';
+      msgs.push(`📧 El email ya pertenece al <strong>Cliente N° ${nro}</strong>: ${matchEmail.Nombre||''} ${matchEmail.Apellido||''}`);
+    } else if(matchEmail&&matchEmail===matchTel){
+      // Mismo cliente con ambos campos duplicados — ya se mostró con el teléfono
+    }
+    $$('cli-dup-det').innerHTML=msgs.join('<br>');
     dup.style.display='block';
   } else {
     dup.style.display='none';
