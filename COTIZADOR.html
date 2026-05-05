@@ -2174,7 +2174,7 @@ function renderAdminPropuestas(rows, el){
     return;
   }
   el.innerHTML=rows.map(p=>{
-    const cliente=((p.Nombre||p.nombre||'')+' '+(p.Apellido||p.apellido||'')).trim()||p.Cliente||p.cliente||'Sin nombre';
+    const cliente=((String(p.Nombre||p.nombre||'')+' '+String(p.Apellido||p.apellido||'')).trim())||String(p.Cliente||p.cliente||'Sin nombre');
     const totalA=parseInt(p.TotalA||p.Total||p.total||0);
     return `<div class="card" style="margin-bottom:6px;padding:10px 12px;cursor:pointer" onclick="abrirDetallePropuesta(${JSON.stringify(p).replace(/"/g,'&quot;')})">
       <div style="display:flex;justify-content:space-between;align-items:flex-start">
@@ -3103,13 +3103,14 @@ function vVendDrive(nombreVendedor, allRows, titId, listId){
 }
 
 function abrirDetallePropuesta(p){
-  // Datos base — proteger nombre para que no tome nroCliente ni campos numéricos
-  const vendedor=p.Vendedor||p.vendedor||'—';
-  const rawNombre=(p.Nombre||p.nombre||'').trim();
-  const rawApellido=(p.Apellido||p.apellido||'').trim();
-  const rawCliente=(p.Cliente||p.cliente||'').trim();
-  // Si nombre parece un número (es nroCliente), ignorarlo
-  const esNumero=(s)=>/^\d+$/.test(s);
+  // Conversión segura a string — previene TypeError con campos numéricos
+  const S=(v)=>typeof v==='number'?String(v):String(v||'');
+  const esNumero=(s)=>/^\d{5,}$/.test(s.trim()); // 5+ dígitos = probablemente teléfono o ID
+
+  const vendedor=S(p.Vendedor||p.vendedor)||'—';
+  const rawNombre=S(p.Nombre||p.nombre).trim();
+  const rawApellido=S(p.Apellido||p.apellido).trim();
+  const rawCliente=S(p.Cliente||p.cliente).trim();
   const nomFinal=esNumero(rawNombre)?'':rawNombre;
   const apeFinal=esNumero(rawApellido)?'':rawApellido;
   const cliFinal=esNumero(rawCliente)?'':rawCliente;
