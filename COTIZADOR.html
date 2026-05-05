@@ -2915,35 +2915,51 @@ function rMH(){
   // Supervisor y Gerencia: ver propuestas guardadas del Drive
   if(esSupervisor(CU)||esGerencia(CU)){
     el.innerHTML='<div style="text-align:center;padding:20px;color:var(--m)">⏳ Cargando propuestas...</div>';
+    // Mostrar primero las del localStorage mientras carga el Drive
+    const hLocalSup=JSON.parse(localStorage.getItem('almar_propuestas')||'[]');
+    if(hLocalSup.length){
+      el.innerHTML='';
+      hLocalSup.forEach(p=>{
+        const d=document.createElement('div');d.className='hi';d.style.cursor='pointer';
+        d.onclick=()=>abrirDetallePropuesta(p);
+        const nom=p.auto||p.Auto||'—';
+        const banco=p.banco||p.Banco||'';
+        const camp2=p.campana||p.Campana||'—';
+        const plazo=p.plazo||p.Plazo||'';
+        const cuota=parseInt(p.cuota||p.Cuota||0);
+        const cli=p.cliente||p.Cliente||((p.nombre||'')+' '+(p.apellido||'')).trim()||'—';
+        const totalA=parseInt(String(p.totalA||p.TotalA||p.precio||p.Precio||0).replace(/\./g,''));
+        const u=USERS.find(u=>u.name===(p.vendedor||p.Vendedor))||{col:'#0069b4'};
+        d.innerHTML=`<div class="hico" style="background:${u.col}">🚗</div><div class="hinf"><div class="haut">${nom}</div><div class="hdet">${banco?banco+' · ':''}${camp2}${plazo?' · '+plazo+'m':''} · ${cli}</div></div><div class="hr2"><div class="hcuo">${cuota?fmt(cuota)+'/mes':fmt(totalA)}</div><div class="hfec">${fmtFecha(p.fecha||p.Fecha)} · <span style="color:#41c0f0">👁 Ver</span></div></div>`;
+        el.appendChild(d);
+      });
+    }
+    // Luego actualizar desde Drive en segundo plano
     fetch(PROPUESTAS_URL+'?action=get&t='+Date.now(),{cache:'no-store'})
       .then(r=>r.json())
       .then(rows=>{
-        if(!Array.isArray(rows)||!rows.length){
-          el.innerHTML='<div class="empty"><div class="eico">📋</div><div class="ettl">Sin propuestas</div><div class="esub">Aun no hay propuestas guardadas por el equipo.</div></div>';
-          return;
-        }
+        if(!Array.isArray(rows)||!rows.length) return;
+        // Combinar Drive con localStorage — localStorage tiene prioridad (más datos)
+        const idsLocal=new Set(hLocalSup.map(p=>String(p.id)));
+        const rowsDrive=rows.reverse().filter(p=>!idsLocal.has(String(p.ID||p.id||'')));
+        const todos=[...hLocalSup,...rowsDrive];
         el.innerHTML='';
-        rows.reverse().forEach(p=>{
-          const precio=parseInt(p.Precio||p.precio||0);
-          const total=parseInt(p.Total||p.total||0);
-          const d=document.createElement('div'); d.className='hi';
-          d.style.cursor='pointer';
+        todos.forEach(p=>{
+          const d=document.createElement('div');d.className='hi';d.style.cursor='pointer';
           d.onclick=()=>abrirDetallePropuesta(p);
-          d.innerHTML=`<div class="hico" style="background:#0069b4">🚗</div>
-            <div class="hinf">
-              <div class="haut">${p.Auto||p.auto||'—'}</div>
-              <div class="hdet">${p.Banco||p.banco||'—'} · ${p.Campana||p.campana||'—'}${p.Plazo||p.plazo?' · '+(p.Plazo||p.plazo)+'m':''} · ${p.Cliente||p.cliente||'Sin nombre'}</div>
-            </div>
-            <div class="hr2">
-              <div class="hcuo">${total?fmt(total):fmt(precio)}</div>
-              <div class="hfec">${fmtFecha(p.Fecha||p.fecha)} · <span style="color:#41c0f0">👁 Ver</span></div>
-            </div>`;
+          const nom=p.auto||p.Auto||'—';
+          const banco=p.banco||p.Banco||'—';
+          const camp2=p.campana||p.Campana||'—';
+          const plazo=p.plazo||p.Plazo||'';
+          const cuota=parseInt(p.cuota||p.Cuota||0);
+          const cli=p.cliente||p.Cliente||((p.nombre||p.Nombre||'')+' '+(p.apellido||p.Apellido||'')).trim()||'Sin nombre';
+          const totalA=parseInt(String(p.totalA||p.TotalA||p.Total||p.total||p.precio||p.Precio||0).replace(/\./g,''));
+          const u=USERS.find(u=>u.name===(p.vendedor||p.Vendedor))||{col:'#0069b4'};
+          d.innerHTML=`<div class="hico" style="background:${u.col}">🚗</div><div class="hinf"><div class="haut">${nom}</div><div class="hdet">${banco} · ${camp2}${plazo?' · '+plazo+'m':''} · ${cli}</div></div><div class="hr2"><div class="hcuo">${cuota?fmt(cuota)+'/mes':fmt(totalA)}</div><div class="hfec">${fmtFecha(p.fecha||p.Fecha)} · <span style="color:#41c0f0">👁 Ver</span></div></div>`;
           el.appendChild(d);
         });
       })
-      .catch(()=>{
-        el.innerHTML='<div class="empty"><div class="eico">⚠️</div><div class="ettl">Sin conexion</div><div class="esub">No se pudieron cargar las propuestas. Verificar internet.</div></div>';
-      });
+      .catch(()=>{});
     return;
   }
   // Vendedor: combinar HG (en memoria) con almar_propuestas (localStorage)
