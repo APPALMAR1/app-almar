@@ -985,11 +985,13 @@ const USERS=[
   {id:'lucas',    name:'Lucas Gadea',     ini:'LG', role:'vendedor',   col:'#784212', pin:'4567'},
   {id:'mauricio', name:'Mauricio García', ini:'MG', role:'supervisor', col:'#B7950B', pin:'5678'},
   {id:'gerencia', name:'Gerencia',        ini:'GR', role:'gerencia',   col:'#164194', pin:'9999'},
+  {id:'master',   name:'Master ALMAR',    ini:'MA', role:'master',     col:'#922B21', pin:'0441'},
 ];
 // helpers de rol
 const esVendedor  = u => u?.role==='vendedor';
-const esSupervisor= u => u?.role==='supervisor';
-const esGerencia  = u => u?.role==='gerencia';
+const esSupervisor= u => u?.role==='supervisor'||u?.role==='master';
+const esGerencia  = u => u?.role==='gerencia'||u?.role==='master';
+const esMaster    = u => u?.role==='master';
 const puedeVerTodos = u => esSupervisor(u)||esGerencia(u);
 const PL=[12,18,24,36,48,60];
 
