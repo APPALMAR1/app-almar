@@ -3104,16 +3104,19 @@ function vVendDrive(nombreVendedor, allRows, titId, listId){
 
 function abrirDetallePropuesta(p){
   // Conversión segura a string — previene TypeError con campos numéricos
-  const S=(v)=>typeof v==='number'?String(v):String(v||'');
-  const esNumero=(s)=>/^\d{5,}$/.test(s.trim()); // 5+ dígitos = probablemente teléfono o ID
+  const S=(v)=>String(v==null?'':v);
 
   const vendedor=S(p.Vendedor||p.vendedor)||'—';
+  // nombre/apellido pueden ser strings normales o números (nroCliente)
+  // Usamos cliente como fuente más confiable, con fallback a nombre+apellido
+  const rawCliente=S(p.Cliente||p.cliente).trim();
   const rawNombre=S(p.Nombre||p.nombre).trim();
   const rawApellido=S(p.Apellido||p.apellido).trim();
-  const rawCliente=S(p.Cliente||p.cliente).trim();
-  const nomFinal=esNumero(rawNombre)?'':rawNombre;
-  const apeFinal=esNumero(rawApellido)?'':rawApellido;
-  const cliFinal=esNumero(rawCliente)?'':rawCliente;
+  // Es número si solo tiene dígitos (nroCliente=4, teléfono=3764608079, etc)
+  const esNum=(s)=>/^\d+$/.test(s);
+  const nomFinal=esNum(rawNombre)?'':rawNombre;
+  const apeFinal=esNum(rawApellido)?'':rawApellido;
+  const cliFinal=esNum(rawCliente)?'':rawCliente;
   const cliente=(nomFinal+' '+apeFinal).trim()||cliFinal||'Sin nombre';
   const dni=p.DNI||p.dni||'';
   const tel=p.Telefono||p.telefono||'';
@@ -3138,28 +3141,32 @@ function abrirDetallePropuesta(p){
     dB=typeof rawB==='string'?JSON.parse(rawB):(rawB&&typeof rawB==='object'?rawB:{});
   }catch(e){dB={};}
 
-  // Valores columna A — primero del JSON, luego del campo individual, luego del raíz
-  const aPrecio=parseInt(dA.precio||p.Precio||p.precio||0);
-  const aGestoria=parseInt(dA.gestoria||p.aGestoria||0);
-  const aGastosBanc=parseInt(dA.gastosBancarios||p.aGastosBanc||0);
-  const aGastosBancAd=parseInt(dA.gastosBancariosAd||p.aGastosBancAd||0);
-  const aIntereses=parseInt(dA.intereses||p.aIntereses||0);
-  const aComision=parseInt(dA.comisionBanco||p.aComision||0);
-  const aSeguro=parseInt(dA.seguro||p.aSeguro||0);
-  const sumaA=aPrecio+aGestoria+aGastosBanc+aGastosBancAd+aIntereses+aComision+aSeguro;
-  const rawTotalA=parseInt(p.TotalA||p.totalA||p.Total||p.total||0);
-  const totalA=(rawTotalA>50000)?rawTotalA:(sumaA||aPrecio);
+  // Helper para parsear números con o sin puntos de miles
+  const N=(v)=>parseInt(String(v||0).replace(/\./g,''))||0;
 
-  // Valores columna B — primero del JSON, luego del campo individual
-  const bCredito=parseInt(dB.credito||p.Credito||p.credito||0);
-  const bUsado=parseInt(dB.usadoPartePago||p.bUsado||0);
-  const bAnticipo=parseInt(dB.anticipo||p.bAnticipo||0);
-  const bCheques=parseInt(dB.cheques||p.bCheques||0);
-  const bDocPag=parseInt(dB.documentosPagares||p.bDocPag||dB.saldo||0);
-  const bOtroCred=parseInt(dB.otroCredito||p.bOtroCred||0);
+  // Valores columna A — campo individual tiene prioridad, luego JSON, luego raíz
+  const aPrecio=N(p.precio||p.Precio||dA.precio||0);
+  const aGestoria=N(p.aGestoria||dA.gestoria||0);
+  const aGastosBanc=N(p.aGastosBanc||dA.gastosBancarios||0);
+  const aGastosBancAd=N(p.aGastosBancAd||dA.gastosBancariosAd||0);
+  const aIntereses=N(p.aIntereses||dA.intereses||0);
+  const aComision=N(p.aComision||dA.comisionBanco||0);
+  const aSeguro=N(p.aSeguro||dA.seguro||0);
+  const sumaA=aPrecio+aGestoria+aGastosBanc+aGastosBancAd+aIntereses+aComision+aSeguro;
+  // totalA: limpiar puntos de miles antes de parsear
+  const rawTotalA=N(p.TotalA||p.totalA||p.Total||p.total||0);
+  const totalA=rawTotalA>0?rawTotalA:sumaA;
+
+  // Valores columna B — campo individual tiene prioridad, luego JSON
+  const bCredito=N(p.credito||p.Credito||dB.credito||0);
+  const bUsado=N(p.bUsado||dB.usadoPartePago||0);
+  const bAnticipo=N(p.bAnticipo||dB.anticipo||0);
+  const bCheques=N(p.bCheques||dB.cheques||0);
+  const bDocPag=N(p.bDocPag||dB.documentosPagares||dB.saldo||0);
+  const bOtroCred=N(p.bOtroCred||dB.otroCredito||0);
   const sumaB=bCredito+bUsado+bAnticipo+bCheques+bDocPag+bOtroCred;
-  const rawTotalB=parseInt(p.TotalB||p.totalB||0);
-  const totalB=(rawTotalB>50000)?rawTotalB:(sumaB||bCredito);
+  const rawTotalB=N(p.TotalB||p.totalB||0);
+  const totalB=rawTotalB>0?rawTotalB:sumaB;
 
   // Helper fila
   const fila=(lbl,val,color='#4A5568')=>`<div style="display:flex;justify-content:space-between;font-size:10px;padding:3px 0;border-bottom:1px solid #EEF3F8"><span style="color:#4A5568">${lbl}</span><span style="font-weight:700;color:${val?color:'#ccc'}">${val?fmt(val):'$ 0'}</span></div>`;
