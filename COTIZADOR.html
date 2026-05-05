@@ -669,8 +669,13 @@ input[type=text]#p-obs{background:#F5F7FA!important;border:1px solid #D5DCE6!imp
       </div>
       <!-- Error duplicado -->
       <div id="cli-duplicado" style="display:none;margin-bottom:8px;padding:10px 14px;background:rgba(231,76,60,.12);border:1.5px solid #e74c3c;border-radius:8px">
-        <div style="font-size:10px;font-weight:800;color:#e74c3c;letter-spacing:1px;text-transform:uppercase">❌ Email o teléfono ya registrado para otro cliente</div>
-        <div id="cli-dup-det" style="font-size:11px;color:var(--m);margin-top:2px"></div>
+        <div style="font-size:10px;font-weight:800;color:#e74c3c;letter-spacing:1px;text-transform:uppercase">⚠️ Coincidencia en base de clientes</div>
+        <div id="cli-dup-det" style="font-size:11px;color:var(--m);margin-top:4px;margin-bottom:8px;line-height:1.6"></div>
+        <div id="cli-dup-btns" style="display:flex;gap:8px;margin-top:6px">
+          <button onclick="confirmarDuplicado()" style="flex:1;padding:7px;background:#e74c3c;color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:800;cursor:pointer">✅ Sí, continuar igual</button>
+          <button onclick="corregirDuplicado()" style="flex:1;padding:7px;background:none;border:1.5px solid #e74c3c;color:#e74c3c;border-radius:6px;font-size:11px;font-weight:800;cursor:pointer">✏️ No, quiero corregir</button>
+        </div>
+        <div id="cli-dup-confirmado" style="display:none;font-size:10px;color:#e74c3c;font-weight:700;margin-top:4px">⚠️ Continuando con datos duplicados — revisá antes de guardar</div>
       </div>
       <div class="fr f2">
         <div class="fld"><label>Nombre <span style="color:#e74c3c">*</span></label><input type="text" id="p-nombre" placeholder="Nombre" oninput="buscarClienteExistente()" style="border-color:var(--bdr)" autocomplete="off"></div>
@@ -1811,20 +1816,40 @@ function buscarClienteExistente(){
   }
 }
 
+function confirmarDuplicado(){
+  window._dupConfirmado=true;
+  $$('cli-dup-btns').style.display='none';
+  $$('cli-dup-confirmado').style.display='block';
+}
+
+function corregirDuplicado(){
+  window._dupConfirmado=false;
+  $$('cli-duplicado').style.display='none';
+  // Limpiar los campos en conflicto para que el vendedor los corrija
+  const tel=$$('p-tel');
+  const email=$$('p-email');
+  if(tel) tel.focus();
+}
+
 function buscarDuplicado(){
+  // Resetear confirmación previa si el usuario cambió los datos
+  window._dupConfirmado=false;
+  const btnsDup=$$('cli-dup-btns');
+  const confDup=$$('cli-dup-confirmado');
+  if(btnsDup) btnsDup.style.display='flex';
+  if(confDup) confDup.style.display='none';
   const tel=($$('p-tel')?.value||'').replace(/\D/g,'');
   const email=($$('p-email')?.value||'').trim().toLowerCase();
   const dup=$$('cli-duplicado');
   if(!dup) return;
-  if(!tel&&!email){dup.style.display='none';return;}
+  if(!tel&&!email){dup.style.display='none';window._dupConfirmado=false;return;}
   const nombre=($$('p-nombre')?.value||'').trim().toLowerCase();
   const apellido=($$('p-apellido')?.value||'').trim().toLowerCase();
 
-  // Buscar coincidencia por teléfono
   let matchTel=null, matchEmail=null;
   for(const c of _clientesCache){
     const mismoNombre=(c.Nombre||'').toLowerCase()===nombre&&(c.Apellido||'').toLowerCase()===apellido;
-    if(mismoNombre) continue; // mismo cliente, no es duplicado
+    if(mismoNombre) continue;
     const cTel=(c.Telefono||'').replace(/\D/g,'');
     const cEmail=(c.Email||'').toLowerCase().trim();
     if(tel&&cTel&&cTel===tel&&!matchTel) matchTel=c;
@@ -1832,21 +1857,45 @@ function buscarDuplicado(){
   }
 
   if(matchTel||matchEmail){
+    // Si ya fue confirmado por el vendedor, no volver a mostrar
+    if(window._dupConfirmado) return;
     let msgs=[];
     if(matchTel){
       const nro=matchTel.NroCliente||matchTel.nroCliente||'—';
-      msgs.push(`📱 El teléfono ya pertenece al <strong>Cliente N° ${nro}</strong>: ${matchTel.Nombre||''} ${matchTel.Apellido||''}`);
+      msgs.push(`📱 El <strong>teléfono</strong> ya pertenece al <strong>Cliente N° ${nro}</strong>: ${matchTel.Nombre||''} ${matchTel.Apellido||''}`);
     }
-    if(matchEmail&&matchEmail!==matchTel){
+    if(matchEmail&&(!matchTel||(matchEmail.NroCliente||matchEmail.nroCliente)!==(matchTel.NroCliente||matchTel.nroCliente))){
       const nro=matchEmail.NroCliente||matchEmail.nroCliente||'—';
-      msgs.push(`📧 El email ya pertenece al <strong>Cliente N° ${nro}</strong>: ${matchEmail.Nombre||''} ${matchEmail.Apellido||''}`);
-    } else if(matchEmail&&matchEmail===matchTel){
-      // Mismo cliente con ambos campos duplicados — ya se mostró con el teléfono
+      msgs.push(`📧 El <strong>email</strong> ya pertenece al <strong>Cliente N° ${nro}</strong>: ${matchEmail.Nombre||''} ${matchEmail.Apellido||''}`);
     }
-    $$('cli-dup-det').innerHTML=msgs.join('<br>');
+    $$('cli-dup-det').innerHTML=msgs.join('<br>')+
+      `<div style="margin-top:10px;display:flex;gap:8px">
+        <button onclick="confirmarDuplicado(true)" style="flex:1;padding:8px;background:#e74c3c;color:#fff;border:none;border-radius:6px;font-weight:800;cursor:pointer;font-size:12px">✅ SÍ, continuar igual</button>
+        <button onclick="confirmarDuplicado(false)" style="flex:1;padding:8px;background:var(--s2);color:var(--t);border:1.5px solid var(--bdr);border-radius:6px;font-weight:800;cursor:pointer;font-size:12px">✏️ NO, corregir datos</button>
+      </div>`;
     dup.style.display='block';
   } else {
     dup.style.display='none';
+    window._dupConfirmado=false;
+  }
+}
+
+function confirmarDuplicado(continuar){
+  if(continuar){
+    window._dupConfirmado=true;
+    $$('cli-duplicado').style.display='none';
+    mostrarToast('⚠️ Continuando con datos duplicados');
+  } else {
+    window._dupConfirmado=false;
+    // Enfocar el campo que tiene el duplicado para que lo corrija
+    const tel=($$('p-tel')?.value||'').replace(/\D/g,'');
+    const email=($$('p-email')?.value||'').trim().toLowerCase();
+    for(const c of _clientesCache){
+      const cTel=(c.Telefono||'').replace(/\D/g,'');
+      const cEmail=(c.Email||'').toLowerCase().trim();
+      if(tel&&cTel===tel){$$('p-tel').value='';$$('p-tel').focus();break;}
+      if(email&&cEmail===email){$$('p-email').value='';$$('p-email').focus();break;}
+    }
   }
 }
 
@@ -1949,9 +1998,9 @@ function guardarPropuesta(){
     $$('card-cliente')?.scrollIntoView({behavior:'smooth'});
     return;
   }
-  // Verificar duplicado bloqueante
-  if($$('cli-duplicado')?.style.display==='block'){
-    alert('❌ El email o teléfono ya pertenece a otro cliente. Verificá los datos antes de guardar.');
+  // Verificar duplicado — solo bloquear si NO fue confirmado por el vendedor
+  if($$('cli-duplicado')?.style.display==='block'&&!window._dupConfirmado){
+    alert('❌ Hay coincidencias con clientes existentes. Confirmá si querés continuar o corregí los datos.');
     return;
   }
 
