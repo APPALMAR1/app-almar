@@ -3103,6 +3103,9 @@ function vVendDrive(nombreVendedor, allRows, titId, listId){
 }
 
 function abrirDetallePropuesta(p){
+  // DEBUG TEMPORAL
+  console.log('DEBUG p.aGestoria=',p.aGestoria,'p.detalleA=',p.detalleA,'p.cliente=',p.cliente);
+
   // Conversión segura a string — previene TypeError con campos numéricos
   const S=(v)=>String(v==null?'':v);
 
