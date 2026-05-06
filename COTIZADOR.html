@@ -2539,12 +2539,16 @@ function impXP(e){
               const r=rows[i];
               // La marca puede venir de la columna MARCA o del nombre de la hoja
               const marca=colMarca>=0&&String(r[colMarca]||'').trim()?String(r[colMarca]||'').trim():shName;
-              const modelo=String(r[colMod]||'').trim();
-              const precio=parseFloat(String(r[colP]||'').replace(/[^0-9.]/g,''))||0;
+              const modelo=String(r[colMod]||'').replace(/\t/g,' ').trim();
+              // Precio puede ser número o string con comas/puntos
+              const precioRaw=r[colP];
+              let precio=0;
+              if(typeof precioRaw==='number') precio=precioRaw;
+              else precio=parseFloat(String(precioRaw||'').replace(/[^0-9.,]/g,'').replace(',','.').replace(/\.(?=.*\.)/g,''))||0;
               const moneda=colMon>=0?String(r[colMon]||'').trim().toUpperCase():'ARS';
               if(!modelo||!precio) continue;
-              if(!marcasMap[marca]) marcasMap[marca]=[];
-              marcasMap[marca].push({modelo,precio,moneda:moneda==='USD'?'USD':'ARS'});
+              if(!marcasMap[marca.trim()]) marcasMap[marca.trim()]=[];
+              marcasMap[marca.trim()].push({modelo,precio,moneda:moneda==='USD'?'USD':'ARS'});
             }
           }
         }
@@ -2639,7 +2643,7 @@ function rPrecios(data){
       if(esUSD){
         const usd=mod.precio;
         precioNum=_bnaCotiz?Math.round(usd*_bnaCotiz):0;
-        const pesos=precioNum?`<span style="color:#0069b4">$${fmt(precioNum)}</span>`:
+        const pesos=precioNum?`<span style="color:#0069b4">${fmt(precioNum)}</span>`:
           `<span style="color:var(--m);font-size:9px">TC pendiente</span>`;
         precioDisplay=`<div style="text-align:right">
           <div style="font-size:10px;color:#F39C12;font-weight:700">USD ${usd.toLocaleString('es-AR')}</div>
@@ -2648,7 +2652,7 @@ function rPrecios(data){
         </div>`;
       } else {
         precioNum=typeof mod.precio==='number'?mod.precio:parseInt(String(mod.precio).replace(/[^0-9]/g,''))||0;
-        precioDisplay=`<span style="font-size:12px;font-weight:700;color:#0069b4;white-space:nowrap">$${fmt(precioNum)}</span>`;
+        precioDisplay=`<span style="font-size:12px;font-weight:700;color:#0069b4;white-space:nowrap">${fmt(precioNum)}</span>`;
       }
       const precioParaCotizar=esUSD&&_bnaCotiz?precioNum:(typeof mod.precio==='number'?mod.precio:parseInt(String(mod.precio).replace(/[^0-9]/g,''))||0);
       html_p+=`<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 12px;border-bottom:1px solid var(--bdr);gap:6px">
