@@ -2485,46 +2485,77 @@ function impXP(e){
     reader.onload=ev=>{
       try{
         const wb=XLSX.read(ev.target.result,{type:'array'});
-        // Buscar hoja "Precios" o primera hoja
-        const shName=wb.SheetNames.includes('Precios')?'Precios':wb.SheetNames[0];
-        const ws=wb.Sheets[shName];
-        const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
-        // Procesar filas — buscar header MARCA/MODELO/PRECIO
-        let hRow=-1;
-        let colM=-1,colMod=-1,colP=-1,colMon=-1;
-        for(let i=0;i<Math.min(5,rows.length);i++){
-          const r=rows[i].map(v=>String(v).trim().toUpperCase());
-          const mi=r.findIndex(v=>v==='MARCA');
-          const modi=r.findIndex(v=>v==='MODELO');
-          const pi=r.findIndex(v=>v==='PRECIO');
-          if(mi>=0&&modi>=0&&pi>=0){
-            hRow=i; colM=mi; colMod=modi; colP=pi;
-            colMon=r.findIndex(v=>v==='MONEDA'||v==='USD'||v==='DIVISA');
-            break;
+        const marcasMap={};
+
+        // ── MODO 1: hoja única "Precios" con columnas MARCA/MODELO/PRECIO/MONEDA
+        if(wb.SheetNames.includes('Precios')||wb.SheetNames.includes('PRECIOS')){
+          const shName=wb.SheetNames.includes('Precios')?'Precios':'PRECIOS';
+          const ws=wb.Sheets[shName];
+          const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+          let hRow=-1,colM=-1,colMod=-1,colP=-1,colMon=-1;
+          for(let i=0;i<Math.min(5,rows.length);i++){
+            const r=rows[i].map(v=>String(v).trim().toUpperCase());
+            const mi=r.findIndex(v=>v==='MARCA');
+            const modi=r.findIndex(v=>v==='MODELO');
+            const pi=r.findIndex(v=>v==='PRECIO');
+            if(mi>=0&&modi>=0&&pi>=0){
+              hRow=i;colM=mi;colMod=modi;colP=pi;
+              colMon=r.findIndex(v=>v==='MONEDA'||v==='USD'||v==='DIVISA');
+              break;
+            }
+          }
+          if(hRow>=0){
+            for(let i=hRow+1;i<rows.length;i++){
+              const r=rows[i];
+              const marca=String(r[colM]||'').trim();
+              const modelo=String(r[colMod]||'').trim();
+              const precio=parseFloat(String(r[colP]||'').replace(/[^0-9.]/g,''))||0;
+              const moneda=colMon>=0?String(r[colMon]||'').trim().toUpperCase():'ARS';
+              if(!marca||!modelo||!precio) continue;
+              if(!marcasMap[marca]) marcasMap[marca]=[];
+              marcasMap[marca].push({modelo,precio,moneda:moneda==='USD'?'USD':'ARS'});
+            }
+          }
+        } else {
+          // ── MODO 2: múltiples hojas — cada hoja es una marca
+          for(const shName of wb.SheetNames){
+            const ws=wb.Sheets[shName];
+            const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+            // Buscar fila de headers con MODELO y PRECIO
+            let hRow=-1,colMod=-1,colP=-1,colMon=-1,colMarca=-1;
+            for(let i=0;i<Math.min(5,rows.length);i++){
+              const r=rows[i].map(v=>String(v).trim().toUpperCase());
+              const modi=r.findIndex(v=>v==='MODELO');
+              const pi=r.findIndex(v=>v==='PRECIO');
+              if(modi>=0&&pi>=0){
+                hRow=i;colMod=modi;colP=pi;
+                colMon=r.findIndex(v=>v==='MONEDA'||v==='USD'||v==='DIVISA');
+                colMarca=r.findIndex(v=>v==='MARCA');
+                break;
+              }
+            }
+            if(hRow<0) continue;
+            for(let i=hRow+1;i<rows.length;i++){
+              const r=rows[i];
+              // La marca puede venir de la columna MARCA o del nombre de la hoja
+              const marca=colMarca>=0&&String(r[colMarca]||'').trim()?String(r[colMarca]||'').trim():shName;
+              const modelo=String(r[colMod]||'').trim();
+              const precio=parseFloat(String(r[colP]||'').replace(/[^0-9.]/g,''))||0;
+              const moneda=colMon>=0?String(r[colMon]||'').trim().toUpperCase():'ARS';
+              if(!modelo||!precio) continue;
+              if(!marcasMap[marca]) marcasMap[marca]=[];
+              marcasMap[marca].push({modelo,precio,moneda:moneda==='USD'?'USD':'ARS'});
+            }
           }
         }
-        if(hRow<0){alert('❌ No encontré la fila de encabezados.\nAsegurate que la hoja tenga las columnas: MARCA | MODELO | PRECIO (y opcionalmente MONEDA)');return;}
-        // Agrupar por marca
-        const marcasMap={};
-        for(let i=hRow+1;i<rows.length;i++){
-          const r=rows[i];
-          const marca=String(r[colM]||'').trim();
-          const modelo=String(r[colMod]||'').trim();
-          const precio=parseFloat(String(r[colP]||'').replace(/[^0-9.]/g,''))||0;
-          const moneda=colMon>=0?String(r[colMon]||'').trim().toUpperCase():'ARS';
-          if(!marca||!modelo||!precio) continue;
-          if(!marcasMap[marca]) marcasMap[marca]=[];
-          marcasMap[marca].push({modelo,precio,moneda:moneda==='USD'?'USD':'ARS'});
-        }
+
         const marcasArr=Object.entries(marcasMap).map(([marca,modelos])=>({marca,modelos}));
-        if(!marcasArr.length){alert('❌ No se encontraron datos válidos. Revisá el formato del archivo.');return;}
-        // Guardar en localStorage para persistir
+        if(!marcasArr.length){alert('❌ No se encontraron datos válidos.\n\nAsegurate que cada hoja tenga columnas: MODELO | PRECIO (y opcionalmente MONEDA)');return;}
         localStorage.setItem('almar_precios_okm',JSON.stringify({data:marcasArr,fecha:new Date().toISOString()}));
         window._preciosData=marcasArr;
-        // Actualizar BNA y renderizar
         actualizarBNA().then(()=>rPrecios(marcasArr)).catch(()=>rPrecios(marcasArr));
         const total=marcasArr.reduce((s,m)=>s+m.modelos.length,0);
-        mostrarToast(`✅ ${marcasArr.length} marcas · ${total} modelos importados correctamente`);
+        mostrarToast(`✅ ${marcasArr.length} marcas · ${total} modelos importados`);
       }catch(err){
         alert('❌ Error al procesar el archivo: '+err.message);
       }
