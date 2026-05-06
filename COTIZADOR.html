@@ -2523,7 +2523,7 @@ function impXP(e){
             const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
             // Buscar fila de headers con MODELO y PRECIO
             let hRow=-1,colMod=-1,colP=-1,colMon=-1,colMarca=-1;
-            for(let i=0;i<Math.min(5,rows.length);i++){
+            for(let i=0;i<Math.min(6,rows.length);i++){
               const r=rows[i].map(v=>String(v).trim().toUpperCase());
               const modi=r.findIndex(v=>v==='MODELO');
               const pi=r.findIndex(v=>v==='PRECIO');
@@ -2539,16 +2539,17 @@ function impXP(e){
               const r=rows[i];
               // La marca puede venir de la columna MARCA o del nombre de la hoja
               const marca=colMarca>=0&&String(r[colMarca]||'').trim()?String(r[colMarca]||'').trim():shName;
-              const modelo=String(r[colMod]||'').replace(/\t/g,' ').trim();
-              // Precio puede ser número o string con comas/puntos
+              const modelo=String(r[colMod]||'').replace(/\t/g,' ').replace(/\s+/g,' ').trim();
+              // Precio puede ser número o string
               const precioRaw=r[colP];
               let precio=0;
               if(typeof precioRaw==='number') precio=precioRaw;
               else precio=parseFloat(String(precioRaw||'').replace(/[^0-9.,]/g,'').replace(',','.').replace(/\.(?=.*\.)/g,''))||0;
               const moneda=colMon>=0?String(r[colMon]||'').trim().toUpperCase():'ARS';
               if(!modelo||!precio) continue;
-              if(!marcasMap[marca.trim()]) marcasMap[marca.trim()]=[];
-              marcasMap[marca.trim()].push({modelo,precio,moneda:moneda==='USD'?'USD':'ARS'});
+              const marcaLimpia=marca.trim();
+              if(!marcasMap[marcaLimpia]) marcasMap[marcaLimpia]=[];
+              marcasMap[marcaLimpia].push({modelo,precio,moneda:moneda==='USD'?'USD':'ARS'});
             }
           }
         }
