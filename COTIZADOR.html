@@ -2540,11 +2540,27 @@ function impXP(e){
               // La marca puede venir de la columna MARCA o del nombre de la hoja
               const marca=colMarca>=0&&String(r[colMarca]||'').trim()?String(r[colMarca]||'').trim():shName;
               const modelo=String(r[colMod]||'').replace(/\t/g,' ').replace(/\s+/g,' ').trim();
-              // Precio puede ser número o string
+              // Precio puede ser número o string en varios formatos
               const precioRaw=r[colP];
               let precio=0;
-              if(typeof precioRaw==='number') precio=precioRaw;
-              else precio=parseFloat(String(precioRaw||'').replace(/[^0-9.,]/g,'').replace(',','.').replace(/\.(?=.*\.)/g,''))||0;
+              if(typeof precioRaw==='number'){
+                precio=precioRaw;
+              } else {
+                const ps=String(precioRaw||'').trim();
+                // Detectar formato: si tiene coma seguida de 3 dígitos = separador de miles
+                // Ej: "$ 42,639,000" o "42.639.000" o "42639000"
+                const sinSimbolo=ps.replace(/[^0-9.,]/g,'');
+                if(/,\d{3}/.test(sinSimbolo)){
+                  // Coma como separador de miles: "42,639,000" → 42639000
+                  precio=parseFloat(sinSimbolo.replace(/,/g,''))||0;
+                } else if(/\.\d{3}/.test(sinSimbolo)){
+                  // Punto como separador de miles: "42.639.000" → 42639000
+                  precio=parseFloat(sinSimbolo.replace(/\./g,''))||0;
+                } else {
+                  // Número simple o decimal
+                  precio=parseFloat(sinSimbolo.replace(',','.'))||0;
+                }
+              }
               const moneda=colMon>=0?String(r[colMon]||'').trim().toUpperCase():'ARS';
               if(!modelo||!precio) continue;
               const marcaLimpia=marca.trim();
