@@ -2769,7 +2769,7 @@ function rPrecios(data){
         precioDisplay=`<span style="font-size:12px;font-weight:700;color:#0069b4;white-space:nowrap">${fmt(precioNum)}</span>`;
       }
       const precioParaCotizar=esUSD&&_bnaCotiz?precioNum:(typeof mod.precio==='number'?mod.precio:parseInt(String(mod.precio).replace(/[^0-9]/g,''))||0);
-      const precioUSDRef=esUSD?precioNum:0;
+      const precioUSDRef=esUSD?(typeof mod.precio==='number'?mod.precio:parseFloat(String(mod.precio).replace(/[^0-9.]/g,''))||0):0;
       html_p+=`<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 12px;border-bottom:1px solid var(--bdr);gap:6px">
         <span style="font-size:11px;color:var(--t);flex:1">${mod.modelo}${esUSD?' 💵':''}</span>
         ${precioDisplay}
