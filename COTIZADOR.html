@@ -2633,19 +2633,29 @@ function syncPrecios(){
     });
 }
 
-// Inyecta en el array data las marcas con precios en USD desde MKT_USD_DATA
-// Solo agrega marcas que no estén ya presentes (evita duplicados al reimportar)
+// Inyecta en el array data las marcas/modelos USD desde MKT_USD_DATA_G.
+// Si la marca ya existe (vino del Excel en ARS), agrega solo los modelos USD que falten.
+// Si la marca no existe, la crea completa.
 function _inyectarMarcasUSD(data){
   if(typeof MKT_USD_DATA_G==='undefined') return;
   for(const marca of Object.keys(MKT_USD_DATA_G)){
-    if(data.find(m=>m.marca===marca)) continue; // ya está (vino del Excel)
-    const modelos=[];
+    const existente=data.find(m=>m.marca===marca);
+    const modelosUSD=[];
     for(const [modelo,versiones] of Object.entries(MKT_USD_DATA_G[marca])){
       for(const [version,precio] of Object.entries(versiones)){
-        modelos.push({modelo:modelo+' '+version, precio:precio, moneda:'USD'});
+        const nombreCompleto=modelo+' '+version;
+        // Solo agregar si no existe ya ese modelo exacto en la marca
+        if(!existente||!existente.modelos.find(mod=>mod.modelo===nombreCompleto)){
+          modelosUSD.push({modelo:nombreCompleto, precio:precio, moneda:'USD'});
+        }
       }
     }
-    if(modelos.length) data.push({marca, modelos});
+    if(existente){
+      // Agregar modelos USD al final de la marca existente
+      existente.modelos.push(...modelosUSD);
+    } else if(modelosUSD.length){
+      data.push({marca, modelos:modelosUSD});
+    }
   }
 }
 
