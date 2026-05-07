@@ -2769,10 +2769,11 @@ function rPrecios(data){
         precioDisplay=`<span style="font-size:12px;font-weight:700;color:#0069b4;white-space:nowrap">${fmt(precioNum)}</span>`;
       }
       const precioParaCotizar=esUSD&&_bnaCotiz?precioNum:(typeof mod.precio==='number'?mod.precio:parseInt(String(mod.precio).replace(/[^0-9]/g,''))||0);
+      const precioUSDRef=esUSD?precioNum:0;
       html_p+=`<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 12px;border-bottom:1px solid var(--bdr);gap:6px">
         <span style="font-size:11px;color:var(--t);flex:1">${mod.modelo}${esUSD?' 💵':''}</span>
         ${precioDisplay}
-        <button onclick="cotizarDesdePrecios('${m.marca}','${mod.modelo.replace(/'/g,"\\'")}',${precioParaCotizar})"
+        <button onclick="cotizarDesdePrecios('${m.marca}','${mod.modelo.replace(/'/g,"\\'")}',${precioParaCotizar},${precioUSDRef})"
           style="background:#0069b4;color:#fff;border:none;border-radius:6px;padding:4px 8px;font-size:9px;font-weight:700;letter-spacing:.5px;cursor:pointer;white-space:nowrap;flex-shrink:0">
           ＋ Cotizar
         </button>
@@ -2784,7 +2785,7 @@ function rPrecios(data){
   el.innerHTML=html_p;
 }
 
-function cotizarDesdePrecios(marca, modeloCompleto, precioArg){
+function cotizarDesdePrecios(marca, modeloCompleto, precioArg, precioUSD){
   // Precio puede llegar como número o string
   const precio=typeof precioArg==='number'?precioArg:parseInt(String(precioArg).replace(/[^0-9]/g,''))||0;
   
@@ -2853,9 +2854,11 @@ function cotizarDesdePrecios(marca, modeloCompleto, precioArg){
             selOpts('anno',[yr,yr-1],'— Elegir año —');
             elAnno.value=yr;
           }
-          // Mostrar info
+          // Mostrar info con referencia USD si aplica
           const aral=$$('ar-al');
-          if(aral) aral.innerHTML=`<div class="al info">💰 <strong>${marca} — ${modeloCompleto}</strong> · Año ${yr}<br><span style="font-size:10px;color:var(--m)">Precio cargado desde lista de precios</span></div>`;
+          const usdRef=precioUSD&&precioUSD>0?` &nbsp;·&nbsp; <span style="color:#F39C12;font-weight:700">💵 USD ${precioUSD.toLocaleString('es-AR')}</span>`:'';
+          const tcRef=precioUSD&&precioUSD>0&&_bnaCotiz?` <span style="font-size:9px;color:var(--m)">(TC BNA $${Math.round(_bnaCotiz).toLocaleString('es-AR')})</span>`:'';
+          if(aral) aral.innerHTML=`<div class="al info">💰 <strong>${marca} — ${modeloCompleto}</strong> · Año ${yr}${usdRef}${tcRef}<br><span style="font-size:10px;color:var(--m)">Precio cargado desde lista de precios</span></div>`;
           cP();
           rCampMini();
         },150);
