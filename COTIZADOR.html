@@ -625,7 +625,7 @@ input[type=text]#p-obs{background:#F5F7FA!important;border:1px solid #D5DCE6!imp
     <div class="cb">
       <div class="fr f2">
         <div class="fld"><label>Tipo <span class="req">*</span></label>
-          <select id="tipo" onchange="onTipo()"><option value="">— Elegir tipo —</option><option value="usado">Usado (Stock Almar)</option><option value="okm">0 km (Stock Almar)</option><option value="mercado">Multimarcas 0km</option><option value="mercado_usado">Multimarcas Usado</option></select>
+          <select id="tipo" onchange="onTipo()"><option value="">— Elegir tipo —</option><option value="usado">Usado (Stock Almar)</option><option value="lista_precios">0km Lista de Precios</option><option value="mercado">Multimarcas 0km</option><option value="mercado_usado">Multimarcas Usado</option></select>
           <select id="subtipo" onchange="onSubtipo()" disabled style="display:none"><option value="">— Auto o Utilitario —</option><option value="Auto">🚗 Autos</option><option value="Utilitario/Pickup">🚛 Utilitarios / Pickups</option></select>
         </div>
         <div class="fld"><label>Búsqueda rápida</label>
@@ -1656,7 +1656,6 @@ function onTipo(){
   $$('ar').style.display='none'; $$('ar-al').innerHTML='';
   const t=$$('tipo').value; if(!t)return;
   if(t==='mercado'){
-    // Mostrar selector de subtipo (solo para 0km)
     $$('subtipo').style.display='';
     $$('subtipo').disabled=false;
     $$('subtipo').value='';
@@ -1665,10 +1664,21 @@ function onTipo(){
   }
   $$('subtipo').style.display='none';
   $$('subtipo').disabled=true;
-  const ms=t==='usado'?[...new Set(stk.map(u=>u.marca))].sort()
-    :t==='okm'?[...new Set(okm.map(u=>u.marca))].sort()
-    :t==='mercado_usado'?Object.keys(MKT_TIPOS).sort()
-    :Object.keys(MKT).sort();
+  let ms;
+  if(t==='lista_precios'){
+    const pd=window._preciosData||[];
+    ms=pd.map(m=>m.marca).filter(Boolean).sort();
+    if(!ms.length){
+      $$('ar-al').innerHTML='<div class="al err">⚠️ No hay lista de precios cargada. Andá a PRECIOS → ☁ Actualizar primero.</div>';
+      return;
+    }
+  } else if(t==='usado'){
+    ms=[...new Set(stk.map(u=>u.marca))].sort();
+  } else if(t==='mercado_usado'){
+    ms=Object.keys(MKT_TIPOS).sort();
+  } else {
+    ms=Object.keys(MKT).sort();
+  }
   selOpts('marca',ms,'— Elegir marca —');
 }
 
@@ -1692,8 +1702,12 @@ function onMarca(){
     const tipos=MKT_TIPOS[ma]||{};
     const todos=[...(tipos['Auto']||[]),...(tipos['Utilitario/Pickup']||[])];
     ms=[...new Set(todos)].sort();
+  } else if(t==='lista_precios'){
+    const pd=window._preciosData||[];
+    const marcaData=pd.find(m=>m.marca===ma);
+    ms=(marcaData?marcaData.modelos:[]).map(mod=>mod.modelo).filter(Boolean).sort();
   } else {
-    ms=t==='usado'?[...new Set(stk.filter(u=>u.marca===ma).map(u=>u.modelo))].sort():t==='okm'?[...new Set(okm.filter(u=>u.marca===ma).map(u=>u.modelo))].sort():Object.keys(MKT[ma]||{}).sort();
+    ms=t==='usado'?[...new Set(stk.filter(u=>u.marca===ma).map(u=>u.modelo))].sort():Object.keys(MKT[ma]||{}).sort();
   }
   selOpts('modelo',ms,'— Elegir modelo —');
   // Actualizar campañas para mostrar financiera de la marca si corresponde
@@ -1702,13 +1716,50 @@ function onMarca(){
 function onModelo(){
   ['version','anno'].forEach(disEl);
   const t=$$('tipo').value,ma=$$('marca').value,mo=$$('modelo').value; if(!mo)return;
-  const mktVers=(MKT[ma]||{})[mo];const vs=t==='usado'?[...new Set(stk.filter(u=>u.marca===ma&&u.modelo===mo).map(u=>u.version))].sort():t==='okm'?[...new Set(okm.filter(u=>u.marca===ma&&u.modelo===mo).map(u=>u.version))].sort():t==='mercado_usado'?(Array.isArray(mktVers)?mktVers:Object.keys(mktVers||{}).sort()):Array.isArray(mktVers)?mktVers:Object.keys(mktVers||{}).sort();
+  if(t==='lista_precios'){
+    // En lista_precios no hay versión separada — el modelo ya es la versión completa
+    // Pasamos directo al año
+    const yr=new Date().getFullYear();
+    selOpts('version',['0KM'],'— Versión —');
+    $$('version').value='0KM';
+    selOpts('anno',[yr,yr-1],'— Elegir año —');
+    // Autocompletar precio
+    _autocompletarPrecioLista(ma,mo);
+    return;
+  }
+  const mktVers=(MKT[ma]||{})[mo];
+  const vs=t==='usado'?[...new Set(stk.filter(u=>u.marca===ma&&u.modelo===mo).map(u=>u.version))].sort()
+    :t==='mercado_usado'?(Array.isArray(mktVers)?mktVers:Object.keys(mktVers||{}).sort())
+    :Array.isArray(mktVers)?mktVers:Object.keys(mktVers||{}).sort();
   selOpts('version',vs,'— Elegir versión —');
+}
+function _autocompletarPrecioLista(ma,mo){
+  const pd=window._preciosData||[];
+  const marcaData=pd.find(m=>m.marca===ma);
+  if(!marcaData) return;
+  const modData=marcaData.modelos.find(m=>m.modelo===mo);
+  if(!modData) return;
+  let precio=modData.precio;
+  // Si es USD y hay cotización BNA, convertir
+  if(modData.moneda==='USD'&&window._bnaCotiz){
+    precio=Math.round(parseFloat(String(precio).replace(/[^0-9.]/g,''))*window._bnaCotiz);
+  } else {
+    precio=parseInt(String(precio).replace(/[^0-9]/g,''))||0;
+  }
+  if(precio>0){
+    const pa1=$$('pa1');
+    if(pa1){ pa1.value=precio; cP(); }
+    $$('ar-al').innerHTML='<div class="al info">💰 Precio cargado desde lista de precios'+(modData.moneda==='USD'?' (USD × TC BNA)':'')+'.</div>';
+  }
 }
 function onVer(){
   disEl('anno');
   const t=$$('tipo').value,ma=$$('marca').value,mo=$$('modelo').value,v=$$('version').value; if(!v)return;
-  const as=t==='usado'?[...new Set(stk.filter(u=>u.marca===ma&&u.modelo===mo&&u.version===v).map(u=>u.anno))].sort((a,b)=>b-a):t==='okm'?[...new Set(okm.filter(u=>u.marca===ma&&u.modelo===mo&&u.version===v).map(u=>u.anno))].sort((a,b)=>b-a):t==='mercado'?[new Date().getFullYear(),new Date().getFullYear()-1]:t==='mercado_usado'?Array.from({length:25},(_,i)=>new Date().getFullYear()-i):Array.from({length:25},(_,i)=>new Date().getFullYear()-i);
+  if(t==='lista_precios') return; // anno ya fue seteado en onModelo
+  const as=t==='usado'?[...new Set(stk.filter(u=>u.marca===ma&&u.modelo===mo&&u.version===v).map(u=>u.anno))].sort((a,b)=>b-a)
+    :t==='mercado'?[new Date().getFullYear(),new Date().getFullYear()-1]
+    :t==='mercado_usado'?Array.from({length:25},(_,i)=>new Date().getFullYear()-i)
+    :Array.from({length:25},(_,i)=>new Date().getFullYear()-i);
   selOpts('anno',as,'— Elegir año —');
 }
 function onAuto(){
@@ -1734,10 +1785,10 @@ function onAuto(){
         aral.innerHTML='<div class="al err">🔴 Este vehículo está <strong>SEÑADO</strong>. Verificá disponibilidad antes de cotizar.</div>';
     }
   }
-  else if(t==='okm'){
-    const u=okm.find(x=>x.marca===ma&&x.modelo===mo&&x.version===v&&x.anno===a);
-    if(u&&u.precio>0){$$('pa1').value=u.precio;if(u.color)$$('color').value=u.color}
-    if(u) updEstado(u.estado);
+  else if(t==='lista_precios'){
+    // El precio ya fue autocompletado en onModelo/_autocompletarPrecioLista
+    // Solo actualizamos el estado
+    updEstado('');
   } else if(t==='mercado_usado'){
     // Multimarcas Usado: precio libre, el vendedor lo ingresa manualmente
     $$('pa1').value='';
@@ -1815,7 +1866,7 @@ function updR(){
   $$('ra').textContent=a||'—';
   $$('rk').textContent=$$('km').value?parseInt($$('km').value).toLocaleString('es-AR')+' km':'—';
   $$('rc').textContent=$$('color').value||'—';
-  $$('rt').textContent=$$('tipo').value==='usado'?'USADO':$$('tipo').value==='okm'?'0 KM':'MERCADO';
+  $$('rt').textContent=$$('tipo').value==='usado'?'USADO':$$('tipo').value==='lista_precios'?'0 KM':'MERCADO';
 }
 function buscar(){
   const q=$$('busq').value.toLowerCase().trim(); if(q.length<2)return;
