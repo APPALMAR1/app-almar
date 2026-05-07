@@ -2547,18 +2547,18 @@ function impXP(e){
                 precio=precioRaw;
               } else {
                 const ps=String(precioRaw||'').trim();
-                // Detectar formato: si tiene coma seguida de 3 dígitos = separador de miles
-                // Ej: "$ 42,639,000" o "42.639.000" o "42639000"
                 const sinSimbolo=ps.replace(/[^0-9.,]/g,'');
-                if(/,\d{3}/.test(sinSimbolo)){
+                if(/,\d{3}/.test(sinSimbolo)&&!/\.\d{3}/.test(sinSimbolo)){
                   // Coma como separador de miles: "42,639,000" → 42639000
                   precio=parseFloat(sinSimbolo.replace(/,/g,''))||0;
-                } else if(/\.\d{3}/.test(sinSimbolo)){
-                  // Punto como separador de miles: "42.639.000" → 42639000
+                } else if(/\.\d{3}/.test(sinSimbolo)&&!/,/.test(sinSimbolo)){
+                  // Punto como separador de miles (AR): "43.100" o "42.639.000" → número
                   precio=parseFloat(sinSimbolo.replace(/\./g,''))||0;
+                } else if(/\.\d{3}/.test(sinSimbolo)&&/,/.test(sinSimbolo)){
+                  // Formato mixto "42.639,00" → 42639
+                  precio=parseFloat(sinSimbolo.replace(/\./g,'').replace(',','.'))||0;
                 } else {
-                  // Número simple o decimal
-                  precio=parseFloat(sinSimbolo.replace(',','.'))||0;
+                  precio=parseFloat(sinSimbolo)||0;
                 }
               }
               const moneda=colMon>=0?String(r[colMon]||'').trim().toUpperCase():'ARS';
@@ -3723,8 +3723,37 @@ function gO(){rOkm();alert('✅ Stock 0km guardado.')}
 function aC(){camp.push({id:Date.now(),banco:"NUEVO",nombre:"NUEVA CAMPAÑA",tipo:"TRAD",tna:50,comision:0,plazoMax:60,ltv:80,activa:false});rAdm()}
 function aS(){stk.unshift({dominio:"",marca:"",modelo:"",version:"",anno:2025,km:0,precio:0,color:"",estado:"DISPONIBLE"});rAdm()}
 function aO(){okm.unshift({marca:"",modelo:"",version:"",anno:2025,precio:0,color:"",estado:"DISPONIBLE",obs:""});rAdm()}
-function expD(){const d=JSON.stringify({camp,stk,okm,HG,exported:new Date().toISOString()},null,2);const a=document.createElement('a');a.href='data:application/json,'+encodeURIComponent(d);a.download='ALMAR_'+new Date().toISOString().slice(0,10)+'.json';a.click()}
-function impD(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{try{const d=JSON.parse(ev.target.result);if(d.camp)camp=d.camp;if(d.stk)stk=d.stk;if(d.okm)okm=d.okm;if(d.HG)HG=d.HG;alert('✅ Datos importados.');rAdm();rCampMini();rCampCot()}catch(err){alert('❌ Archivo inválido.')}};r.readAsText(f)}
+function expD(){
+  const precios=localStorage.getItem('almar_precios_okm');
+  const preciosObj=precios?JSON.parse(precios):null;
+  const d=JSON.stringify({camp,stk,okm,HG,precios_okm:preciosObj,exported:new Date().toISOString()},null,2);
+  const a=document.createElement('a');
+  a.href='data:application/json,'+encodeURIComponent(d);
+  a.download='ALMAR_'+new Date().toISOString().slice(0,10)+'.json';
+  a.click();
+}
+function impD(e){
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=ev=>{
+    try{
+      const d=JSON.parse(ev.target.result);
+      if(d.camp) camp=d.camp;
+      if(d.stk)  stk=d.stk;
+      if(d.okm)  okm=d.okm;
+      if(d.HG)   HG=d.HG;
+      // Restaurar precios 0km si están en el JSON
+      if(d.precios_okm){
+        localStorage.setItem('almar_precios_okm',JSON.stringify(d.precios_okm));
+        window._preciosData=d.precios_okm.data||[];
+        mostrarToast('✅ Precios 0km restaurados — '+((d.precios_okm.data||[]).reduce((s,m)=>s+m.modelos.length,0))+' modelos');
+      }
+      alert('✅ Datos importados.');
+      rAdm();rCampMini();rCampCot();
+    }catch(err){alert('❌ Archivo inválido.');}
+  };
+  r.readAsText(f);
+}
 
 // ── TEMA CLARO / OSCURO ───────────────────────────────────────────────────────
 let isLight=false;
