@@ -2810,16 +2810,11 @@ function cotizarDesdePrecios(marca, modeloCompleto, precioArg){
 
   // Ir a propuesta y cargar datos
   goTo('propuesta');
+  const yr=new Date().getFullYear();
   setTimeout(()=>{
-    // Setear tipo Multimarcas 0km
+    // Setear tipo lista_precios
     const tipo=$$('tipo');
-    if(tipo){ tipo.value='mercado'; onTipo(); }
-    // Forzar subtipo vacío y cargar todas las marcas del MKT directamente
-    // (saltear el bloqueo que espera que el usuario elija Auto/Utilitario)
-    const sub=$$('subtipo');
-    if(sub){ sub.value=''; }
-    // Cargar marcas manualmente sin esperar subtipo
-    selOpts('marca', Object.keys(MKT).sort(), '— Elegir marca —');
+    if(tipo){ tipo.value='lista_precios'; onTipo(); }
 
     setTimeout(()=>{
       // Setear marca
@@ -2831,28 +2826,37 @@ function cotizarDesdePrecios(marca, modeloCompleto, precioArg){
       }
 
       setTimeout(()=>{
-        // Setear modelo — onMarca() ya cargó las opciones
+        // Setear modelo — onMarca() ya cargó las opciones desde _preciosData
         const elModelo=$$('modelo');
         if(elModelo){
           const optsM=[...elModelo.options];
-          const optM=optsM.find(o=>o.value.toUpperCase()===mejorModelo.toUpperCase());
-          if(optM){ elModelo.value=optM.value; onModelo(); }
+          // El modelo en lista_precios es el nombre completo (modelo + version juntos)
+          const optM=optsM.find(o=>o.value===modeloCompleto);
+          if(optM){
+            elModelo.value=optM.value;
+            onModelo(); // esto setea version='0KM' y año, y autocompleta precio
+          }
         }
 
         setTimeout(()=>{
-          // Setear precio
-          if(precio>0) $$('pa1').value=precio;
+          // Sobreescribir precio con el valor exacto pasado desde PRECIOS (puede ser convertido USD→ARS)
+          if(precio>0){ $$('pa1').value=precio; cP(); }
+          // Setear versión = nombre completo del modelo (es la versión en este flujo)
+          const elVer=$$('version');
+          if(elVer){
+            selOpts('version',[modeloCompleto],'— Versión —');
+            elVer.value=modeloCompleto;
+          }
           // Setear año actual
           const elAnno=$$('anno');
           if(elAnno){
-            selOpts('anno',[new Date().getFullYear(),new Date().getFullYear()-1],'— Elegir año —');
-            elAnno.value=new Date().getFullYear();
+            selOpts('anno',[yr,yr-1],'— Elegir año —');
+            elAnno.value=yr;
           }
           // Mostrar info
           const aral=$$('ar-al');
-          if(aral) aral.innerHTML=`<div class="al info">💰 <strong>${marca} — ${modeloCompleto}</strong><br><span style="font-size:10px;color:var(--m)">Precio de lista · Completar versión y año si es necesario</span></div>`;
+          if(aral) aral.innerHTML=`<div class="al info">💰 <strong>${marca} — ${modeloCompleto}</strong> · Año ${yr}<br><span style="font-size:10px;color:var(--m)">Precio cargado desde lista de precios</span></div>`;
           cP();
-          // Refrescar campañas con marca y tipo ya seteados
           rCampMini();
         },150);
       },150);
