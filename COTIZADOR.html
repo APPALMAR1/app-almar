@@ -2320,6 +2320,8 @@ function guardarPropuesta(){
   }).catch(()=>{});
 
   mostrarToast('✅ Propuesta guardada');
+  // Limpiar formulario para nueva operación
+  setTimeout(()=>resetP(true),1500);
   }catch(err){
     console.error('Error en guardarPropuesta:',err);
     alert('❌ Error al guardar: '+err.message+'\n\nContactá al administrador.');
@@ -3258,8 +3260,8 @@ function addEx(col){
   $$(c).appendChild(d);
 }
 
-function resetP(){
-  if(!confirm('¿Limpiar toda la propuesta para una nueva operación?'))return;
+function resetP(sinConfirmar){
+  if(!sinConfirmar&&!confirm('¿Limpiar toda la propuesta para una nueva operación?'))return;
   ['tipo','marca','modelo','version','anno','color','km','tveh'].forEach(id=>{const el=$$(id);if(el){el.value='';if(el.tagName==='SELECT')el.disabled=['marca','modelo','version','anno'].includes(id)}});
   ['pa1','pa2','pa3','pa3b','pa4','pa5','pa6','pb1','pb2','pb3','pb4','pb5','pb6'].forEach(id=>{const el=$$(id);if(el)el.value=''});
   ['p-nombre','p-apellido','p-dni','p-tel','p-email','p-obs'].forEach(id=>{const el=$$(id);if(el)el.value=''});
