@@ -678,7 +678,7 @@ input[type=text]#p-obs{background:#F5F7FA!important;border:1px solid #D5DCE6!imp
       </div>
       <div class="fr f2">
         <div class="fld"><label>Teléfono celular <span style="color:#e74c3c">*</span></label><input type="tel" id="p-tel" placeholder="Ej: 3764XXXXXXX" oninput="validarTel();buscarDuplicado()" maxlength="13" style="border-color:var(--bdr)"></div>
-        <div class="fld"><label>Email <span style="color:#e74c3c">*</span></label><input type="email" id="p-email" placeholder="correo@ejemplo.com" oninput="validarEmail();buscarDuplicado()" style="border-color:var(--bdr)"></div>
+        <div class="fld"><label>Email <span style="font-size:9px;color:var(--m)">(opcional)</span></label><input type="email" id="p-email" placeholder="correo@ejemplo.com" oninput="validarEmail();buscarDuplicado()" style="border-color:var(--bdr)"></div>
       </div>
       <div class="fr f2">
         <div class="fld"><label>DNI / CUIT</label><input type="text" id="p-dni" placeholder="Opcional"></div>
@@ -2071,7 +2071,8 @@ function validarCamposCliente(){
   if(!nombre) msgs.push('Nombre');
   if(!apellido) msgs.push('Apellido');
   if(!tel||tel.length<10) msgs.push('Teléfono válido (mín 10 dígitos)');
-  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) msgs.push('Email válido');
+  // Email es opcional — solo validar formato si se ingresó algo
+  if(email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) msgs.push('Email (formato incorrecto)');
   return msgs;
 }
 
@@ -2141,6 +2142,7 @@ function renderClientes(rows){
 
 // ── PROPUESTAS — GUARDAR Y CARGAR ────────────────────────────────────────────
 function guardarPropuesta(){
+  try{
   // Validar campos cliente
   const errores=validarCamposCliente();
   if(errores.length){
@@ -2318,6 +2320,10 @@ function guardarPropuesta(){
   }).catch(()=>{});
 
   mostrarToast('✅ Propuesta guardada');
+  }catch(err){
+    console.error('Error en guardarPropuesta:',err);
+    alert('❌ Error al guardar: '+err.message+'\n\nContactá al administrador.');
+  }
 }
 
 function fmtFecha(f){
