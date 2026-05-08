@@ -2041,8 +2041,8 @@ function confirmarDuplicado(continuar){
     const tel=($$('p-tel')?.value||'').replace(/\D/g,'');
     const email=($$('p-email')?.value||'').trim().toLowerCase();
     for(const c of _clientesCache){
-      const cTel=(c.Telefono||'').replace(/\D/g,'');
-      const cEmail=(c.Email||'').toLowerCase().trim();
+      const cTel=String(c.Telefono||c.telefono||'').replace(/\D/g,'');
+      const cEmail=String(c.Email||c.email||'').toLowerCase().trim();
       if(tel&&cTel===tel){$$('p-tel').value='';$$('p-tel').focus();break;}
       if(email&&cEmail===email){$$('p-email').value='';$$('p-email').focus();break;}
     }
@@ -2173,8 +2173,8 @@ function guardarPropuesta(){
   // Calcular número de cliente: buscar si ya existe, si no asignar el siguiente
   let nroCliente='';
   const clienteExistente=_clientesCache.find(c=>{
-    const cTel=(c.Telefono||'').replace(/\D/g,'');
-    const cEmail=(c.Email||'').toLowerCase();
+    const cTel=String(c.Telefono||c.telefono||'').replace(/\D/g,'');
+    const cEmail=String(c.Email||c.email||'').toLowerCase();
     const tl=tel.replace(/\D/g,'');
     const em=email.toLowerCase();
     return (tl&&cTel===tl)||(em&&cEmail===em);
@@ -2308,8 +2308,8 @@ function guardarPropuesta(){
   }).then(()=>{
     // Actualizar cache local de clientes
     const idx=_clientesCache.findIndex(c=>{
-      const cTel=(c.Telefono||'').replace(/\D/g,'');
-      const cEmail=(c.Email||'').toLowerCase();
+      const cTel=String(c.Telefono||c.telefono||'').replace(/\D/g,'');
+      const cEmail=String(c.Email||c.email||'').toLowerCase();
       return (tel.replace(/\D/g,'')&&cTel===tel.replace(/\D/g,''))||(email&&cEmail===email.toLowerCase());
     });
     if(idx>=0){
