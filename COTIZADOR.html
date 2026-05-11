@@ -3265,12 +3265,18 @@ function calcCred(){
   // UVA alert
   $$('uva-al').innerHTML=cv.tipo==='UVA'?'<div class="al warn" style="margin-top:6px">⚠️ Crédito UVA: cuota varía según BCRA.</div>':'';
 
-  // Tabla de cuotas para impresión (sin banco ni campaña)
+  // Tabla de cuotas para impresión — usa coeficientes exactos si los tiene, sino TNA
   const pq=$$('print-cuotas');
   const bestN=valid.length?valid.reduce((a,b)=>a.c<b.c?a:b).n:null;
   if(valid.length){
     const items=PL.filter(n=>n<=cv.plazoMax).map(n=>{
-      const c=cuota(mt,cv.tna,n);
+      // Usar coeficiente real [0] (1era cuota) si está disponible — igual que las tarjetas
+      let c;
+      if(cv.coefs&&cv.coefs[n]){
+        c=Math.round(mt/(cv.coefBase||1000)*cv.coefs[n][0]);
+      } else {
+        c=cuota(mt,cv.tna,n);
+      }
       const isBest=n===bestN;
       return `<div class="pq-item${isBest?' pq-best':''}"><div class="pq-pl">${n} meses</div><div class="pq-cv">${fmt(c)}</div></div>`;
     }).join('');
