@@ -754,13 +754,22 @@ input[type=text]#p-obs{background:#F5F7FA!important;border:1px solid #D5DCE6!imp
 
   <!-- OBSERVACIONES Y ACCIONES -->
   <div class="card"><div class="cb">
-    <div class="fld"><label>Observaciones</label><input type="text" id="p-obs" placeholder="ej: Precio sujeto a aprobación crediticia. Propuesta válida por 48hs."></div>
+    <!-- Campo 1: Observaciones para el cliente (se imprime) -->
+    <div class="fld" style="margin-bottom:8px">
+      <label>Observaciones <span style="font-size:8px;color:var(--m)">(visible en la propuesta impresa)</span></label>
+      <input type="text" id="p-obs" placeholder="ej: Precio sujeto a aprobación crediticia. Propuesta válida por 48hs.">
+    </div>
+    <!-- Campo 2: Nota interna ALMAR (NO se imprime, solo historial interno) -->
+    <div class="fld no-print" style="margin-bottom:8px">
+      <label style="color:var(--y)">🔒 Nota interna ALMAR <span style="font-size:8px;color:var(--m)">(solo equipo — NO aparece en propuesta impresa)</span></label>
+      <input type="text" id="p-obs-interno" placeholder="ej: Cliente entrega Volkswagen Gol 2018 como parte de pago — a tasar." style="border-color:rgba(239,125,0,.4);background:rgba(239,125,0,.05)">
+    </div>
     <div class="brow no-print">
       <button class="btn btn-r btn-full" onclick="vWA()">📱 Copiar texto WhatsApp</button>
       <button class="btn btn-ghost" onclick="prtP()">🖨 Imprimir / PDF</button>
       <button class="btn btn-ghost" onclick="emailPropuesta()">📧 Email</button>
       <button class="btn btn-g" onclick="gCot()">💾 Guardar</button>
-      <button class="btn btn-ghost" onclick="resetP()">🔄 Nueva operación</button>
+      <button class="btn btn-ghost" onclick="resetP(sinConfirmar)">🔄 Nueva operación</button>
     </div>
     <div id="wap" style="display:none"></div>
   </div></div>
@@ -2251,6 +2260,9 @@ function guardarPropuesta(){
     cuota, plazo,
     totalA:total,
     totalB,
+    // Observaciones
+    obs:$$('p-obs')?.value||'',
+    obsInterno:$$('p-obs-interno')?.value||'',
     // Campos individuales de A (para leer sin parsear JSON)
     aGestoria:detalleA.gestoria||0,
     aGastosBanc:detalleA.gastosBancarios||0,
@@ -3290,7 +3302,7 @@ function resetP(sinConfirmar){
   if(!sinConfirmar&&!confirm('¿Limpiar toda la propuesta para una nueva operación?'))return;
   ['tipo','marca','modelo','version','anno','color','km','tveh'].forEach(id=>{const el=$$(id);if(el){el.value='';if(el.tagName==='SELECT')el.disabled=['marca','modelo','version','anno'].includes(id)}});
   ['pa1','pa2','pa3','pa3b','pa4','pa5','pa6','pb1','pb2','pb3','pb4','pb5','pb6'].forEach(id=>{const el=$$(id);if(el)el.value=''});
-  ['p-nombre','p-apellido','p-dni','p-tel','p-email','p-obs'].forEach(id=>{const el=$$(id);if(el)el.value=''});
+  ['p-nombre','p-apellido','p-dni','p-tel','p-email','p-obs','p-obs-interno'].forEach(id=>{const el=$$(id);if(el)el.value=''});
   $$('exa').innerHTML=''; $$('exb').innerHTML='';
   $$('ar').style.display='none'; $$('ar-al').innerHTML=''; $$('cred-box').style.display='none';
   credCampId=null; credPlazo=null;
@@ -3746,6 +3758,21 @@ function abrirDetallePropuesta(p){
       <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,.8);text-transform:uppercase;letter-spacing:1px">Total a cubrir</div>
       <div style="font-size:22px;font-weight:900;color:#fff">${fmt(totalA)}</div>
     </div>
+
+    <!-- Observaciones cliente -->
+    ${(p.obs||p.Obs)?`
+    <div style="margin-top:10px;padding:8px 12px;background:#F5F7FA;border-radius:6px;border-left:3px solid #0069b4">
+      <div style="font-size:8px;font-weight:800;letter-spacing:1.5px;color:#7F8C9A;text-transform:uppercase;margin-bottom:3px">📋 Observaciones</div>
+      <div style="font-size:11px;color:#1A2332">${p.obs||p.Obs}</div>
+    </div>`:''}
+
+    <!-- Nota interna ALMAR (solo visible para el equipo — no se imprime) -->
+    ${(p.obsInterno||p.ObsInterno)?`
+    <div style="margin-top:6px;padding:8px 12px;background:rgba(239,125,0,.08);border-radius:6px;border-left:3px solid #ef7d00">
+      <div style="font-size:8px;font-weight:800;letter-spacing:1.5px;color:#ef7d00;text-transform:uppercase;margin-bottom:3px">🔒 Nota interna ALMAR</div>
+      <div style="font-size:11px;color:#1A2332">${p.obsInterno||p.ObsInterno}</div>
+    </div>`:''}
+
     <div style="margin-top:8px;font-size:8px;color:#9d9d9c;text-align:center">Propuesta sujeta a disponibilidad de stock y aprobación crediticia · ALMAR Concesionario Oficial · Posadas, Misiones</div>
   </div>`;
 
