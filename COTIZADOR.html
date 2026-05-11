@@ -531,7 +531,7 @@ select,input[type=text],input[type=number],input[type=tel],input[type=email]{
 .pq-item.pq-best .pq-pl{color:rgba(255,255,255,.7)!important}
 .pq-cv{font-family:'Barlow Condensed',Arial;font-weight:900;font-size:11pt;color:#1A2332;line-height:1}
 .pq-item.pq-best .pq-cv{color:#fff!important}
-.pq-tt{font-size:6pt;color:#9AAAB8;margin-top:.5mm}
+.pq-tt{display:none!important}
 .pq-item.pq-best .pq-tt{color:rgba(255,255,255,.55)!important}
 .pq-nota{font-size:6pt;color:#9AAAB8;margin-top:1.5mm;font-style:italic}
 
@@ -3237,7 +3237,17 @@ function calcCred(){
     const d=document.createElement('div');
     d.className='qm'+(best?' best':'')+(dis?' dis':'')+(picked&&!best?' picked':'');
     d.onclick=()=>{if(!dis){credPlazo=n;calcCred()}};
-    d.innerHTML=`<div class="mpl">${n}M${dis?' ✗':''}</div><div class="mcv">${fmt(c)}</div>${cv.coefs&&cv.coefs[n]?`<div class="mtt" style="font-size:9px;color:#aaa">1era: ${fmt(mt/(cv.coefBase||1000)*cv.coefs[n][0])}</div>`:''}${best?'<div class="mst">⭐</div>':''}`;
+    // Si tiene coeficientes: coefs[n][0] = 1era cuota (más alta), coefs[n][1] = promedio
+    const tiene1era=cv.coefs&&cv.coefs[n];
+    const cuota1era=tiene1era?Math.round(mt/(cv.coefBase||1000)*cv.coefs[n][0]):0;
+    const cuotaProm=c; // ya calculada arriba
+    if(tiene1era){
+      // Arriba: 1era cuota (la real, la más alta) — tamaño grande
+      // Abajo: cuota promedio — chica con label
+      d.innerHTML=`<div class="mpl">${n}M${dis?' ✗':''}</div><div class="mcv">${fmt(cuota1era)}</div><div class="mtt" style="font-size:8px;opacity:.7">Prom: ${fmt(cuotaProm)}</div>${best?'<div class="mst">⭐</div>':''}`;
+    } else {
+      d.innerHTML=`<div class="mpl">${n}M${dis?' ✗':''}</div><div class="mcv">${fmt(cuotaProm)}</div>${best?'<div class="mst">⭐</div>':''}`;
+    }
     g.appendChild(d);
   });
 
@@ -3262,7 +3272,7 @@ function calcCred(){
     const items=PL.filter(n=>n<=cv.plazoMax).map(n=>{
       const c=cuota(mt,cv.tna,n);
       const isBest=n===bestN;
-      return `<div class="pq-item${isBest?' pq-best':''}"><div class="pq-pl">${n} meses</div><div class="pq-cv">${fmt(c)}</div><div class="pq-tt">Total ${fmt(c*n)}</div></div>`;
+      return `<div class="pq-item${isBest?' pq-best':''}"><div class="pq-pl">${n} meses</div><div class="pq-cv">${fmt(c)}</div></div>`;
     }).join('');
     pq.innerHTML=`<div class="pq-tit">Opciones de cuota mensual</div><div class="pq-grid">${items}</div><div class="pq-nota">* Valores estimados. Sujeto a aprobación crediticia y condiciones vigentes al momento de la operación.</div>`;
     pq.style.display='block';
@@ -3511,7 +3521,7 @@ function calcCot(){
     const best=c===minC&&n<=cv.plazoMax,dis=n>cv.plazoMax;
     const pct=pr>0?((c*n/pr-1)*100).toFixed(0):0;
     const d=document.createElement('div');d.className='qc'+(best?' best':'')+(dis?' dis':'');
-    d.innerHTML=`<div class="pl">${n}M${dis?' ✗':''}</div><div class="cv">${fmt(c)}</div><div class="ttl">${fmt(c*n)}</div><div class="pct">+${pct}%</div>${best?'<div class="star">⭐ Mejor</div>':''}`;
+    d.innerHTML=`<div class="pl">${n}M${dis?' ✗':''}</div><div class="cv">${fmt(c)}</div><div class="pct">+${pct}%</div>${best?'<div class="star">⭐ Mejor</div>':''}`;
     g.appendChild(d);
   });
   $$('cot-clbl').textContent=`${cv.banco} — ${cv.nombre} · TNA ${cv.tna.toFixed(2).replace('.',',')}%`;
