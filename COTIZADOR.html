@@ -698,7 +698,7 @@ input[type=text]#p-obs{background:#F5F7FA!important;border:1px solid #D5DCE6!imp
         <div class="pr"><label class="m">Precio del vehículo</label><input type="number" id="pa1" placeholder="0" oninput="cP()"></div>
         <div class="pr"><label>Gestoría / Patentamiento</label><input type="number" id="pa2" placeholder="0" oninput="cP()"></div>
         <div class="pr"><label>Gastos bancarios campaña</label><input type="number" id="pa3" placeholder="0" oninput="cP()"></div>
-        <div class="pr"><label>Gastos bancarios adicionales</label><input type="number" id="pa3b" placeholder="0" oninput="cP()"></div>
+        <div class="pr"><label>Gastos adicionales ALMAR <span style="font-size:8px;color:var(--m)">(auto: 3% sin com. / 2% con com.)</span></label><input type="number" id="pa3b" placeholder="0" oninput="cP()"></div>
         <div class="pr"><label>Intereses crédito (total)</label><input type="number" id="pa4" placeholder="0" oninput="cP()"></div>
         <div class="pr"><label>Comisión / Premio banco</label><input type="number" id="pa5" placeholder="0" oninput="cP()"></div>
         <div class="pr"><label>Seguro automotor</label><input type="number" id="pa6" placeholder="0" oninput="cP()"></div>
@@ -3138,10 +3138,18 @@ function sCredCamp(id){
   credCampId=id; credPlazo=null;
   const cv=camp.find(c=>c.id===id);
   const mt=parseFloat($$('pb1').value)||0;
-  if(cv&&mt>0&&cv.comision>0){
-    const quebranto=Math.round(mt*(cv.comision/100)*1.21);
-    // Asignar sin disparar oninput para evitar bucle
-    const el=$$('pa3'); if(el) el.value=quebranto;
+  if(cv&&mt>0){
+    // Gastos bancarios campaña (quebranto con IVA)
+    if(cv.comision>0){
+      const quebranto=Math.round(mt*(cv.comision/100)*1.21);
+      const el=$$('pa3'); if(el) el.value=quebranto;
+    }
+    // Gastos adicionales ALMAR:
+    // — Sin comisión bancaria → 3% del monto
+    // — Con comisión bancaria → 2% del monto
+    const pctAlmar=cv.comision>0?0.02:0.03;
+    const gastosAlmar=Math.round(mt*pctAlmar);
+    const el3b=$$('pa3b'); if(el3b) el3b.value=gastosAlmar;
   }
   rCampMini();
   calcCred();
@@ -3155,9 +3163,16 @@ function calcCred(){
   // Recalcular gastos bancarios si hay campaña seleccionada
   if(credCampId&&mt>0){
     const cv=camp.find(c=>c.id===credCampId);
-    if(cv&&cv.comision>0){
-      const quebranto=Math.round(mt*(cv.comision/100)*1.21);
-      $$('pa3').value=quebranto;
+    if(cv){
+      // Gastos bancarios campaña (quebranto con IVA)
+      if(cv.comision>0){
+        const quebranto=Math.round(mt*(cv.comision/100)*1.21);
+        $$('pa3').value=quebranto;
+      }
+      // Gastos adicionales ALMAR: 3% sin comisión bancaria / 2% con comisión bancaria
+      const pctAlmar=cv.comision>0?0.02:0.03;
+      const gastosAlmar=Math.round(mt*pctAlmar);
+      $$('pa3b').value=gastosAlmar;
     }
   }
   box.style.display='block';
