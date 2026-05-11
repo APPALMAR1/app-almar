@@ -22,7 +22,7 @@ function loadXLSX(cb){
 }
 </script>
 <style>
-/* ── MODO OSCURO (default) ── */
+/*  MODO OSCURO (default)  */
 :root{
   --r:#0069b4;--rd:#164194;--rg:rgba(0,105,180,.18);
   --bg:#0D0D0D;--s1:#161616;--s2:#1E1E1E;--s3:#272727;
@@ -35,7 +35,7 @@ function loadXLSX(cb){
   --shadow:0 2px 14px rgba(0,0,0,.6);
   --tbg:var(--s1);--accent:var(--r);
 }
-/* ── MODO CLARO ── */
+/*  MODO CLARO  */
 html.light{
   --bg:#F0F4F8;--s1:#FFFFFF;--s2:#F5F7FA;--s3:#E8EDF3;
   --w:#1A2332;--t:#2C3E50;--m:#7F8C9A;--bdr:#D5DCE6;
@@ -430,7 +430,7 @@ body.print-stock #screen-propuesta{display:none!important}
 body.print-stock #screen-stock{display:block!important}
 body.print-stock .no-print{display:none!important}
 
-/* ── STOCK IMPRESIÓN ── */
+/*  STOCK IMPRESIÓN  */
 body.print-stock{background:#fff!important;color:#1A2332!important;font-size:8pt!important}
 body.print-stock .pw-stk{padding:0!important;max-width:100%!important}
 body.print-stock .ph-stk{display:flex!important;align-items:center;justify-content:space-between;border-bottom:2.5px solid #164194;padding-bottom:3mm;margin-bottom:3mm}
@@ -456,22 +456,22 @@ body.print-stock .pft-stk{display:block!important;margin-top:3mm;padding-top:2mm
 html,body{background:#fff!important;color:#1A2332!important;font-size:8pt!important;line-height:1.3}
 .pw{padding:0!important;max-width:100%!important}
 
-/* ── HEADER ── */
+/*  HEADER  */
 .ph{display:flex!important;align-items:center;justify-content:space-between;border-bottom:2.5px solid #164194;padding-bottom:3mm;margin-bottom:3mm}
 .phl{background:#164194!important;color:#fff!important;padding:2mm 6mm;font-family:'Barlow Condensed',Arial;font-weight:900;font-size:17pt;letter-spacing:3px;border-radius:3px}
 .phi{text-align:right;font-size:7.5pt;color:#5A6A7A;line-height:1.5}
 
-/* ── OCULTAR card Vehículo completo — lo reemplaza el resumen ar ── */
+/*  OCULTAR card Vehículo completo — lo reemplaza el resumen ar  */
 .card.hl{display:none!important}
 
-/* ── RESUMEN AUTO (banda compacta) ── */
+/*  RESUMEN AUTO (banda compacta)  */
 .ar{display:flex!important;background:#EEF3F8!important;border:1px solid #C8D6E3!important;border-left:4px solid #164194!important;padding:1.5mm 3mm!important;margin-bottom:2mm!important;border-radius:3px!important;align-items:center;gap:8px;flex-wrap:wrap}
 .arn{color:#1A2332!important;font-size:10pt!important;font-weight:800;flex:1;min-width:120px}
 .pills{display:flex;gap:4px;flex-wrap:wrap}
 .pill{background:#D5DCE6!important;color:#2C3E50!important;border-radius:10px;padding:0.5mm 4px;font-size:7pt}
 .pill.r{background:rgba(0,105,180,.1)!important;color:#0069b4!important}
 
-/* ── CARD CLIENTE compacto ── */
+/*  CARD CLIENTE compacto  */
 .card{background:#fff!important;border:1px solid #D5DCE6!important;box-shadow:none!important;margin-bottom:2mm!important;break-inside:avoid;border-radius:3px!important}
 .ch{padding:1mm 3mm!important;background:#F0F4F8!important;border-bottom:1px solid #D5DCE6!important}
 .cb{padding:2mm 3mm!important}
@@ -488,7 +488,7 @@ select,input[type=text],input[type=number],input[type=tel],input[type=email]{
 /* ocultar selector campañas y cuotas en impresión — las cuotas van en col-A via print-cuotas */
 .addb,.cg-mini,.qg-mini,.cred-box-tit,.clbl2,#uva-al,#ltv-al,#qg-mini-wrap,#cred-box,#cred-camp-resumen{display:none!important}
 
-/* ── PROPUESTA 2 COLUMNAS ── */
+/*  PROPUESTA 2 COLUMNAS  */
 .p2{display:grid!important;grid-template-columns:1fr 1fr!important;gap:3mm!important;align-items:start;margin-bottom:2mm!important}
 .pct2{font-size:8pt!important;font-weight:800;letter-spacing:.5px;padding:1mm 0!important;margin-bottom:1.5mm!important;border-bottom-width:2px!important}
 .col-a .pct2{border-color:#0069b4!important;color:#0069b4!important}
@@ -506,7 +506,7 @@ select,input[type=text],input[type=number],input[type=tel],input[type=email]{
 .ptv{font-size:11pt!important;font-weight:900;line-height:1}
 .ptot.a .ptv{color:#0069b4!important}.ptot.b .ptv{color:#1E8449!important}
 
-/* ── SALDO ── */
+/*  SALDO  */
 .saldo{margin-top:1.5mm!important}
 .si2{animation:none!important;padding:1.5mm 2.5mm!important;border-radius:3px!important;display:flex;align-items:center;justify-content:space-between}
 .si2.ok{background:#F0FFF4!important;border:1.5px solid #1E8449!important}
@@ -520,8 +520,8 @@ select,input[type=text],input[type=number],input[type=tel],input[type=email]{
 .si2.falta .stl,.si2.falta .svl{color:#0069b4!important}
 .prog{display:none!important}
 
-/* ── BOX CUOTAS — ocultar en pantalla solo los que no tienen display inline (manejado por JS) ── */
-/* ── CUOTAS en col-A, debajo del Total a cubrir ── */
+/*  BOX CUOTAS — ocultar en pantalla solo los que no tienen display inline (manejado por JS)  */
+/*  CUOTAS en col-A, debajo del Total a cubrir  */
 #print-cuotas{display:block!important;margin-top:2mm!important}
 .pq-tit{font-family:'Barlow Condensed',Arial;font-weight:800;font-size:8pt;color:#164194;letter-spacing:.5px;text-transform:uppercase;margin-bottom:1.5mm;border-bottom:1.5px solid #164194;padding-bottom:.8mm}
 .pq-grid{display:grid!important;grid-template-columns:repeat(3,1fr);gap:1.5mm}
@@ -535,12 +535,12 @@ select,input[type=text],input[type=number],input[type=tel],input[type=email]{
 .pq-item.pq-best .pq-tt{color:rgba(255,255,255,.55)!important}
 .pq-nota{font-size:6pt;color:#9AAAB8;margin-top:1.5mm;font-style:italic}
 
-/* ── OBSERVACIONES (card final) ── */
+/*  OBSERVACIONES (card final)  */
 .card:last-of-type .cb{padding:1.5mm 3mm!important}
 .fld label{font-size:6.5pt!important;color:#7F8C9A!important}
 input[type=text]#p-obs{background:#F5F7FA!important;border:1px solid #D5DCE6!important;color:#1A2332!important;font-size:7.5pt!important;padding:1mm 2mm!important}
 
-/* ── FOOTER ── */
+/*  FOOTER  */
 .pft{display:block!important;margin-top:3mm;padding-top:2mm;border-top:1px solid #D5DCE6;font-size:6pt;color:#9AAAB8;text-align:center;letter-spacing:.3px}
 }
 </style>
@@ -1000,7 +1000,7 @@ input[type=text]#p-obs{background:#F5F7FA!important;border:1px solid #D5DCE6!imp
 <div id="bn"></div>
 
 <script>
-// ── DATOS ─────────────────────────────────────────────────────────────────────
+//  DATOS ─
 const USERS=[
   {id:'camila',   name:'Camila Betchen',  ini:'CB', role:'vendedor',   col:'#8E44AD', pin:'1234'},
   {id:'lucio',    name:'Lucio Pilleri',   ini:'LP', role:'vendedor',   col:'#164194', pin:'2345'},
@@ -1019,7 +1019,7 @@ const puedeVerTodos = u => esSupervisor(u)||esGerencia(u);
 const PL=[6,12,18,24,30,36,48,60];
 
 const CAMP_D=[
-  // ── BANCOS ──────────────────────────────────────────────────────────────
+  //  BANCOS 
   {id:1, banco:"ICBC",      nombre:"TASA OPORTUNIDAD",        tipo:"TRAD",tna:53,   comision:0,  plazoMax:60,ltv:80,activa:true,  marca:null, coefBase:1000,coefs:{12:[118.42,114.56],24:[77.69,74.03],36:[65.25,61.90],48:[59.79,56.74],60:[57.01,54.26]}},
   {id:2, banco:"ICBC",      nombre:"TASA PROMOCIONAL",        tipo:"TRAD",tna:61,   comision:5,  plazoMax:60,ltv:80,activa:true,  marca:null, coefBase:1000,coefs:{12:[124.03,119.66],24:[83.73,79.65],36:[71.76,68.08],48:[66.69,63.41],60:[64.24,61.32]}},
   {id:3, banco:"ICBC",      nombre:"TASA MAX 36M",            tipo:"TRAD",tna:63,   comision:10, plazoMax:36,ltv:80,activa:true,  marca:null, coefBase:1000,coefs:{12:[123.33,119.02],24:[84.50,80.37],36:[73.41,69.66]}},
@@ -1036,7 +1036,7 @@ const CAMP_D=[
   {id:14,banco:"SANTANDER", nombre:"ESPECIAL",                tipo:"TRAD",tna:53.9, comision:4,  plazoMax:60,ltv:80,activa:true,  marca:null, coefBase:100000,coefs:{12:[10961.39,10961.39],18:[8218.23,8218.23],24:[6892.97,6892.97],36:[5654.29,5654.29],48:[5112.08,5112.08],60:[4838.23,4838.23]}},
   {id:15,banco:"SANTANDER", nombre:"LINEA GREEN",             tipo:"TRAD",tna:39.9, comision:4,  plazoMax:60,ltv:80,activa:true,  marca:null, coefBase:100000,coefs:{12:[10242.1,10242.1],18:[7472.12,7472.12],24:[6113.37,6113.37],36:[4805.18,4805.18],48:[4198.43,4198.43],60:[3868.53,3868.53]}},
   {id:16,banco:"SANTANDER", nombre:"CAMIONES/UTILITARIOS",    tipo:"TRAD",tna:47.9, comision:4,  plazoMax:60,ltv:80,activa:true,  marca:null, coefBase:100000,coefs:{12:[10650.07,10650.07],18:[7893.98,7893.98],24:[6553.09,6553.09],36:[5282.59,5282.59],48:[4711.49,4711.49],60:[4413.21,4413.21]}},
-  // ── CAMPAÑAS DE MARCA ───────────────────────────────────────────────────
+  //  CAMPAÑAS DE MARCA ─
   // GPAT — Chevrolet (Vigencia 19/03/2026)
   {id:300,banco:"GPAT",nombre:"ONIX PROMO 12c",tipo:"TRAD",tna:0.0,comision:15.8,plazoMax:12,ltv:70,activa:true,marca:"CHEVROLET",modelos:["ONIX", "ONIX PLUS"]},
   {id:301,banco:"GPAT",nombre:"ONIX PROMO 18c",tipo:"TRAD",tna:9.9,comision:15.8,plazoMax:18,ltv:70,activa:true,marca:"CHEVROLET",modelos:["ONIX", "ONIX PLUS"]},
@@ -1197,7 +1197,16 @@ const CAMP_D=[
   {id:746,banco:"MOBILIZE",nombre:"PRESTAMO PV VO",tipo:"TRAD",tna:0.0,comision:0.0,plazoMax:12,ltv:70,activa:true,marca:"RENAULT",modelos:null},
   {id:747,banco:"MOBILIZE",nombre:"UVA VN",tipo:"TRAD",tna:25.9,comision:0.0,plazoMax:48,ltv:70,activa:true,marca:"RENAULT",modelos:null},
   {id:748,banco:"MOBILIZE",nombre:"UVA VO",tipo:"TRAD",tna:26.7,comision:0.0,plazoMax:48,ltv:70,activa:true,marca:"RENAULT",modelos:null},
-  // ── CREDICUOTAS — Cuotas fijas (coeficientes reales calculados sobre $10.000.000) ──
+  //  SANTANDER KAISEN — Utilitarios UVA (Quebranto Dealers) 
+  // Coeficientes calculados sobre simulación $10.000.000
+  // Quebranto: 12m=$1.754.500 (17.54%) | 18m=$1.633.500 (16.34%) | 24m=$2.117.500 (21.18%)
+  // TNA implícita: 12m≈0% (tasa cero) | 18m≈11.77% | 24m≈11.77%
+  // Tipo UVA: cuota varía según índice BCRA
+  {id:850,banco:"SANTANDER",nombre:"KAISEN UTILITARIOS UVA 12m",tipo:"UVA",tna:0.01,comision:17.54,plazoMax:12,ltv:80,activa:true,marca:null,modelos:null,coefBase:1000,coefs:{12:[83.34,83.34]}},
+  {id:851,banco:"SANTANDER",nombre:"KAISEN UTILITARIOS UVA 18m",tipo:"UVA",tna:11.77,comision:16.34,plazoMax:18,ltv:80,activa:true,marca:null,modelos:null,coefBase:1000,coefs:{18:[60.88,60.88]}},
+  {id:852,banco:"SANTANDER",nombre:"KAISEN UTILITARIOS UVA 24m",tipo:"UVA",tna:11.77,comision:21.18,plazoMax:24,ltv:80,activa:true,marca:null,modelos:null,coefBase:1000,coefs:{24:[46.97,46.97]}},
+  // Campaña unificada — muestra los 3 plazos juntos
+  {id:853,banco:"SANTANDER",nombre:"KAISEN UTILITARIOS UVA TODOS",tipo:"UVA",tna:11.77,comision:17.54,plazoMax:24,ltv:80,activa:true,marca:null,modelos:null,coefBase:1000,coefs:{12:[83.34,83.34],18:[60.88,60.88],24:[46.97,46.97]}}, 
   // Coeficiente = cuota por cada $1.000 financiados. TNA implícita ~85% TNA.
   {id:800,banco:"CREDICUOTAS",nombre:"CUOTAS FIJAS 6m",  tipo:"TRAD",tna:87.70,comision:0,plazoMax:6, ltv:80,activa:true,marca:null,modelos:null,coefBase:1000,coefs:{6: [211.80,211.80]}},
   {id:801,banco:"CREDICUOTAS",nombre:"CUOTAS FIJAS 12m", tipo:"TRAD",tna:85.74,comision:0,plazoMax:12,ltv:80,activa:true,marca:null,modelos:null,coefBase:1000,coefs:{12:[126.88,126.88]}},
@@ -1206,7 +1215,7 @@ const CAMP_D=[
   {id:804,banco:"CREDICUOTAS",nombre:"CUOTAS FIJAS 30m", tipo:"TRAD",tna:84.48,comision:0,plazoMax:30,ltv:80,activa:true,marca:null,modelos:null,coefBase:1000,coefs:{30:[80.91,80.91]}},
   {id:805,banco:"CREDICUOTAS",nombre:"CUOTAS FIJAS 36m", tipo:"TRAD",tna:84.35,comision:0,plazoMax:36,ltv:80,activa:true,marca:null,modelos:null,coefBase:1000,coefs:{36:[76.96,76.96]}},
   {id:806,banco:"CREDICUOTAS",nombre:"CUOTAS FIJAS 48m", tipo:"TRAD",tna:84.20,comision:0,plazoMax:48,ltv:80,activa:true,marca:null,modelos:null,coefBase:1000,coefs:{48:[72.98,72.98]}},
-  // ── CREDICUOTAS — campaña unificada (muestra todos los plazos disponibles) ──
+  //  CREDICUOTAS — campaña unificada (muestra todos los plazos disponibles) 
   {id:807,banco:"CREDICUOTAS",nombre:"TODOS LOS PLAZOS", tipo:"TRAD",tna:85.00,comision:0,plazoMax:48,ltv:80,activa:true,marca:null,modelos:null,coefBase:1000,coefs:{6:[211.80,211.80],12:[126.88,126.88],18:[100.03,100.03],24:[87.63,87.63],30:[80.91,80.91],36:[76.96,76.96],48:[72.98,72.98]}},
 ];
 
@@ -1389,7 +1398,7 @@ const MKT={
   }
 };
 
-// ── ESTADO EN MEMORIA ─────────────────────────────────────────────────────────
+//  ESTADO EN MEMORIA ─
 let camp=JSON.parse(JSON.stringify(CAMP_D));
 let stk=JSON.parse(JSON.stringify(STK_D));
 let okm=JSON.parse(JSON.stringify(OKM_D));
@@ -1409,7 +1418,7 @@ const cuota=(mt,tna,n)=>{const tem=Math.pow(1+tna/100,1/12)-1;return tem>0?mt*te
 // Calcular cuota usando coeficiente del banco (cuota x $1.000)
 const cuotaPorCoef=(mt,coef)=>Math.round(mt/1000*coef);
 
-// ── ESTADO PIN ────────────────────────────────────────────────────────────────
+//  ESTADO PIN 
 let pinUser=null, pinInput='', pinAttempts={};
 const PIN_MAX=3;
 
@@ -1511,7 +1520,7 @@ function cambiarPin(uid){
   alert(`✅ PIN de ${u.name} cambiado correctamente.`);
 }
 
-// ── LOGIN ─────────────────────────────────────────────────────────────────────
+//  LOGIN ─
 function roleLbl(u){
   if(esMaster(u))     return 'Master — Acceso total';
   if(esGerencia(u))   return 'Gerencia — Solo lectura';
@@ -1556,7 +1565,7 @@ function logout(){
   $$('login').classList.remove('off');clD();
 }
 
-// ── NAVEGACIÓN ────────────────────────────────────────────────────────────────
+//  NAVEGACIÓN 
 const SC={
   propuesta:  {t:'Propuesta Comercial',    s:'Unidad · Crédito · Saldo'},
   cotizador:  {t:'Cotizador rápido',       s:'Simulación de cuotas'},
@@ -1657,7 +1666,7 @@ function bBN(){
   });
 }
 
-// ── CASCADA (selector de vehículo) ───────────────────────────────────────────
+//  CASCADA (selector de vehículo) ─
 function selOpts(id,opts,ph){const s=$$(id);s.innerHTML=`<option value="">${ph}</option>`;opts.forEach(v=>s.add(new Option(v,v)));s.disabled=false}
 function disEl(id){$$(id).innerHTML='<option value="">—</option>';$$(id).disabled=true}
 
@@ -1936,12 +1945,12 @@ function buscar(){
   if(r&&!$$('tipo').value){$$('tipo').value='usado';onTipo();setTimeout(()=>{$$('marca').value=r.marca;onMarca();setTimeout(()=>{$$('modelo').value=r.modelo;onModelo()},80)},50)}
 }
 
-// ── CALCULADORA CRÉDITO INTEGRADA (Columna B) ─────────────────────────────────
-// ── PRECIOS OKM DESDE DRIVE ──────────────────────────────────────────────────
+//  CALCULADORA CRÉDITO INTEGRADA (Columna B) ─
+//  PRECIOS OKM DESDE DRIVE 
 const PROPUESTAS_URL='https://script.google.com/macros/s/AKfycbxhHuMIEpbO-YTuscJgW2gtosIFecg3FnPtTSgLLWdhcFrlAOHjiHODn5PKh-eZw3q8/exec';
 const PRECIOS_URL='https://docs.google.com/spreadsheets/d/e/2PACX-1vSU1sIw1-Fv3zisHUzsFuwZ47ZSgCH2ApVMY-LgxXuhyn9q1RnmOESFoMyMWrn-cI7Y24L9TxNitH5t/pub?gid=1475982203&single=true&output=csv';
 
-// ── CLIENTES — BASE DE DATOS ─────────────────────────────────────────────────
+//  CLIENTES — BASE DE DATOS ─
 let _clientesCache=[];
 let _clienteSugerido=null;
 
@@ -1982,12 +1991,6 @@ function buscarClienteExistente(){
     sug.style.display='none';
     _clienteSugerido=null;
   }
-}
-
-function confirmarDuplicado(){
-  window._dupConfirmado=true;
-  $$('cli-dup-btns').style.display='none';
-  $$('cli-dup-confirmado').style.display='block';
 }
 
 function corregirDuplicado(){
@@ -2160,7 +2163,7 @@ function renderClientes(rows){
     </div>`).join('');
 }
 
-// ── PROPUESTAS — GUARDAR Y CARGAR ────────────────────────────────────────────
+//  PROPUESTAS — GUARDAR Y CARGAR 
 function guardarPropuesta(){
   try{
   // Validar campos cliente
@@ -2584,7 +2587,7 @@ function filtrarPropuestas(){
   cards.innerHTML=html;
 }
 
-// ── COTIZACIÓN DÓLAR BNA ─────────────────────────────────────────────────────
+//  COTIZACIÓN DÓLAR BNA ─
 let _bnaCotiz=null;
 async function actualizarBNA(){
   const el=$$('bna-valor');
@@ -2609,7 +2612,7 @@ async function actualizarBNA(){
   }
 }
 
-// ── IMPORTAR LISTA DE PRECIOS DESDE EXCEL ─────────────────────────────────────
+//  IMPORTAR LISTA DE PRECIOS DESDE EXCEL ─
 function impXP(e){
   const f=e.target.files[0]; if(!f) return;
   e.target.value='';
@@ -2620,7 +2623,7 @@ function impXP(e){
         const wb=XLSX.read(ev.target.result,{type:'array'});
         const marcasMap={};
 
-        // ── MODO 1: hoja única "Precios" con columnas MARCA/MODELO/PRECIO/MONEDA
+        //  MODO 1: hoja única "Precios" con columnas MARCA/MODELO/PRECIO/MONEDA
         if(wb.SheetNames.includes('Precios')||wb.SheetNames.includes('PRECIOS')){
           const shName=wb.SheetNames.includes('Precios')?'Precios':'PRECIOS';
           const ws=wb.Sheets[shName];
@@ -2650,7 +2653,7 @@ function impXP(e){
             }
           }
         } else {
-          // ── MODO 2: múltiples hojas — cada hoja es una marca
+          //  MODO 2: múltiples hojas — cada hoja es una marca
           for(const shName of wb.SheetNames){
             const ws=wb.Sheets[shName];
             const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
@@ -2719,7 +2722,7 @@ function impXP(e){
   });
 }
 
-// ── SYNC PRECIOS (desde Drive o localStorage) ─────────────────────────────────
+//  SYNC PRECIOS (desde Drive o localStorage) ─
 // Inyecta marcas USD del hardcode SOLO si la marca no existe en data (fallback sin Excel)
 function _inyectarMarcasUSD(data){
   if(typeof MKT_USD_DATA_G==='undefined') return;
@@ -2981,10 +2984,10 @@ function rCampMini(){
   const act=camp.filter(c=>c.activa);
   const esUsado=t==='usado'||t==='mercado_usado';
 
-  // ── REGLA 1: BANCOS GENERALES (siempre al final, sin marca ni usados) ────
+  //  REGLA 1: BANCOS GENERALES (siempre al final, sin marca ni usados) 
   const bancos=act.filter(c=>!c.marca&&!c.usados);
 
-  // ── REGLA 2: FINANCIERAS DE MARCA ────────────────────────────────────────
+  //  REGLA 2: FINANCIERAS DE MARCA 
   let deMarca=[];
   if(esUsado){
     // USADOS: campañas con usados:true (PSA USADOS, FCA USADOS)
@@ -3287,7 +3290,7 @@ function calcCred(){
   }
 }
 
-// ── PROPUESTA (saldo A/B) ────────────────────────────────────────────────────
+//  PROPUESTA (saldo A/B) 
 function cP(){
   const iA=['pa1','pa2','pa3','pa3b','pa4','pa5','pa6'];
   const iB=['pb1','pb2','pb3','pb4','pb5','pb6'];
@@ -3329,7 +3332,7 @@ function resetP(sinConfirmar){
   cP();
 }
 
-// ── WhatsApp ──────────────────────────────────────────────────────────────────
+//  WhatsApp 
 function gWA(){
   const u=CU||{name:'Almar'}, cli=($$('p-nombre')?.value||'') + ' ' + ($$('p-apellido')?.value||'')||'Cliente';
   const nom=[$$('marca').value,$$('modelo').value,$$('version').value,$$('anno').value].filter(Boolean).join(' ')||'la unidad';
@@ -3346,7 +3349,7 @@ function fbCopy(t){const ta=document.createElement('textarea');ta.value=t;docume
 function vWA(){const p=$$('wap');if(p.style.display==='block'){p.style.display='none';return}p.innerHTML='<div class="waprev">'+gWA().replace(/\n/g,'<br>').replace(/\*(.*?)\*/g,'<strong>$1</strong>')+'</div>';p.style.display='block';cpWA()}
 function prtP(){$$('phf').textContent=tod();$$('phv').textContent=CU?CU.name:'';window.print()}
 
-// ── HISTORIAL ────────────────────────────────────────────────────────────────
+//  HISTORIAL 
 function gCot(){
   // Delegar todo a guardarPropuesta que tiene la lógica completa
   guardarPropuesta();
@@ -3471,7 +3474,7 @@ function rMH(){
 }
 function lmpH(){if(!CU)return;if(confirm('¿Eliminar tu historial?')){HG[CU.id]=[];localStorage.removeItem('almar_propuestas');uHB();rMH()}}
 
-// ── COTIZADOR RÁPIDO (drawer) ────────────────────────────────────────────────
+//  COTIZADOR RÁPIDO (drawer) 
 function rCampCot(){
   const g=$$('cg-cot');
   if(!g)return; g.innerHTML='';
@@ -3535,7 +3538,7 @@ function calcCot(){
   $$('cot-al').innerHTML=cv.tipo==='UVA'?'<div class="al warn" style="margin-top:7px">⚠️ Crédito UVA: cuota varía según BCRA.</div>':'';
 }
 
-// ── SUPERVISOR (ve vendedores solamente) ──────────────────────────────────────
+//  SUPERVISOR (ve vendedores solamente) 
 function rSup(){
   const vendedores=USERS.filter(u=>esVendedor(u)||esSupervisor(u));
   const hoy=tod();
@@ -3576,7 +3579,7 @@ function rSup(){
     });
 }
 
-// ── GERENCIA (ve todos los vendedores + supervisor) ───────────────────────────
+//  GERENCIA (ve todos los vendedores + supervisor) ─
 function rGer(){
   const todos=USERS.filter(u=>!esGerencia(u));
   let tot=0;todos.forEach(u=>tot+=gH(u.id).length);
@@ -3877,7 +3880,7 @@ function vVend(uid, titId='dtit', listId='dh'){
   h.forEach(x=>el.appendChild(mkHI(x)));
 }
 
-// ── STOCK ────────────────────────────────────────────────────────────────────
+//  STOCK 
 function rStk(){
   const el=$$('sl'); el.innerHTML='';
   // Mostrar todo el stock incluyendo A RECIBIR
@@ -3913,20 +3916,39 @@ function rStk(){
 }
 function rOkm(){const el=$$('ol');el.innerHTML='';okm.forEach(u=>{const d=document.createElement('div');d.className='hi';d.innerHTML=`<div class="hico" style="background:var(--b)">🏎</div><div class="hinf"><div class="haut">${u.marca} ${u.modelo} ${u.version}</div><div class="hdet">${u.anno} · ${u.color||'—'}</div></div><div class="hr2"><div class="hcuo">${u.precio?fmt(u.precio):'Consultar'}</div><div class="hfec">${u.estado||'—'}</div></div>`;el.appendChild(d)})}
 
-// ── ADMIN ────────────────────────────────────────────────────────────────────
+//  ADMIN 
 function rAdm(){
   if(!esSupervisor(CU)){$$('screen-admin').innerHTML='<div class="page"><div class="al err">🔒 Acceso restringido. Solo Mauricio García.</div></div>';return}
-  const t=$$('atc');t.innerHTML='<thead><tr><th>Banco</th><th>Nombre</th><th>TNA %</th><th>Com %</th><th>Plazo Máx</th><th>LTV %</th><th>Activa</th></tr></thead>';
+  const t=$$('atc');
+  t.innerHTML='<thead><tr><th>Banco</th><th>Nombre</th><th>TNA %</th><th>Com %</th><th>Plazo Máx</th><th>LTV %</th><th>Activa</th><th>Coefs</th></tr></thead>';
   const tb=document.createElement('tbody');
-  camp.forEach((c,i)=>{const tr=document.createElement('tr');tr.innerHTML=`<td><input value="${c.banco}" onchange="camp[${i}].banco=this.value" style="width:58px"></td><td><input value="${c.nombre}" onchange="camp[${i}].nombre=this.value" style="width:142px"></td><td><input type="number" value="${c.tna}" step="0.01" onchange="camp[${i}].tna=parseFloat(this.value)||0" style="width:55px"></td><td><input type="number" value="${c.comision}" onchange="camp[${i}].comision=parseFloat(this.value)||0" style="width:46px"></td><td><input type="number" value="${c.plazoMax}" onchange="camp[${i}].plazoMax=parseInt(this.value)||60" style="width:44px"></td><td><input type="number" value="${c.ltv}" onchange="camp[${i}].ltv=parseInt(this.value)||80" style="width:44px"></td><td style="text-align:center"><input type="checkbox" ${c.activa?'checked':''} onchange="camp[${i}].activa=this.checked;rCampMini();rCampCot()" style="width:auto;transform:scale(1.3)"></td>`;tb.appendChild(tr)});t.appendChild(tb);
+  camp.forEach((c,i)=>{
+    const tr=document.createElement('tr');
+    // Resaltar campañas con coeficientes (Kaisen, ICBC, BBVA, Credicuotas)
+    const tieneCoefs=c.coefs&&Object.keys(c.coefs).length>0;
+    const coefBtn=tieneCoefs
+      ?`<button onclick="editarCoefs(${i})" style="background:var(--b);border:none;color:#fff;border-radius:5px;padding:3px 7px;font-size:9px;font-weight:700;cursor:pointer;white-space:nowrap">✏️ Editar</button>`
+      :`<span style="font-size:9px;color:var(--m)">—</span>`;
+    tr.innerHTML=`
+      <td><input value="${c.banco}" onchange="camp[${i}].banco=this.value" style="width:80px"></td>
+      <td><input value="${c.nombre}" onchange="camp[${i}].nombre=this.value" style="width:160px"></td>
+      <td><input type="number" value="${c.tna}" step="0.01" onchange="camp[${i}].tna=parseFloat(this.value)||0" style="width:55px"></td>
+      <td><input type="number" value="${c.comision}" onchange="camp[${i}].comision=parseFloat(this.value)||0" style="width:46px"></td>
+      <td><input type="number" value="${c.plazoMax}" onchange="camp[${i}].plazoMax=parseInt(this.value)||60" style="width:44px"></td>
+      <td><input type="number" value="${c.ltv}" onchange="camp[${i}].ltv=parseInt(this.value)||80" style="width:44px"></td>
+      <td style="text-align:center"><input type="checkbox" ${c.activa?'checked':''} onchange="camp[${i}].activa=this.checked;rCampMini();rCampCot()" style="width:auto;transform:scale(1.3)"></td>
+      <td style="text-align:center">${coefBtn}</td>`;
+    tb.appendChild(tr);
+  });
+  t.appendChild(tb);
   const ts=$$('ats');ts.innerHTML='<thead><tr><th>Dominio</th><th>Marca</th><th>Modelo</th><th>Versión</th><th>Año</th><th>KM</th><th>Precio</th><th>Estado</th></tr></thead>';
   const tsb=document.createElement('tbody');
   stk.forEach((u,i)=>{const tr=document.createElement('tr');tr.innerHTML=`<td><input value="${u.dominio||''}" onchange="stk[${i}].dominio=this.value" style="width:65px"></td><td><input value="${u.marca}" onchange="stk[${i}].marca=this.value" style="width:72px"></td><td><input value="${u.modelo}" onchange="stk[${i}].modelo=this.value" style="width:82px"></td><td><input value="${u.version}" onchange="stk[${i}].version=this.value" style="width:132px"></td><td><input type="number" value="${u.anno}" onchange="stk[${i}].anno=parseInt(this.value)" style="width:46px"></td><td><input type="number" value="${u.km||0}" onchange="stk[${i}].km=parseInt(this.value)" style="width:56px"></td><td><input type="number" value="${u.precio||0}" onchange="stk[${i}].precio=parseInt(this.value)" style="width:85px"></td><td><select onchange="stk[${i}].estado=this.value" style="padding:3px 4px;font-size:10px"><option ${u.estado==='DISPONIBLE'?'selected':''}>DISPONIBLE</option><option ${u.estado==='EN PREPARACION'?'selected':''}>EN PREPARACION</option><option ${u.estado==='SENIADO'?'selected':''}>SENIADO</option><option ${u.estado==='A RECIBIR'?'selected':''}>A RECIBIR</option></select></td>`;tsb.appendChild(tr)});ts.appendChild(tsb);
-  // ── Tabla Stock 0km ──
+  //  Tabla Stock 0km 
   const to=$$('ato');to.innerHTML='<thead><tr><th>Marca</th><th>Modelo</th><th>Versión</th><th>Año</th><th>Precio</th><th>Color</th><th>Estado</th><th>Obs.</th></tr></thead>';
   const tob=document.createElement('tbody');
   okm.forEach((u,i)=>{const tr=document.createElement('tr');tr.innerHTML=`<td><input value="${u.marca||''}" onchange="okm[${i}].marca=this.value" style="width:72px"></td><td><input value="${u.modelo||''}" onchange="okm[${i}].modelo=this.value" style="width:82px"></td><td><input value="${u.version||''}" onchange="okm[${i}].version=this.value" style="width:138px"></td><td><input type="number" value="${u.anno||2025}" onchange="okm[${i}].anno=parseInt(this.value)" style="width:46px"></td><td><input type="number" value="${u.precio||0}" onchange="okm[${i}].precio=parseInt(this.value)" style="width:88px"></td><td><input value="${u.color||''}" onchange="okm[${i}].color=this.value" style="width:80px"></td><td><select onchange="okm[${i}].estado=this.value" style="padding:3px 4px;font-size:10px"><option ${u.estado==='DISPONIBLE'?'selected':''}>DISPONIBLE</option><option ${u.estado==='CONSULTAR'?'selected':''}>CONSULTAR</option><option ${u.estado==='RESERVADO'?'selected':''}>RESERVADO</option><option ${u.estado==='EN CAMINO'?'selected':''}>EN CAMINO</option></select></td><td><input value="${u.obs||''}" onchange="okm[${i}].obs=this.value" placeholder="Observación..." style="width:100px"></td>`;tob.appendChild(tr)});to.appendChild(tob);
-  // ── Lista desbloqueo ──
+  //  Lista desbloqueo 
   const bl=$$('blk-list'); if(!bl)return; bl.innerHTML='';
   USERS.filter(u=>!esGerencia(u)).forEach(u=>{
     const blocked=(pinAttempts[u.id]||0)>=PIN_MAX;
@@ -3936,7 +3958,128 @@ function rAdm(){
     bl.appendChild(d);
   });
 }
-function gC(){rCampMini();rCampCot();alert('✅ Campañas actualizadas.')}
+function editarCoefs(idx){
+  const c=camp[idx];
+  const plazos=[6,12,18,24,30,36,48,60];
+
+  // Construir filas de coeficientes actuales
+  const filas=plazos.map(n=>{
+    const val=c.coefs&&c.coefs[n]?c.coefs[n][0]:'';
+    return `<tr>
+      <td style="padding:5px 8px;font-weight:700;color:var(--b);width:60px">${n}m</td>
+      <td style="padding:5px 8px">
+        <input type="number" id="coef-${n}" value="${val}" step="0.0001"
+          placeholder="Coef. por $1.000"
+          style="width:130px;padding:5px 8px;border:1.5px solid var(--bdr);border-radius:6px;
+                 background:var(--inp);color:var(--t);font-size:13px;font-weight:700">
+      </td>
+      <td style="padding:5px 8px;font-size:10px;color:var(--m)" id="coef-preview-${n}">
+        ${val?'Cuota $10M: '+fmt(val*10000):''}
+      </td>
+    </tr>`;
+  }).join('');
+
+  const modal=document.createElement('div');
+  modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
+  modal.innerHTML=`
+    <div style="background:var(--s1);border-radius:12px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.5)">
+      <!-- Header -->
+      <div style="background:#164194;padding:14px 16px;border-radius:12px 12px 0 0;display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <div style="font-weight:900;font-size:14px;color:#fff">✏️ Editar coeficientes</div>
+          <div style="font-size:10px;color:rgba(255,255,255,.6);margin-top:2px">${c.banco} — ${c.nombre}</div>
+        </div>
+        <button onclick="this.closest('[style*=fixed]').remove()"
+          style="background:rgba(255,255,255,.15);border:none;color:#fff;border-radius:50%;width:28px;height:28px;font-size:16px;cursor:pointer">×</button>
+      </div>
+      <!-- Instrucción -->
+      <div style="padding:10px 16px;background:rgba(22,65,148,.08);border-bottom:1px solid var(--bdr);font-size:11px;color:var(--m)">
+        💡 Ingresá el coeficiente (cuota por cada $1.000 financiados). Dejá vacío los plazos que no aplican.
+        <br>Ejemplo: si la cuota para $10.000.000 a 24m es $469.650 → coef = <b>46.965</b>
+      </div>
+      <!-- Tabla coeficientes -->
+      <div style="padding:12px 16px">
+        <div style="font-size:9px;font-weight:800;letter-spacing:2px;color:var(--m);text-transform:uppercase;margin-bottom:8px">Coeficiente por $1.000 financiados</div>
+        <table style="width:100%;border-collapse:collapse">
+          <thead><tr>
+            <th style="text-align:left;font-size:8px;letter-spacing:1.5px;color:var(--m);padding:4px 8px;text-transform:uppercase">Plazo</th>
+            <th style="text-align:left;font-size:8px;letter-spacing:1.5px;color:var(--m);padding:4px 8px;text-transform:uppercase">Coeficiente</th>
+            <th style="text-align:left;font-size:8px;letter-spacing:1.5px;color:var(--m);padding:4px 8px;text-transform:uppercase">Cuota p/ $10M</th>
+          </tr></thead>
+          <tbody>${filas}</tbody>
+        </table>
+      </div>
+      <!-- También editar comisión y plazoMax -->
+      <div style="padding:0 16px 12px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+        <div>
+          <div style="font-size:9px;font-weight:800;color:var(--m);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">Comisión %</div>
+          <input type="number" id="coef-com" value="${c.comision}" step="0.01"
+            style="width:100%;padding:6px 8px;border:1.5px solid var(--bdr);border-radius:6px;background:var(--inp);color:var(--t);font-size:13px;font-weight:700">
+        </div>
+        <div>
+          <div style="font-size:9px;font-weight:800;color:var(--m);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">TNA %</div>
+          <input type="number" id="coef-tna" value="${c.tna}" step="0.01"
+            style="width:100%;padding:6px 8px;border:1.5px solid var(--bdr);border-radius:6px;background:var(--inp);color:var(--t);font-size:13px;font-weight:700">
+        </div>
+        <div>
+          <div style="font-size:9px;font-weight:800;color:var(--m);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">Plazo máx</div>
+          <input type="number" id="coef-plazo" value="${c.plazoMax}"
+            style="width:100%;padding:6px 8px;border:1.5px solid var(--bdr);border-radius:6px;background:var(--inp);color:var(--t);font-size:13px;font-weight:700">
+        </div>
+      </div>
+      <!-- Botones -->
+      <div style="padding:0 16px 16px;display:flex;gap:8px">
+        <button onclick="guardarCoefs(${idx},this)"
+          style="flex:1;padding:10px;background:#164194;border:none;color:#fff;border-radius:8px;font-weight:800;font-size:13px;cursor:pointer">
+          💾 Guardar coeficientes
+        </button>
+        <button onclick="this.closest('[style*=fixed]').remove()"
+          style="padding:10px 16px;background:none;border:1.5px solid var(--bdr);color:var(--m);border-radius:8px;font-weight:700;font-size:12px;cursor:pointer">
+          Cancelar
+        </button>
+      </div>
+    </div>`;
+
+  // Preview en tiempo real al escribir
+  [6,12,18,24,30,36,48,60].forEach(n=>{
+    const inp=modal.querySelector(`#coef-${n}`);
+    const prev=modal.querySelector(`#coef-preview-${n}`);
+    if(inp&&prev){
+      inp.addEventListener('input',()=>{
+        const v=parseFloat(inp.value)||0;
+        prev.textContent=v?'Cuota $10M: '+fmt(v*10000):'';
+      });
+    }
+  });
+
+  document.body.appendChild(modal);
+}
+
+function guardarCoefs(idx, btn){
+  const c=camp[idx];
+  const plazos=[6,12,18,24,30,36,48,60];
+  const nuevosCoefs={};
+  plazos.forEach(n=>{
+    const el=document.getElementById('coef-'+n);
+    if(el&&el.value&&parseFloat(el.value)>0){
+      const v=parseFloat(el.value);
+      nuevosCoefs[n]=[v,v]; // [1era, promedio] — mismo valor si no se diferencia
+    }
+  });
+  c.coefs=nuevosCoefs;
+  c.coefBase=1000;
+  // Actualizar comisión, TNA y plazoMax
+  const com=parseFloat(document.getElementById('coef-com')?.value)||c.comision;
+  const tna=parseFloat(document.getElementById('coef-tna')?.value)||c.tna;
+  const plazo=parseInt(document.getElementById('coef-plazo')?.value)||c.plazoMax;
+  c.comision=com; c.tna=tna; c.plazoMax=plazo;
+  // Cerrar modal
+  btn.closest('[style*="fixed"]').remove();
+  // Actualizar UI
+  rCampMini(); rCampCot(); rAdm();
+  mostrarToast(`✅ Coeficientes de "${c.nombre}" actualizados — exportá el JSON para guardar`);
+}
+function gC(){rCampMini();rCampCot();mostrarToast('✅ Campañas actualizadas');}
 function gS(){rStk();alert('✅ Stock Usados guardado.')}
 function gO(){rOkm();alert('✅ Stock 0km guardado.')}
 function aC(){camp.push({id:Date.now(),banco:"NUEVO",nombre:"NUEVA CAMPAÑA",tipo:"TRAD",tna:50,comision:0,plazoMax:60,ltv:80,activa:false});rAdm()}
@@ -3974,7 +4117,7 @@ function impD(e){
   r.readAsText(f);
 }
 
-// ── TEMA CLARO / OSCURO ───────────────────────────────────────────────────────
+//  TEMA CLARO / OSCURO ─
 let isLight=false;
 function tgThm(){
   isLight=!isLight;
@@ -3983,7 +4126,7 @@ function tgThm(){
   $$('thm').title=isLight?'Cambiar a modo oscuro':'Cambiar a modo claro';
 }
 
-// ── IMPORTAR EXCEL USADOS ────────────────────────────────────────────────────
+//  IMPORTAR EXCEL USADOS 
 function impX(e){
   const f=e.target.files[0]; if(!f)return;
   loadXLSX(()=>{
@@ -4029,8 +4172,8 @@ function impX(e){
     e.target.value='';
   });
 }
-// ── IMPORTAR EXCEL 0KM ───────────────────────────────────────────────────────
-// ── IMPORTAR CAMPAÑAS DESDE EXCEL ────────────────────────────────────────────
+//  IMPORTAR EXCEL 0KM ─
+//  IMPORTAR CAMPAÑAS DESDE EXCEL 
 function impXC(e){
   const f=e.target.files[0]; if(!f)return;
   e.target.value='';
@@ -4157,7 +4300,7 @@ function impXO(e){
   }); // fin loadXLSX
 }
 
-// ── DESCARGAR PLANTILLA 0KM (pre-cargada con DFSK y FOTON) ──────────────────
+//  DESCARGAR PLANTILLA 0KM (pre-cargada con DFSK y FOTON) 
 function dlgPlantillaOkm(){
   loadXLSX(()=>{
   const hdr=['MARCA','MODELO','VERSION','AÑO','PRECIO','COLOR','ESTADO','OBS'];
@@ -4201,7 +4344,7 @@ function dlgPlantillaOkm(){
   }); // fin loadXLSX
 }
 
-// ── IMPRIMIR / PDF STOCK ──────────────────────────────────────────────────────
+//  IMPRIMIR / PDF STOCK 
 function pdfStock(){
   $$('stk-fecha').textContent=tod();
   document.body.classList.add('print-stock');
@@ -4210,7 +4353,7 @@ function pdfStock(){
   setTimeout(()=>document.body.classList.remove('print-stock'),1000);
 }
 
-// ── EMAIL STOCK ───────────────────────────────────────────────────────────────
+//  EMAIL STOCK ─
 function emailStock(){
   // Generar cuerpo de email con lista de usados
   const disp=stk.filter(u=>u.estado==='DISPONIBLE');
@@ -4237,7 +4380,7 @@ function emailStock(){
   window.location.href=`mailto:?subject=${asunto}&body=${cuerpo}`;
 }
 
-// ── EMAIL PROPUESTA ───────────────────────────────────────────────────────────
+//  EMAIL PROPUESTA ─
 function emailPropuesta(){
   const cli=($$('p-nombre')?.value||'') + ' ' + ($$('p-apellido')?.value||'')||'Cliente';
   const nom=[$$('marca').value,$$('modelo').value,$$('version').value,$$('anno').value].filter(Boolean).join(' ')||'la unidad';
@@ -4273,10 +4416,10 @@ function emailPropuesta(){
     `🚗 UNIDAD: ${nom}\n`+
     (pr?`💰 Precio: ${fmt(pr)}\n`:'')+
     `\n📌 QUÉ INCLUYE EL PRECIO:\n${linA}`+
-    `   ────────────────────────\n`+
+    `   \n`+
     `   TOTAL A CUBRIR: ${fmt(tA)}\n\n`+
     `✅ CÓMO LO PAGA:\n${linB}`+
-    `   ────────────────────────\n`+
+    `   \n`+
     `   TOTAL CUBIERTO: ${fmt(tB)}\n\n`+
     (cv&&mt>0?`🏦 CRÉDITO BANCARIO — ${cv.banco} · ${cv.nombre} · TNA ${cv.tna.toFixed(2).replace('.',',')}%\n${cuotas}\n`:'')+
     (obs?`📋 ${obs}\n\n`:'')+
@@ -4287,7 +4430,7 @@ function emailPropuesta(){
 }
 
 
-// ── SYNC DRIVE ──────────────────────────────────────────────────────────────
+//  SYNC DRIVE 
 let DRIVE_URL_H1=localStorage.getItem('almar_drive_h1')||'https://docs.google.com/spreadsheets/d/e/2PACX-1vRZc13F55AeNqNfw0rG-9vVA5-ETS0DH3tPLTS5JA6aDK-F87p5tfrR4U3eB-Cfug/pub?gid=1231420949&single=true&output=csv';
 function syncDrive(){
   const btn=$$('btn-drive-sync'),bar=$$('drive-sync-bar');
@@ -4374,12 +4517,12 @@ function parseDrv(csv){
 }
 function cF(l){const r=[];let a='';let q=false;for(let i=0;i<l.length;i++){const c=l[i];if(c==='"'){q=!q;}else if(c===','&&!q){r.push(a);a='';}else{a+=c;}}r.push(a);return r;}
 function pNv(s){if(!s)return 0;const n=parseInt(String(s).replace(/[$\.]/g,'').replace(/,/g,'').replace(/[^0-9]/g,''));return isNaN(n)?0:n;}
-// ── FIN SYNC DRIVE ───────────────────────────────────────────────────────────
+//  FIN SYNC DRIVE ─
 
-// ── INIT ─────────────────────────────────────────────────────────────────────
+//  INIT ─
 bLogin();
 
-// ── AUTO-SYNC DRIVE AL INICIAR ───────────────────────────────────────────────
+//  AUTO-SYNC DRIVE AL INICIAR ─
 (function autoSync(){
   // Solo si estamos online (no file://)
   if(location.protocol==='file:') return;
