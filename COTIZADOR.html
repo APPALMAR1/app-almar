@@ -1202,11 +1202,11 @@ const CAMP_D=[
   // Quebranto: 12m=$1.754.500 (17.54%) | 18m=$1.633.500 (16.34%) | 24m=$2.117.500 (21.18%)
   // TNA implícita: 12m≈0% (tasa cero) | 18m≈11.77% | 24m≈11.77%
   // Tipo UVA: cuota varía según índice BCRA
-  {id:850,banco:"SANTANDER",nombre:"KAISEN UTILITARIOS UVA 12m",tipo:"UVA",tna:0.01,comision:17.54,plazoMax:12,ltv:80,activa:true,marca:null,modelos:null,coefBase:1000,coefs:{12:[83.34,83.34]}},
-  {id:851,banco:"SANTANDER",nombre:"KAISEN UTILITARIOS UVA 18m",tipo:"UVA",tna:11.77,comision:16.34,plazoMax:18,ltv:80,activa:true,marca:null,modelos:null,coefBase:1000,coefs:{18:[60.88,60.88]}},
-  {id:852,banco:"SANTANDER",nombre:"KAISEN UTILITARIOS UVA 24m",tipo:"UVA",tna:11.77,comision:21.18,plazoMax:24,ltv:80,activa:true,marca:null,modelos:null,coefBase:1000,coefs:{24:[46.97,46.97]}},
+  {id:850,banco:"SANTANDER",nombre:"KAISEN UTILITARIOS UVA 12m",tipo:"UVA",tna:0.01,comision:17.54,plazoMax:12,ltv:80,activa:true,marca:null,modelos:null,coefBase:1000,coefs:{12:[83.338722,83.338722]}},
+  {id:851,banco:"SANTANDER",nombre:"KAISEN UTILITARIOS UVA 18m",tipo:"UVA",tna:11.77,comision:16.34,plazoMax:18,ltv:80,activa:true,marca:null,modelos:null,coefBase:1000,coefs:{18:[60.877296,60.877296]}},
+  {id:852,banco:"SANTANDER",nombre:"KAISEN UTILITARIOS UVA 24m",tipo:"UVA",tna:11.77,comision:21.18,plazoMax:24,ltv:80,activa:true,marca:null,modelos:null,coefBase:1000,coefs:{24:[46.965035,46.965035]}},
   // Campaña unificada — muestra los 3 plazos juntos
-  {id:853,banco:"SANTANDER",nombre:"KAISEN UTILITARIOS UVA TODOS",tipo:"UVA",tna:11.77,comision:17.54,plazoMax:24,ltv:80,activa:true,marca:null,modelos:null,coefBase:1000,coefs:{12:[83.34,83.34],18:[60.88,60.88],24:[46.97,46.97]}}, 
+  {id:853,banco:"SANTANDER",nombre:"KAISEN UTILITARIOS UVA TODOS",tipo:"UVA",tna:11.77,comision:17.54,plazoMax:24,ltv:80,activa:true,marca:null,modelos:null,coefBase:1000,coefs:{12:[83.338722,83.338722],18:[60.877296,60.877296],24:[46.965035,46.965035]}},
   // Coeficiente = cuota por cada $1.000 financiados. TNA implícita ~85% TNA.
   {id:800,banco:"CREDICUOTAS",nombre:"CUOTAS FIJAS 6m",  tipo:"TRAD",tna:87.70,comision:0,plazoMax:6, ltv:80,activa:true,marca:null,modelos:null,coefBase:1000,coefs:{6: [211.80,211.80]}},
   {id:801,banco:"CREDICUOTAS",nombre:"CUOTAS FIJAS 12m", tipo:"TRAD",tna:85.74,comision:0,plazoMax:12,ltv:80,activa:true,marca:null,modelos:null,coefBase:1000,coefs:{12:[126.88,126.88]}},
@@ -3222,6 +3222,8 @@ function calcCred(){
   // Cuotas
   $$('qg-mini-wrap').style.display='block';
   const g=$$('qg-mini'); g.innerHTML='';
+  // Si la campaña tiene coeficientes definidos, solo son válidos los plazos con coef
+  const tieneCoefMap=cv.coefs&&Object.keys(cv.coefs).length>0;
   const data=PL.map(n=>{
     let c;
     if(cv.coefs&&cv.coefs[n]){
@@ -3232,21 +3234,26 @@ function calcCred(){
     }
     return {n,c};
   });
-  const valid=data.filter(d=>d.n<=cv.plazoMax);
+  // Si tiene coeficientes: válidos solo los que tienen coef Y están dentro del plazoMax
+  // Si no tiene coeficientes: válidos los que están dentro del plazoMax
+  const valid=data.filter(d=>{
+    if(tieneCoefMap) return cv.coefs[d.n]&&d.n<=cv.plazoMax;
+    return d.n<=cv.plazoMax;
+  });
   const minC=valid.length?Math.min(...valid.map(d=>d.c)):Infinity;
 
   data.forEach(({n,c})=>{
-    const best=c===minC&&n<=cv.plazoMax, dis=n>cv.plazoMax, picked=credPlazo===n;
+    // dis = fuera de plazo máximo O (tiene coefs y este plazo no tiene coef)
+    const sinCoef=tieneCoefMap&&!cv.coefs[n];
+    const dis=n>cv.plazoMax||sinCoef;
+    const best=c===minC&&!dis, picked=credPlazo===n;
     const d=document.createElement('div');
     d.className='qm'+(best?' best':'')+(dis?' dis':'')+(picked&&!best?' picked':'');
     d.onclick=()=>{if(!dis){credPlazo=n;calcCred()}};
-    // Si tiene coeficientes: coefs[n][0] = 1era cuota (más alta), coefs[n][1] = promedio
     const tiene1era=cv.coefs&&cv.coefs[n];
     const cuota1era=tiene1era?Math.round(mt/(cv.coefBase||1000)*cv.coefs[n][0]):0;
-    const cuotaProm=c; // ya calculada arriba
+    const cuotaProm=c;
     if(tiene1era){
-      // Arriba: 1era cuota (la real, la más alta) — tamaño grande
-      // Abajo: cuota promedio — chica con label
       d.innerHTML=`<div class="mpl">${n}M${dis?' ✗':''}</div><div class="mcv">${fmt(cuota1era)}</div><div class="mtt" style="font-size:8px;opacity:.7">Prom: ${fmt(cuotaProm)}</div>${best?'<div class="mst">⭐</div>':''}`;
     } else {
       d.innerHTML=`<div class="mpl">${n}M${dis?' ✗':''}</div><div class="mcv">${fmt(cuotaProm)}</div>${best?'<div class="mst">⭐</div>':''}`;
@@ -3272,8 +3279,10 @@ function calcCred(){
   const pq=$$('print-cuotas');
   const bestN=valid.length?valid.reduce((a,b)=>a.c<b.c?a:b).n:null;
   if(valid.length){
-    const items=PL.filter(n=>n<=cv.plazoMax).map(n=>{
-      // Usar coeficiente real [0] (1era cuota) si está disponible — igual que las tarjetas
+    const items=PL.filter(n=>{
+      if(tieneCoefMap) return cv.coefs&&cv.coefs[n]&&n<=cv.plazoMax;
+      return n<=cv.plazoMax;
+    }).map(n=>{
       let c;
       if(cv.coefs&&cv.coefs[n]){
         c=Math.round(mt/(cv.coefBase||1000)*cv.coefs[n][0]);
