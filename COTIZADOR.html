@@ -698,7 +698,7 @@ input[type=text]#p-obs{background:#F5F7FA!important;border:1px solid #D5DCE6!imp
         <div class="pr"><label class="m">Precio del vehículo</label><input type="number" id="pa1" placeholder="0" oninput="cP()"></div>
         <div class="pr"><label>Gestoría / Patentamiento</label><input type="number" id="pa2" placeholder="0" oninput="cP()"></div>
         <div class="pr"><label>Gastos bancarios campaña</label><input type="number" id="pa3" placeholder="0" oninput="cP()"></div>
-        <div class="pr"><label>Gastos bancarios adicionales</label><input type="number" id="pa3b" placeholder="0" oninput="cP()"></div>
+        <div class="pr"><label>Gastos de otorgamiento</label><input type="number" id="pa3b" placeholder="0" oninput="cP()"></div>
         <div class="pr"><label>Intereses crédito (total)</label><input type="number" id="pa4" placeholder="0" oninput="cP()"></div>
         <div class="pr"><label>Comisión / Premio banco</label><input type="number" id="pa5" placeholder="0" oninput="cP()"></div>
         <div class="pr"><label>Seguro automotor</label><input type="number" id="pa6" placeholder="0" oninput="cP()"></div>
@@ -2499,7 +2499,7 @@ function renderCardPropuesta(p){
     ${filaA('Precio del vehículo',dA.precio||precio)}
     ${filaA('Gestoría / Patentamiento',dA.gestoria)}
     ${filaA('Gastos bancarios campaña',dA.gastosBancarios)}
-    ${filaA('Gastos bancarios adicionales',dA.gastosBancariosAd)}
+    ${filaA('Gastos de otorgamiento',dA.gastosBancariosAd)}
     ${filaA('Intereses crédito',dA.intereses)}
     ${filaA('Comisión banco',dA.comisionBanco)}
     ${filaA('Seguro automotor',dA.seguro)}
@@ -3768,7 +3768,7 @@ function abrirDetallePropuesta(p){
         ${fila('Precio del vehículo',aPrecio)}
         ${fila('Gestoría / Patentamiento',aGestoria)}
         ${fila('Gastos bancarios campaña',aGastosBanc,'#0069b4')}
-        ${fila('Gastos bancarios adicionales',aGastosBancAd,'#0069b4')}
+        ${fila('Gastos de otorgamiento',aGastosBancAd,'#0069b4')}
         ${fila('Intereses crédito',aIntereses,'#0069b4')}
         ${fila('Comisión banco',aComision,'#0069b4')}
         ${fila('Seguro automotor',aSeguro)}
@@ -4438,7 +4438,7 @@ function emailPropuesta(){
   // Construir totales A y B
   const iA=['pa1','pa2','pa3','pa3b','pa4','pa5','pa6'];
   const iB=['pb1','pb2','pb3','pb4','pb5','pb6'];
-  const labA=['Precio del vehículo','Gestoría/Patentamiento','Gastos bancarios campaña','Gastos bancarios adicionales','Intereses crédito','Comisión banco','Seguro automotor'];
+  const labA=['Precio del vehículo','Gestoría/Patentamiento','Gastos bancarios campaña','Gastos de otorgamiento','Intereses crédito','Comisión banco','Seguro automotor'];
   const labB=['Crédito bancario','Usado en parte de pago','Anticipo efectivo','Cheques','Documentos/Pagarés','Otro crédito'];
   let linA='',linB='';
   iA.forEach((id,i)=>{const v=parseFloat($$(id)?.value)||0;if(v>0)linA+=`  • ${labA[i]}: ${fmt(v)}\n`});
