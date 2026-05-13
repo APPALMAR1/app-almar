@@ -3991,22 +3991,47 @@ function rStk(){
     el.appendChild(d);
   });
 }
-// Cotizar desde stock 0km — usa _preciosData como única fuente de precios
+// Cotizar desde stock 0km — usa _preciosData + MKT como fuentes de precios
 function cotizarDesdeOkm(u){
   if(!esVendedor(CU)&&!esSupervisor(CU)) return;
+
+  // Buscar en _preciosData primero, luego en MKT (hardcodeado)
   const pd=window._preciosData||[];
-  // Buscar marca en precios
+  let mods=[];
   const marcaData=pd.find(m=>m.marca.toUpperCase()===u.marca.toUpperCase());
-  if(!marcaData){
-    mostrarToast('⚠️ No hay precios cargados para '+u.marca+'. Actualizá PRECIOS primero.');
-    return;
+  if(marcaData){
+    mods=marcaData.modelos.filter(mod=>{
+      const nm=mod.modelo.toUpperCase();
+      const mk=u.modelo.toUpperCase();
+      return nm===mk||nm.startsWith(mk+' ')||nm.startsWith(mk+'\t');
+    });
   }
-  // Buscar modelos que matcheen
-  const mods=marcaData.modelos.filter(mod=>{
-    const nm=mod.modelo.toUpperCase();
-    const mk=u.modelo.toUpperCase();
-    return nm===mk||nm.startsWith(mk+' ')||nm.startsWith(mk+'\t');
-  });
+  // Fallback: buscar en MKT (FOTON/DFSK están hardcodeados ahí)
+  if(!mods.length){
+    const mktMarca=MKT[u.marca.toUpperCase()];
+    if(mktMarca){
+      // Buscar modelo exacto o que empiece con el nombre
+      const mk=u.modelo.toUpperCase();
+      Object.keys(mktMarca).forEach(nombreMod=>{
+        if(nombreMod.toUpperCase()===mk||nombreMod.toUpperCase().startsWith(mk+' ')){
+          // Cada key del modelo es una versión con su precio
+          Object.entries(mktMarca[nombreMod]).forEach(([ver,precio])=>{
+            mods.push({modelo:nombreMod+' '+ver, precio, moneda:'ARS'});
+          });
+        }
+      });
+      // Si no matchea exacto, buscar cualquier modelo que CONTENGA el nombre
+      if(!mods.length){
+        Object.keys(mktMarca).forEach(nombreMod=>{
+          if(nombreMod.toUpperCase().includes(mk)){
+            Object.entries(mktMarca[nombreMod]).forEach(([ver,precio])=>{
+              mods.push({modelo:nombreMod+' '+ver, precio, moneda:'ARS'});
+            });
+          }
+        });
+      }
+    }
+  }
   if(!mods.length){
     mostrarToast('⚠️ No se encontró "'+u.marca+' '+u.modelo+'" en PRECIOS. Verificá la lista.');
     return;
@@ -4048,15 +4073,29 @@ function rOkm(){
   // Helper: buscar precio en _preciosData por marca+modelo
   const buscarPrecioEnLista=(marca,modelo)=>{
     const pd=window._preciosData||[];
+    const mk=modelo.toUpperCase();
+    // 1. Buscar en _preciosData (Excel importado)
     const marcaData=pd.find(m=>m.marca.toUpperCase()===marca.toUpperCase());
-    if(!marcaData) return null;
-    // Buscar modelo exacto o que empiece con el mismo nombre
-    const mods=marcaData.modelos.filter(mod=>{
-      const nm=mod.modelo.toUpperCase();
-      const mk=modelo.toUpperCase();
-      return nm===mk||nm.startsWith(mk+' ')||nm.startsWith(mk+'	');
-    });
-    return mods.length?mods:null;
+    if(marcaData){
+      const mods=marcaData.modelos.filter(mod=>{
+        const nm=mod.modelo.toUpperCase();
+        return nm===mk||nm.startsWith(mk+' ')||nm.startsWith(mk+'	');
+      });
+      if(mods.length) return mods;
+    }
+    // 2. Fallback: buscar en MKT (FOTON/DFSK hardcodeados)
+    const mktMarca=MKT[marca.toUpperCase()];
+    if(mktMarca){
+      const result=[];
+      Object.keys(mktMarca).forEach(nombreMod=>{
+        if(nombreMod.toUpperCase()===mk||nombreMod.toUpperCase().startsWith(mk+' ')||nombreMod.toUpperCase().includes(mk)){
+          const precios=Object.values(mktMarca[nombreMod]);
+          if(precios.length) result.push({modelo:nombreMod,precio:precios[0],moneda:'ARS'});
+        }
+      });
+      if(result.length) return result;
+    }
+    return null;
   };
 
   const secciones=[
