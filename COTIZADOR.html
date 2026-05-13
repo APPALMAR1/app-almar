@@ -4010,20 +4010,21 @@ function cotizarDesdeOkm(u){
   if(!mods.length){
     const mktMarca=MKT[u.marca.toUpperCase()];
     if(mktMarca){
-      // Buscar modelo exacto o que empiece con el nombre
       const mk=u.modelo.toUpperCase();
+      // Buscar modelo exacto o que empiece con el nombre del modelo de Autologica
       Object.keys(mktMarca).forEach(nombreMod=>{
-        if(nombreMod.toUpperCase()===mk||nombreMod.toUpperCase().startsWith(mk+' ')){
-          // Cada key del modelo es una versión con su precio
+        const nm=nombreMod.toUpperCase();
+        if(nm===mk||nm.startsWith(mk+' ')||mk.startsWith(nm+' ')||mk===nm){
+          // modeloCompleto = nombreMod + ' ' + version (igual que en _preciosData)
           Object.entries(mktMarca[nombreMod]).forEach(([ver,precio])=>{
             mods.push({modelo:nombreMod+' '+ver, precio, moneda:'ARS'});
           });
         }
       });
-      // Si no matchea exacto, buscar cualquier modelo que CONTENGA el nombre
+      // Fallback: contiene
       if(!mods.length){
         Object.keys(mktMarca).forEach(nombreMod=>{
-          if(nombreMod.toUpperCase().includes(mk)){
+          if(nombreMod.toUpperCase().includes(mk)||mk.includes(nombreMod.toUpperCase())){
             Object.entries(mktMarca[nombreMod]).forEach(([ver,precio])=>{
               mods.push({modelo:nombreMod+' '+ver, precio, moneda:'ARS'});
             });
