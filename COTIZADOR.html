@@ -2819,20 +2819,25 @@ function _inyectarMarcasUSD(data){
       if(modelos.length) data.push({marca,modelos});
     }
   }
-  // Inyectar marcas ARS desde MKT (DFSK y otros) que no estén en _preciosData
-  const MARCAS_MKT_ARS=['DFSK','FOTON']; // marcas ARS hardcodeadas en MKT
+  // Inyectar modelos ARS desde MKT (DFSK, FOTON ARS) — agregar los que faltan sin reemplazar
+  const MARCAS_MKT_ARS=['DFSK','FOTON'];
   for(const marca of MARCAS_MKT_ARS){
-    if(data.find(m=>m.marca===marca)) continue; // ya inyectada (USD u otro)
     const mktMarca=MKT[marca];
     if(!mktMarca) continue;
-    const modelos=[];
+    let marcaEntry=data.find(m=>m.marca===marca);
+    if(!marcaEntry){
+      marcaEntry={marca,modelos:[]};
+      data.push(marcaEntry);
+    }
+    // Agregar solo los modelos que no existen todavía
     for(const [modelo,versiones] of Object.entries(mktMarca)){
       for(const [version,precio] of Object.entries(versiones)){
         const nombreCompleto=(modelo+' '+version).trim();
-        modelos.push({modelo:nombreCompleto,precio:precio,moneda:'ARS'});
+        if(!marcaEntry.modelos.find(m=>m.modelo===nombreCompleto)){
+          marcaEntry.modelos.push({modelo:nombreCompleto,precio:precio,moneda:'ARS'});
+        }
       }
     }
-    if(modelos.length) data.push({marca,modelos});
   }
 }
 
