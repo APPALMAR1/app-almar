@@ -4041,7 +4041,12 @@ function cotizarDesdeOkm(u){
   if(mods.length===1){
     const mod=mods[0];
     const esUSD=mod.moneda==='USD';
-    const precio=esUSD&&_bnaCotiz?Math.round(mod.precio*_bnaCotiz):(typeof mod.precio==='number'?mod.precio:0);
+    // Si el precio es USD y no hay TC disponible, avisar y cancelar
+    if(esUSD&&!_bnaCotiz){
+      mostrarToast('⚠️ Tipo de cambio BNA no disponible. Esperá unos segundos y volvé a intentar.');
+      return;
+    }
+    const precio=esUSD?Math.round(mod.precio*_bnaCotiz):(typeof mod.precio==='number'?mod.precio:0);
     const precioUSD=esUSD?mod.precio:0;
     cotizarDesdePrecios(u.marca, mod.modelo, precio, precioUSD);
     return;
@@ -4054,9 +4059,10 @@ function cotizarDesdeOkm(u){
   html+='<div style="font-size:11px;color:var(--m);margin-bottom:16px">Elegí la versión a cotizar</div>';
   mods.forEach(mod=>{
     const esUSD=mod.moneda==='USD';
+    // Precio siempre convertido al TC del momento — mismo resultado que botón PRECIOS
     const precio=esUSD&&_bnaCotiz?Math.round(mod.precio*_bnaCotiz):(typeof mod.precio==='number'?mod.precio:0);
     const precioUSD=esUSD?mod.precio:0;
-    const precioTxt=esUSD?('USD '+mod.precio.toLocaleString('es-AR')+(precio?' · '+fmt(precio):'')):(precio?fmt(precio):'Consultar');
+    const precioTxt=esUSD?('USD '+mod.precio.toLocaleString('es-AR')+(precio?' · $'+precio.toLocaleString('es-AR'):'')):(precio?fmt(precio):'Consultar');
     html+=`<div onclick="this.closest('[data-modal]').remove();cotizarDesdePrecios('${u.marca}','${mod.modelo.replace(/'/g,"\'")}',${precio},${precioUSD})" style="padding:10px 14px;border:1px solid var(--bdr);border-radius:8px;margin-bottom:8px;cursor:pointer;display:flex;justify-content:space-between;align-items:center"><span style="font-size:11px">${mod.modelo}</span><span style="font-size:11px;font-weight:700;color:#0069b4">${precioTxt}</span></div>`;
   });
   html+=`<button onclick="this.closest('[data-modal]').remove()" style="width:100%;padding:8px;background:var(--s2);border:none;border-radius:8px;cursor:pointer;margin-top:4px;font-size:11px">Cancelar</button>`;
