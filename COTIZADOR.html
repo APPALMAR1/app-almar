@@ -1576,7 +1576,7 @@ function login(u){
   $$('cnm').textContent=u.name.split(' ')[0];
   $$('dav').textContent=u.ini; $$('dav').style.background=u.col;
   $$('dnm').textContent=u.name; $$('drl').textContent=roleLbl(u);
-  $$('p-vend').value=esGerencia(u)?'':u.name;
+  $$('p-vend').value=(esGerencia(u)&&!esMaster(u))?'':u.name;
   $$('dfec').textContent=tod();
   bDr(); bBN(); rCampMini(); rCampCot(); uHB();
   // Cargar cache de clientes para autocompletado (silencioso)
@@ -1631,14 +1631,14 @@ function bDr(){
   if(!CU)return;
   const nav=$$('dnav'); nav.innerHTML='';
   const items=[
-    // Gerencia: solo ve su panel global, sin propuesta ni historial propio
-    ...(esGerencia(CU)?[
+    // Gerencia pura (no Master): solo ve su panel global, sin propuesta ni historial propio
+    ...(esGerencia(CU)&&!esMaster(CU)?[
       {s:'gerencia',i:'📊',l:'Panel Gerencia',sup:true},
       {sec:'Inventario'},
       {s:'stock',i:'🚗',l:'Stock Usados'},
       {s:'okm',i:'🏎',l:'Stock 0 km'},
     ]:[
-      // Vendedores y supervisor
+      // Vendedores, supervisor y Master
       {s:'propuesta',i:'📋',l:'Propuesta Comercial'},
       {s:'historial',i:'🕐',l:'Mi Historial',bdg:true},
       ...(esSupervisor(CU)?[{s:'supervisor',i:'📊',l:'Panel Supervisor',sup:true}]:[]),
@@ -1648,11 +1648,12 @@ function bDr(){
       {s:'stock',i:'🚗',l:'Stock Usados'},
       {s:'okm',i:'🏎',l:'Stock 0 km'},
       ...(esSupervisor(CU)?[{sec:'Admin'},{s:'admin',i:'⚙️',l:'Panel Admin',sup:true}]:[]),
+      ...(esMaster(CU)?[{sec:'Gerencia'},{s:'gerencia',i:'📊',l:'Panel Gerencia',sup:true}]:[]),
     ]),
   ];
   items.forEach(x=>{
     if(x.sec){const d=document.createElement('div');d.className='ns';d.textContent=x.sec;nav.appendChild(d);return}
-    const first=esGerencia(CU)?'gerencia':'propuesta';
+    const first=esGerencia(CU)&&!esMaster(CU)?'gerencia':'propuesta';
     const d=document.createElement('div');
     d.className='ni'+(x.sup?' sup':'')+(x.s===first?' on':'');
     d.dataset.s=x.s; d.onclick=()=>goTo(x.s);
@@ -2477,43 +2478,72 @@ function filtrarAdminPropuestas(){
   renderAdminPropuestas(filtrado, $$('admin-prop-lista'));
 }
 
-function renderCardPropuesta(p){
-  const cliente=p.Cliente||p.cliente||p.nombre+' '+p.apellido||'Sin nombre';
-  const precio=parseInt(p.Precio||p.precio||0);
-  const totalA=parseInt(p.TotalA||p.Total||p.total||0);
-  const totalB=parseInt(p.TotalB||0);
-  // Parsear detalleA y detalleB — puede ser string JSON u objeto directo
+// ── Helper centralizado: normaliza claves de Sheets (PascalCase) y localStorage (camelCase) ──
+function parsearPropuesta(p){
+  const pn={};
+  Object.keys(p).forEach(k=>{ pn[k.toLowerCase()]=p[k]; });
+  const N=v=>parseInt(String(v||0).replace(/\./g,''))||0;
   let dA={},dB={};
-  try{const rawA=p.DetalleA||p.detalleA;dA=typeof rawA==='string'?JSON.parse(rawA):(rawA&&typeof rawA==='object'?rawA:{});}catch(e){dA={};}
-  try{const rawB=p.DetalleB||p.detalleB;dB=typeof rawB==='string'?JSON.parse(rawB):(rawB&&typeof rawB==='object'?rawB:{});}catch(e){dB={};}
-  const banco=p.Banco||p.banco||'';
-  const campana=p.Campana||p.campana||'';
-  const cuota=parseInt(p.Cuota||p.cuota||0);
-  const plazo=p.Plazo||p.plazo||'';
-  const email=p.Email||p.email||'';
-  const tel=p.Telefono||p.telefono||'';
+  try{const r=pn.detallea;dA=typeof r==='string'?JSON.parse(r):(r&&typeof r==='object'?r:{});}catch(e){dA={};}
+  try{const r=pn.detalleb;dB=typeof r==='string'?JSON.parse(r):(r&&typeof r==='object'?r:{});}catch(e){dB={};}
+  const precio   =N(pn.precio||dA.precio||0);
+  const gestoria =N(pn.agestoria||dA.gestoria||0);
+  const gastosBanc  =N(pn.agastosbanc||pn.agastosbancarios||dA.gastosBancarios||0);
+  const gastosBancAd=N(pn.agastosbancad||pn.agastosbancariosad||dA.gastosBancariosAd||0);
+  const intereses=N(pn.aintereses||dA.intereses||0);
+  const comision =N(pn.acomision||dA.comisionBanco||0);
+  const seguro   =N(pn.aseguro||dA.seguro||0);
+  const totalA   =N(pn.totala||pn.total||0)||precio+gestoria+gastosBanc+gastosBancAd+intereses+comision+seguro;
+  const credito  =N(pn.credito||dB.credito||0);
+  const usado    =N(pn.busado||dB.usadoPartePago||0);
+  const anticipo =N(pn.banticipo||dB.anticipo||0);
+  const cheques  =N(pn.bcheques||dB.cheques||0);
+  const docpag   =N(pn.bdocpag||dB.documentosPagares||dB.saldo||0);
+  const otrocred =N(pn.botrocred||dB.otroCredito||0);
+  const totalB   =N(pn.totalb||0)||credito+usado+anticipo+cheques+docpag+otrocred;
+  return {
+    pn,dA,dB,N,
+    cliente:((String(pn.nombre||'')+' '+String(pn.apellido||'')).trim())||String(pn.cliente||'Sin nombre'),
+    precio,gestoria,gastosBanc,gastosBancAd,intereses,comision,seguro,totalA,
+    credito,usado,anticipo,cheques,docpag,otrocred,totalB,
+    banco:pn.banco||'', campana:pn.campana||'',
+    cuota:N(pn.cuota||0), plazo:pn.plazo||'',
+    email:pn.email||'', tel:String(pn.telefono||''),
+    auto:pn.auto||'—', vendedor:pn.vendedor||'—',
+    fecha:pn.fecha||'', hora:pn.hora||'',
+    dni:pn.dni||pn['dni/cuit']||'',
+    obs:pn.obs||'', obsInterno:pn.obsinterno||'',
+  };
+}
 
+function renderCardPropuesta(p){
+  const v=parsearPropuesta(p);
+  const {cliente,precio,gestoria,gastosBanc,gastosBancAd,intereses,comision,seguro,totalA,
+         credito,usado,anticipo,cheques,docpag,otrocred,totalB,
+         banco,campana,cuota,plazo,email,tel}=v;
+  // (totalA y totalB ya calculados en parsearPropuesta)
   const filaA=(lbl,val)=>val?`<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--bdr)"><span style="color:var(--m)">${lbl}</span><span style="font-weight:600">$${parseInt(val).toLocaleString('es-AR')}</span></div>`:'';
 
   const detA=`
-    ${filaA('Precio del vehículo',dA.precio||precio)}
-    ${filaA('Gestoría / Patentamiento',dA.gestoria)}
-    ${filaA('Gastos bancarios campaña',dA.gastosBancarios)}
-    ${filaA('Gastos de otorgamiento',dA.gastosBancariosAd)}
-    ${filaA('Intereses crédito',dA.intereses)}
-    ${filaA('Comisión banco',dA.comisionBanco)}
-    ${filaA('Seguro automotor',dA.seguro)}
-    ${totalA?`<div style="display:flex;justify-content:space-between;padding:4px 0;margin-top:2px"><span style="font-weight:800;color:var(--b)">TOTAL A</span><span style="font-weight:800;color:var(--b)">$${totalA.toLocaleString('es-AR')}</span></div>`:''}`;
+    ${filaA('Precio del veh\u00edculo',precio)}
+    ${filaA('Gestor\u00eda / Patentamiento',gestoria)}
+    ${filaA('Gastos bancarios campa\u00f1a',gastosBanc)}
+    ${filaA('Gastos de otorgamiento',gastosBancAd)}
+    ${filaA('Intereses cr\u00e9dito',intereses)}
+    ${filaA('Comisi\u00f3n banco',comision)}
+    ${filaA('Seguro automotor',seguro)}
+    ${totalA?`<div style="display:flex;justify-content:space-between;padding:4px 0;margin-top:2px"><span style="font-weight:800;color:var(--b)">TOTAL A</span><span style="font-weight:800;color:var(--b)">$${totalA.toLocaleString('es-AR')}</span></div>`:''}` ;
 
   const detB=`
-    ${filaA('Crédito bancario',dB.credito||parseInt(p.Credito||p.credito||0))}
-    ${filaA('Usado en parte de pago',dB.usadoPartePago)}
-    ${filaA('Anticipo en efectivo',dB.anticipo)}
-    ${filaA('Cheques',dB.cheques)}
-    ${filaA('Saldo',dB.saldo)}
-    ${cuota&&plazo?`<div style="display:flex;justify-content:space-between;padding:4px 0;margin-top:2px"><span style="font-weight:800;color:var(--g)">Cuota mensual</span><span style="font-weight:800;color:var(--g)">$${cuota.toLocaleString('es-AR')} x ${plazo}m</span></div>`:''}`;
+    ${filaA('Cr\u00e9dito bancario',credito)}
+    ${filaA('Usado en parte de pago',usado)}
+    ${filaA('Anticipo en efectivo',anticipo)}
+    ${filaA('Cheques',cheques)}
+    ${filaA('Documentos / Pagar\u00e9s',docpag)}
+    ${filaA('Otro cr\u00e9dito',otrocred)}
+    ${cuota&&plazo?`<div style="display:flex;justify-content:space-between;padding:4px 0;margin-top:2px"><span style="font-weight:800;color:var(--g)">Cuota mensual</span><span style="font-weight:800;color:var(--g)">$${cuota.toLocaleString('es-AR')} x ${plazo}m</span></div>`:''}` ;
 
-  return `<div class="card" style="margin-bottom:10px;overflow:hidden">
+    return `<div class="card" style="margin-bottom:10px;overflow:hidden">
     <!-- Header -->
     <div style="background:linear-gradient(90deg,rgba(22,65,148,.18) 0%,transparent 100%);border-left:3px solid #0069b4;padding:10px 14px;display:flex;justify-content:space-between;align-items:flex-start">
       <div>
@@ -3687,42 +3717,30 @@ function abrirDetallePropuesta(p){
   const cuotaV=parseInt(p.Cuota||p.cuota||0);
   const plazo=p.Plazo||p.plazo||'';
 
-  // Parsear detalleA y detalleB — puede ser string JSON u objeto directo
-  let dA={},dB={};
-  try{
-    const rawA=p.DetalleA||p.detalleA;
-    dA=typeof rawA==='string'?JSON.parse(rawA):(rawA&&typeof rawA==='object'?rawA:{});
-  }catch(e){dA={};}
-  try{
-    const rawB=p.DetalleB||p.detalleB;
-    dB=typeof rawB==='string'?JSON.parse(rawB):(rawB&&typeof rawB==='object'?rawB:{});
-  }catch(e){dB={};}
-
-  // Helper para parsear números con o sin puntos de miles
-  const N=(v)=>parseInt(String(v||0).replace(/\./g,''))||0;
-
-  // Valores columna A — campo individual tiene prioridad, luego JSON, luego raíz
-  const aPrecio=N(p.precio||p.Precio||dA.precio||0);
-  const aGestoria=N(p.aGestoria||dA.gestoria||0);
-  const aGastosBanc=N(p.aGastosBanc||dA.gastosBancarios||0);
-  const aGastosBancAd=N(p.aGastosBancAd||dA.gastosBancariosAd||0);
-  const aIntereses=N(p.aIntereses||dA.intereses||0);
-  const aComision=N(p.aComision||dA.comisionBanco||0);
-  const aSeguro=N(p.aSeguro||dA.seguro||0);
+  // Usar helper centralizado parsearPropuesta (normaliza PascalCase de Sheets y camelCase de localStorage)
+  const _v=parsearPropuesta(p);
+  const pn=_v.pn; const dA=_v.dA; const dB=_v.dB; const N=_v.N;
+  const aPrecio=_v.precio;
+  const aGestoria=_v.gestoria;
+  const aGastosBanc=_v.gastosBanc;
+  const aGastosBancAd=_v.gastosBancAd;
+  const aIntereses=_v.intereses;
+  const aComision=_v.comision;
+  const aSeguro=_v.seguro;
   const sumaA=aPrecio+aGestoria+aGastosBanc+aGastosBancAd+aIntereses+aComision+aSeguro;
   // totalA: limpiar puntos de miles antes de parsear
-  const rawTotalA=N(p.TotalA||p.totalA||p.Total||p.total||0);
+  const rawTotalA=N(pn.totala||pn.total||0);
   const totalA=rawTotalA>0?rawTotalA:sumaA;
 
-  // Valores columna B — campo individual tiene prioridad, luego JSON
-  const bCredito=N(p.credito||p.Credito||dB.credito||0);
-  const bUsado=N(p.bUsado||dB.usadoPartePago||0);
-  const bAnticipo=N(p.bAnticipo||dB.anticipo||0);
-  const bCheques=N(p.bCheques||dB.cheques||0);
-  const bDocPag=N(p.bDocPag||dB.documentosPagares||dB.saldo||0);
-  const bOtroCred=N(p.bOtroCred||dB.otroCredito||0);
+  // Columna B desde helper parsearPropuesta
+  const bCredito=_v.credito;
+  const bUsado=_v.usado;
+  const bAnticipo=_v.anticipo;
+  const bCheques=_v.cheques;
+  const bDocPag=_v.docpag;
+  const bOtroCred=_v.otrocred;
   const sumaB=bCredito+bUsado+bAnticipo+bCheques+bDocPag+bOtroCred;
-  const rawTotalB=N(p.TotalB||p.totalB||0);
+  const rawTotalB=_v.totalB;
   const totalB=rawTotalB>0?rawTotalB:sumaB;
 
   // Helper fila
