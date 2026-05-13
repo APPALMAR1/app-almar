@@ -2481,38 +2481,65 @@ function filtrarAdminPropuestas(){
 // ── Helper centralizado: normaliza claves de Sheets (PascalCase) y localStorage (camelCase) ──
 function parsearPropuesta(p){
   const pn={};
-  Object.keys(p).forEach(k=>{ pn[k.toLowerCase()]=p[k]; });
-  const N=v=>parseInt(String(v||0).replace(/\./g,''))||0;
+  // Normalizar TODAS las claves a minúscula sin espacios ni caracteres especiales
+  Object.keys(p).forEach(k=>{ pn[k.toLowerCase().replace(/[^a-z0-9]/g,'')]=p[k]; });
+  const N=v=>parseInt(String(v||0).replace(/\./g,'').replace(/,/g,''))||0;
+
+  // Parsear DetalleA/DetalleB — JSON guardado como string
   let dA={},dB={};
-  try{const r=pn.detallea;dA=typeof r==='string'?JSON.parse(r):(r&&typeof r==='object'?r:{});}catch(e){dA={};}
-  try{const r=pn.detalleb;dB=typeof r==='string'?JSON.parse(r):(r&&typeof r==='object'?r:{});}catch(e){dB={};}
-  const precio   =N(pn.precio||dA.precio||0);
-  const gestoria =N(pn.agestoria||dA.gestoria||0);
-  const gastosBanc  =N(pn.agastosbanc||pn.agastosbancarios||dA.gastosBancarios||0);
-  const gastosBancAd=N(pn.agastosbancad||pn.agastosbancariosad||dA.gastosBancariosAd||0);
-  const intereses=N(pn.aintereses||dA.intereses||0);
-  const comision =N(pn.acomision||dA.comisionBanco||0);
-  const seguro   =N(pn.aseguro||dA.seguro||0);
-  const totalA   =N(pn.totala||pn.total||0)||precio+gestoria+gastosBanc+gastosBancAd+intereses+comision+seguro;
-  const credito  =N(pn.credito||dB.credito||0);
-  const usado    =N(pn.busado||dB.usadoPartePago||0);
-  const anticipo =N(pn.banticipo||dB.anticipo||0);
-  const cheques  =N(pn.bcheques||dB.cheques||0);
-  const docpag   =N(pn.bdocpag||dB.documentosPagares||dB.saldo||0);
-  const otrocred =N(pn.botrocred||dB.otroCredito||0);
-  const totalB   =N(pn.totalb||0)||credito+usado+anticipo+cheques+docpag+otrocred;
+  try{const r=pn.detalleak||pn.detallea||pn.detalle_a;dA=typeof r==='string'?JSON.parse(r):(r&&typeof r==='object'?r:{});}catch(e){dA={};}
+  try{const r=pn.detalleb||pn.detalle_b;dB=typeof r==='string'?JSON.parse(r):(r&&typeof r==='object'?r:{});}catch(e){dB={};}
+
+  // Busqueda flexible: buscar cualquier clave que CONTENGA el término clave
+  // Esto cubre: aGestoria, AGestoria, a_gestoria, gestoria, etc.
+  const buscar=(terminos,obj=pn)=>{
+    for(const t of terminos){
+      // Buscar exacto primero
+      if(obj[t]!==undefined && obj[t]!==null && obj[t]!=='') return obj[t];
+      // Buscar cualquier clave que contenga el término
+      const k=Object.keys(obj).find(k=>k.toLowerCase().replace(/[^a-z0-9]/g,'').includes(t));
+      if(k!==undefined && obj[k]!==undefined && obj[k]!==null && obj[k]!=='') return obj[k];
+    }
+    return 0;
+  };
+
+  const precio   =N(buscar(['precio'],pn)||dA.precio||0);
+  const gestoria =N(buscar(['agestoria','gestoria'],pn)||dA.gestoria||0);
+  const gastosBanc  =N(buscar(['agastosbanc','agastosbancarios','gastosbancarios'],pn)||dA.gastosBancarios||0);
+  const gastosBancAd=N(buscar(['agastosbancad','agastosbancariosad','agastosotorgamiento'],pn)||dA.gastosBancariosAd||0);
+  const intereses=N(buscar(['aintereses','intereses'],pn)||dA.intereses||0);
+  const comision =N(buscar(['acomision','comision'],pn)||dA.comisionBanco||0);
+  const seguro   =N(buscar(['aseguro','seguro'],pn)||dA.seguro||0);
+  const totalARaw=N(buscar(['totala','total'],pn)||0);
+  const sumaA=precio+gestoria+gastosBanc+gastosBancAd+intereses+comision+seguro;
+  const totalA=totalARaw>0?totalARaw:sumaA;
+
+  const credito  =N(buscar(['credito','bcredito'],pn)||dB.credito||0);
+  const usado    =N(buscar(['busado','usado','usadopartepago'],pn)||dB.usadoPartePago||0);
+  const anticipo =N(buscar(['banticipo','anticipo'],pn)||dB.anticipo||0);
+  const cheques  =N(buscar(['bcheques','cheques'],pn)||dB.cheques||0);
+  const docpag   =N(buscar(['bdocpag','docpag','documentospagares'],pn)||dB.documentosPagares||dB.saldo||0);
+  const otrocred =N(buscar(['botrocred','otrocred','otrocredito'],pn)||dB.otroCredito||0);
+  const totalBRaw=N(buscar(['totalb'],pn)||0);
+  const sumaB=credito+usado+anticipo+cheques+docpag+otrocred;
+  const totalB=totalBRaw>0?totalBRaw:sumaB;
+
+  // Log de diagnóstico (solo en desarrollo)
+  // console.log('parsearPropuesta pn keys:', Object.keys(pn));
+  // console.log('parsearPropuesta resultado A:', {precio,gestoria,gastosBanc,gastosBancAd,intereses,comision,seguro});
+
   return {
     pn,dA,dB,N,
     cliente:((String(pn.nombre||'')+' '+String(pn.apellido||'')).trim())||String(pn.cliente||'Sin nombre'),
     precio,gestoria,gastosBanc,gastosBancAd,intereses,comision,seguro,totalA,
     credito,usado,anticipo,cheques,docpag,otrocred,totalB,
     banco:pn.banco||'', campana:pn.campana||'',
-    cuota:N(pn.cuota||0), plazo:pn.plazo||'',
-    email:pn.email||'', tel:String(pn.telefono||''),
+    cuota:N(buscar(['cuota'],pn)||0), plazo:String(pn.plazo||''),
+    email:String(pn.email||''), tel:String(pn.telefono||pn.tel||''),
     auto:pn.auto||'—', vendedor:pn.vendedor||'—',
     fecha:pn.fecha||'', hora:pn.hora||'',
-    dni:pn.dni||pn['dni/cuit']||'',
-    obs:pn.obs||'', obsInterno:pn.obsinterno||'',
+    dni:String(pn.dni||pn.dnicuit||''),
+    obs:pn.obs||'', obsInterno:pn.obsinterno||pn.obs_interno||'',
   };
 }
 
