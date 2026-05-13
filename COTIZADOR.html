@@ -4006,31 +4006,31 @@ function cotizarDesdeOkm(u){
       return nm===mk||nm.startsWith(mk+' ')||nm.startsWith(mk+'\t');
     });
   }
-  // Fallback: buscar en MKT (FOTON/DFSK están hardcodeados ahí)
+  // Fallback 1: MKT_USD_DATA_G (FOTON y otros USD — nombres exactos como en PRECIOS)
+  if(!mods.length&&typeof MKT_USD_DATA_G!=='undefined'&&MKT_USD_DATA_G[u.marca.toUpperCase()]){
+    const mktU=MKT_USD_DATA_G[u.marca.toUpperCase()];
+    const mk=u.modelo.toUpperCase();
+    Object.keys(mktU).forEach(nombreMod=>{
+      const nm=nombreMod.toUpperCase();
+      if(nm===mk||nm.startsWith(mk+' ')||nm.startsWith(mk+'\t')){
+        const precio=Object.values(mktU[nombreMod])[0]||0;
+        mods.push({modelo:nombreMod,precio,moneda:'USD'});
+      }
+    });
+  }
+  // Fallback 2: MKT (DFSK en ARS)
   if(!mods.length){
     const mktMarca=MKT[u.marca.toUpperCase()];
     if(mktMarca){
       const mk=u.modelo.toUpperCase();
-      // Buscar modelo exacto o que empiece con el nombre del modelo de Autologica
       Object.keys(mktMarca).forEach(nombreMod=>{
         const nm=nombreMod.toUpperCase();
-        if(nm===mk||nm.startsWith(mk+' ')||mk.startsWith(nm+' ')||mk===nm){
-          // modeloCompleto = nombreMod + ' ' + version (igual que en _preciosData)
+        if(nm===mk||nm.startsWith(mk+' ')){
           Object.entries(mktMarca[nombreMod]).forEach(([ver,precio])=>{
             mods.push({modelo:nombreMod+' '+ver, precio, moneda:'ARS'});
           });
         }
       });
-      // Fallback: contiene
-      if(!mods.length){
-        Object.keys(mktMarca).forEach(nombreMod=>{
-          if(nombreMod.toUpperCase().includes(mk)||mk.includes(nombreMod.toUpperCase())){
-            Object.entries(mktMarca[nombreMod]).forEach(([ver,precio])=>{
-              mods.push({modelo:nombreMod+' '+ver, precio, moneda:'ARS'});
-            });
-          }
-        });
-      }
     }
   }
   if(!mods.length){
@@ -4073,20 +4073,45 @@ function rOkm(){
 
   // Helper: buscar precio en _preciosData por marca+modelo
   const buscarPrecioEnLista=(marca,modelo)=>{
-    // ÚNICA fuente de precios: _preciosData (Excel importado desde Drive)
-    // MKT no se usa para mostrar precios — puede estar desactualizado
-    const pd=window._preciosData||[];
-    if(!pd.length) return null; // Sin precios cargados
     const mk=modelo.toUpperCase();
-    const marcaData=pd.find(m=>m.marca.toUpperCase()===marca.toUpperCase());
-    if(!marcaData) return null;
-    // Buscar modelos que contengan el nombre del modelo de Autologica
-    // Ej: Autologica dice "TM1" → en precios es "TM1 1.5 CABINA SIMPLE", "TM1 1.6 CAB DOBLE", etc.
-    const mods=marcaData.modelos.filter(mod=>{
-      const nm=mod.modelo.toUpperCase();
-      return nm===mk||nm.startsWith(mk+' ')||nm.startsWith(mk+'	')||nm.includes(' '+mk+' ')||nm.includes(' '+mk);
-    });
-    return mods.length?mods:null;
+    // 1. Buscar en _preciosData (Excel importado desde Drive) — máxima prioridad
+    const pd=window._preciosData||[];
+    const marcaDataPD=pd.find(m=>m.marca.toUpperCase()===marca.toUpperCase());
+    if(marcaDataPD){
+      const mods=marcaDataPD.modelos.filter(mod=>{
+        const nm=mod.modelo.toUpperCase();
+        return nm===mk||nm.startsWith(mk+' ')||nm.startsWith(mk+'\t')||nm.includes(' '+mk+' ')||nm.startsWith(mk+' ');
+      });
+      if(mods.length) return mods;
+    }
+    // 2. Fallback: MKT_USD_DATA_G (FOTON, BAIC, CHERY, TOYOTA especiales — precios USD actualizados)
+    if(typeof MKT_USD_DATA_G!=='undefined'&&MKT_USD_DATA_G[marca.toUpperCase()]){
+      const mktU=MKT_USD_DATA_G[marca.toUpperCase()];
+      const result=[];
+      Object.keys(mktU).forEach(nombreMod=>{
+        const nm=nombreMod.toUpperCase();
+        if(nm===mk||nm.startsWith(mk+' ')||nm.startsWith(mk+'\t')){
+          // nombreMod ya es el nombre completo (ej: "TM1 1.5 CABINA SIMPLE")
+          const precio=Object.values(mktU[nombreMod])[0]||0;
+          result.push({modelo:nombreMod,precio,moneda:'USD'});
+        }
+      });
+      if(result.length) return result;
+    }
+    // 3. Fallback: MKT (DFSK y otros en ARS)
+    const mktMarca=MKT[marca.toUpperCase()];
+    if(mktMarca){
+      const result=[];
+      Object.keys(mktMarca).forEach(nombreMod=>{
+        const nm=nombreMod.toUpperCase();
+        if(nm===mk||nm.startsWith(mk+' ')){
+          const precios=Object.values(mktMarca[nombreMod]);
+          if(precios.length) result.push({modelo:nombreMod+' '+Object.keys(mktMarca[nombreMod])[0], precio:precios[0], moneda:'ARS'});
+        }
+      });
+      if(result.length) return result;
+    }
+    return null;
   };
 
   const secciones=[
