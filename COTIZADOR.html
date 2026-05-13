@@ -982,12 +982,14 @@ input[type=text]#p-obs{background:#F5F7FA!important;border:1px solid #D5DCE6!imp
     <button class="btn btn-ghost btn-sm" onclick="expD()">📤 Exportar JSON</button>
     <button class="btn btn-ghost btn-sm" onclick="document.getElementById('impf').click()">📥 Importar JSON</button>
     <button class="btn btn-sm" onclick="document.getElementById('impx').click()" style="background:none;border:1.5px solid var(--g);color:var(--g);font-family:var(--hf);font-weight:700;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;padding:5px 10px;border-radius:6px;cursor:pointer">📊 Importar Excel Usados</button>
+    <button class="btn btn-sm" onclick="document.getElementById('impxaut').click()" style="background:none;border:1.5px solid #2980b9;color:#2980b9;font-family:var(--hf);font-weight:700;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;padding:5px 10px;border-radius:6px;cursor:pointer">🚛 Stock 0km Autologica</button>
     <button class="btn btn-sm" onclick="document.getElementById('impxo').click()" style="background:none;border:1.5px solid var(--b);color:var(--b);font-family:var(--hf);font-weight:700;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;padding:5px 10px;border-radius:6px;cursor:pointer">🏎 Importar Excel 0km</button>
     <button class="btn btn-sm" onclick="dlgPlantillaOkm()" style="background:none;border:1.5px solid var(--m);color:var(--m);font-family:var(--hf);font-weight:700;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;padding:5px 10px;border-radius:6px;cursor:pointer">📋 Plantilla 0km</button>
     <button class="btn btn-sm" onclick="document.getElementById('impxc').click()" style="background:none;border:1.5px solid #ef7d00;color:#ef7d00;font-family:var(--hf);font-weight:700;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;padding:5px 10px;border-radius:6px;cursor:pointer">🏦 Importar Campañas Excel</button>
     <button class="btn btn-sm" onclick="document.getElementById('impxp').click()" style="background:none;border:1.5px solid #F39C12;color:#F39C12;font-family:var(--hf);font-weight:700;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;padding:5px 10px;border-radius:6px;cursor:pointer">💰 Importar Lista Precios</button>
     <button class="btn btn-sm" onclick="if(confirm('¿Limpiar cache de precios? Se borrarán los precios guardados y se recargarán desde Drive.')){localStorage.removeItem('almar_precios_okm');window._preciosData=null;mostrarToast('🗑️ Cache de precios limpiado');setTimeout(()=>location.reload(),1000)}" style="background:none;border:1.5px solid #e74c3c;color:#e74c3c;font-family:var(--hf);font-weight:700;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;padding:5px 10px;border-radius:6px;cursor:pointer">🗑️ Limpiar Cache Precios</button>
     <input type="file" id="impf"  accept=".json"      style="display:none" onchange="impD(event)">
+    <input type="file" id="impxaut" accept=".xlsx,.xls" style="display:none" onchange="impXAutologica(event)">
     <input type="file" id="impx"  accept=".xlsx,.xls" style="display:none" onchange="impX(event)">
     <input type="file" id="impxo" accept=".xlsx,.xls" style="display:none" onchange="impXO(event)">
     <input type="file" id="impxc" accept=".xlsx,.xls" style="display:none" onchange="impXC(event)">
@@ -3996,7 +3998,41 @@ function rStk(){
     el.appendChild(d);
   });
 }
-function rOkm(){const el=$$('ol');el.innerHTML='';okm.forEach(u=>{const d=document.createElement('div');d.className='hi';d.innerHTML=`<div class="hico" style="background:var(--b)">🏎</div><div class="hinf"><div class="haut">${u.marca} ${u.modelo} ${u.version}</div><div class="hdet">${u.anno} · ${u.color||'—'}</div></div><div class="hr2"><div class="hcuo">${u.precio?fmt(u.precio):'Consultar'}</div><div class="hfec">${u.estado||'—'}</div></div>`;el.appendChild(d)})}
+function rOkm(){
+  const el=$$('ol');el.innerHTML='';
+  if(!okm||!okm.length){el.innerHTML='<div class="empty"><div class="eico">🏎</div><div class="ettl">Sin stock 0km</div><div class="esub">Importá el Excel de Autologica desde Panel Admin.</div></div>';return;}
+  // Agrupar por estado para mostrar secciones
+  const secciones=[
+    {label:'✅ EN STOCK',     key:'EN STOCK',     color:'#27ae60'},
+    {label:'🚚 EN TRÁNSITO', key:'EN TRÁNSITO',  color:'#f39c12'},
+    {label:'🔒 SEÑADO',      key:'SEÑADO',        color:'#e74c3c'},
+  ];
+  secciones.forEach(sec=>{
+    const items=okm.filter(u=>(u.estado||'EN STOCK')===sec.key);
+    if(!items.length) return;
+    // Header de sección
+    const hd=document.createElement('div');
+    hd.style.cssText='padding:6px 14px;font-size:10px;font-weight:800;letter-spacing:1px;color:'+sec.color+';background:var(--s2);border-bottom:1px solid var(--bdr)';
+    hd.textContent=sec.label+' ('+items.length+')';
+    el.appendChild(hd);
+    items.forEach(u=>{
+      const d=document.createElement('div');d.className='hi';
+      const precioTxt=u.moneda==='USD'&&u.precioUSD>0?'USD '+u.precioUSD.toLocaleString('es-AR'):u.precio?fmt(u.precio):'Consultar';
+      const empresa=u.empresa?'['+u.empresa+'] ':'';
+      const patente=u.patente?' · '+u.patente:'';
+      d.innerHTML=`<div class="hico" style="background:${sec.color}">🏎</div><div class="hinf"><div class="haut">${empresa}${u.marca} ${u.modelo}${u.version?' '+u.version:''}</div><div class="hdet">${u.anno}${u.color?' · '+u.color:''}${patente}${u.obs?' · '+u.obs:''}</div></div><div class="hr2"><div class="hcuo">${precioTxt}</div><div class="hfec" style="color:${sec.color}">${sec.label.split(' ')[1]||sec.key}</div></div>`;
+      el.appendChild(d);
+    });
+  });
+  // Mostrar VENDIDO al final si hay
+  const vendidos=okm.filter(u=>u.estado==='VENDIDO');
+  if(vendidos.length){
+    const hd=document.createElement('div');
+    hd.style.cssText='padding:6px 14px;font-size:10px;font-weight:800;letter-spacing:1px;color:#95a5a6;background:var(--s2);border-bottom:1px solid var(--bdr)';
+    hd.textContent='✗ VENDIDO ('+vendidos.length+')';
+    el.appendChild(hd);
+  }
+}
 
 //  ADMIN 
 function rAdm(){
@@ -4381,6 +4417,95 @@ function impXO(e){
   e.target.value='';
   }); // fin loadXLSX
 }
+
+//  IMPORTAR STOCK 0KM DESDE EXCEL AUTOLOGICA ─
+function impXAutologica(e){
+  const f=e.target.files[0]; if(!f)return;
+  loadXLSX(()=>{
+  const r=new FileReader();
+  r.onload=ev=>{
+    try{
+      const wb=XLSX.read(ev.target.result,{type:'binary'});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+      const MARCAS_OK=['FOTON','DFSK','TOYOTA'];
+      let estadoActual='EN STOCK';
+      let empresaActual='ALMAR';
+      const nuevos=[];
+      for(let i=0;i<rows.length;i++){
+        const v=rows[i].map(c=>String(c==null?'':c).trim());
+        const textoFila=v.join(' ').toUpperCase();
+        // Detectar depósito → estado
+        if(textoFila.includes('DEP')){
+          if(textoFila.includes('TERMINAL')) estadoActual='EN TRÁNSITO';
+          else if(textoFila.includes('DEP')) estadoActual='EN STOCK';
+        }
+        // Detectar empresa
+        if(textoFila.includes('ALMAR S.A')) empresaActual='ALMAR';
+        else if(textoFila.includes('KOVIA S.A')) empresaActual='KOVIA';
+        // Fila de vehículo: col0 es marca válida
+        const marca=v[0]?.toUpperCase();
+        if(!MARCAS_OK.includes(marca)) continue;
+        const modelo=v[2]||'';
+        const color=v[3]||'';
+        const anno=parseInt(v[4])||0;
+        // Detectar si patente cayó en col5 o si el VIN está en col5
+        // VIN chino: empieza con L y tiene 17 chars
+        const col5=v[5]||'';
+        const col6=v[6]||'';
+        let patente='', vin='', precioRaw=0, obs='';
+        if(col5.length===17&&col5.startsWith('L')){
+          // Sin patente — VIN en col5, precio en col8, obs en col9
+          patente='';
+          vin=col5;
+          precioRaw=parseFloat(String(v[8]||'0').replace(/[.,]/g,''))||0;
+          obs=v[9]||'';
+        } else {
+          // Con patente — VIN en col6, precio en col9, obs en col10
+          patente=col5;
+          vin=col6;
+          precioRaw=parseFloat(String(v[9]||'0').replace(/[.,]/g,''))||0;
+          obs=v[10]||'';
+        }
+        // Precio: si < 200000 → USD, si no → ARS
+        const moneda=precioRaw>0&&precioRaw<200000?'USD':'ARS';
+        nuevos.push({
+          empresa:empresaActual,
+          marca,modelo,color,anno,patente,vin,
+          precio:precioRaw,moneda,
+          estado:estadoActual,
+          obs
+        });
+      }
+      if(!nuevos.length){alert('❌ No se encontraron vehículos FOTON/DFSK.\nVerificá que sea el informe correcto de Autologica.');return;}
+      if(!confirm('✅ Se encontraron '+nuevos.length+' unidades 0km.\n\nDetalle:\n'
+        +nuevos.map(u=>u.marca+' '+u.modelo+' ('+u.estado+')').join('\n')
+        +'\n\n¿Reemplazar el stock 0km actual?')) return;
+      // Guardar en variable okm
+      okm=nuevos.map(u=>({
+        marca:u.marca,
+        modelo:u.modelo,
+        version:u.obs||'',
+        anno:u.anno,
+        precio:u.moneda==='ARS'?u.precio:0,
+        precioUSD:u.moneda==='USD'?u.precio:0,
+        color:u.color,
+        estado:u.estado,
+        empresa:u.empresa,
+        patente:u.patente,
+        vin:u.vin,
+        obs:u.obs,
+        moneda:u.moneda
+      }));
+      rOkm(); rAdm();
+      mostrarToast('✅ Stock 0km actualizado — '+nuevos.length+' unidades. Exportá el JSON para guardar.');
+    }catch(err){alert('❌ Error: '+err.message);}
+  };
+  r.readAsBinaryString(f);
+  e.target.value='';
+  });
+}
+
 
 //  DESCARGAR PLANTILLA 0KM (pre-cargada con DFSK y FOTON) 
 function dlgPlantillaOkm(){
