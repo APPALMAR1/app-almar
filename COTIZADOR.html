@@ -3991,6 +3991,73 @@ function rStk(){
     el.appendChild(d);
   });
 }
+// Cotizar desde stock 0km — precarga la propuesta con los datos de la unidad
+function cotizarDesdeOkm(u){
+  if(!esVendedor(CU)&&!esSupervisor(CU)){return;}
+  // Navegar a propuesta
+  goTo('propuesta');
+  // Esperar a que la pantalla esté lista y precargar datos
+  setTimeout(()=>{
+    // Tipo: lista de precios 0km
+    const selTipo=$$('tipo');
+    if(selTipo){selTipo.value='lista_precios';onTipo();}
+    setTimeout(()=>{
+      // Marca
+      const selMarca=$$('marca');
+      if(selMarca){
+        selMarca.value=u.marca;
+        selMarca.disabled=false;
+        onMarca();
+      }
+      setTimeout(()=>{
+        // Modelo
+        const selModelo=$$('modelo');
+        if(selModelo){
+          selModelo.value=u.modelo;
+          selModelo.disabled=false;
+          onModelo();
+        }
+        setTimeout(()=>{
+          // Versión — buscar la que contenga obs o la primera disponible
+          const selVer=$$('version');
+          if(selVer&&selVer.options.length>1){
+            // Si tiene obs (ej: FURGON), intentar matchear
+            if(u.obs){
+              const obs=u.obs.toUpperCase();
+              for(let i=1;i<selVer.options.length;i++){
+                if(selVer.options[i].value.toUpperCase().includes(obs)){
+                  selVer.value=selVer.options[i].value;break;
+                }
+              }
+            }
+            if(!selVer.value&&selVer.options[1]) selVer.value=selVer.options[1].value;
+            selVer.disabled=false;
+            onVersion();
+          }
+          // Año
+          const selAnno=$$('anno');
+          if(selAnno){selAnno.value=u.anno;selAnno.disabled=false;}
+          // Color
+          const selColor=$$('color');
+          if(selColor){selColor.value=u.color||'';}
+          // Precio: si tiene precio ARS usarlo, si USD dejarlo en 0 (el usuario pone el precio en ARS)
+          if(u.precio>0){
+            const pa1=$$('pa1');
+            if(pa1){pa1.value=u.precio;cP();}
+          }
+          // KM = 0 para 0km
+          const kmEl=$$('km');if(kmEl)kmEl.value='0';
+          // Tipo vehículo
+          const tvEl=$$('tveh');if(tvEl){tvEl.value='Auto / Utilitario';}
+          // Toast informativo
+          const precioInfo=u.moneda==='USD'?'Precio en USD '+u.precioUSD.toLocaleString('es-AR')+' — completá precio en ARS':'';
+          mostrarToast('🏎 '+u.marca+' '+u.modelo+' cargado'+(precioInfo?' · '+precioInfo:''));
+        },150);
+      },150);
+    },150);
+  },300);
+}
+
 function rOkm(){
   const el=$$('ol');el.innerHTML='';
   if(!okm||!okm.length){el.innerHTML='<div class="empty"><div class="eico">🏎</div><div class="ettl">Sin stock 0km</div><div class="esub">Importá el Excel de Autologica desde Panel Admin.</div></div>';return;}
@@ -4013,7 +4080,8 @@ function rOkm(){
       const precioTxt=u.moneda==='USD'&&u.precioUSD>0?'USD '+u.precioUSD.toLocaleString('es-AR'):u.precio?fmt(u.precio):'Consultar';
       const empresa=u.empresa?'['+u.empresa+'] ':'';
       const patente=u.patente?' · '+u.patente:'';
-      d.innerHTML=`<div class="hico" style="background:${sec.color}">🏎</div><div class="hinf"><div class="haut">${empresa}${u.marca} ${u.modelo}${u.version?' '+u.version:''}</div><div class="hdet">${u.anno}${u.color?' · '+u.color:''}${patente}${u.obs?' · '+u.obs:''}</div></div><div class="hr2"><div class="hcuo">${precioTxt}</div><div class="hfec" style="color:${sec.color}">${sec.label.split(' ')[1]||sec.key}</div></div>`;
+      const puedeVer=esVendedor(CU)||esSupervisor(CU);
+      d.innerHTML=`<div class="hico" style="background:${sec.color}">🏎</div><div class="hinf"><div class="haut">${empresa}${u.marca} ${u.modelo}${u.version?' '+u.version:''}</div><div class="hdet">${u.anno}${u.color?' · '+u.color:''}${patente}${u.obs?' · '+u.obs:''}</div></div><div class="hr2"><div><div class="hcuo">${precioTxt}</div><div class="hfec" style="color:${sec.color}">${sec.label.split(' ')[1]||sec.key}</div></div>${puedeVer&&sec.key!=='EN TRÁNSITO'?`<button onclick="event.stopPropagation();cotizarDesdeOkm(${JSON.stringify(u).replace(/"/g,'&quot;')})" style="margin-left:8px;padding:4px 10px;font-size:9px;font-weight:800;letter-spacing:1px;background:#0069b4;color:#fff;border:none;border-radius:6px;cursor:pointer;text-transform:uppercase">📋 Cotizar</button>`:''}`;
       el.appendChild(d);
     });
   });
