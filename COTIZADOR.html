@@ -4011,108 +4011,73 @@ function rStk(){
 // Clave: "MARCA|MODELO_AUTOLOGICA" → array de nombres exactos en PRECIOS
 // Si hay una sola versión → carga directo. Si hay varias → muestra modal.
 const OKM_EQUIV={
-  'FOTON|TM1':         ['TM1 1.5 CABINA SIMPLE','TM1 1.6 CAB DOBLE','TM1 1.6 BOX CARGO','TM1 1.6 BOX CARGO REFRIGERADO'],
-  'FOTON|TM2':         ['TM2 HD 1.6 CABINA SIMPLE','TM2 HD 1.6 CABINA DOBLE'],
-  'FOTON|TUNLAND V9':  ['TUNLAND V9 4X4 2.0 HYBRID AT8 ZF','TUNLAND V9 4X4 PRO SPORT NAFTERA','TUNLAND V7 MHEV ULTIMATE'],
-  'FOTON|TUNLAND G7':  ['TUNLAND G7 4X2 MT','TUNLAND G7 4X4 MT','TUNLAND G7 4X2 AT','TUNLAND G7 4X4 AT8'],
+  // Clave: "MARCA|MODELO_AUTOLOGICA" → nombres EXACTOS en MKT_USD_DATA_G/_preciosData
+  'FOTON|TM1':          ['TM1 1.5 CABINA SIMPLE','TM1 1.6 CAB DOBLE','TM1 1.6 BOX CARGO','TM1 1.6 BOX CARGO REFRIGERADO'],
+  'FOTON|TM2':          ['TM2 HD 1.6 CABINA SIMPLE','TM2 HD 1.6 CABINA DOBLE'],
+  'FOTON|TUNLAND V9':   ['AUMAN D 1621 6.7 CAJA ZF MT8 10.000KG','AUMAN D 2027 6.7 CAJA ZF MT8 15.000KG'],
+  'FOTON|TUNLAND G7':   ['TUNLAND G7 4X2 MT','TUNLAND G7 4X4 MT','TUNLAND G7 4X2 AT','TUNLAND G7 4X4 AT8'],
   'FOTON|AUMARK S3 916':['AUMARK S3 3.8 916 MT6 5.000KG CHASIS'],
   'FOTON|AUMARK S3 615':['AUMARK S3 2.8 615 MT5 3.500KG CHASIS'],
   'FOTON|AUMARK S3 1016':['AUMARK S3 3.8 1016 MT6 6.000KG CHASIS'],
-  'FOTON|WONDER':      ['WONDER CABINA SIMPLE','WONDER CABINA DOBLE','WONDER CABINA SIMPLE CS'],
-  'DFSK|C35':          ['C35 FURGON','C35 FURGON 7A HOMOLOGADA','C35 BOX'],
-  'DFSK|C35 FURGON':   ['C35 FURGON'],
-  'DFSK|C31':          ['C31'],
-  'DFSK|C31 BOX':      ['C31 BOX'],
-  'DFSK|K01H':         ['K01H FURGON','K01H MINIBUS'],
-  'DFSK|E5':           ['E5 PHEV L1 HYBRID 7 ASIENTOS CVT'],
+  'FOTON|WONDER':       ['WONDER CABINA SIMPLE','WONDER CABINA DOBLE','WONDER CABINA SIMPLE CS'],
+  'DFSK|C35':           ['C35 FURGON','C35 FURGON 7A HOMOLOGADA','C35 BOX'],
+  'DFSK|C35 FURGON':    ['C35 FURGON'],
+  'DFSK|C31':           ['C31'],
+  'DFSK|C31 BOX':       ['C31 BOX'],
+  'DFSK|K01H':          ['K01H FURGON','K01H MINIBUS'],
+  'DFSK|E5':            ['E5 PHEV L1 HYBRID 7 ASIENTOS CVT'],
 };
 
 // Cotizar desde stock 0km — idéntico al botón PRECIOS
 function cotizarDesdeOkm(u){
   if(!esVendedor(CU)&&!esSupervisor(CU)) return;
-  // _bnaCotiz puede no estar si la marca es ARS — no bloqueamos
 
-  // Buscar equivalencia Autologica → nombre exacto en PRECIOS
+  // Paso 1: traducir modelo Autologica a nombres en _preciosData via OKM_EQUIV
   const clave=Object.keys(OKM_EQUIV).find(k=>k.toUpperCase()===(u.marca+'|'+u.modelo).toUpperCase());
   const nombresEnPrecios=clave?OKM_EQUIV[clave]:null;
   if(!nombresEnPrecios||!nombresEnPrecios.length){
-    mostrarToast('⚠️ No hay equivalencia para "'+u.marca+' '+u.modelo+'". Avisá al administrador.');
+    mostrarToast('⚠️ Sin equivalencia para "'+u.marca+' '+u.modelo+'". Avisá al administrador.');
     return;
   }
 
-  // Buscar cada nombre en _preciosData — ÚNICA fuente de precios (igual que botón PRECIOS)
+  // Paso 2: buscar en _preciosData — ya tiene FOTON/DFSK inyectados desde MKT_USD_DATA_G
   const pd=window._preciosData||[];
-  // Buscar en _preciosData primero, luego fallback a MKT_USD_DATA_G (FOTON/DFSK hardcodeados)
   const marcaData=pd.find(m=>m.marca.toUpperCase()===u.marca.toUpperCase());
+  if(!marcaData||!marcaData.modelos.length){
+    mostrarToast('⚠️ No hay precios para '+u.marca+'. Actualizá PRECIOS.');
+    return;
+  }
 
+  // Paso 3: resolver precios — exactamente igual que el botón PRECIOS
   const mods=[];
   nombresEnPrecios.forEach(nombreCompleto=>{
-    // 1. Buscar en _preciosData (Excel importado)
-    let mod=marcaData?marcaData.modelos.find(m=>m.modelo.toUpperCase()===nombreCompleto.toUpperCase()):null;
-    if(mod){
-      const esUSD=mod.moneda==='USD';
-      if(esUSD&&!_bnaCotiz){mostrarToast('⚠️ TC BNA no disponible. Esperá unos segundos.');return;}
-      const precioParaCotizar=esUSD&&_bnaCotiz?Math.round(mod.precio*_bnaCotiz):(typeof mod.precio==='number'?mod.precio:0);
-      const precioUSDRef=esUSD?(typeof mod.precio==='number'?mod.precio:0):0;
-      mods.push({nombre:mod.modelo,precioARS:precioParaCotizar,precioUSD:precioUSDRef,esUSD});
-      return;
-    }
-    // 2. Fallback: MKT_USD_DATA_G — buscar modelo de Autologica (ej: "AUMARK S3 916 CHASIS")
-    // o el nombre completo de PRECIOS (ej: "AUMARK S3 3.8 916 MT6 5.000KG CHASIS")
-    const mktU=typeof MKT_USD_DATA_G!=='undefined'?MKT_USD_DATA_G[u.marca.toUpperCase()]:{};
-    if(mktU){
-      let encontrado=false;
-      for(const [nombreMod,versiones] of Object.entries(mktU)){
-        for(const [ver,usd] of Object.entries(versiones)){
-          const nombreFull=(nombreMod+' '+ver).trim().toUpperCase();
-          const nombreModUP=nombreMod.toUpperCase();
-          const nombreCompUP=nombreCompleto.toUpperCase();
-          // Buscar por nombre completo PRECIOS O por modelo Autologica
-          const modeloAuto=u.modelo.toUpperCase();
-          if(nombreFull===nombreCompUP||nombreModUP===nombreCompUP||
-             nombreModUP===modeloAuto||nombreFull.includes(modeloAuto)){
-            if(!_bnaCotiz){mostrarToast('⚠️ TC BNA no disponible. Esperá unos segundos.');return;}
-            mods.push({nombre:nombreCompleto,precioARS:Math.round(usd*_bnaCotiz),precioUSD:usd,esUSD:true});
-            encontrado=true;
-            break;
-          }
-        }
-        if(encontrado) break;
-      }
-    }
-    // 3. Fallback: MKT (DFSK en ARS)
-    const mktMarca=MKT[u.marca.toUpperCase()];
-    if(mktMarca){
-      for(const [nm,vers] of Object.entries(mktMarca)){
-        for(const [ver,precio] of Object.entries(vers)){
-          const nombreFull=(nm+' '+ver).trim().toUpperCase();
-          if(nombreFull===nombreCompleto.toUpperCase()||nm.toUpperCase()===nombreCompleto.toUpperCase()){
-            mods.push({nombre:nombreCompleto,precioARS:precio,precioUSD:0,esUSD:false});
-            return;
-          }
-        }
-      }
-    }
+    const mod=marcaData.modelos.find(m=>m.modelo.toUpperCase()===nombreCompleto.toUpperCase());
+    if(!mod) return;
+    const esUSD=mod.moneda==='USD';
+    // Mismo cálculo que botón PRECIOS línea 2923
+    const precioParaCotizar=esUSD&&_bnaCotiz?Math.round(mod.precio*_bnaCotiz):(typeof mod.precio==='number'?mod.precio:parseInt(String(mod.precio).replace(/[^0-9]/g,''))||0);
+    const precioUSDRef=esUSD?(typeof mod.precio==='number'?mod.precio:parseFloat(String(mod.precio).replace(/[^0-9.]/g,''))||0):0;
+    mods.push({nombre:mod.modelo,precioARS:precioParaCotizar,precioUSD:precioUSDRef,esUSD});
   });
 
   if(!mods.length){
-    mostrarToast('⚠️ No se encontraron precios para "'+u.marca+' '+u.modelo+'" en la lista actual. Actualizá PRECIOS.');
+    mostrarToast('⚠️ No se encontraron precios para "'+u.marca+' '+u.modelo+'". Actualizá PRECIOS.');
     return;
   }
 
-  // Una sola versión → cotizar directo
+  // Una sola versión → cotizar directo (igual que botón PRECIOS)
   if(mods.length===1){
-    cotizarDesdePrecios(u.marca, mods[0].nombre, mods[0].precioARS, mods[0].precioUSD);
+    cotizarDesdePrecios(u.marca,mods[0].nombre,mods[0].precioARS,mods[0].precioUSD);
     return;
   }
 
-  // Varias versiones → modal de selección (idéntico al de PRECIOS)
+  // Varias versiones → modal para elegir
   const modal=document.createElement('div');
   modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
   modal.setAttribute('data-modal','');
   let html=`<div style="background:var(--bg);border-radius:12px;padding:20px;max-width:420px;width:100%;max-height:80vh;overflow-y:auto">`;
   html+=`<div style="font-weight:800;font-size:14px;margin-bottom:4px">${u.marca} ${u.modelo}</div>`;
-  html+=`<div style="font-size:11px;color:var(--m);margin-bottom:16px">Elegí la versión — ${u.color||''} · ${u.anno||''}</div>`;
+  html+=`<div style="font-size:11px;color:var(--m);margin-bottom:16px">Elegí la versión${u.color?' · '+u.color:''}${u.anno?' · '+u.anno:''}</div>`;
   mods.forEach(mod=>{
     const precioTxt=mod.esUSD
       ?`USD ${mod.precioUSD.toLocaleString('es-AR')} · $${mod.precioARS.toLocaleString('es-AR')}`
