@@ -4042,22 +4042,48 @@ function cotizarDesdeOkm(u){
 
   // Buscar cada nombre en _preciosData — ÚNICA fuente de precios (igual que botón PRECIOS)
   const pd=window._preciosData||[];
+  // Buscar en _preciosData primero, luego fallback a MKT_USD_DATA_G (FOTON/DFSK hardcodeados)
   const marcaData=pd.find(m=>m.marca.toUpperCase()===u.marca.toUpperCase());
-  if(!marcaData){
-    mostrarToast('⚠️ No hay precios cargados para '+u.marca+'. Actualizá PRECIOS primero.');
-    return;
-  }
 
-  // Resolver precios exactamente igual que el botón PRECIOS
   const mods=[];
   nombresEnPrecios.forEach(nombreCompleto=>{
-    const mod=marcaData.modelos.find(m=>m.modelo.toUpperCase()===nombreCompleto.toUpperCase());
+    // 1. Buscar en _preciosData (Excel importado)
+    let mod=marcaData?marcaData.modelos.find(m=>m.modelo.toUpperCase()===nombreCompleto.toUpperCase()):null;
     if(mod){
       const esUSD=mod.moneda==='USD';
       if(esUSD&&!_bnaCotiz){mostrarToast('⚠️ TC BNA no disponible. Esperá unos segundos.');return;}
       const precioParaCotizar=esUSD&&_bnaCotiz?Math.round(mod.precio*_bnaCotiz):(typeof mod.precio==='number'?mod.precio:0);
       const precioUSDRef=esUSD?(typeof mod.precio==='number'?mod.precio:0):0;
-      mods.push({nombre:mod.modelo, precioARS:precioParaCotizar, precioUSD:precioUSDRef, esUSD});
+      mods.push({nombre:mod.modelo,precioARS:precioParaCotizar,precioUSD:precioUSDRef,esUSD});
+      return;
+    }
+    // 2. Fallback: MKT_USD_DATA_G (FOTON y otros USD hardcodeados — igual que botón PRECIOS)
+    const mktU=typeof MKT_USD_DATA_G!=='undefined'?MKT_USD_DATA_G[u.marca.toUpperCase()]:{};
+    if(mktU){
+      // nombreCompleto puede ser "TM1 1.5 CABINA SIMPLE" → buscar en MKT_USD_DATA_G directamente
+      for(const [nombreMod,versiones] of Object.entries(mktU)){
+        for(const [ver,usd] of Object.entries(versiones)){
+          const nombreFull=(nombreMod+' '+ver).trim().toUpperCase();
+          if(nombreFull===nombreCompleto.toUpperCase()||nombreMod.toUpperCase()===nombreCompleto.toUpperCase()){
+            if(!_bnaCotiz){mostrarToast('⚠️ TC BNA no disponible. Esperá unos segundos.');return;}
+            mods.push({nombre:nombreCompleto,precioARS:Math.round(usd*_bnaCotiz),precioUSD:usd,esUSD:true});
+            return;
+          }
+        }
+      }
+    }
+    // 3. Fallback: MKT (DFSK en ARS)
+    const mktMarca=MKT[u.marca.toUpperCase()];
+    if(mktMarca){
+      for(const [nm,vers] of Object.entries(mktMarca)){
+        for(const [ver,precio] of Object.entries(vers)){
+          const nombreFull=(nm+' '+ver).trim().toUpperCase();
+          if(nombreFull===nombreCompleto.toUpperCase()||nm.toUpperCase()===nombreCompleto.toUpperCase()){
+            mods.push({nombre:nombreCompleto,precioARS:precio,precioUSD:0,esUSD:false});
+            return;
+          }
+        }
+      }
     }
   });
 
