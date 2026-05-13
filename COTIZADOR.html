@@ -4013,7 +4013,7 @@ function rStk(){
 const OKM_EQUIV={
   'FOTON|TM1':         ['TM1 1.5 CABINA SIMPLE','TM1 1.6 CAB DOBLE','TM1 1.6 BOX CARGO','TM1 1.6 BOX CARGO REFRIGERADO'],
   'FOTON|TM2':         ['TM2 HD 1.6 CABINA SIMPLE','TM2 HD 1.6 CABINA DOBLE'],
-  'FOTON|TUNLAND V9':  ['TUNLAND V9 4X4 2.0 HYBRID AT8 ZF'],
+  'FOTON|TUNLAND V9':  ['TUNLAND V9 4X4 2.0 HYBRID AT8 ZF','TUNLAND V9 4X4 PRO SPORT NAFTERA','TUNLAND V7 MHEV ULTIMATE'],
   'FOTON|TUNLAND G7':  ['TUNLAND G7 4X2 MT','TUNLAND G7 4X4 MT','TUNLAND G7 4X2 AT','TUNLAND G7 4X4 AT8'],
   'FOTON|AUMARK S3 916':['AUMARK S3 3.8 916 MT6 5.000KG CHASIS'],
   'FOTON|AUMARK S3 615':['AUMARK S3 2.8 615 MT5 3.500KG CHASIS'],
@@ -4030,10 +4030,7 @@ const OKM_EQUIV={
 // Cotizar desde stock 0km — idéntico al botón PRECIOS
 function cotizarDesdeOkm(u){
   if(!esVendedor(CU)&&!esSupervisor(CU)) return;
-  if(!_bnaCotiz){
-    mostrarToast('⚠️ Tipo de cambio BNA no disponible. Esperá unos segundos y volvé a intentar.');
-    return;
-  }
+  // _bnaCotiz puede no estar si la marca es ARS — no bloqueamos
 
   // Buscar equivalencia Autologica → nombre exacto en PRECIOS
   const clave=Object.keys(OKM_EQUIV).find(k=>k.toUpperCase()===(u.marca+'|'+u.modelo).toUpperCase());
@@ -4057,6 +4054,7 @@ function cotizarDesdeOkm(u){
     const mod=marcaData.modelos.find(m=>m.modelo.toUpperCase()===nombreCompleto.toUpperCase());
     if(mod){
       const esUSD=mod.moneda==='USD';
+      if(esUSD&&!_bnaCotiz){mostrarToast('⚠️ TC BNA no disponible. Esperá unos segundos.');return;}
       const precioParaCotizar=esUSD&&_bnaCotiz?Math.round(mod.precio*_bnaCotiz):(typeof mod.precio==='number'?mod.precio:0);
       const precioUSDRef=esUSD?(typeof mod.precio==='number'?mod.precio:0):0;
       mods.push({nombre:mod.modelo, precioARS:precioParaCotizar, precioUSD:precioUSDRef, esUSD});
