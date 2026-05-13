@@ -4073,30 +4073,20 @@ function rOkm(){
 
   // Helper: buscar precio en _preciosData por marca+modelo
   const buscarPrecioEnLista=(marca,modelo)=>{
+    // ÚNICA fuente de precios: _preciosData (Excel importado desde Drive)
+    // MKT no se usa para mostrar precios — puede estar desactualizado
     const pd=window._preciosData||[];
+    if(!pd.length) return null; // Sin precios cargados
     const mk=modelo.toUpperCase();
-    // 1. Buscar en _preciosData (Excel importado)
     const marcaData=pd.find(m=>m.marca.toUpperCase()===marca.toUpperCase());
-    if(marcaData){
-      const mods=marcaData.modelos.filter(mod=>{
-        const nm=mod.modelo.toUpperCase();
-        return nm===mk||nm.startsWith(mk+' ')||nm.startsWith(mk+'	');
-      });
-      if(mods.length) return mods;
-    }
-    // 2. Fallback: buscar en MKT (FOTON/DFSK hardcodeados)
-    const mktMarca=MKT[marca.toUpperCase()];
-    if(mktMarca){
-      const result=[];
-      Object.keys(mktMarca).forEach(nombreMod=>{
-        if(nombreMod.toUpperCase()===mk||nombreMod.toUpperCase().startsWith(mk+' ')||nombreMod.toUpperCase().includes(mk)){
-          const precios=Object.values(mktMarca[nombreMod]);
-          if(precios.length) result.push({modelo:nombreMod,precio:precios[0],moneda:'ARS'});
-        }
-      });
-      if(result.length) return result;
-    }
-    return null;
+    if(!marcaData) return null;
+    // Buscar modelos que contengan el nombre del modelo de Autologica
+    // Ej: Autologica dice "TM1" → en precios es "TM1 1.5 CABINA SIMPLE", "TM1 1.6 CAB DOBLE", etc.
+    const mods=marcaData.modelos.filter(mod=>{
+      const nm=mod.modelo.toUpperCase();
+      return nm===mk||nm.startsWith(mk+' ')||nm.startsWith(mk+'	')||nm.includes(' '+mk+' ')||nm.includes(' '+mk);
+    });
+    return mods.length?mods:null;
   };
 
   const secciones=[
@@ -4115,7 +4105,8 @@ function rOkm(){
       const d=document.createElement('div');d.className='hi';
       // Precio desde _preciosData
       const mods=buscarPrecioEnLista(u.marca,u.modelo);
-      let precioTxt='Consultar';
+      const hayPrecios=(window._preciosData||[]).length>0;
+      let precioTxt=hayPrecios?'Sin precio en lista':'⚠️ Actualizá PRECIOS';
       if(mods&&mods.length===1){
         const mod=mods[0];
         if(mod.moneda==='USD'){
@@ -4125,7 +4116,10 @@ function rOkm(){
           precioTxt=fmt(mod.precio);
         }
       } else if(mods&&mods.length>1){
-        precioTxt='Ver versiones ('+mods.length+')';
+        const mod=mods[0];
+        const esUSD=mod.moneda==='USD';
+        const p=esUSD&&_bnaCotiz?Math.round(mod.precio*_bnaCotiz):mod.precio;
+        precioTxt=(esUSD?'USD '+mod.precio.toLocaleString('es-AR')+' · ':'')+fmt(p)+' y más';
       }
       const patente=u.patente?' · '+u.patente:'';
       const obs=u.obs&&u.obs!==u.modelo?' · '+u.obs:'';
