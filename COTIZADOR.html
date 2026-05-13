@@ -3991,101 +3991,109 @@ function rStk(){
     el.appendChild(d);
   });
 }
-// Cotizar desde stock 0km — precarga la propuesta con los datos de la unidad
+// Cotizar desde stock 0km — usa _preciosData como única fuente de precios
 function cotizarDesdeOkm(u){
-  if(!esVendedor(CU)&&!esSupervisor(CU)){return;}
-  // Navegar a propuesta
-  goTo('propuesta');
-  // Esperar a que la pantalla esté lista y precargar datos
-  setTimeout(()=>{
-    // Tipo: lista de precios 0km
-    const selTipo=$$('tipo');
-    if(selTipo){selTipo.value='lista_precios';onTipo();}
-    setTimeout(()=>{
-      // Marca
-      const selMarca=$$('marca');
-      if(selMarca){
-        selMarca.value=u.marca;
-        selMarca.disabled=false;
-        onMarca();
-      }
-      setTimeout(()=>{
-        // Modelo
-        const selModelo=$$('modelo');
-        if(selModelo){
-          selModelo.value=u.modelo;
-          selModelo.disabled=false;
-          onModelo();
-        }
-        setTimeout(()=>{
-          // Versión — buscar la que contenga obs o la primera disponible
-          const selVer=$$('version');
-          if(selVer&&selVer.options.length>1){
-            // Si tiene obs (ej: FURGON), intentar matchear
-            if(u.obs){
-              const obs=u.obs.toUpperCase();
-              for(let i=1;i<selVer.options.length;i++){
-                if(selVer.options[i].value.toUpperCase().includes(obs)){
-                  selVer.value=selVer.options[i].value;break;
-                }
-              }
-            }
-            if(!selVer.value&&selVer.options[1]) selVer.value=selVer.options[1].value;
-            selVer.disabled=false;
-            onVersion();
-          }
-          // Año
-          const selAnno=$$('anno');
-          if(selAnno){selAnno.value=u.anno;selAnno.disabled=false;}
-          // Color
-          const selColor=$$('color');
-          if(selColor){selColor.value=u.color||'';}
-          // Precio: si tiene precio ARS usarlo, si USD dejarlo en 0 (el usuario pone el precio en ARS)
-          if(u.precio>0){
-            const pa1=$$('pa1');
-            if(pa1){pa1.value=u.precio;cP();}
-          }
-          // KM = 0 para 0km
-          const kmEl=$$('km');if(kmEl)kmEl.value='0';
-          // Tipo vehículo
-          const tvEl=$$('tveh');if(tvEl){tvEl.value='Auto / Utilitario';}
-          // Toast informativo
-          const precioInfo=u.moneda==='USD'?'Precio en USD '+u.precioUSD.toLocaleString('es-AR')+' — completá precio en ARS':'';
-          mostrarToast('🏎 '+u.marca+' '+u.modelo+' cargado'+(precioInfo?' · '+precioInfo:''));
-        },150);
-      },150);
-    },150);
-  },300);
+  if(!esVendedor(CU)&&!esSupervisor(CU)) return;
+  const pd=window._preciosData||[];
+  // Buscar marca en precios
+  const marcaData=pd.find(m=>m.marca.toUpperCase()===u.marca.toUpperCase());
+  if(!marcaData){
+    mostrarToast('⚠️ No hay precios cargados para '+u.marca+'. Actualizá PRECIOS primero.');
+    return;
+  }
+  // Buscar modelos que matcheen
+  const mods=marcaData.modelos.filter(mod=>{
+    const nm=mod.modelo.toUpperCase();
+    const mk=u.modelo.toUpperCase();
+    return nm===mk||nm.startsWith(mk+' ')||nm.startsWith(mk+'\t');
+  });
+  if(!mods.length){
+    mostrarToast('⚠️ No se encontró "'+u.marca+' '+u.modelo+'" en PRECIOS. Verificá la lista.');
+    return;
+  }
+  // Si hay una sola versión → cotizar directo
+  if(mods.length===1){
+    const mod=mods[0];
+    const esUSD=mod.moneda==='USD';
+    const precio=esUSD&&_bnaCotiz?Math.round(mod.precio*_bnaCotiz):(typeof mod.precio==='number'?mod.precio:0);
+    const precioUSD=esUSD?mod.precio:0;
+    cotizarDesdePrecios(u.marca, mod.modelo, precio, precioUSD);
+    return;
+  }
+  // Si hay varias versiones → mostrar modal para elegir
+  const modal=document.createElement('div');
+  modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+  let html='<div style="background:var(--bg);border-radius:12px;padding:20px;max-width:400px;width:100%;max-height:80vh;overflow-y:auto">';
+  html+='<div style="font-weight:800;font-size:14px;margin-bottom:4px">'+u.marca+' '+u.modelo+'</div>';
+  html+='<div style="font-size:11px;color:var(--m);margin-bottom:16px">Elegí la versión a cotizar</div>';
+  mods.forEach(mod=>{
+    const esUSD=mod.moneda==='USD';
+    const precio=esUSD&&_bnaCotiz?Math.round(mod.precio*_bnaCotiz):(typeof mod.precio==='number'?mod.precio:0);
+    const precioUSD=esUSD?mod.precio:0;
+    const precioTxt=esUSD?('USD '+mod.precio.toLocaleString('es-AR')+(precio?' · '+fmt(precio):'')):(precio?fmt(precio):'Consultar');
+    html+=`<div onclick="this.closest('[data-modal]').remove();cotizarDesdePrecios('${u.marca}','${mod.modelo.replace(/'/g,"\'")}',${precio},${precioUSD})" style="padding:10px 14px;border:1px solid var(--bdr);border-radius:8px;margin-bottom:8px;cursor:pointer;display:flex;justify-content:space-between;align-items:center"><span style="font-size:11px">${mod.modelo}</span><span style="font-size:11px;font-weight:700;color:#0069b4">${precioTxt}</span></div>`;
+  });
+  html+=`<button onclick="this.closest('[data-modal]').remove()" style="width:100%;padding:8px;background:var(--s2);border:none;border-radius:8px;cursor:pointer;margin-top:4px;font-size:11px">Cancelar</button>`;
+  html+='</div>';
+  modal.setAttribute('data-modal','');
+  modal.innerHTML=html;
+  modal.onclick=e=>{if(e.target===modal)modal.remove();};
+  document.body.appendChild(modal);
 }
 
 function rOkm(){
   const el=$$('ol');el.innerHTML='';
   if(!okm||!okm.length){el.innerHTML='<div class="empty"><div class="eico">🏎</div><div class="ettl">Sin stock 0km</div><div class="esub">Importá el Excel de Autologica desde Panel Admin.</div></div>';return;}
-  // Agrupar por estado para mostrar secciones
+
+  // Helper: buscar precio en _preciosData por marca+modelo
+  const buscarPrecioEnLista=(marca,modelo)=>{
+    const pd=window._preciosData||[];
+    const marcaData=pd.find(m=>m.marca.toUpperCase()===marca.toUpperCase());
+    if(!marcaData) return null;
+    // Buscar modelo exacto o que empiece con el mismo nombre
+    const mods=marcaData.modelos.filter(mod=>{
+      const nm=mod.modelo.toUpperCase();
+      const mk=modelo.toUpperCase();
+      return nm===mk||nm.startsWith(mk+' ')||nm.startsWith(mk+'	');
+    });
+    return mods.length?mods:null;
+  };
+
   const secciones=[
-    {label:'✅ EN STOCK',     key:'EN STOCK',     color:'#27ae60'},
-    {label:'🚚 EN TRÁNSITO', key:'EN TRÁNSITO',  color:'#f39c12'},
-    {label:'🔒 SEÑADO',      key:'SEÑADO',        color:'#e74c3c'},
+    {label:'✅ EN STOCK',     key:'EN STOCK',    color:'#27ae60'},
+    {label:'🚚 EN TRÁNSITO', key:'EN TRÁNSITO', color:'#f39c12'},
+    {label:'🔒 SEÑADO',      key:'SEÑADO',       color:'#e74c3c'},
   ];
   secciones.forEach(sec=>{
     const items=okm.filter(u=>(u.estado||'EN STOCK')===sec.key);
     if(!items.length) return;
-    // Header de sección
     const hd=document.createElement('div');
     hd.style.cssText='padding:6px 14px;font-size:10px;font-weight:800;letter-spacing:1px;color:'+sec.color+';background:var(--s2);border-bottom:1px solid var(--bdr)';
     hd.textContent=sec.label+' ('+items.length+')';
     el.appendChild(hd);
     items.forEach(u=>{
       const d=document.createElement('div');d.className='hi';
-      const precioTxt=u.moneda==='USD'&&u.precioUSD>0?'USD '+u.precioUSD.toLocaleString('es-AR'):u.precio?fmt(u.precio):'Consultar';
-      const empresa=u.empresa?'['+u.empresa+'] ':'';
+      // Precio desde _preciosData
+      const mods=buscarPrecioEnLista(u.marca,u.modelo);
+      let precioTxt='Consultar';
+      if(mods&&mods.length===1){
+        const mod=mods[0];
+        if(mod.moneda==='USD'){
+          const ars=_bnaCotiz?Math.round(mod.precio*_bnaCotiz):0;
+          precioTxt='USD '+mod.precio.toLocaleString('es-AR')+(ars?' · '+fmt(ars):'');
+        } else {
+          precioTxt=fmt(mod.precio);
+        }
+      } else if(mods&&mods.length>1){
+        precioTxt='Ver versiones ('+mods.length+')';
+      }
       const patente=u.patente?' · '+u.patente:'';
+      const obs=u.obs&&u.obs!==u.modelo?' · '+u.obs:'';
       const puedeVer=esVendedor(CU)||esSupervisor(CU);
-      d.innerHTML=`<div class="hico" style="background:${sec.color}">🏎</div><div class="hinf"><div class="haut">${empresa}${u.marca} ${u.modelo}${u.version?' '+u.version:''}</div><div class="hdet">${u.anno}${u.color?' · '+u.color:''}${patente}${u.obs?' · '+u.obs:''}</div></div><div class="hr2"><div><div class="hcuo">${precioTxt}</div><div class="hfec" style="color:${sec.color}">${sec.label.split(' ')[1]||sec.key}</div></div>${puedeVer&&sec.key!=='EN TRÁNSITO'?`<button onclick="event.stopPropagation();cotizarDesdeOkm(${JSON.stringify(u).replace(/"/g,'&quot;')})" style="margin-left:8px;padding:4px 10px;font-size:9px;font-weight:800;letter-spacing:1px;background:#0069b4;color:#fff;border:none;border-radius:6px;cursor:pointer;text-transform:uppercase">📋 Cotizar</button>`:''}`;
+      d.innerHTML=`<div class="hico" style="background:${sec.color}">🏎</div><div class="hinf"><div class="haut">${u.marca} ${u.modelo}${obs}</div><div class="hdet">${u.anno}${u.color?' · '+u.color:''}${patente}</div></div><div class="hr2"><div><div class="hcuo" style="font-size:10px">${precioTxt}</div><div class="hfec" style="color:${sec.color}">${sec.key}</div></div>${puedeVer&&sec.key!=='EN TRÁNSITO'?`<button onclick="event.stopPropagation();cotizarDesdeOkm(${JSON.stringify(u).replace(/"/g,'&quot;')})" style="margin-left:8px;padding:4px 10px;font-size:9px;font-weight:800;letter-spacing:1px;background:#0069b4;color:#fff;border:none;border-radius:6px;cursor:pointer;text-transform:uppercase">📋 Cotizar</button>`:''}`;
       el.appendChild(d);
     });
   });
-  // Mostrar VENDIDO al final si hay
   const vendidos=okm.filter(u=>u.estado==='VENDIDO');
   if(vendidos.length){
     const hd=document.createElement('div');
@@ -4546,17 +4554,13 @@ function impXAutologica(e){
       okm=nuevos.map(u=>({
         marca:u.marca,
         modelo:u.modelo,
-        version:u.obs||'',
-        anno:u.anno,
-        precio:u.moneda==='ARS'?u.precio:0,
-        precioUSD:u.moneda==='USD'?u.precio:0,
         color:u.color,
-        estado:u.estado,
-        empresa:u.empresa,
+        anno:u.anno,
         patente:u.patente,
         vin:u.vin,
+        estado:u.estado,
         obs:u.obs,
-        moneda:u.moneda
+        // Precio no se guarda — siempre se toma de PRECIOS (fuente única)
       }));
       // Persistir en localStorage para sobrevivir recargas
       try{localStorage.setItem('almar_okm_autologica',JSON.stringify(okm));}catch(e){}
