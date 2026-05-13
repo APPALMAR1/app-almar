@@ -4065,22 +4065,20 @@ function cotizarDesdeOkm(u){
     return;
   }
 
-  // Paso 2: asegurar que _preciosData tiene FOTON/DFSK inyectados
-  // Si el usuario no pasó por botón PRECIOS, _preciosData puede ser null
-  if(!window._preciosData||!window._preciosData.length){
-    window._preciosData=[];
-    _inyectarMarcasUSD(window._preciosData);
-  }
-  // Si la marca no está, inyectar ahora
-  const pd=window._preciosData;
-  if(!pd.find(m=>m.marca.toUpperCase()===u.marca.toUpperCase())){
-    _inyectarMarcasUSD(pd);
-  }
-  const marcaData=pd.find(m=>m.marca.toUpperCase()===u.marca.toUpperCase());
-  if(!marcaData||!marcaData.modelos.length){
-    mostrarToast('⚠️ No hay precios para '+u.marca+'. Actualizá PRECIOS.');
-    return;
-  }
+  // Paso 2: asegurar precios cargados — si no están, cargar desde Drive (igual que botón PRECIOS)
+  const _buscarYCotizar=()=>{
+    const pd=window._preciosData||[];
+    let marcaData=pd.find(m=>m.marca.toUpperCase()===u.marca.toUpperCase());
+    // Si no está la marca, inyectar hardcodeados como fallback
+    if(!marcaData){
+      _inyectarMarcasUSD(pd);
+      window._preciosData=pd;
+      marcaData=pd.find(m=>m.marca.toUpperCase()===u.marca.toUpperCase());
+    }
+    if(!marcaData||!marcaData.modelos.length){
+      mostrarToast('⚠️ No hay precios para '+u.marca+'. Actualizá PRECIOS.');
+      return;
+    }
 
   // Paso 3: resolver precios — exactamente igual que el botón PRECIOS
   const mods=[];
@@ -4123,9 +4121,27 @@ function cotizarDesdeOkm(u){
   modal.innerHTML=html;
   modal.onclick=e=>{if(e.target===modal)modal.remove();};
   document.body.appendChild(modal);
+  };
+  // Cargar precios si no están disponibles
+  if(!window._preciosData||!window._preciosData.length){
+    mostrarToast('⏳ Cargando precios...');
+    fetch(PRECIOS_URL+'&t='+Date.now(),{cache:'no-store'})
+      .then(r=>r.text())
+      .then(csv=>{
+        const data=parsePreciosCSV(csv);
+        _inyectarMarcasUSD(data);
+        window._preciosData=data;
+        _buscarYCotizar();
+      })
+      .catch(()=>{
+        window._preciosData=[];
+        _inyectarMarcasUSD(window._preciosData);
+        _buscarYCotizar();
+      });
+  } else {
+    _buscarYCotizar();
+  }
 }
-
-
 function rOkm(){
   const el=$$('ol');el.innerHTML='';
   if(!okm||!okm.length){el.innerHTML='<div class="empty"><div class="eico">🏎</div><div class="ettl">Sin stock 0km</div><div class="esub">Importá el Excel de Autologica desde Panel Admin.</div></div>';return;}
