@@ -2805,14 +2805,31 @@ function impXP(e){
 //  SYNC PRECIOS (desde Drive o localStorage) ─
 // Inyecta marcas USD del hardcode SOLO si la marca no existe en data (fallback sin Excel)
 function _inyectarMarcasUSD(data){
-  if(typeof MKT_USD_DATA_G==='undefined') return;
-  for(const marca of Object.keys(MKT_USD_DATA_G)){
-    if(data.find(m=>m.marca===marca)) continue; // ya viene del Excel, no tocar
+  // Inyectar marcas USD desde MKT_USD_DATA_G
+  if(typeof MKT_USD_DATA_G!=='undefined'){
+    for(const marca of Object.keys(MKT_USD_DATA_G)){
+      if(data.find(m=>m.marca===marca)) continue; // ya viene del Excel, no tocar
+      const modelos=[];
+      for(const [modelo,versiones] of Object.entries(MKT_USD_DATA_G[marca])){
+        for(const [version,precio] of Object.entries(versiones)){
+          const nombreCompleto=(modelo+' '+version).trim();
+          modelos.push({modelo:nombreCompleto,precio:precio,moneda:'USD'});
+        }
+      }
+      if(modelos.length) data.push({marca,modelos});
+    }
+  }
+  // Inyectar marcas ARS desde MKT (DFSK y otros) que no estén en _preciosData
+  const MARCAS_MKT_ARS=['DFSK','FOTON']; // marcas ARS hardcodeadas en MKT
+  for(const marca of MARCAS_MKT_ARS){
+    if(data.find(m=>m.marca===marca)) continue; // ya inyectada (USD u otro)
+    const mktMarca=MKT[marca];
+    if(!mktMarca) continue;
     const modelos=[];
-    for(const [modelo,versiones] of Object.entries(MKT_USD_DATA_G[marca])){
+    for(const [modelo,versiones] of Object.entries(mktMarca)){
       for(const [version,precio] of Object.entries(versiones)){
         const nombreCompleto=(modelo+' '+version).trim();
-        modelos.push({modelo:nombreCompleto,precio:precio,moneda:'USD'});
+        modelos.push({modelo:nombreCompleto,precio:precio,moneda:'ARS'});
       }
     }
     if(modelos.length) data.push({marca,modelos});
@@ -4011,21 +4028,24 @@ function rStk(){
 // Clave: "MARCA|MODELO_AUTOLOGICA" → array de nombres exactos en PRECIOS
 // Si hay una sola versión → carga directo. Si hay varias → muestra modal.
 const OKM_EQUIV={
-  // Clave: "MARCA|MODELO_AUTOLOGICA" → nombres EXACTOS en MKT_USD_DATA_G/_preciosData
-  'FOTON|TM1':          ['TM1 1.5 CABINA SIMPLE','TM1 1.6 CAB DOBLE','TM1 1.6 BOX CARGO','TM1 1.6 BOX CARGO REFRIGERADO'],
-  'FOTON|TM2':          ['TM2 HD 1.6 CABINA SIMPLE','TM2 HD 1.6 CABINA DOBLE'],
-  'FOTON|TUNLAND V9':   ['AUMAN D 1621 6.7 CAJA ZF MT8 10.000KG','AUMAN D 2027 6.7 CAJA ZF MT8 15.000KG'],
-  'FOTON|TUNLAND G7':   ['TUNLAND G7 4X2 MT','TUNLAND G7 4X4 MT','TUNLAND G7 4X2 AT','TUNLAND G7 4X4 AT8'],
-  'FOTON|AUMARK S3 916':['AUMARK S3 3.8 916 MT6 5.000KG CHASIS'],
-  'FOTON|AUMARK S3 615':['AUMARK S3 2.8 615 MT5 3.500KG CHASIS'],
+  // Clave: "MARCA|MODELO_AUTOLOGICA" → nombres EXACTOS en _preciosData (MKT_USD_DATA_G + MKT)
+  // FOTON — precios USD desde MKT_USD_DATA_G
+  'FOTON|TM1':           ['TM1 1.5 CABINA SIMPLE','TM1 1.6 CAB DOBLE','TM1 1.6 BOX CARGO','TM1 1.6 BOX CARGO REFRIGERADO'],
+  'FOTON|TM2':           ['TM2 HD 1.6 CABINA SIMPLE','TM2 HD 1.6 CABINA DOBLE'],
+  'FOTON|TUNLAND V9':    ['AUMAN D 1621 6.7 CAJA ZF MT8 10.000KG','AUMAN D 2027 6.7 CAJA ZF MT8 15.000KG'],
+  'FOTON|TUNLAND G7':    ['TUNLAND G7 4X2 MT','TUNLAND G7 4X4 MT','TUNLAND G7 4X2 AT','TUNLAND G7 4X4 AT8'],
+  'FOTON|AUMARK S3 916': ['AUMARK S3 3.8 916 MT6 5.000KG CHASIS'],
+  'FOTON|AUMARK S3 615': ['AUMARK S3 2.8 615 MT5 3.500KG CHASIS'],
   'FOTON|AUMARK S3 1016':['AUMARK S3 3.8 1016 MT6 6.000KG CHASIS'],
-  'FOTON|WONDER':       ['WONDER CABINA SIMPLE','WONDER CABINA DOBLE','WONDER CABINA SIMPLE CS'],
-  'DFSK|C35':           ['C35 FURGON','C35 FURGON 7A HOMOLOGADA','C35 BOX'],
-  'DFSK|C35 FURGON':    ['C35 FURGON'],
-  'DFSK|C31':           ['C31'],
-  'DFSK|C31 BOX':       ['C31 BOX'],
-  'DFSK|K01H':          ['K01H FURGON','K01H MINIBUS'],
-  'DFSK|E5':            ['E5 PHEV L1 HYBRID 7 ASIENTOS CVT'],
+  'FOTON|WONDER':        ['WONDER CABINA SIMPLE','WONDER CABINA DOBLE','WONDER CABINA SIMPLE CS'],
+  // DFSK — precios ARS desde MKT → nombres: "MODELO VERSION" exacto
+  'DFSK|C35':            ['C35 FURGON'],
+  'DFSK|C35 FURGON':     ['C35 FURGON'],
+  'DFSK|C31':            ['C31 CABINA SIMPLE','C31 BOX','C31 BOX REFRIGERADO'],
+  'DFSK|C31 BOX':        ['C31 BOX'],
+  'DFSK|K01H':           ['K01H MINI TRUCK','K01H FURGON CERRADO','K01H FURGON REFRIGERADO'],
+  'DFSK|E5':             ['E5 PHEV L1 HYBRID 7 ASIENTOS CVT'],
+  'DFSK|C35 FURGON 7A HOMOLOGADA':['C35 FURGON'],
 };
 
 // Cotizar desde stock 0km — idéntico al botón PRECIOS
@@ -4040,8 +4060,17 @@ function cotizarDesdeOkm(u){
     return;
   }
 
-  // Paso 2: buscar en _preciosData — ya tiene FOTON/DFSK inyectados desde MKT_USD_DATA_G
-  const pd=window._preciosData||[];
+  // Paso 2: asegurar que _preciosData tiene FOTON/DFSK inyectados
+  // Si el usuario no pasó por botón PRECIOS, _preciosData puede ser null
+  if(!window._preciosData||!window._preciosData.length){
+    window._preciosData=[];
+    _inyectarMarcasUSD(window._preciosData);
+  }
+  // Si la marca no está, inyectar ahora
+  const pd=window._preciosData;
+  if(!pd.find(m=>m.marca.toUpperCase()===u.marca.toUpperCase())){
+    _inyectarMarcasUSD(pd);
+  }
   const marcaData=pd.find(m=>m.marca.toUpperCase()===u.marca.toUpperCase());
   if(!marcaData||!marcaData.modelos.length){
     mostrarToast('⚠️ No hay precios para '+u.marca+'. Actualizá PRECIOS.');
