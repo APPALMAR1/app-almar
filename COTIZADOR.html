@@ -4057,19 +4057,27 @@ function cotizarDesdeOkm(u){
       mods.push({nombre:mod.modelo,precioARS:precioParaCotizar,precioUSD:precioUSDRef,esUSD});
       return;
     }
-    // 2. Fallback: MKT_USD_DATA_G (FOTON y otros USD hardcodeados — igual que botón PRECIOS)
+    // 2. Fallback: MKT_USD_DATA_G — buscar modelo de Autologica (ej: "AUMARK S3 916 CHASIS")
+    // o el nombre completo de PRECIOS (ej: "AUMARK S3 3.8 916 MT6 5.000KG CHASIS")
     const mktU=typeof MKT_USD_DATA_G!=='undefined'?MKT_USD_DATA_G[u.marca.toUpperCase()]:{};
     if(mktU){
-      // nombreCompleto puede ser "TM1 1.5 CABINA SIMPLE" → buscar en MKT_USD_DATA_G directamente
+      let encontrado=false;
       for(const [nombreMod,versiones] of Object.entries(mktU)){
         for(const [ver,usd] of Object.entries(versiones)){
           const nombreFull=(nombreMod+' '+ver).trim().toUpperCase();
-          if(nombreFull===nombreCompleto.toUpperCase()||nombreMod.toUpperCase()===nombreCompleto.toUpperCase()){
+          const nombreModUP=nombreMod.toUpperCase();
+          const nombreCompUP=nombreCompleto.toUpperCase();
+          // Buscar por nombre completo PRECIOS O por modelo Autologica
+          const modeloAuto=u.modelo.toUpperCase();
+          if(nombreFull===nombreCompUP||nombreModUP===nombreCompUP||
+             nombreModUP===modeloAuto||nombreFull.includes(modeloAuto)){
             if(!_bnaCotiz){mostrarToast('⚠️ TC BNA no disponible. Esperá unos segundos.');return;}
             mods.push({nombre:nombreCompleto,precioARS:Math.round(usd*_bnaCotiz),precioUSD:usd,esUSD:true});
-            return;
+            encontrado=true;
+            break;
           }
         }
+        if(encontrado) break;
       }
     }
     // 3. Fallback: MKT (DFSK en ARS)
