@@ -4027,87 +4027,73 @@ const OKM_EQUIV={
   'DFSK|E5':           ['E5 PHEV L1 HYBRID 7 ASIENTOS CVT'],
 };
 
-// Cotizar desde stock 0km — usa _preciosData + MKT como fuentes de precios
+// Cotizar desde stock 0km — idéntico al botón PRECIOS
 function cotizarDesdeOkm(u){
   if(!esVendedor(CU)&&!esSupervisor(CU)) return;
+  if(!_bnaCotiz){
+    mostrarToast('⚠️ Tipo de cambio BNA no disponible. Esperá unos segundos y volvé a intentar.');
+    return;
+  }
 
-  // Buscar en _preciosData primero, luego en MKT (hardcodeado)
+  // Buscar equivalencia Autologica → nombre exacto en PRECIOS
+  const clave=Object.keys(OKM_EQUIV).find(k=>k.toUpperCase()===(u.marca+'|'+u.modelo).toUpperCase());
+  const nombresEnPrecios=clave?OKM_EQUIV[clave]:null;
+  if(!nombresEnPrecios||!nombresEnPrecios.length){
+    mostrarToast('⚠️ No hay equivalencia para "'+u.marca+' '+u.modelo+'". Avisá al administrador.');
+    return;
+  }
+
+  // Buscar cada nombre en _preciosData — ÚNICA fuente de precios (igual que botón PRECIOS)
   const pd=window._preciosData||[];
-  let mods=[];
   const marcaData=pd.find(m=>m.marca.toUpperCase()===u.marca.toUpperCase());
-  if(marcaData){
-    mods=marcaData.modelos.filter(mod=>{
-      const nm=mod.modelo.toUpperCase();
-      const mk=u.modelo.toUpperCase();
-      return nm===mk||nm.startsWith(mk+' ')||nm.startsWith(mk+'\t');
-    });
-  }
-  // Fallback 1: MKT_USD_DATA_G (FOTON y otros USD — nombres exactos como en PRECIOS)
-  if(!mods.length&&typeof MKT_USD_DATA_G!=='undefined'&&MKT_USD_DATA_G[u.marca.toUpperCase()]){
-    const mktU=MKT_USD_DATA_G[u.marca.toUpperCase()];
-    const mk=u.modelo.toUpperCase();
-    Object.keys(mktU).forEach(nombreMod=>{
-      const nm=nombreMod.toUpperCase();
-      if(nm===mk||nm.startsWith(mk+' ')||nm.startsWith(mk+'\t')){
-        const precio=Object.values(mktU[nombreMod])[0]||0;
-        mods.push({modelo:nombreMod,precio,moneda:'USD'});
-      }
-    });
-  }
-  // Fallback 2: MKT (DFSK en ARS)
-  if(!mods.length){
-    const mktMarca=MKT[u.marca.toUpperCase()];
-    if(mktMarca){
-      const mk=u.modelo.toUpperCase();
-      Object.keys(mktMarca).forEach(nombreMod=>{
-        const nm=nombreMod.toUpperCase();
-        if(nm===mk||nm.startsWith(mk+' ')){
-          Object.entries(mktMarca[nombreMod]).forEach(([ver,precio])=>{
-            mods.push({modelo:nombreMod+' '+ver, precio, moneda:'ARS'});
-          });
-        }
-      });
-    }
-  }
-  if(!mods.length){
-    mostrarToast('⚠️ No se encontró "'+u.marca+' '+u.modelo+'" en PRECIOS. Verificá la lista.');
+  if(!marcaData){
+    mostrarToast('⚠️ No hay precios cargados para '+u.marca+'. Actualizá PRECIOS primero.');
     return;
   }
-  // Si hay una sola versión → cotizar directo
+
+  // Resolver precios exactamente igual que el botón PRECIOS
+  const mods=[];
+  nombresEnPrecios.forEach(nombreCompleto=>{
+    const mod=marcaData.modelos.find(m=>m.modelo.toUpperCase()===nombreCompleto.toUpperCase());
+    if(mod){
+      const esUSD=mod.moneda==='USD';
+      const precioParaCotizar=esUSD&&_bnaCotiz?Math.round(mod.precio*_bnaCotiz):(typeof mod.precio==='number'?mod.precio:0);
+      const precioUSDRef=esUSD?(typeof mod.precio==='number'?mod.precio:0):0;
+      mods.push({nombre:mod.modelo, precioARS:precioParaCotizar, precioUSD:precioUSDRef, esUSD});
+    }
+  });
+
+  if(!mods.length){
+    mostrarToast('⚠️ No se encontraron precios para "'+u.marca+' '+u.modelo+'" en la lista actual. Actualizá PRECIOS.');
+    return;
+  }
+
+  // Una sola versión → cotizar directo
   if(mods.length===1){
-    const mod=mods[0];
-    const esUSD=mod.moneda==='USD';
-    // Si el precio es USD y no hay TC disponible, avisar y cancelar
-    if(esUSD&&!_bnaCotiz){
-      mostrarToast('⚠️ Tipo de cambio BNA no disponible. Esperá unos segundos y volvé a intentar.');
-      return;
-    }
-    const precio=esUSD?Math.round(mod.precio*_bnaCotiz):(typeof mod.precio==='number'?mod.precio:0);
-    const precioUSD=esUSD?mod.precio:0;
-    cotizarDesdePrecios(u.marca, mod.modelo, precio, precioUSD);
+    cotizarDesdePrecios(u.marca, mods[0].nombre, mods[0].precioARS, mods[0].precioUSD);
     return;
   }
-  // Si hay varias versiones → mostrar modal para elegir
+
+  // Varias versiones → modal de selección (idéntico al de PRECIOS)
   const modal=document.createElement('div');
   modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
-  let html='<div style="background:var(--bg);border-radius:12px;padding:20px;max-width:400px;width:100%;max-height:80vh;overflow-y:auto">';
-  html+='<div style="font-weight:800;font-size:14px;margin-bottom:4px">'+u.marca+' '+u.modelo+'</div>';
-  html+='<div style="font-size:11px;color:var(--m);margin-bottom:16px">Elegí la versión a cotizar</div>';
+  modal.setAttribute('data-modal','');
+  let html=`<div style="background:var(--bg);border-radius:12px;padding:20px;max-width:420px;width:100%;max-height:80vh;overflow-y:auto">`;
+  html+=`<div style="font-weight:800;font-size:14px;margin-bottom:4px">${u.marca} ${u.modelo}</div>`;
+  html+=`<div style="font-size:11px;color:var(--m);margin-bottom:16px">Elegí la versión — ${u.color||''} · ${u.anno||''}</div>`;
   mods.forEach(mod=>{
-    const esUSD=mod.moneda==='USD';
-    // Precio siempre convertido al TC del momento — mismo resultado que botón PRECIOS
-    const precio=esUSD&&_bnaCotiz?Math.round(mod.precio*_bnaCotiz):(typeof mod.precio==='number'?mod.precio:0);
-    const precioUSD=esUSD?mod.precio:0;
-    const precioTxt=esUSD?('USD '+mod.precio.toLocaleString('es-AR')+(precio?' · $'+precio.toLocaleString('es-AR'):'')):(precio?fmt(precio):'Consultar');
-    html+=`<div onclick="this.closest('[data-modal]').remove();cotizarDesdePrecios('${u.marca}','${mod.modelo.replace(/'/g,"\'")}',${precio},${precioUSD})" style="padding:10px 14px;border:1px solid var(--bdr);border-radius:8px;margin-bottom:8px;cursor:pointer;display:flex;justify-content:space-between;align-items:center"><span style="font-size:11px">${mod.modelo}</span><span style="font-size:11px;font-weight:700;color:#0069b4">${precioTxt}</span></div>`;
+    const precioTxt=mod.esUSD
+      ?`USD ${mod.precioUSD.toLocaleString('es-AR')} · $${mod.precioARS.toLocaleString('es-AR')}`
+      :(mod.precioARS?fmt(mod.precioARS):'Consultar');
+    html+=`<div onclick="this.closest('[data-modal]').remove();cotizarDesdePrecios('${u.marca}','${mod.nombre.replace(/'/g,"\'")}',${mod.precioARS},${mod.precioUSD})" style="padding:10px 14px;border:1px solid var(--bdr);border-radius:8px;margin-bottom:8px;cursor:pointer;display:flex;justify-content:space-between;align-items:center"><span style="font-size:11px">${mod.nombre}</span><span style="font-size:11px;font-weight:700;color:#0069b4">${precioTxt}</span></div>`;
   });
   html+=`<button onclick="this.closest('[data-modal]').remove()" style="width:100%;padding:8px;background:var(--s2);border:none;border-radius:8px;cursor:pointer;margin-top:4px;font-size:11px">Cancelar</button>`;
   html+='</div>';
-  modal.setAttribute('data-modal','');
   modal.innerHTML=html;
   modal.onclick=e=>{if(e.target===modal)modal.remove();};
   document.body.appendChild(modal);
 }
+
 
 function rOkm(){
   const el=$$('ol');el.innerHTML='';
