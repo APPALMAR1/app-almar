@@ -2820,7 +2820,7 @@ function _inyectarMarcasUSD(data){
     }
   }
   // Inyectar modelos ARS desde MKT (DFSK, FOTON ARS) — agregar los que faltan sin reemplazar
-  const MARCAS_MKT_ARS=['DFSK','FOTON'];
+  const MARCAS_MKT_ARS=['FOTON']; // DFSK viene del CSV de Drive, no del MKT hardcodeado
   for(const marca of MARCAS_MKT_ARS){
     const mktMarca=MKT[marca];
     if(!mktMarca) continue;
@@ -4033,24 +4033,26 @@ function rStk(){
 // Clave: "MARCA|MODELO_AUTOLOGICA" → array de nombres exactos en PRECIOS
 // Si hay una sola versión → carga directo. Si hay varias → muestra modal.
 const OKM_EQUIV={
-  // Clave: "MARCA|MODELO_AUTOLOGICA" → nombres EXACTOS en _preciosData (MKT_USD_DATA_G + MKT)
-  // FOTON — precios USD desde MKT_USD_DATA_G
+  // Clave: "MARCA|MODELO_AUTOLOGICA" → nombres EXACTOS tal como aparecen en botón PRECIOS (CSV)
+  // FOTON USD
   'FOTON|TM1':           ['TM1 1.5 CABINA SIMPLE','TM1 1.6 CAB DOBLE','TM1 1.6 BOX CARGO','TM1 1.6 BOX CARGO REFRIGERADO'],
   'FOTON|TM2':           ['TM2 HD 1.6 CABINA SIMPLE','TM2 HD 1.6 CABINA DOBLE'],
-  'FOTON|TUNLAND V9':    ['AUMAN D 1621 6.7 CAJA ZF MT8 10.000KG','AUMAN D 2027 6.7 CAJA ZF MT8 15.000KG'],
-  'FOTON|TUNLAND G7':    ['TUNLAND G7 4X2 MT','TUNLAND G7 4X4 MT','TUNLAND G7 4X2 AT','TUNLAND G7 4X4 AT8'],
+  'FOTON|WONDER':        ['WONDER CABINA SIMPLE','WONDER CABINA DOBLE','WONDER CABINA SIMPLE'],
   'FOTON|AUMARK S3 916': ['AUMARK S3 3.8 916 MT6 5.000KG CHASIS'],
   'FOTON|AUMARK S3 615': ['AUMARK S3 2.8 615 MT5 3.500KG CHASIS'],
   'FOTON|AUMARK S3 1016':['AUMARK S3 3.8 1016 MT6 6.000KG CHASIS'],
-  'FOTON|WONDER':        ['WONDER CABINA SIMPLE','WONDER CABINA DOBLE','WONDER CABINA SIMPLE CS'],
-  // DFSK — precios ARS desde MKT → nombres: "MODELO VERSION" exacto
-  'DFSK|C35':            ['C35 FURGON'],
-  'DFSK|C35 FURGON':     ['C35 FURGON'],
-  'DFSK|C31':            ['C31 CABINA SIMPLE','C31 BOX','C31 BOX REFRIGERADO'],
-  'DFSK|C31 BOX':        ['C31 BOX'],
+  // FOTON ARS
+  'FOTON|TUNLAND G7':    ['TUNLAND G7 4X2 MT','TUNLAND G7 4X4 MT','TUNLAND G7 4X2 AT','TUNLAND G7 4X4 AT8'],
+  'FOTON|TUNLAND V9':    ['TUNLAND V9 4X4 2.0 HYBRID AT8 ZF','TUNLAND V9 4X4 PRO SPORT NAFTERA'],
+  // DFSK — nombres EXACTOS del CSV (botón PRECIOS)
   'DFSK|K01H':           ['K01H MINI TRUCK','K01H FURGON CERRADO','K01H FURGON REFRIGERADO'],
+  'DFSK|C31':            ['C31 CABINA SIMPLE 1150KG','C31 BOX','C31 BOX REFRIGERADO'],
+  'DFSK|C31 BOX':        ['C31 BOX'],
+  'DFSK|C32':            ['C32 CABINA DOBLE'],
+  'DFSK|C35':            ['C35 FURGON','C35 FURGON 7A HOMOLOGADA'],
+  'DFSK|C35 FURGON':     ['C35 FURGON'],
+  'DFSK|C35 FURGON 7A HOMOLOGADA':['C35 FURGON 7A HOMOLOGADA'],
   'DFSK|E5':             ['E5 PHEV L1 HYBRID 7 ASIENTOS CVT'],
-  'DFSK|C35 FURGON 7A HOMOLOGADA':['C35 FURGON'],
 };
 
 // Cotizar desde stock 0km — idéntico al botón PRECIOS
@@ -4065,20 +4067,22 @@ function cotizarDesdeOkm(u){
     return;
   }
 
-  // Paso 2: asegurar precios cargados — si no están, cargar desde Drive (igual que botón PRECIOS)
-  const _buscarYCotizar=()=>{
-    const pd=window._preciosData||[];
-    let marcaData=pd.find(m=>m.marca.toUpperCase()===u.marca.toUpperCase());
-    // Si no está la marca, inyectar hardcodeados como fallback
-    if(!marcaData){
-      _inyectarMarcasUSD(pd);
-      window._preciosData=pd;
-      marcaData=pd.find(m=>m.marca.toUpperCase()===u.marca.toUpperCase());
-    }
-    if(!marcaData||!marcaData.modelos.length){
-      mostrarToast('⚠️ No hay precios para '+u.marca+'. Actualizá PRECIOS.');
-      return;
-    }
+  // Paso 2: asegurar que _preciosData tiene FOTON/DFSK inyectados
+  // Si el usuario no pasó por botón PRECIOS, _preciosData puede ser null
+  if(!window._preciosData||!window._preciosData.length){
+    window._preciosData=[];
+    _inyectarMarcasUSD(window._preciosData);
+  }
+  // Si la marca no está, inyectar ahora
+  const pd=window._preciosData;
+  if(!pd.find(m=>m.marca.toUpperCase()===u.marca.toUpperCase())){
+    _inyectarMarcasUSD(pd);
+  }
+  const marcaData=pd.find(m=>m.marca.toUpperCase()===u.marca.toUpperCase());
+  if(!marcaData||!marcaData.modelos.length){
+    mostrarToast('⚠️ No hay precios para '+u.marca+'. Actualizá PRECIOS.');
+    return;
+  }
 
   // Paso 3: resolver precios — exactamente igual que el botón PRECIOS
   const mods=[];
@@ -4121,27 +4125,9 @@ function cotizarDesdeOkm(u){
   modal.innerHTML=html;
   modal.onclick=e=>{if(e.target===modal)modal.remove();};
   document.body.appendChild(modal);
-  };
-  // Cargar precios si no están disponibles
-  if(!window._preciosData||!window._preciosData.length){
-    mostrarToast('⏳ Cargando precios...');
-    fetch(PRECIOS_URL+'&t='+Date.now(),{cache:'no-store'})
-      .then(r=>r.text())
-      .then(csv=>{
-        const data=parsePreciosCSV(csv);
-        _inyectarMarcasUSD(data);
-        window._preciosData=data;
-        _buscarYCotizar();
-      })
-      .catch(()=>{
-        window._preciosData=[];
-        _inyectarMarcasUSD(window._preciosData);
-        _buscarYCotizar();
-      });
-  } else {
-    _buscarYCotizar();
-  }
 }
+
+
 function rOkm(){
   const el=$$('ol');el.innerHTML='';
   if(!okm||!okm.length){el.innerHTML='<div class="empty"><div class="eico">🏎</div><div class="ettl">Sin stock 0km</div><div class="esub">Importá el Excel de Autologica desde Panel Admin.</div></div>';return;}
