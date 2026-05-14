@@ -3033,6 +3033,8 @@ function cotizarDesdePrecios(marca, modeloCompleto, precioArg, precioUSD){
           const usdRef=precioUSD&&precioUSD>0?` &nbsp;·&nbsp; <span style="color:#F39C12;font-weight:700">💵 USD ${precioUSD.toLocaleString('es-AR')}</span>`:'';
           const tcRef=precioUSD&&precioUSD>0&&_bnaCotiz?` <span style="font-size:9px;color:var(--m)">(TC BNA $${Math.round(_bnaCotiz).toLocaleString('es-AR')})</span>`:'';
           if(aral) aral.innerHTML=`<div class="al info">💰 <strong>${marca} — ${modeloCompleto}</strong> · Año ${yr}${usdRef}${tcRef}<br><span style="font-size:10px;color:var(--m)">Precio cargado desde lista de precios</span></div>`;
+          // Forzar precio ARS correcto (evita que _autocompletarPrecioLista ponga USD crudo)
+          if(precio>0){$$('pa1').value=precio;}
           cP();
           rCampMini();
         },150);
