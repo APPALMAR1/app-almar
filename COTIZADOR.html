@@ -4092,9 +4092,12 @@ function cotizarDesdeOkm(u){
     const mod=marcaData.modelos.find(m=>m.modelo.toUpperCase()===nombreCompleto.toUpperCase());
     if(!mod) return;
     const esUSD=mod.moneda==='USD';
-    // Mismo cálculo que botón PRECIOS línea 2923
-    const precioParaCotizar=esUSD&&_bnaCotiz?Math.round(mod.precio*_bnaCotiz):(typeof mod.precio==='number'?mod.precio:parseInt(String(mod.precio).replace(/[^0-9]/g,''))||0);
-    const precioUSDRef=esUSD?(typeof mod.precio==='number'?mod.precio:parseFloat(String(mod.precio).replace(/[^0-9.]/g,''))||0):0;
+    // Normalizar precio (puede ser número o string con $)
+    const precioNumerico=typeof mod.precio==='number'?mod.precio:parseFloat(String(mod.precio).replace(/[^0-9.]/g,''))||0;
+    // Convertir USD→ARS igual que botón PRECIOS
+    const precioParaCotizar=esUSD&&_bnaCotiz?Math.round(precioNumerico*_bnaCotiz):precioNumerico;
+    const precioUSDRef=esUSD?precioNumerico:0;
+    if(esUSD&&!_bnaCotiz){mostrarToast('⚠️ TC BNA no disponible aún. Esperá unos segundos y volvé a intentar.');return;}
     mods.push({nombre:mod.modelo,precioARS:precioParaCotizar,precioUSD:precioUSDRef,esUSD});
   });
 
