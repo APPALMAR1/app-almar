@@ -4131,23 +4131,7 @@ function rOkm(){
     items.forEach(u=>{
       const d=document.createElement('div');d.className='hi';
       // Precio desde _preciosData
-      const mods=buscarPrecioEnLista(u.marca,u.modelo);
-      const hayPrecios=(window._preciosData||[]).length>0;
-      let precioTxt=hayPrecios?'Sin precio en lista':'⚠️ Actualizá PRECIOS';
-      if(mods&&mods.length===1){
-        const mod=mods[0];
-        if(mod.moneda==='USD'){
-          const ars=_bnaCotiz?Math.round(mod.precio*_bnaCotiz):0;
-          precioTxt='USD '+mod.precio.toLocaleString('es-AR')+(ars?' · '+fmt(ars):'');
-        } else {
-          precioTxt=fmt(mod.precio);
-        }
-      } else if(mods&&mods.length>1){
-        const mod=mods[0];
-        const esUSD=mod.moneda==='USD';
-        const p=esUSD&&_bnaCotiz?Math.round(mod.precio*_bnaCotiz):mod.precio;
-        precioTxt=(esUSD?'USD '+mod.precio.toLocaleString('es-AR')+' · ':'')+fmt(p)+' y más';
-      }
+      const precioTxt='';
       const patente=u.patente?' · '+u.patente:'';
       const obs=u.obs&&u.obs!==u.modelo?' · '+u.obs:'';
       const puedeVer=esVendedor(CU)||esSupervisor(CU);
