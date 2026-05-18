@@ -2852,58 +2852,19 @@ function _inyectarMarcasUSD(data){
 
 
 // ── Sync precios OKM — igual mecanismo que stock usados ──────────────────────
-// ID del Google Sheets con lista de precios OKM (publicado en la web)
-const PRECIOS_OKM_SHEET_ID='1NRqC1bXHW89hpc2YKIQDbeFWFrCCgORp';
-const PRECIOS_OKM_HOJAS=['TOYOTA','FOTON','DFSK','BAIC','CHERY','FIAT','JEEP','CITROEN','PEUGEOT','RENAULT','CHEVROLET'];
-
 function syncPreciosOKM(){
-  // Igual que stock usados — leer directo de Google Sheets publicado, sin cache
-  const marcasMap={};
-  let pendientes=PRECIOS_OKM_HOJAS.length;
-  
-  PRECIOS_OKM_HOJAS.forEach(hoja=>{
-    const url=`https://docs.google.com/spreadsheets/d/${PRECIOS_OKM_SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${hoja}&t=${Date.now()}`;
-    fetch(url,{cache:'no-store'})
-      .then(r=>r.text())
-      .then(csv=>{
-        // Parsear CSV: fila 1=headers, resto=datos
-        const lineas=csv.trim().split('\n').filter(l=>l.trim());
-        if(lineas.length<2){pendientes--;if(!pendientes)_aplicarPrecios(marcasMap);return;}
-        // Detectar columnas MODELO, PRECIO, MONEDA
-        const headers=lineas[0].split(',').map(h=>h.replace(/"/g,'').trim().toUpperCase());
-        const iMod=headers.indexOf('MODELO');
-        const iPre=headers.indexOf('PRECIO');
-        const iMon=headers.indexOf('MONEDA');
-        if(iMod<0||iPre<0){pendientes--;if(!pendientes)_aplicarPrecios(marcasMap);return;}
-        lineas.slice(1).forEach(linea=>{
-          const cols=linea.split(',').map(c=>c.replace(/"/g,'').trim());
-          const modelo=cols[iMod]||'';
-          const precioRaw=(cols[iPre]||'').replace(/[$,. ]/g,'').replace(/\./g,'');
-          const precio=parseFloat(precioRaw)||0;
-          const moneda=iMon>=0?(cols[iMon]||'ARS').toUpperCase():'ARS';
-          if(!modelo||!precio) return;
-          if(!marcasMap[hoja]) marcasMap[hoja]=[];
-          marcasMap[hoja].push({modelo,precio,moneda});
-        });
-        pendientes--;
-        if(!pendientes) _aplicarPrecios(marcasMap);
-      })
-      .catch(()=>{
-        pendientes--;
-        if(!pendientes) _aplicarPrecios(marcasMap);
-      });
-  });
-}
-
-function _aplicarPrecios(marcasMap){
-  const data=Object.entries(marcasMap)
-    .filter(([,mods])=>mods&&mods.length)
-    .map(([marca,modelos])=>({marca,modelos}));
-  if(!data.length) return;
-  _inyectarMarcasUSD(data);
-  window._preciosData=data;
-  localStorage.setItem('almar_precios_okm',JSON.stringify({data,fecha:new Date().toISOString()}));
-  actualizarBNA&&actualizarBNA().catch(()=>{});
+  // Usar localStorage como fuente (contiene el Excel importado por el admin)
+  const cached=localStorage.getItem('almar_precios_okm');
+  if(cached){
+    try{
+      const {data}=JSON.parse(cached);
+      if(data&&data.length){
+        _inyectarMarcasUSD(data);
+        window._preciosData=data;
+        actualizarBNA&&actualizarBNA().catch(()=>{});
+      }
+    }catch(e){}
+  }
 }
 
 function syncPrecios(){
