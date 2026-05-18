@@ -2840,29 +2840,29 @@ function _inyectarMarcasUSD(data){
 }
 
 function syncPreciosSilencioso(){
-  // Carga precios desde Drive en segundo plano sin molestar al vendedor
-  // Primero usar cache local si existe (respuesta instantánea)
-  const cached=localStorage.getItem('almar_precios_okm');
-  if(cached){
-    try{
-      const {data}=JSON.parse(cached);
-      _inyectarMarcasUSD(data);
-      window._preciosData=data;
-      actualizarBNA().catch(()=>{});
-    }catch(e){}
-  }
-  // Luego actualizar desde Drive en background (frescos)
+  // SIEMPRE descargar desde Drive primero (fuente de verdad)
+  // Si falla la conexión, usar cache local como fallback
   fetch(PRECIOS_URL+'&t='+Date.now(),{cache:'no-store'})
     .then(r=>r.text())
     .then(csv=>{
       const data=parsePreciosCSV(csv);
       _inyectarMarcasUSD(data);
       window._preciosData=data;
-      // Guardar en cache para próxima vez
       localStorage.setItem('almar_precios_okm',JSON.stringify({data,fecha:new Date().toISOString()}));
       actualizarBNA().catch(()=>{});
     })
-    .catch(()=>{}); // Sin conexión: usar cache local, no pasa nada
+    .catch(()=>{
+      // Sin conexión: usar cache local
+      const cached=localStorage.getItem('almar_precios_okm');
+      if(cached){
+        try{
+          const {data}=JSON.parse(cached);
+          _inyectarMarcasUSD(data);
+          window._preciosData=data;
+          actualizarBNA().catch(()=>{});
+        }catch(e){}
+      }
+    });
 }
 
 function syncPrecios(){
