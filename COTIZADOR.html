@@ -2840,29 +2840,28 @@ function _inyectarMarcasUSD(data){
 }
 
 function syncPreciosSilencioso(){
-  // SIEMPRE descargar desde Drive primero (fuente de verdad)
-  // Si falla la conexión, usar cache local como fallback
+  // Usar localStorage como fuente (contiene el Excel importado por el admin)
+  // Si no hay cache, usar CSV de Drive como fallback
+  const cached=localStorage.getItem('almar_precios_okm');
+  if(cached){
+    try{
+      const {data}=JSON.parse(cached);
+      _inyectarMarcasUSD(data);
+      window._preciosData=data;
+      actualizarBNA().catch(()=>{});
+      return;
+    }catch(e){}
+  }
+  // Sin cache: bajar CSV de Drive (fallback para dispositivos sin cache)
   fetch(PRECIOS_URL+'&t='+Date.now(),{cache:'no-store'})
     .then(r=>r.text())
     .then(csv=>{
       const data=parsePreciosCSV(csv);
       _inyectarMarcasUSD(data);
       window._preciosData=data;
-      localStorage.setItem('almar_precios_okm',JSON.stringify({data,fecha:new Date().toISOString()}));
       actualizarBNA().catch(()=>{});
     })
-    .catch(()=>{
-      // Sin conexión: usar cache local
-      const cached=localStorage.getItem('almar_precios_okm');
-      if(cached){
-        try{
-          const {data}=JSON.parse(cached);
-          _inyectarMarcasUSD(data);
-          window._preciosData=data;
-          actualizarBNA().catch(()=>{});
-        }catch(e){}
-      }
-    });
+    .catch(()=>{});
 }
 
 function syncPrecios(){
