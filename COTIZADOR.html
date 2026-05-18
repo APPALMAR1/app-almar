@@ -2805,10 +2805,11 @@ function impXP(e){
 //  SYNC PRECIOS (desde Drive o localStorage) ─
 // Inyecta marcas USD del hardcode SOLO si la marca no existe en data (fallback sin Excel)
 function _inyectarMarcasUSD(data){
-  // Inyectar marcas USD desde MKT_USD_DATA_G SOLO si no existe en data (Excel tiene prioridad)
+  // Inyectar marcas USD desde MKT_USD_DATA_G SOLO si la marca NO existe en data
+  // Si el Excel ya tiene FOTON, no agregar nada de MKT_USD_DATA_G para FOTON
   if(typeof MKT_USD_DATA_G!=='undefined'){
     for(const marca of Object.keys(MKT_USD_DATA_G)){
-      if(data.find(m=>m.marca.toUpperCase()===marca.toUpperCase())) continue; // Excel tiene prioridad
+      if(data.find(m=>m.marca.toUpperCase()===marca.toUpperCase())) continue; // marca ya en Excel
       const modelos=[];
       for(const [modelo,versiones] of Object.entries(MKT_USD_DATA_G[marca])){
         for(const [version,precio] of Object.entries(versiones)){
@@ -2819,25 +2820,19 @@ function _inyectarMarcasUSD(data){
       if(modelos.length) data.push({marca,modelos});
     }
   }
-  // Inyectar modelos ARS desde MKT (DFSK, FOTON ARS) — agregar los que faltan sin reemplazar
+  // Inyectar ARS desde MKT solo si la marca NO está en el Excel
   const MARCAS_MKT_ARS=['DFSK','FOTON'];
   for(const marca of MARCAS_MKT_ARS){
+    if(data.find(m=>m.marca.toUpperCase()===marca.toUpperCase())) continue;
     const mktMarca=MKT[marca];
     if(!mktMarca) continue;
-    let marcaEntry=data.find(m=>m.marca===marca);
-    if(!marcaEntry){
-      marcaEntry={marca,modelos:[]};
-      data.push(marcaEntry);
-    }
-    // Agregar solo los modelos que no existen todavía
+    const modelos=[];
     for(const [modelo,versiones] of Object.entries(mktMarca)){
       for(const [version,precio] of Object.entries(versiones)){
-        const nombreCompleto=(modelo+' '+version).trim();
-        if(!marcaEntry.modelos.find(m=>m.modelo===nombreCompleto)){
-          marcaEntry.modelos.push({modelo:nombreCompleto,precio:precio,moneda:'ARS'});
-        }
+        modelos.push({modelo:(modelo+' '+version).trim(),precio,moneda:'ARS'});
       }
     }
+    if(modelos.length) data.push({marca,modelos});
   }
 }
 
