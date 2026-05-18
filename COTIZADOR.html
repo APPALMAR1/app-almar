@@ -1579,9 +1579,8 @@ function login(u){
     .then(r=>r.json())
     .then(data=>{_clientesCache=data.data||data||[];})
     .catch(()=>{});
-  // Sincronizar precios automáticamente en segundo plano (silencioso)
-  // El vendedor no necesita hacer nada — igual que el stock usados
-  setTimeout(()=>syncPreciosSilencioso(), 1500);
+  // Sincronizar precios OKM automáticamente — igual que stock usados
+  setTimeout(syncPreciosOKM, 2000);
 }
 function logout(){
   CU=null;credCampId=null;credPlazo=null;cotCampId=null;
@@ -2808,11 +2807,10 @@ function impXP(e){
 //  SYNC PRECIOS (desde Drive o localStorage) ─
 // Inyecta marcas USD del hardcode SOLO si la marca no existe en data (fallback sin Excel)
 function _inyectarMarcasUSD(data){
-  // Inyectar marcas USD desde MKT_USD_DATA_G SOLO si la marca NO existe en data
-  // Si el Excel ya tiene FOTON, no agregar nada de MKT_USD_DATA_G para FOTON
+  // Inyectar marcas USD desde MKT_USD_DATA_G
   if(typeof MKT_USD_DATA_G!=='undefined'){
     for(const marca of Object.keys(MKT_USD_DATA_G)){
-      if(data.find(m=>m.marca.toUpperCase()===marca.toUpperCase())) continue; // marca ya en Excel
+      if(data.find(m=>m.marca===marca)) continue; // ya viene del Excel, no tocar
       const modelos=[];
       for(const [modelo,versiones] of Object.entries(MKT_USD_DATA_G[marca])){
         for(const [version,precio] of Object.entries(versiones)){
@@ -2823,45 +2821,58 @@ function _inyectarMarcasUSD(data){
       if(modelos.length) data.push({marca,modelos});
     }
   }
-  // Inyectar ARS desde MKT solo si la marca NO está en el Excel
+  // Inyectar modelos ARS desde MKT (DFSK, FOTON ARS) — agregar los que faltan sin reemplazar
   const MARCAS_MKT_ARS=['DFSK','FOTON'];
   for(const marca of MARCAS_MKT_ARS){
-    if(data.find(m=>m.marca.toUpperCase()===marca.toUpperCase())) continue;
     const mktMarca=MKT[marca];
     if(!mktMarca) continue;
-    const modelos=[];
+    let marcaEntry=data.find(m=>m.marca===marca);
+    if(!marcaEntry){
+      marcaEntry={marca,modelos:[]};
+      data.push(marcaEntry);
+    }
+    // Agregar solo los modelos que no existen todavía
     for(const [modelo,versiones] of Object.entries(mktMarca)){
       for(const [version,precio] of Object.entries(versiones)){
-        modelos.push({modelo:(modelo+' '+version).trim(),precio,moneda:'ARS'});
+        const nombreCompleto=(modelo+' '+version).trim();
+        if(!marcaEntry.modelos.find(m=>m.modelo===nombreCompleto)){
+          marcaEntry.modelos.push({modelo:nombreCompleto,precio:precio,moneda:'ARS'});
+        }
       }
     }
-    if(modelos.length) data.push({marca,modelos});
   }
 }
 
-function syncPreciosSilencioso(){
-  // Usar localStorage como fuente (contiene el Excel importado por el admin)
-  // Si no hay cache, usar CSV de Drive como fallback
+
+// ── Sync precios OKM — igual mecanismo que stock usados ──────────────────────
+function syncPreciosOKM(){
+  // Lee el Excel de precios desde Google Sheets publicado (igual que stock usados)
+  // El admin solo sube el Excel al Drive y publica — todos los dispositivos se actualizan solos
   const cached=localStorage.getItem('almar_precios_okm');
   if(cached){
     try{
       const {data}=JSON.parse(cached);
-      _inyectarMarcasUSD(data);
-      window._preciosData=data;
-      actualizarBNA().catch(()=>{});
-      return;
+      if(data&&data.length){
+        _inyectarMarcasUSD(data);
+        window._preciosData=data;
+        actualizarBNA&&actualizarBNA().catch(()=>{});
+      }
     }catch(e){}
   }
-  // Sin cache: bajar CSV de Drive (fallback para dispositivos sin cache)
-  fetch(PRECIOS_URL+'&t='+Date.now(),{cache:'no-store'})
-    .then(r=>r.text())
-    .then(csv=>{
-      const data=parsePreciosCSV(csv);
-      _inyectarMarcasUSD(data);
-      window._preciosData=data;
-      actualizarBNA().catch(()=>{});
-    })
-    .catch(()=>{});
+  // Bajar frescos desde Drive en background (sin bloquear ni mostrar nada)
+  if(typeof PRECIOS_URL!=='undefined'){
+    fetch(PRECIOS_URL+'&t='+Date.now(),{cache:'no-store'})
+      .then(r=>r.text())
+      .then(csv=>{
+        const data=parsePreciosCSV(csv);
+        if(!data||!data.length) return;
+        _inyectarMarcasUSD(data);
+        window._preciosData=data;
+        localStorage.setItem('almar_precios_okm',JSON.stringify({data,fecha:new Date().toISOString()}));
+        actualizarBNA&&actualizarBNA().catch(()=>{});
+      })
+      .catch(()=>{}); // Sin conexión: usar cache — no pasa nada
+  }
 }
 
 function syncPrecios(){
@@ -4056,28 +4067,24 @@ function rStk(){
 // Clave: "MARCA|MODELO_AUTOLOGICA" → array de nombres exactos en PRECIOS
 // Si hay una sola versión → carga directo. Si hay varias → muestra modal.
 const OKM_EQUIV={
-  // Clave: "MARCA|MODELO_AUTOLOGICA" → nombres EXACTOS tal como aparecen en la lista Excel importada
-  // FOTON USD (del Excel: TM1 1.6 CABINA SIMPLE, TM2 HD 1.6 CABINA SIMPLE, etc.)
-  'FOTON|TM1':           ['TM1 1.6 CABINA SIMPLE','TM1 1.6 CAB DOBLE','TM1 1.6 BOX CARGO','TM1 1.6 BOX CARGO REFRIGERADO'],
+  // Clave: "MARCA|MODELO_AUTOLOGICA" → nombres EXACTOS en _preciosData (MKT_USD_DATA_G + MKT)
+  // FOTON — precios USD desde MKT_USD_DATA_G
+  'FOTON|TM1':           ['TM1 1.5 CABINA SIMPLE','TM1 1.6 CAB DOBLE','TM1 1.6 BOX CARGO','TM1 1.6 BOX CARGO REFRIGERADO'],
   'FOTON|TM2':           ['TM2 HD 1.6 CABINA SIMPLE','TM2 HD 1.6 CABINA DOBLE'],
-  'FOTON|WONDER':        ['WONDER CABINA SIMPLE','WONDER CABINA DOBLE','WONDER CABINA BOX'],
+  'FOTON|TUNLAND V9':    ['AUMAN D 1621 6.7 CAJA ZF MT8 10.000KG','AUMAN D 2027 6.7 CAJA ZF MT8 15.000KG'],
+  'FOTON|TUNLAND G7':    ['TUNLAND G7 4X2 MT','TUNLAND G7 4X4 MT','TUNLAND G7 4X2 AT','TUNLAND G7 4X4 AT8'],
   'FOTON|AUMARK S3 916': ['AUMARK S3 3.8 916 MT6 5.000KG CHASIS'],
   'FOTON|AUMARK S3 615': ['AUMARK S3 2.8 615 MT5 3.500KG CHASIS'],
   'FOTON|AUMARK S3 1016':['AUMARK S3 3.8 1016 MT6 6.000KG CHASIS'],
-  // FOTON ARS (del Excel: TUNLAND G7, V9)
-  'FOTON|TUNLAND G7':    ['TUNLAND G7 4X2 MT','TUNLAND G7 4X4 MT','TUNLAND G7 4X2 AT','TUNLAND G7 4X4 AT8'],
-  'FOTON|TUNLAND V9':    ['TUNLAND V9 4X4 2.0 HYBRID AT8 ZF','TUNLAND V9 4X4 PRO SPORT NAFTERA'],
-  // DFSK — nombres EXACTOS del Excel (con espacios: "C 31", "C 35", "K01H")
+  'FOTON|WONDER':        ['WONDER CABINA SIMPLE','WONDER CABINA DOBLE','WONDER CABINA SIMPLE CS'],
+  // DFSK — precios ARS desde MKT → nombres: "MODELO VERSION" exacto
+  'DFSK|C35':            ['C35 FURGON'],
+  'DFSK|C35 FURGON':     ['C35 FURGON'],
+  'DFSK|C31':            ['C31 CABINA SIMPLE','C31 BOX','C31 BOX REFRIGERADO'],
+  'DFSK|C31 BOX':        ['C31 BOX'],
   'DFSK|K01H':           ['K01H MINI TRUCK','K01H FURGON CERRADO','K01H FURGON REFRIGERADO'],
-  'DFSK|C31':            ['C 31 CABINA SIMPLE 1150KG','C 31 BOX','C 31 BOX REFRIGERADO'],
-  'DFSK|C31 BOX':        ['C 31 BOX'],
-  'DFSK|C32':            ['C 32 CABINA DOBLE'],
-  'DFSK|C35':            ['C 35 FURGON','C 35 FURGON 7A HOMOLOGADA'],
-  'DFSK|C35 FURGON':     ['C 35 FURGON'],
-  'DFSK|C35 FURGON 7A HOMOLOGADA':['C 35 FURGON 7A HOMOLOGADA'],
   'DFSK|E5':             ['E5 PHEV L1 HYBRID 7 ASIENTOS CVT'],
-  'DFSK|GLORY 500':      ['GLORY 500 1.5 CVT 5 PLAZAS'],
-  'DFSK|GLORY 580':      ['GLORY 580 1.8 CVT 7 PLAZAS'],
+  'DFSK|C35 FURGON 7A HOMOLOGADA':['C35 FURGON'],
 };
 
 // Cotizar desde stock 0km — idéntico al botón PRECIOS
