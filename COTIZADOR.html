@@ -2817,7 +2817,7 @@ function _inyectarMarcasUSD(data){
   // Inyectar marcas USD desde MKT_USD_DATA_G
   if(typeof MKT_USD_DATA_G!=='undefined'){
     for(const marca of Object.keys(MKT_USD_DATA_G)){
-      if(data.find(m=>m.marca===marca)) continue; // ya viene del Excel, no tocar
+      if(data.find(m=>m.marca.toUpperCase()===marca.toUpperCase())) continue; // ya existe, no duplicar
       const modelos=[];
       for(const [modelo,versiones] of Object.entries(MKT_USD_DATA_G[marca])){
         for(const [version,precio] of Object.entries(versiones)){
@@ -2829,11 +2829,13 @@ function _inyectarMarcasUSD(data){
     }
   }
   // Inyectar modelos ARS desde MKT (DFSK, FOTON ARS) — agregar los que faltan sin reemplazar
-  const MARCAS_MKT_ARS=['DFSK','FOTON'];
+  const MARCAS_MKT_ARS=['DFSK']; // FOTON viene completo del Excel importado
   for(const marca of MARCAS_MKT_ARS){
     const mktMarca=MKT[marca];
     if(!mktMarca) continue;
     let marcaEntry=data.find(m=>m.marca===marca);
+    // Si la marca ya tiene modelos del Excel importado, no agregar los hardcodeados
+    if(marcaEntry&&marcaEntry.modelos.length) continue;
     if(!marcaEntry){
       marcaEntry={marca,modelos:[]};
       data.push(marcaEntry);
@@ -2852,65 +2854,20 @@ function _inyectarMarcasUSD(data){
 
 
 // ── Sync precios OKM — igual mecanismo que stock usados ──────────────────────
-// URLs CSV del Google Sheets de precios OKM (publicado — igual que stock usados)
-const PRECIOS_OKM_SHEET_ID='1NRqC1bXHW89hpc2YKIQDbeFWFrCCgORp';
-const PRECIOS_OKM_HOJAS=['TOYOTA','FOTON','DFSK','BAIC','CHERY','FIAT','JEEP','CITROEN','PEUGEOT','RENAULT','CHEVROLET'];
-
-function parsePreciosHoja(csv, marca){
-  // Parsear CSV de una hoja — columnas: MARCA, MODELO, PRECIO, MONEDA
-  const modelos=[];
-  const lineas=csv.split(/\r?\n/).filter(l=>l.trim())
-  if(lineas.length<2) return modelos;
-  // Buscar fila de headers (contiene MODELO y PRECIO)
-  let hi=-1;
-  for(let i=0;i<Math.min(lineas.length,5);i++){
-    const u=lineas[i].toUpperCase();
-    if(u.includes('MODELO')&&u.includes('PRECIO')){hi=i;break;}
-  }
-  if(hi<0) return modelos;
-  const cF=l=>{const r=[];let a='';let q=false;for(let i=0;i<l.length;i++){const c=l[i];if(c==='"'){q=!q;}else if(c===','&&!q){r.push(a.trim());a='';}else{a+=c;}}r.push(a.trim());return r;};
-  const hdrs=cF(lineas[hi]).map(h=>h.replace(/"/g,'').toUpperCase().trim());
-  const iMod=hdrs.findIndex(h=>h==='MODELO'||h.includes('MODELO'));
-  const iPre=hdrs.findIndex(h=>h==='PRECIO'||h.includes('PRECIO'));
-  const iMon=hdrs.findIndex(h=>h==='MONEDA'||h.includes('MONEDA'));
-  if(iMod<0||iPre<0) return modelos;
-  for(let i=hi+1;i<lineas.length;i++){
-    const cols=cF(lineas[i]);
-    const modelo=(cols[iMod]||'').replace(/"/g,'').trim();
-    const precioStr=(cols[iPre]||'').replace(/"/g,'').replace(/[$\s]/g,'').replace(/[.,]/g,'').trim();
-    const precio=parseFloat(precioStr)||0;
-    const moneda=iMon>=0?(cols[iMon]||'').replace(/"/g,'').trim().toUpperCase()||'ARS':'ARS';
-    if(!modelo||!precio) continue;
-    modelos.push({modelo,precio,moneda});
-  }
-  return modelos;
-}
-
 function syncPreciosOKM(){
-  // IDÉNTICO al auto-sync del stock usados — fetch directo de Google Sheets publicado
-  if(location.protocol==='file:') return;
-  const marcasData=[];
-  let pendientes=PRECIOS_OKM_HOJAS.length;
-  const done=()=>{
-    pendientes--;
-    if(pendientes>0) return;
-    const data=marcasData.filter(m=>m.modelos.length);
-    if(!data.length) return;
-    _inyectarMarcasUSD(data);
-    window._preciosData=data;
-    actualizarBNA&&actualizarBNA().catch(()=>{});
-  };
-  PRECIOS_OKM_HOJAS.forEach(hoja=>{
-    const url='https://docs.google.com/spreadsheets/d/'+PRECIOS_OKM_SHEET_ID+'/gviz/tq?tqx=out:csv&sheet='+hoja+'&t='+Date.now();
-    fetch(url,{cache:'no-store'})
-      .then(r=>{if(!r.ok)throw new Error();return r.text();})
-      .then(csv=>{
-        const modelos=parsePreciosHoja(csv,hoja);
-        if(modelos.length) marcasData.push({marca:hoja,modelos});
-        done();
-      })
-      .catch(()=>done()); // Silencioso si falla — igual que stock
-  });
+  // Usar localStorage como fuente (contiene el Excel importado por el admin)
+  const cached=localStorage.getItem('almar_precios_okm');
+  if(cached){
+    try{
+      const {data}=JSON.parse(cached);
+      if(data&&data.length){
+        // NO llamar _inyectarMarcasUSD — el Excel es la fuente completa
+        // Solo actualizar BNA para conversión USD
+        window._preciosData=data;
+        actualizarBNA&&actualizarBNA().catch(()=>{});
+      }
+    }catch(e){}
+  }
 }
 
 function syncPrecios(){
