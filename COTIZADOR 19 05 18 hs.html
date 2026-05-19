@@ -2829,7 +2829,7 @@ function _inyectarMarcasUSD(data){
     }
   }
   // Inyectar modelos ARS desde MKT (DFSK, FOTON ARS) — agregar los que faltan sin reemplazar
-  const MARCAS_MKT_ARS=['DFSK','FOTON'];
+  const MARCAS_MKT_ARS=['DFSK']; // FOTON viene completo del Excel importado
   for(const marca of MARCAS_MKT_ARS){
     const mktMarca=MKT[marca];
     if(!mktMarca) continue;
