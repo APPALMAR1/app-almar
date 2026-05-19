@@ -2817,15 +2817,25 @@ function _inyectarMarcasUSD(data){
   // Inyectar marcas USD desde MKT_USD_DATA_G
   if(typeof MKT_USD_DATA_G!=='undefined'){
     for(const marca of Object.keys(MKT_USD_DATA_G)){
-      if(data.find(m=>m.marca.toUpperCase()===marca.toUpperCase())) continue; // ya existe, no duplicar
-      const modelos=[];
+      let marcaEntry=data.find(m=>m.marca.toUpperCase()===marca.toUpperCase());
+      const modelosUSD=[];
       for(const [modelo,versiones] of Object.entries(MKT_USD_DATA_G[marca])){
         for(const [version,precio] of Object.entries(versiones)){
           const nombreCompleto=(modelo+' '+version).trim();
-          modelos.push({modelo:nombreCompleto,precio:precio,moneda:'USD'});
+          modelosUSD.push({modelo:nombreCompleto,precio:precio,moneda:'USD'});
         }
       }
-      if(modelos.length) data.push({marca,modelos});
+      if(!marcaEntry){
+        // Marca no existe: crearla completa con precios USD
+        if(modelosUSD.length) data.push({marca,modelos:modelosUSD});
+      } else {
+        // Marca ya existe (vino del Excel ARS): agregar modelos USD que falten
+        for(const m of modelosUSD){
+          if(!marcaEntry.modelos.find(x=>x.modelo===m.modelo)){
+            marcaEntry.modelos.push(m);
+          }
+        }
+      }
     }
   }
   // Inyectar modelos ARS desde MKT (DFSK, FOTON ARS) — agregar los que faltan sin reemplazar
