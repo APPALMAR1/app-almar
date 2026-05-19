@@ -2852,9 +2852,20 @@ function _inyectarMarcasUSD(data){
 
 
 // ── Sync precios OKM — igual mecanismo que stock usados ──────────────────────
-// URLs CSV del Google Sheets de precios OKM (publicado — igual que stock usados)
-const PRECIOS_OKM_SHEET_ID='1NRqC1bXHW89hpc2YKIQDbeFWFrCCgORp';
-const PRECIOS_OKM_HOJAS=['TOYOTA','FOTON','DFSK','BAIC','CHERY','FIAT','JEEP','CITROEN','PEUGEOT','RENAULT','CHEVROLET'];
+// URLs CSV del Google Sheets de precios OKM — una URL por hoja (igual que stock usados)
+const PRECIOS_OKM_HOJAS=[
+  {marca:'TOYOTA',url:'https://docs.google.com/spreadsheets/d/e/2PACX-1vStlMk_2Jvs-wCEene-KVQhUMKO1A_VEDe98Ga6NJrGEl9c_f8oR4xX5EgV3GXwPQ/pub?gid=1490641706&single=true&output=csv'},
+  {marca:'FOTON',url:'https://docs.google.com/spreadsheets/d/e/2PACX-1vStlMk_2Jvs-wCEene-KVQhUMKO1A_VEDe98Ga6NJrGEl9c_f8oR4xX5EgV3GXwPQ/pub?gid=257770647&single=true&output=csv'},
+  {marca:'DFSK',url:'https://docs.google.com/spreadsheets/d/e/2PACX-1vStlMk_2Jvs-wCEene-KVQhUMKO1A_VEDe98Ga6NJrGEl9c_f8oR4xX5EgV3GXwPQ/pub?gid=532606630&single=true&output=csv'},
+  {marca:'BAIC',url:'https://docs.google.com/spreadsheets/d/e/2PACX-1vStlMk_2Jvs-wCEene-KVQhUMKO1A_VEDe98Ga6NJrGEl9c_f8oR4xX5EgV3GXwPQ/pub?gid=2093654025&single=true&output=csv'},
+  {marca:'CHERY',url:'https://docs.google.com/spreadsheets/d/e/2PACX-1vStlMk_2Jvs-wCEene-KVQhUMKO1A_VEDe98Ga6NJrGEl9c_f8oR4xX5EgV3GXwPQ/pub?gid=866740853&single=true&output=csv'},
+  {marca:'FIAT',url:'https://docs.google.com/spreadsheets/d/e/2PACX-1vStlMk_2Jvs-wCEene-KVQhUMKO1A_VEDe98Ga6NJrGEl9c_f8oR4xX5EgV3GXwPQ/pub?gid=1966619507&single=true&output=csv'},
+  {marca:'JEEP',url:'https://docs.google.com/spreadsheets/d/e/2PACX-1vStlMk_2Jvs-wCEene-KVQhUMKO1A_VEDe98Ga6NJrGEl9c_f8oR4xX5EgV3GXwPQ/pub?gid=213109167&single=true&output=csv'},
+  {marca:'CITROEN',url:'https://docs.google.com/spreadsheets/d/e/2PACX-1vStlMk_2Jvs-wCEene-KVQhUMKO1A_VEDe98Ga6NJrGEl9c_f8oR4xX5EgV3GXwPQ/pub?gid=1665675029&single=true&output=csv'},
+  {marca:'PEUGEOT',url:'https://docs.google.com/spreadsheets/d/e/2PACX-1vStlMk_2Jvs-wCEene-KVQhUMKO1A_VEDe98Ga6NJrGEl9c_f8oR4xX5EgV3GXwPQ/pub?gid=696278487&single=true&output=csv'},
+  {marca:'RENAULT',url:'https://docs.google.com/spreadsheets/d/e/2PACX-1vStlMk_2Jvs-wCEene-KVQhUMKO1A_VEDe98Ga6NJrGEl9c_f8oR4xX5EgV3GXwPQ/pub?gid=1060745320&single=true&output=csv'},
+  {marca:'CHEVROLET',url:'https://docs.google.com/spreadsheets/d/e/2PACX-1vStlMk_2Jvs-wCEene-KVQhUMKO1A_VEDe98Ga6NJrGEl9c_f8oR4xX5EgV3GXwPQ/pub?gid=730737699&single=true&output=csv'}
+];
 
 function parsePreciosHoja(csv, marca){
   // Parsear CSV de una hoja — columnas: MARCA, MODELO, PRECIO, MONEDA
@@ -2900,13 +2911,12 @@ function syncPreciosOKM(){
     window._preciosData=data;
     actualizarBNA&&actualizarBNA().catch(()=>{});
   };
-  PRECIOS_OKM_HOJAS.forEach(hoja=>{
-    const url='https://docs.google.com/spreadsheets/d/'+PRECIOS_OKM_SHEET_ID+'/gviz/tq?tqx=out:csv&sheet='+hoja+'&t='+Date.now();
-    fetch(url,{cache:'no-store'})
+  PRECIOS_OKM_HOJAS.forEach(({marca,url})=>{
+    fetch(url+'&t='+Date.now(),{cache:'no-store'})
       .then(r=>{if(!r.ok)throw new Error();return r.text();})
       .then(csv=>{
-        const modelos=parsePreciosHoja(csv,hoja);
-        if(modelos.length) marcasData.push({marca:hoja,modelos});
+        const modelos=parsePreciosHoja(csv,marca);
+        if(modelos.length) marcasData.push({marca,modelos});
         done();
       })
       .catch(()=>done()); // Silencioso si falla — igual que stock
