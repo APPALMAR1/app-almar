@@ -2984,20 +2984,52 @@ function syncPrecios(){
 
 
 function parsePreciosCSV(csv){
+  // Soporta dos formatos:
+  // Formato TABLA (Sheets publicado): MARCA,MODELO,PRECIO,MONEDA por fila
+  // Formato LEGACY (Drive viejo): marca sola en fila, luego MODELO,$PRECIO
   const lines=csv.split(/\r?\n/);
-  const result=[]; // [{marca, modelos: [{modelo, precio}]}]
-  let marcaActual=null;
-  for(let i=0;i<lines.length;i++){
-    const l=lines[i].trim();
-    if(!l) continue;
-    const cols=l.split(',');
-    // Detectar marca: una sola celda sin coma con precio, sin $ 
-    const c0=cols[0].trim(); const c1=(cols[1]||'').trim();
-    if(c0&&!c1&&!c0.startsWith('$')&&!c0.includes('MODELO')&&!c0.includes('PRECIO')&&!c0.includes('Lista')&&!c0.includes('Precios')&&!c0.includes('Vigencia')){
-      marcaActual={marca:c0, modelos:[]};
-      result.push(marcaActual);
-    } else if(marcaActual&&c0&&c1&&c1.startsWith('$')){
-      marcaActual.modelos.push({modelo:c0, precio:c1});
+  if(!lines.length) return [];
+
+  // Detectar formato: si la primera fila no vacía tiene MARCA y MODELO es tabla
+  const primeraFila=lines.find(l=>l.trim());
+  const esTabla=primeraFila&&primeraFila.toUpperCase().includes('MARCA')&&primeraFila.toUpperCase().includes('MODELO');
+
+  const result=[];
+  if(esTabla){
+    // Formato tabla: MARCA,MODELO,PRECIO,MONEDA
+    // Parsear encabezado
+    const hdr=primeraFila.split(',').map(c=>c.trim().toUpperCase());
+    const iMarca=hdr.findIndex(h=>h==='MARCA');
+    const iModelo=hdr.findIndex(h=>h==='MODELO');
+    const iPrecio=hdr.findIndex(h=>h==='PRECIO'||h.includes('PRECIO'));
+    const iMoneda=hdr.findIndex(h=>h==='MONEDA');
+    for(let i=1;i<lines.length;i++){
+      const l=lines[i].trim();
+      if(!l) continue;
+      const cols=l.split(',');
+      const marca=(cols[iMarca]||'').trim();
+      const modelo=(cols[iModelo]||'').trim();
+      const precio=(cols[iPrecio]||'').trim();
+      const moneda=(cols[iMoneda]||'').trim()||'ARS';
+      if(!marca||!modelo||!precio) continue;
+      let marcaEntry=result.find(m=>m.marca===marca);
+      if(!marcaEntry){ marcaEntry={marca,modelos:[]}; result.push(marcaEntry); }
+      marcaEntry.modelos.push({modelo,precio,moneda});
+    }
+  } else {
+    // Formato legacy: fila con solo marca, luego MODELO,$PRECIO
+    let marcaActual=null;
+    for(let i=0;i<lines.length;i++){
+      const l=lines[i].trim();
+      if(!l) continue;
+      const cols=l.split(',');
+      const c0=cols[0].trim(); const c1=(cols[1]||'').trim();
+      if(c0&&!c1&&!c0.startsWith('$')&&!c0.includes('MODELO')&&!c0.includes('PRECIO')&&!c0.includes('Lista')&&!c0.includes('Precios')&&!c0.includes('Vigencia')){
+        marcaActual={marca:c0,modelos:[]};
+        result.push(marcaActual);
+      } else if(marcaActual&&c0&&c1&&c1.startsWith('$')){
+        marcaActual.modelos.push({modelo:c0,precio:c1,moneda:'ARS'});
+      }
     }
   }
   return result.filter(m=>m.modelos.length>0);
