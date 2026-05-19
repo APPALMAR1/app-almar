@@ -2865,7 +2865,7 @@ function _inyectarMarcasUSD(data){
 
 // ── Sync precios OKM — igual mecanismo que stock usados ──────────────────────
 // GIDs de cada hoja en el Sheets publicado de Precios OKM
-const PRECIOS_OKM_BASE='https://docs.google.com/spreadsheets/d/e/2PACX-1vQ_OCNBl4KpGpm1xEmh73Aj7EQ4Di_JvJHoYXKF4qOWlymof-nNLUtVV86XZ8P-HVj7HkUYnTrr54xY/pub?output=csv&gid=';
+const PRECIOS_OKM_BASE='https://docs.google.com/spreadsheets/d/e/2PACX-1vQ_OCNBI4KpGpm1xEmh73Aj7EQ4Di_JvJHoYXKF4qOWIymof-nNLUtVV86XZ8P-HVj7HkUYnTrr54xY/pub?output=csv&gid=';
 const PRECIOS_OKM_GIDS={
   'TOYOTA':    1490641706,
   'FOTON':     257770647,
@@ -2948,8 +2948,16 @@ function _cargarPrecios(conFeedback){
           }
         }catch(e){}
       }
-      // Sin conexión y sin cache: mostrar mensaje
-      if(conFeedback&&el){
+      // Sin conexión y sin cache: mostrar hardcode USD como último recurso
+      const fallback=[];
+      _inyectarMarcasUSD(fallback);
+      if(fallback.length){
+        window._preciosData=fallback;
+        if(conFeedback){
+          actualizarBNA&&actualizarBNA().then(()=>rPrecios(fallback)).catch(()=>rPrecios(fallback));
+          mostrarToast('⚠️ Sin conexión — mostrando precios USD disponibles');
+        }
+      } else if(conFeedback&&el){
         el.innerHTML='<div class="empty"><div class="eico">❌</div><div class="ettl">Sin conexión</div><div class="esub">Verificá tu conexión a internet.</div></div>';
       }
     });
