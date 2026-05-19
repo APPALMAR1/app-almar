@@ -2953,16 +2953,18 @@ function syncPrecios(){
       return;
     }catch(e){}
   }
-  // Si no hay cache local, cargar desde Drive
+  // Sin cache: bajar desde Google Sheets publicado (mismo mecanismo que syncPreciosOKM)
   const el=$$('precios-content');
-  el.innerHTML='<div class="empty"><div class="eico">⏳</div><div class="ettl">Cargando...</div><div class="esub">Conectando con Drive.</div></div>';
-  fetch(PRECIOS_URL+'&t='+Date.now(),{cache:'no-store'})
-    .then(r=>r.text())
-    .then(csv=>{
-      const data=parsePreciosCSV(csv);
-      _inyectarMarcasUSD(data);
-      window._preciosData=data;
-      actualizarBNA().then(()=>rPrecios(data)).catch(()=>rPrecios(data));
+  el.innerHTML='<div class="empty"><div class="eico">⏳</div><div class="ettl">Cargando...</div><div class="esub">Conectando con Google Sheets...</div></div>';
+  _fetchPreciosDesdeSheets()
+    .then(data=>{
+      if(data&&data.length){
+        _inyectarMarcasUSD(data);
+        window._preciosData=data;
+        try{localStorage.setItem('almar_precios_okm',JSON.stringify({data,fecha:new Date().toISOString(),fuente:'sheets'}));}catch(e){}
+        actualizarBNA().then(()=>rPrecios(data)).catch(()=>rPrecios(data));
+        mostrarToast('✅ Precios actualizados desde Sheets');
+      } else { throw new Error('sin datos'); }
     })
     .catch(()=>{
       // Sin conexión: mostrar al menos las marcas USD hardcodeadas
