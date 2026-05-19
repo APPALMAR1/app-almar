@@ -2817,25 +2817,15 @@ function _inyectarMarcasUSD(data){
   // Inyectar marcas USD desde MKT_USD_DATA_G
   if(typeof MKT_USD_DATA_G!=='undefined'){
     for(const marca of Object.keys(MKT_USD_DATA_G)){
-      let marcaEntry=data.find(m=>m.marca.toUpperCase()===marca.toUpperCase());
-      const modelosUSD=[];
+      if(data.find(m=>m.marca.toUpperCase()===marca.toUpperCase())) continue; // ya existe, no duplicar
+      const modelos=[];
       for(const [modelo,versiones] of Object.entries(MKT_USD_DATA_G[marca])){
         for(const [version,precio] of Object.entries(versiones)){
           const nombreCompleto=(modelo+' '+version).trim();
-          modelosUSD.push({modelo:nombreCompleto,precio:precio,moneda:'USD'});
+          modelos.push({modelo:nombreCompleto,precio:precio,moneda:'USD'});
         }
       }
-      if(!marcaEntry){
-        // Marca no existe: crearla completa con precios USD
-        if(modelosUSD.length) data.push({marca,modelos:modelosUSD});
-      } else {
-        // Marca ya existe (vino del Excel ARS): agregar modelos USD que falten
-        for(const m of modelosUSD){
-          if(!marcaEntry.modelos.find(x=>x.modelo===m.modelo)){
-            marcaEntry.modelos.push(m);
-          }
-        }
-      }
+      if(modelos.length) data.push({marca,modelos});
     }
   }
   // Inyectar modelos ARS desde MKT (DFSK, FOTON ARS) — agregar los que faltan sin reemplazar
@@ -2864,100 +2854,56 @@ function _inyectarMarcasUSD(data){
 
 
 // ── Sync precios OKM — igual mecanismo que stock usados ──────────────────────
-// GIDs de cada hoja en el Sheets publicado de Precios OKM
-const PRECIOS_OKM_BASE='https://docs.google.com/spreadsheets/d/e/2PACX-1vQ_OCNBI4KpGpm1xEmh73Aj7EQ4Di_JvJHoYXKF4qOWIymof-nNLUtVV86XZ8P-HVj7HkUYnTrr54xY/pub?output=csv&gid=';
-const PRECIOS_OKM_GIDS={
-  'TOYOTA':    1490641706,
-  'FOTON':     257770647,
-  'DFSK':      532606630,
-  'BAIC':      2093654025,
-  'CHERY':     866740853,
-  'FIAT':      1966619507,
-  'JEEP':      213109167,
-  'CITROEN':   1665675029,
-  'PEUGEOT':   696278487,
-  'RENAULT':   1060745320,
-  'CHEVROLET': 730737699
-};
-
-async function _fetchPreciosDesdeSheets(){
-  // Descarga todas las hojas en paralelo y las parsea
-  const marcas=Object.keys(PRECIOS_OKM_GIDS);
-  const resultados=await Promise.allSettled(
-    marcas.map(marca=>
-      fetch(PRECIOS_OKM_BASE+PRECIOS_OKM_GIDS[marca]+'&t='+Date.now(),{cache:'no-store'})
-        .then(r=>r.text())
-        .then(csv=>({marca,csv}))
-    )
-  );
-  const data=[];
-  for(const res of resultados){
-    if(res.status!=='fulfilled') continue;
-    const {marca,csv}=res.value;
-    const parsed=parsePreciosCSV(csv);
-    // parsePreciosCSV devuelve [{marca,modelos}] — tomar los modelos de la primera entrada
-    if(parsed&&parsed.length){
-      // Puede venir con el nombre de marca de la hoja; forzamos el nombre correcto
-      const entrada=parsed.find(m=>m.marca.toUpperCase()===marca)||parsed[0];
-      if(entrada&&entrada.modelos.length){
-        data.push({marca, modelos:entrada.modelos});
-      }
-    }
-  }
-  return data;
-}
-
-// Carga precios al arrancar (silenciosa, sin toast)
 function syncPreciosOKM(){
-  _cargarPrecios(false);
-}
-
-// Carga precios cuando el usuario abre pantalla PRECIOS o toca Actualizar (con feedback)
-function syncPrecios(){
-  _cargarPrecios(true);
-}
-
-// Función central — igual que syncDrive para usados
-function _cargarPrecios(conFeedback){
-  const el=$$('precios-content');
-  if(conFeedback&&el){
-    el.innerHTML='<div class="empty"><div class="eico">⏳</div><div class="ettl">Actualizando precios...</div><div class="esub">Conectando con Google Sheets.</div></div>';
+  // Usar localStorage como fuente (contiene el Excel importado por el admin)
+  const cached=localStorage.getItem('almar_precios_okm');
+  if(cached){
+    try{
+      const {data}=JSON.parse(cached);
+      if(data&&data.length){
+        // NO llamar _inyectarMarcasUSD — el Excel es la fuente completa
+        // Solo actualizar BNA para conversión USD
+        window._preciosData=data;
+        actualizarBNA&&actualizarBNA().catch(()=>{});
+      }
+    }catch(e){}
   }
-  // Siempre bajar desde Sheets (igual que syncDrive siempre baja de Drive)
-  _fetchPreciosDesdeSheets()
-    .then(data=>{
-      if(!data||!data.length) throw new Error('sin datos');
+}
+
+function syncPrecios(){
+  // Primero intentar cargar desde localStorage (importación previa)
+  const cached=localStorage.getItem('almar_precios_okm');
+  if(cached){
+    try{
+      const {data,fecha}=JSON.parse(cached);
+      _inyectarMarcasUSD(data);
       window._preciosData=data;
-      try{localStorage.setItem('almar_precios_okm',JSON.stringify({data,fecha:new Date().toISOString()}));}catch(e){}
-      actualizarBNA&&actualizarBNA().then(()=>{if(conFeedback)rPrecios(data);}).catch(()=>{if(conFeedback)rPrecios(data);});
-      if(conFeedback) mostrarToast('✅ Precios actualizados');
+      actualizarBNA().then(()=>rPrecios(data)).catch(()=>rPrecios(data));
+      const d=new Date(fecha);
+      mostrarToast('✅ Precios cargados ('+d.toLocaleDateString('es-AR')+')');
+      return;
+    }catch(e){}
+  }
+  // Si no hay cache local, cargar desde Drive
+  const el=$$('precios-content');
+  el.innerHTML='<div class="empty"><div class="eico">⏳</div><div class="ettl">Cargando...</div><div class="esub">Conectando con Drive.</div></div>';
+  fetch(PRECIOS_URL+'&t='+Date.now(),{cache:'no-store'})
+    .then(r=>r.text())
+    .then(csv=>{
+      const data=parsePreciosCSV(csv);
+      _inyectarMarcasUSD(data);
+      window._preciosData=data;
+      actualizarBNA().then(()=>rPrecios(data)).catch(()=>rPrecios(data));
     })
     .catch(()=>{
-      // Sin conexión: usar cache local si hay
-      const cached=localStorage.getItem('almar_precios_okm');
-      if(cached){
-        try{
-          const {data,fecha}=JSON.parse(cached);
-          if(data&&data.length){
-            window._preciosData=data;
-            if(conFeedback){
-              actualizarBNA&&actualizarBNA().then(()=>rPrecios(data)).catch(()=>rPrecios(data));
-              mostrarToast('⚠️ Sin conexión — mostrando precios guardados');
-            }
-            return;
-          }
-        }catch(e){}
-      }
-      // Sin conexión y sin cache: mostrar hardcode USD como último recurso
-      const fallback=[];
-      _inyectarMarcasUSD(fallback);
-      if(fallback.length){
-        window._preciosData=fallback;
-        if(conFeedback){
-          actualizarBNA&&actualizarBNA().then(()=>rPrecios(fallback)).catch(()=>rPrecios(fallback));
-          mostrarToast('⚠️ Sin conexión — mostrando precios USD disponibles');
-        }
-      } else if(conFeedback&&el){
+      // Sin conexión: mostrar al menos las marcas USD hardcodeadas
+      const data=[];
+      _inyectarMarcasUSD(data);
+      if(data.length){
+        window._preciosData=data;
+        actualizarBNA().then(()=>rPrecios(data)).catch(()=>rPrecios(data));
+        mostrarToast('⚠️ Sin conexión — mostrando solo precios USD');
+      } else {
         el.innerHTML='<div class="empty"><div class="eico">❌</div><div class="ettl">Sin conexión</div><div class="esub">Verificá tu conexión a internet.</div></div>';
       }
     });
@@ -2968,50 +2914,21 @@ function _cargarPrecios(conFeedback){
 // Si la marca no existe, la crea completa.
 
 
-function _parseCSVLine(line){
-  // Parser CSV correcto que respeta campos entre comillas
-  // "$ 42,639,000" no se parte en múltiples columnas
-  const cols=[];
-  let cur='';let inQ=false;
-  for(let i=0;i<line.length;i++){
-    const c=line[i];
-    if(c==='"'){inQ=!inQ;}
-    else if(c===','&&!inQ){cols.push(cur.trim());cur='';}
-    else{cur+=c;}
-  }
-  cols.push(cur.trim());
-  return cols;
-}
-
 function parsePreciosCSV(csv){
   const lines=csv.split(/\r?\n/);
-  if(!lines.length) return [];
-  const primeraFila=lines.find(l=>l.trim());
-  const esTabla=primeraFila&&primeraFila.toUpperCase().includes('MARCA')&&primeraFila.toUpperCase().includes('MODELO');
-  const result=[];
-  if(esTabla){
-    const hdr=_parseCSVLine(primeraFila).map(c=>c.toUpperCase());
-    const iMarca=hdr.findIndex(h=>h==='MARCA');
-    const iModelo=hdr.findIndex(h=>h==='MODELO');
-    const iPrecio=hdr.findIndex(h=>h==='PRECIO'||h.includes('PRECIO'));
-    const iMoneda=hdr.findIndex(h=>h==='MONEDA');
-    for(let i=1;i<lines.length;i++){
-      const l=lines[i].trim();
-      if(!l) continue;
-      const cols=_parseCSVLine(l);
-      const marca=(cols[iMarca]||'').trim();
-      const modelo=(cols[iModelo]||'').trim();
-      const precio=(cols[iPrecio]||'').trim();
-      const moneda=(cols[iMoneda]||'').trim()||'ARS';
-      if(!marca||!modelo||!precio) continue;
-      // Convertir precio a número
-      // Precio ARS: "$ 42,639,000" → 42639000 (quitar todo menos dígitos)
-      // Precio USD: "$ 24,000" → 24000
-      const precioNum=parseInt(precio.replace(/[^0-9]/g,''))||0;
-      const precioFinal=precioNum;
-      let marcaEntry=result.find(m=>m.marca===marca);
-      if(!marcaEntry){marcaEntry={marca,modelos:[]};result.push(marcaEntry);}
-      marcaEntry.modelos.push({modelo,precio:precioFinal,moneda});
+  const result=[]; // [{marca, modelos: [{modelo, precio}]}]
+  let marcaActual=null;
+  for(let i=0;i<lines.length;i++){
+    const l=lines[i].trim();
+    if(!l) continue;
+    const cols=l.split(',');
+    // Detectar marca: una sola celda sin coma con precio, sin $ 
+    const c0=cols[0].trim(); const c1=(cols[1]||'').trim();
+    if(c0&&!c1&&!c0.startsWith('$')&&!c0.includes('MODELO')&&!c0.includes('PRECIO')&&!c0.includes('Lista')&&!c0.includes('Precios')&&!c0.includes('Vigencia')){
+      marcaActual={marca:c0, modelos:[]};
+      result.push(marcaActual);
+    } else if(marcaActual&&c0&&c1&&c1.startsWith('$')){
+      marcaActual.modelos.push({modelo:c0, precio:c1});
     }
   }
   return result.filter(m=>m.modelos.length>0);
