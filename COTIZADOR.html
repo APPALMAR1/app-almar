@@ -2968,22 +2968,29 @@ function _cargarPrecios(conFeedback){
 // Si la marca no existe, la crea completa.
 
 
+function _parseCSVLine(line){
+  // Parser CSV correcto que respeta campos entre comillas
+  // "$ 42,639,000" no se parte en múltiples columnas
+  const cols=[];
+  let cur='';let inQ=false;
+  for(let i=0;i<line.length;i++){
+    const c=line[i];
+    if(c==='"'){inQ=!inQ;}
+    else if(c===','&&!inQ){cols.push(cur.trim());cur='';}
+    else{cur+=c;}
+  }
+  cols.push(cur.trim());
+  return cols;
+}
+
 function parsePreciosCSV(csv){
-  // Soporta dos formatos:
-  // Formato TABLA (Sheets publicado): MARCA,MODELO,PRECIO,MONEDA por fila
-  // Formato LEGACY (Drive viejo): marca sola en fila, luego MODELO,$PRECIO
   const lines=csv.split(/\r?\n/);
   if(!lines.length) return [];
-
-  // Detectar formato: si la primera fila no vacía tiene MARCA y MODELO es tabla
   const primeraFila=lines.find(l=>l.trim());
   const esTabla=primeraFila&&primeraFila.toUpperCase().includes('MARCA')&&primeraFila.toUpperCase().includes('MODELO');
-
   const result=[];
   if(esTabla){
-    // Formato tabla: MARCA,MODELO,PRECIO,MONEDA
-    // Parsear encabezado
-    const hdr=primeraFila.split(',').map(c=>c.trim().toUpperCase());
+    const hdr=_parseCSVLine(primeraFila).map(c=>c.toUpperCase());
     const iMarca=hdr.findIndex(h=>h==='MARCA');
     const iModelo=hdr.findIndex(h=>h==='MODELO');
     const iPrecio=hdr.findIndex(h=>h==='PRECIO'||h.includes('PRECIO'));
@@ -2991,30 +2998,18 @@ function parsePreciosCSV(csv){
     for(let i=1;i<lines.length;i++){
       const l=lines[i].trim();
       if(!l) continue;
-      const cols=l.split(',');
+      const cols=_parseCSVLine(l);
       const marca=(cols[iMarca]||'').trim();
       const modelo=(cols[iModelo]||'').trim();
       const precio=(cols[iPrecio]||'').trim();
       const moneda=(cols[iMoneda]||'').trim()||'ARS';
       if(!marca||!modelo||!precio) continue;
+      // Convertir precio a número
+      const precioNum=parseFloat(precio.replace(/[^0-9.]/g,''))||0;
+      const precioFinal=moneda==='ARS'?precioNum:precioNum;
       let marcaEntry=result.find(m=>m.marca===marca);
-      if(!marcaEntry){ marcaEntry={marca,modelos:[]}; result.push(marcaEntry); }
-      marcaEntry.modelos.push({modelo,precio,moneda});
-    }
-  } else {
-    // Formato legacy: fila con solo marca, luego MODELO,$PRECIO
-    let marcaActual=null;
-    for(let i=0;i<lines.length;i++){
-      const l=lines[i].trim();
-      if(!l) continue;
-      const cols=l.split(',');
-      const c0=cols[0].trim(); const c1=(cols[1]||'').trim();
-      if(c0&&!c1&&!c0.startsWith('$')&&!c0.includes('MODELO')&&!c0.includes('PRECIO')&&!c0.includes('Lista')&&!c0.includes('Precios')&&!c0.includes('Vigencia')){
-        marcaActual={marca:c0,modelos:[]};
-        result.push(marcaActual);
-      } else if(marcaActual&&c0&&c1&&c1.startsWith('$')){
-        marcaActual.modelos.push({modelo:c0,precio:c1,moneda:'ARS'});
-      }
+      if(!marcaEntry){marcaEntry={marca,modelos:[]};result.push(marcaEntry);}
+      marcaEntry.modelos.push({modelo,precio:precioFinal,moneda});
     }
   }
   return result.filter(m=>m.modelos.length>0);
