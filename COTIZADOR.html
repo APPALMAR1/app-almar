@@ -2888,7 +2888,18 @@ function parsePreciosHoja(csv, marca){
   for(let i=hi+1;i<lineas.length;i++){
     const cols=cF(lineas[i]);
     const modelo=(cols[iMod]||'').replace(/"/g,'').trim();
-    const precioStr=(cols[iPre]||'').replace(/"/g,'').replace(/[$,.]/g,'').trim();
+    // Limpiar precio: quitar $, espacios, comillas, puntos y comas de miles
+    // Formatos posibles: "$24.305", "$ 24.305", "$24,305", "24305", "24.305", "42.639.000"
+    let precioStr=(cols[iPre]||'').replace(/"/g,'').replace(/\$/g,'').replace(/\s/g,'').trim();
+    // Si tiene puntos como separadores de miles (ej: 42.639.000), quitar puntos
+    // Si tiene coma decimal (ej: 24,305.50), convertir
+    if(precioStr.includes('.')&&precioStr.includes(',')){
+      // Formato: 1.234,56 → quitar puntos, cambiar coma por punto
+      precioStr=precioStr.replace(/\./g,'').replace(',','.');
+    } else {
+      // Quitar todos los puntos y comas (separadores de miles)
+      precioStr=precioStr.replace(/[.,]/g,'');
+    }
     const precio=parseFloat(precioStr)||0;
     const moneda=iMon>=0?(cols[iMon]||'').replace(/"/g,'').trim().toUpperCase()||'ARS':'ARS';
     if(!modelo||!precio) continue;
@@ -2913,13 +2924,14 @@ function syncPreciosOKM(){
   };
   PRECIOS_OKM_HOJAS.forEach(({marca,url})=>{
     fetch(url+'&t='+Date.now(),{cache:'no-store'})
-      .then(r=>{if(!r.ok)throw new Error();return r.text();})
+      .then(r=>{if(!r.ok)throw new Error('HTTP '+r.status+' '+marca);return r.text();})
       .then(csv=>{
         const modelos=parsePreciosHoja(csv,marca);
         if(modelos.length) marcasData.push({marca,modelos});
+        else mostrarToast('⚠️ '+marca+': 0 modelos parseados');
         done();
       })
-      .catch(()=>done()); // Silencioso si falla — igual que stock
+      .catch(e=>{mostrarToast('❌ '+marca+': '+e.message);done();});
   });
 }
 
