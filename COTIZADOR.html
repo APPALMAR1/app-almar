@@ -2872,10 +2872,10 @@ function parsePreciosHoja(csv, marca){
   const modelos=[];
   const lineas=csv.split(/\r?\n/).filter(l=>l.trim())
   if(lineas.length<2) return modelos;
-  // Buscar fila de headers (contiene MODELO y PRECIO)
+  // Buscar fila de headers (contiene MODELO y PRECIO) — buscar en todas las filas
   let hi=-1;
-  for(let i=0;i<Math.min(lineas.length,5);i++){
-    const u=lineas[i].toUpperCase();
+  for(let i=0;i<Math.min(lineas.length,10);i++){
+    const u=lineas[i].toUpperCase().replace(/"/g,'');
     if(u.includes('MODELO')&&u.includes('PRECIO')){hi=i;break;}
   }
   if(hi<0) return modelos;
@@ -2913,12 +2913,15 @@ function syncPreciosOKM(){
   if(location.protocol==='file:') return;
   const marcasData=[];
   let pendientes=PRECIOS_OKM_HOJAS.length;
+  const ORDEN_MARCAS=PRECIOS_OKM_HOJAS.map(h=>h.marca);
   const done=()=>{
     pendientes--;
     if(pendientes>0) return;
-    const data=marcasData.filter(m=>m.modelos.length);
+    // Ordenar marcas igual que en el Sheets
+    const data=ORDEN_MARCAS
+      .map(m=>marcasData.find(d=>d.marca===m))
+      .filter(d=>d&&d.modelos.length);
     if(!data.length) return;
-    // Sheets es fuente única — NO agregar hardcodeados de marcas que ya vinieron del Sheets
     window._preciosData=data;
     actualizarBNA&&actualizarBNA().catch(()=>{});
   };
