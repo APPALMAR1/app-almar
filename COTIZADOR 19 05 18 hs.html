@@ -2817,7 +2817,7 @@ function _inyectarMarcasUSD(data){
   // Inyectar marcas USD desde MKT_USD_DATA_G
   if(typeof MKT_USD_DATA_G!=='undefined'){
     for(const marca of Object.keys(MKT_USD_DATA_G)){
-      if(data.find(m=>m.marca===marca)) continue; // ya viene del Excel, no tocar
+      if(data.find(m=>m.marca.toUpperCase()===marca.toUpperCase())) continue; // ya existe, no duplicar
       const modelos=[];
       for(const [modelo,versiones] of Object.entries(MKT_USD_DATA_G[marca])){
         for(const [version,precio] of Object.entries(versiones)){
@@ -2861,7 +2861,8 @@ function syncPreciosOKM(){
     try{
       const {data}=JSON.parse(cached);
       if(data&&data.length){
-        _inyectarMarcasUSD(data);
+        // NO llamar _inyectarMarcasUSD — el Excel es la fuente completa
+        // Solo actualizar BNA para conversión USD
         window._preciosData=data;
         actualizarBNA&&actualizarBNA().catch(()=>{});
       }
