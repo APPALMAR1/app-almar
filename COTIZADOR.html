@@ -3005,8 +3005,10 @@ function parsePreciosCSV(csv){
       const moneda=(cols[iMoneda]||'').trim()||'ARS';
       if(!marca||!modelo||!precio) continue;
       // Convertir precio a número
-      const precioNum=parseFloat(precio.replace(/[^0-9.]/g,''))||0;
-      const precioFinal=moneda==='ARS'?precioNum:precioNum;
+      // Precio ARS: "$ 42,639,000" → 42639000 (quitar todo menos dígitos)
+      // Precio USD: "$ 24,000" → 24000
+      const precioNum=parseInt(precio.replace(/[^0-9]/g,''))||0;
+      const precioFinal=precioNum;
       let marcaEntry=result.find(m=>m.marca===marca);
       if(!marcaEntry){marcaEntry={marca,modelos:[]};result.push(marcaEntry);}
       marcaEntry.modelos.push({modelo,precio:precioFinal,moneda});
