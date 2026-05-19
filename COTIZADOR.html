@@ -2907,74 +2907,49 @@ async function _fetchPreciosDesdeSheets(){
   return data;
 }
 
+// Carga precios al arrancar (silenciosa, sin toast)
 function syncPreciosOKM(){
-  // Primero intentar localStorage (Excel importado por admin — fuente completa)
-  const cached=localStorage.getItem('almar_precios_okm');
-  if(cached){
-    try{
-      const {data}=JSON.parse(cached);
-      if(data&&data.length){
-        window._preciosData=data;
-        actualizarBNA&&actualizarBNA().catch(()=>{});
-        return; // localStorage OK, no necesitamos Sheets
-      }
-    }catch(e){}
-  }
-  // Sin localStorage (celular sin importación previa): bajar desde Google Sheets publicado
-  _fetchPreciosDesdeSheets().then(data=>{
-    if(data&&data.length){
-      _inyectarMarcasUSD(data);
-      window._preciosData=data;
-      actualizarBNA&&actualizarBNA().catch(()=>{});
-      // Guardar en localStorage para próximas cargas
-      try{
-        localStorage.setItem('almar_precios_okm',JSON.stringify({data,fecha:new Date().toISOString(),fuente:'sheets'}));
-      }catch(e){}
-    }
-  }).catch(()=>{
-    // Sin conexión: fallback a hardcodeados USD
-    const data=[];
-    _inyectarMarcasUSD(data);
-    if(data.length){ window._preciosData=data; actualizarBNA&&actualizarBNA().catch(()=>{}); }
-  });
+  _cargarPrecios(false);
 }
 
+// Carga precios cuando el usuario abre pantalla PRECIOS o toca Actualizar (con feedback)
 function syncPrecios(){
-  // Primero intentar cargar desde localStorage (importación previa)
-  const cached=localStorage.getItem('almar_precios_okm');
-  if(cached){
-    try{
-      const {data,fecha}=JSON.parse(cached);
-      _inyectarMarcasUSD(data);
-      window._preciosData=data;
-      actualizarBNA().then(()=>rPrecios(data)).catch(()=>rPrecios(data));
-      const d=new Date(fecha);
-      mostrarToast('✅ Precios cargados ('+d.toLocaleDateString('es-AR')+')');
-      return;
-    }catch(e){}
-  }
-  // Sin cache: bajar desde Google Sheets publicado (mismo mecanismo que syncPreciosOKM)
+  _cargarPrecios(true);
+}
+
+// Función central — igual que syncDrive para usados
+function _cargarPrecios(conFeedback){
   const el=$$('precios-content');
-  el.innerHTML='<div class="empty"><div class="eico">⏳</div><div class="ettl">Cargando...</div><div class="esub">Conectando con Google Sheets...</div></div>';
+  if(conFeedback&&el){
+    el.innerHTML='<div class="empty"><div class="eico">⏳</div><div class="ettl">Actualizando precios...</div><div class="esub">Conectando con Google Sheets.</div></div>';
+  }
+  // Siempre bajar desde Sheets (igual que syncDrive siempre baja de Drive)
   _fetchPreciosDesdeSheets()
     .then(data=>{
-      if(data&&data.length){
-        _inyectarMarcasUSD(data);
-        window._preciosData=data;
-        try{localStorage.setItem('almar_precios_okm',JSON.stringify({data,fecha:new Date().toISOString(),fuente:'sheets'}));}catch(e){}
-        actualizarBNA().then(()=>rPrecios(data)).catch(()=>rPrecios(data));
-        mostrarToast('✅ Precios actualizados desde Sheets');
-      } else { throw new Error('sin datos'); }
+      if(!data||!data.length) throw new Error('sin datos');
+      window._preciosData=data;
+      try{localStorage.setItem('almar_precios_okm',JSON.stringify({data,fecha:new Date().toISOString()}));}catch(e){}
+      actualizarBNA&&actualizarBNA().then(()=>{if(conFeedback)rPrecios(data);}).catch(()=>{if(conFeedback)rPrecios(data);});
+      if(conFeedback) mostrarToast('✅ Precios actualizados');
     })
     .catch(()=>{
-      // Sin conexión: mostrar al menos las marcas USD hardcodeadas
-      const data=[];
-      _inyectarMarcasUSD(data);
-      if(data.length){
-        window._preciosData=data;
-        actualizarBNA().then(()=>rPrecios(data)).catch(()=>rPrecios(data));
-        mostrarToast('⚠️ Sin conexión — mostrando solo precios USD');
-      } else {
+      // Sin conexión: usar cache local si hay
+      const cached=localStorage.getItem('almar_precios_okm');
+      if(cached){
+        try{
+          const {data,fecha}=JSON.parse(cached);
+          if(data&&data.length){
+            window._preciosData=data;
+            if(conFeedback){
+              actualizarBNA&&actualizarBNA().then(()=>rPrecios(data)).catch(()=>rPrecios(data));
+              mostrarToast('⚠️ Sin conexión — mostrando precios guardados');
+            }
+            return;
+          }
+        }catch(e){}
+      }
+      // Sin conexión y sin cache: mostrar mensaje
+      if(conFeedback&&el){
         el.innerHTML='<div class="empty"><div class="eico">❌</div><div class="ettl">Sin conexión</div><div class="esub">Verificá tu conexión a internet.</div></div>';
       }
     });
