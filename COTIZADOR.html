@@ -2854,17 +2854,17 @@ function _inyectarMarcasUSD(data){
 // ── Sync precios OKM — igual mecanismo que stock usados ──────────────────────
 // URLs CSV del Google Sheets de precios OKM — una URL por hoja (igual que stock usados)
 const PRECIOS_OKM_HOJAS=[
-  {marca:'TOYOTA',url:'https://docs.google.com/spreadsheets/d/e/2PACX-1vStlMk_2Jvs-wCEene-KVQhUMKO1A_VEDe98Ga6NJrGEl9c_f8oR4xX5EgV3GXwPQ/pub?gid=1490641706&single=true&output=csv'},
-  {marca:'FOTON',url:'https://docs.google.com/spreadsheets/d/e/2PACX-1vStlMk_2Jvs-wCEene-KVQhUMKO1A_VEDe98Ga6NJrGEl9c_f8oR4xX5EgV3GXwPQ/pub?gid=257770647&single=true&output=csv'},
-  {marca:'DFSK',url:'https://docs.google.com/spreadsheets/d/e/2PACX-1vStlMk_2Jvs-wCEene-KVQhUMKO1A_VEDe98Ga6NJrGEl9c_f8oR4xX5EgV3GXwPQ/pub?gid=532606630&single=true&output=csv'},
-  {marca:'BAIC',url:'https://docs.google.com/spreadsheets/d/e/2PACX-1vStlMk_2Jvs-wCEene-KVQhUMKO1A_VEDe98Ga6NJrGEl9c_f8oR4xX5EgV3GXwPQ/pub?gid=2093654025&single=true&output=csv'},
-  {marca:'CHERY',url:'https://docs.google.com/spreadsheets/d/e/2PACX-1vStlMk_2Jvs-wCEene-KVQhUMKO1A_VEDe98Ga6NJrGEl9c_f8oR4xX5EgV3GXwPQ/pub?gid=866740853&single=true&output=csv'},
-  {marca:'FIAT',url:'https://docs.google.com/spreadsheets/d/e/2PACX-1vStlMk_2Jvs-wCEene-KVQhUMKO1A_VEDe98Ga6NJrGEl9c_f8oR4xX5EgV3GXwPQ/pub?gid=1966619507&single=true&output=csv'},
-  {marca:'JEEP',url:'https://docs.google.com/spreadsheets/d/e/2PACX-1vStlMk_2Jvs-wCEene-KVQhUMKO1A_VEDe98Ga6NJrGEl9c_f8oR4xX5EgV3GXwPQ/pub?gid=213109167&single=true&output=csv'},
-  {marca:'CITROEN',url:'https://docs.google.com/spreadsheets/d/e/2PACX-1vStlMk_2Jvs-wCEene-KVQhUMKO1A_VEDe98Ga6NJrGEl9c_f8oR4xX5EgV3GXwPQ/pub?gid=1665675029&single=true&output=csv'},
-  {marca:'PEUGEOT',url:'https://docs.google.com/spreadsheets/d/e/2PACX-1vStlMk_2Jvs-wCEene-KVQhUMKO1A_VEDe98Ga6NJrGEl9c_f8oR4xX5EgV3GXwPQ/pub?gid=696278487&single=true&output=csv'},
-  {marca:'RENAULT',url:'https://docs.google.com/spreadsheets/d/e/2PACX-1vStlMk_2Jvs-wCEene-KVQhUMKO1A_VEDe98Ga6NJrGEl9c_f8oR4xX5EgV3GXwPQ/pub?gid=1060745320&single=true&output=csv'},
-  {marca:'CHEVROLET',url:'https://docs.google.com/spreadsheets/d/e/2PACX-1vStlMk_2Jvs-wCEene-KVQhUMKO1A_VEDe98Ga6NJrGEl9c_f8oR4xX5EgV3GXwPQ/pub?gid=730737699&single=true&output=csv'}
+  {marca:'TOYOTA',url:'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ_OCNBl4KpGpm1xEmh73Aj7EQ4Di_JvJHoYXKF4qOWlymof-nNLUtVV86XZ8P-HVj7HkUYnTrr54xY/pub?output=csv&gid=1490641706'},
+  {marca:'FOTON',url:'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ_OCNBl4KpGpm1xEmh73Aj7EQ4Di_JvJHoYXKF4qOWlymof-nNLUtVV86XZ8P-HVj7HkUYnTrr54xY/pub?output=csv&gid=257770647'},
+  {marca:'DFSK',url:'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ_OCNBl4KpGpm1xEmh73Aj7EQ4Di_JvJHoYXKF4qOWlymof-nNLUtVV86XZ8P-HVj7HkUYnTrr54xY/pub?output=csv&gid=532606630'},
+  {marca:'BAIC',url:'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ_OCNBl4KpGpm1xEmh73Aj7EQ4Di_JvJHoYXKF4qOWlymof-nNLUtVV86XZ8P-HVj7HkUYnTrr54xY/pub?output=csv&gid=2093654025'},
+  {marca:'CHERY',url:'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ_OCNBl4KpGpm1xEmh73Aj7EQ4Di_JvJHoYXKF4qOWlymof-nNLUtVV86XZ8P-HVj7HkUYnTrr54xY/pub?output=csv&gid=866740853'},
+  {marca:'FIAT',url:'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ_OCNBl4KpGpm1xEmh73Aj7EQ4Di_JvJHoYXKF4qOWlymof-nNLUtVV86XZ8P-HVj7HkUYnTrr54xY/pub?output=csv&gid=1966619507'},
+  {marca:'JEEP',url:'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ_OCNBl4KpGpm1xEmh73Aj7EQ4Di_JvJHoYXKF4qOWlymof-nNLUtVV86XZ8P-HVj7HkUYnTrr54xY/pub?output=csv&gid=213109167'},
+  {marca:'CITROEN',url:'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ_OCNBl4KpGpm1xEmh73Aj7EQ4Di_JvJHoYXKF4qOWlymof-nNLUtVV86XZ8P-HVj7HkUYnTrr54xY/pub?output=csv&gid=1665675029'},
+  {marca:'PEUGEOT',url:'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ_OCNBl4KpGpm1xEmh73Aj7EQ4Di_JvJHoYXKF4qOWlymof-nNLUtVV86XZ8P-HVj7HkUYnTrr54xY/pub?output=csv&gid=696278487'},
+  {marca:'RENAULT',url:'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ_OCNBl4KpGpm1xEmh73Aj7EQ4Di_JvJHoYXKF4qOWlymof-nNLUtVV86XZ8P-HVj7HkUYnTrr54xY/pub?output=csv&gid=1060745320'},
+  {marca:'CHEVROLET',url:'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ_OCNBl4KpGpm1xEmh73Aj7EQ4Di_JvJHoYXKF4qOWlymof-nNLUtVV86XZ8P-HVj7HkUYnTrr54xY/pub?output=csv&gid=730737699'}
 ];
 
 function parsePreciosHoja(csv, marca){
@@ -2907,7 +2907,7 @@ function syncPreciosOKM(){
     if(pendientes>0) return;
     const data=marcasData.filter(m=>m.modelos.length);
     if(!data.length) return;
-    _inyectarMarcasUSD(data);
+    // Sheets es fuente única — NO agregar hardcodeados de marcas que ya vinieron del Sheets
     window._preciosData=data;
     actualizarBNA&&actualizarBNA().catch(()=>{});
   };
