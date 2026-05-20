@@ -2860,7 +2860,7 @@ function syncPreciosOKM(){_cargarPrecios(false);}
 
 function _cargarPrecios(conFeedback){
   var el=$$('precios-content');
-  if(conFeedback&&el) el.innerHTML='<div class="empty"><div class="eico">\u23F3</div><div class="ettl">Actualizando...</div><div class="esub">Conectando con Google Sheets.</div></div>';
+  if(conFeedback&&el) el.innerHTML='<div class="empty"><div class="eico">⏳</div><div class="ettl">Actualizando...</div><div class="esub">Conectando con Google Sheets.</div></div>';
   fetch(PRECIOS_OKM_URL+'&t='+Date.now(),{cache:'no-store'})
     .then(function(r){return r.text();})
     .then(function(csv){
@@ -2870,23 +2870,12 @@ function _cargarPrecios(conFeedback){
       try{localStorage.setItem('almar_precios_okm',JSON.stringify({data:data,fecha:new Date().toISOString()}));}catch(e){}
       if(typeof actualizarBNA==='function'){
         actualizarBNA().then(function(){if(conFeedback)rPrecios(data);}).catch(function(){if(conFeedback)rPrecios(data);});
-      }
-      if(conFeedback) mostrarToast('\u2705 Precios actualizados');
+      } else {if(conFeedback)rPrecios(data);}
+      if(conFeedback) mostrarToast('✅ Precios actualizados');
     })
     .catch(function(){
       var cached=localStorage.getItem('almar_precios_okm');
-      if(cached){
-        try{
-          var obj=JSON.parse(cached);
-          if(obj.data&&obj.data.length){
-            window._preciosData=obj.data;
-            if(conFeedback){
-              if(typeof actualizarBNA==='function'){actualizarBNA().then(function(){rPrecios(obj.data);}).catch(function(){rPrecios(obj.data);});}
-              mostrarToast('\u26A0\uFE0F Sin conexi\u00F3n \u2014 precios guardados');
-            }
-          }
-        }catch(e){}
-      }
+      if(cached){try{var obj=JSON.parse(cached);if(obj.data&&obj.data.length){window._preciosData=obj.data;if(conFeedback){if(typeof actualizarBNA==='function'){actualizarBNA().then(function(){rPrecios(obj.data);}).catch(function(){rPrecios(obj.data);});}else{rPrecios(obj.data);}mostrarToast('⚠️ Sin conexión — precios guardados');}}}catch(e){}}
     });
 }
 
@@ -2898,23 +2887,39 @@ function syncPrecios(){_cargarPrecios(true);}
 
 
 function parsePreciosCSV(csv){
-  const lines=csv.split(/\r?\n/);
-  const result=[]; // [{marca, modelos: [{modelo, precio}]}]
-  let marcaActual=null;
-  for(let i=0;i<lines.length;i++){
-    const l=lines[i].trim();
+  // Eliminar \r (Windows line endings)
+  csv=csv.replace(/\r/g,'');
+  const lines=csv.split('\n');
+  const result=[];
+  for(var i=0;i<lines.length;i++){
+    var l=lines[i].trim();
     if(!l) continue;
-    const cols=l.split(',');
-    // Detectar marca: una sola celda sin coma con precio, sin $ 
-    const c0=cols[0].trim(); const c1=(cols[1]||'').trim();
-    if(c0&&!c1&&!c0.startsWith('$')&&!c0.includes('MODELO')&&!c0.includes('PRECIO')&&!c0.includes('Lista')&&!c0.includes('Precios')&&!c0.includes('Vigencia')){
-      marcaActual={marca:c0, modelos:[]};
-      result.push(marcaActual);
-    } else if(marcaActual&&c0&&c1&&c1.startsWith('$')){
-      marcaActual.modelos.push({modelo:c0, precio:c1});
+    // Parser CSV que respeta campos entre comillas
+    var cols=[];var cur='';var inQ=false;
+    for(var j=0;j<l.length;j++){
+      var c=l[j];
+      if(c==='"'){inQ=!inQ;}
+      else if(c===','&&!inQ){cols.push(cur.trim());cur='';}
+      else{cur+=c;}
     }
+    cols.push(cur.trim());
+    var marca=(cols[0]||'').trim();
+    var modelo=(cols[1]||'').trim();
+    var precio=(cols[2]||'').trim();
+    var moneda=(cols[3]||'').trim().toUpperCase();
+    // Saltar encabezado
+    if(marca.toUpperCase()==='MARCA') continue;
+    if(!marca||!modelo||!precio) continue;
+    // Convertir precio: quitar $, espacios, puntos y comas → número entero
+    var precioNum=parseInt(precio.replace(/[^0-9]/g,''))||0;
+    if(!precioNum) continue;
+    // Para USD: el número puede venir como 24305 (de $24.305) o 4310 (de $43,10 mal cargado)
+    var monedaFinal=(moneda==='USD')?'USD':'ARS';
+    var marcaEntry=result.find(function(m){return m.marca===marca;});
+    if(!marcaEntry){marcaEntry={marca:marca,modelos:[]};result.push(marcaEntry);}
+    marcaEntry.modelos.push({modelo:modelo,precio:precioNum,moneda:monedaFinal});
   }
-  return result.filter(m=>m.modelos.length>0);
+  return result.filter(function(m){return m.modelos.length>0;});
 }
 
 function rPrecios(data){
