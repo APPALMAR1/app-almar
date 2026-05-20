@@ -2854,74 +2854,65 @@ function _inyectarMarcasUSD(data){
 
 
 // ── Sync precios OKM — igual mecanismo que stock usados ──────────────────────
-// URL hoja PRECIOS OKM — mismo Sheets que stock de usados, ya publicado
-const PRECIOS_OKM_URL='https://docs.google.com/spreadsheets/d/e/2PACX-1vRZc13F55AeNqNfw0rG-9vVA5-ETSODH3tPLTS5JA6aDK-F87p5tfrR4U3eB-Cfug/pub?output=csv&gid=1463445679';
+const PRECIOS_OKM_URL='https://docs.google.com/spreadsheets/d/e/2PACX-1vSlNo1sGT1E4C3lee5V3OUDnSsjAQbZETTP67btS3kyeH1kWQUVvbZciyd7ru7ErTOunOiELMAimu3b/pub?output=csv&gid=1463445679';
 
-function syncPreciosOKM(){
-  _cargarPrecios(false);
-}
+function syncPreciosOKM(){_cargarPrecios(false);}
 
 function _cargarPrecios(conFeedback){
-  const el=$$('precios-content');
-  if(conFeedback&&el) el.innerHTML='<div class="empty"><div class="eico">⏳</div><div class="ettl">Actualizando...</div><div class="esub">Conectando con Google Sheets.</div></div>';
+  var el=$$('precios-content');
+  if(conFeedback&&el) el.innerHTML='<div class="empty"><div class="eico">\u23F3</div><div class="ettl">Actualizando...</div><div class="esub">Conectando con Google Sheets.</div></div>';
   fetch(PRECIOS_OKM_URL+'&t='+Date.now(),{cache:'no-store'})
-    .then(r=>r.text())
-    .then(csv=>{
-      const data=parsePreciosCSV(csv);
+    .then(function(r){return r.text();})
+    .then(function(csv){
+      var data=parsePreciosCSV(csv);
       if(!data||!data.length) throw new Error('sin datos');
       window._preciosData=data;
-      try{localStorage.setItem('almar_precios_okm',JSON.stringify({data,fecha:new Date().toISOString()}));}catch(e){}
-      actualizarBNA&&actualizarBNA().then(()=>{if(conFeedback)rPrecios(data);}).catch(()=>{if(conFeedback)rPrecios(data);});
-      if(conFeedback) mostrarToast('✅ Precios actualizados');
+      try{localStorage.setItem('almar_precios_okm',JSON.stringify({data:data,fecha:new Date().toISOString()}));}catch(e){}
+      if(typeof actualizarBNA==='function'){
+        actualizarBNA().then(function(){if(conFeedback)rPrecios(data);}).catch(function(){if(conFeedback)rPrecios(data);});
+      }
+      if(conFeedback) mostrarToast('\u2705 Precios actualizados');
     })
-    .catch(()=>{
-      // Sin conexión: usar cache si hay
-      const cached=localStorage.getItem('almar_precios_okm');
-      if(cached){try{const {data}=JSON.parse(cached);if(data&&data.length){window._preciosData=data;if(conFeedback){actualizarBNA&&actualizarBNA().then(()=>rPrecios(data)).catch(()=>rPrecios(data));mostrarToast('⚠️ Sin conexión — precios guardados');}}}catch(e){}}
+    .catch(function(){
+      var cached=localStorage.getItem('almar_precios_okm');
+      if(cached){
+        try{
+          var obj=JSON.parse(cached);
+          if(obj.data&&obj.data.length){
+            window._preciosData=obj.data;
+            if(conFeedback){
+              if(typeof actualizarBNA==='function'){actualizarBNA().then(function(){rPrecios(obj.data);}).catch(function(){rPrecios(obj.data);});}
+              mostrarToast('\u26A0\uFE0F Sin conexi\u00F3n \u2014 precios guardados');
+            }
+          }
+        }catch(e){}
+      }
     });
 }
 
-function syncPrecios(){
-  _cargarPrecios(true);
-}
+function syncPrecios(){_cargarPrecios(true);}
 
 // Inyecta en el array data las marcas/modelos USD desde MKT_USD_DATA_G.
 // Si la marca ya existe (vino del Excel en ARS), agrega solo los modelos USD que falten.
 // Si la marca no existe, la crea completa.
 
 
-function _parseCSVLine(line){
-  const cols=[];let cur='';let inQ=false;
-  for(let i=0;i<line.length;i++){
-    const c=line[i];
-    if(c==='"'){inQ=!inQ;}
-    else if(c===','&&!inQ){cols.push(cur.trim());cur='';}
-    else{cur+=c;}
-  }
-  cols.push(cur.trim());
-  return cols;
-}
-
 function parsePreciosCSV(csv){
   const lines=csv.split(/\r?\n/);
-  if(!lines.length) return [];
-  const result=[];
+  const result=[]; // [{marca, modelos: [{modelo, precio}]}]
+  let marcaActual=null;
   for(let i=0;i<lines.length;i++){
     const l=lines[i].trim();
     if(!l) continue;
-    const cols=_parseCSVLine(l);
-    const c0=(cols[0]||'').trim();
-    const c1=(cols[1]||'').trim();
-    const c2=(cols[2]||'').trim();
-    const c3=(cols[3]||'').trim();
-    if(c0.toUpperCase()==='MARCA') continue;
-    if(!c0||!c1||!c2) continue;
-    const moneda=c3.toUpperCase()==='USD'?'USD':'ARS';
-    const precioNum=parseInt(c2.replace(/[^0-9]/g,''))||0;
-    if(!precioNum) continue;
-    let marcaEntry=result.find(m=>m.marca===c0);
-    if(!marcaEntry){marcaEntry={marca:c0,modelos:[]};result.push(marcaEntry);}
-    marcaEntry.modelos.push({modelo:c1,precio:precioNum,moneda});
+    const cols=l.split(',');
+    // Detectar marca: una sola celda sin coma con precio, sin $ 
+    const c0=cols[0].trim(); const c1=(cols[1]||'').trim();
+    if(c0&&!c1&&!c0.startsWith('$')&&!c0.includes('MODELO')&&!c0.includes('PRECIO')&&!c0.includes('Lista')&&!c0.includes('Precios')&&!c0.includes('Vigencia')){
+      marcaActual={marca:c0, modelos:[]};
+      result.push(marcaActual);
+    } else if(marcaActual&&c0&&c1&&c1.startsWith('$')){
+      marcaActual.modelos.push({modelo:c0, precio:c1});
+    }
   }
   return result.filter(m=>m.modelos.length>0);
 }
