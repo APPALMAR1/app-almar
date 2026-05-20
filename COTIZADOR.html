@@ -2854,59 +2854,49 @@ function _inyectarMarcasUSD(data){
 
 
 // ── Sync precios OKM — igual mecanismo que stock usados ──────────────────────
+// URL única del Sheets de stock — hoja PRECIOS OKM
+const PRECIOS_OKM_URL='https://docs.google.com/spreadsheets/d/e/2PACX-1vRZc13F55AeNqNfw0rG-9vVA5-ETSODH3tPLTS5JA6aDK-F87p5tfrR4U3eB-Cfug/pub?output=csv&gid=1463445679';
+
 function syncPreciosOKM(){
-  // Usar localStorage como fuente (contiene el Excel importado por el admin)
-  const cached=localStorage.getItem('almar_precios_okm');
-  if(cached){
-    try{
-      const {data}=JSON.parse(cached);
-      if(data&&data.length){
-        // NO llamar _inyectarMarcasUSD — el Excel es la fuente completa
-        // Solo actualizar BNA para conversión USD
-        window._preciosData=data;
-        actualizarBNA&&actualizarBNA().catch(()=>{});
-      }
-    }catch(e){}
-  }
+  _cargarPrecios(false);
 }
 
-function syncPrecios(){
-  // Primero intentar cargar desde localStorage (importación previa)
-  const cached=localStorage.getItem('almar_precios_okm');
-  if(cached){
-    try{
-      const {data,fecha}=JSON.parse(cached);
-      _inyectarMarcasUSD(data);
-      window._preciosData=data;
-      actualizarBNA().then(()=>rPrecios(data)).catch(()=>rPrecios(data));
-      const d=new Date(fecha);
-      mostrarToast('✅ Precios cargados ('+d.toLocaleDateString('es-AR')+')');
-      return;
-    }catch(e){}
-  }
-  // Si no hay cache local, cargar desde Drive
+function _cargarPrecios(conFeedback){
   const el=$$('precios-content');
-  el.innerHTML='<div class="empty"><div class="eico">⏳</div><div class="ettl">Cargando...</div><div class="esub">Conectando con Drive.</div></div>';
-  fetch(PRECIOS_URL+'&t='+Date.now(),{cache:'no-store'})
+  if(conFeedback&&el){
+    el.innerHTML='<div class="empty"><div class="eico">⏳</div><div class="ettl">Actualizando...</div><div class="esub">Conectando con Google Sheets.</div></div>';
+  }
+  fetch(PRECIOS_OKM_URL+'&t='+Date.now(),{cache:'no-store'})
     .then(r=>r.text())
     .then(csv=>{
       const data=parsePreciosCSV(csv);
+      if(!data||!data.length) throw new Error('sin datos');
       _inyectarMarcasUSD(data);
       window._preciosData=data;
-      actualizarBNA().then(()=>rPrecios(data)).catch(()=>rPrecios(data));
+      try{localStorage.setItem('almar_precios_okm',JSON.stringify({data,fecha:new Date().toISOString()}));}catch(e){}
+      actualizarBNA&&actualizarBNA().then(()=>{if(conFeedback)rPrecios(data);}).catch(()=>{if(conFeedback)rPrecios(data);});
+      if(conFeedback) mostrarToast('✅ Precios actualizados');
     })
     .catch(()=>{
-      // Sin conexión: mostrar al menos las marcas USD hardcodeadas
-      const data=[];
-      _inyectarMarcasUSD(data);
-      if(data.length){
-        window._preciosData=data;
-        actualizarBNA().then(()=>rPrecios(data)).catch(()=>rPrecios(data));
-        mostrarToast('⚠️ Sin conexión — mostrando solo precios USD');
-      } else {
-        el.innerHTML='<div class="empty"><div class="eico">❌</div><div class="ettl">Sin conexión</div><div class="esub">Verificá tu conexión a internet.</div></div>';
+      const cached=localStorage.getItem('almar_precios_okm');
+      if(cached){
+        try{
+          const {data}=JSON.parse(cached);
+          if(data&&data.length){
+            _inyectarMarcasUSD(data);
+            window._preciosData=data;
+            if(conFeedback){
+              actualizarBNA&&actualizarBNA().then(()=>rPrecios(data)).catch(()=>rPrecios(data));
+              mostrarToast('⚠️ Sin conexión — mostrando precios guardados');
+            }
+          }
+        }catch(e){}
       }
     });
+}
+
+function syncPrecios(){
+  _cargarPrecios(true);
 }
 
 // Inyecta en el array data las marcas/modelos USD desde MKT_USD_DATA_G.
