@@ -3117,9 +3117,13 @@ function rCampMini(){
       deMarca=act.filter(c=>c.usados===true);
     }
     // FCA usados solo si marca es FIAT o JEEP
+    // PSA Finance usados solo si marca es CITROEN o PEUGEOT (cuando hay marca seleccionada)
     if(ma&&ma!==''){
       deMarca=deMarca.filter(c=>{
         if(c.banco==='FCA') return ma==='FIAT'||ma==='JEEP';
+        if(c.banco==='PSA Finance'&&c.usados){
+          return ma==='CITROEN'||ma==='PEUGEOT';
+        }
         return true;
       });
     }
@@ -4236,9 +4240,21 @@ function rAdm(){
   const t=$$('atc');
   t.innerHTML='<thead><tr><th>Banco</th><th>Nombre</th><th>TNA %</th><th>Com %</th><th>Plazo Máx</th><th>LTV %</th><th>Activa</th><th>Coefs</th></tr></thead>';
   const tb=document.createElement('tbody');
-  camp.forEach((c,i)=>{
+  // Ordenar campañas: PSA Finance CITROEN primero, luego PEUGEOT, resto por banco
+  const campOrdenadas=[...camp].sort((a,b)=>{
+    if(a.banco==='PSA Finance'&&b.banco==='PSA Finance'){
+      const ma=a.marca||'ZZZ', mb=b.marca||'ZZZ';
+      if(ma!==mb) return ma.localeCompare(mb); // CITROEN antes que PEUGEOT
+      return a.id-b.id;
+    }
+    if(a.banco==='PSA Finance') return -1;
+    if(b.banco==='PSA Finance') return 1;
+    if(a.banco!==b.banco) return a.banco.localeCompare(b.banco);
+    return a.id-b.id;
+  });
+  campOrdenadas.forEach((c)=>{
+    const i=camp.indexOf(c);
     const tr=document.createElement('tr');
-    // Resaltar campañas con coeficientes (Kaisen, ICBC, BBVA, Credicuotas)
     const coefBtn=`<button onclick="editarCoefs(${i})" style="background:var(--b);border:none;color:#fff;border-radius:5px;padding:3px 7px;font-size:9px;font-weight:700;cursor:pointer;white-space:nowrap">✏️ Editar</button>`;
     tr.innerHTML=`
       <td><input value="${c.banco}" onchange="camp[${i}].banco=this.value" style="width:80px"></td>
