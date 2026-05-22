@@ -425,6 +425,11 @@ select option{background:var(--s2)}
 #tb,#bn,#dr,#ov,#login,#thm,.no-print,.scr{display:none!important}
 #screen-propuesta{display:block!important}
 
+/* Gastos bancarios en impresión: ocultar los dos separados, mostrar el sumado */
+#screen-propuesta .pr:has(#pa3),
+#screen-propuesta .pr:has(#pa3b){display:none!important}
+#screen-propuesta .print-gastos-sum{display:flex!important}
+
 /* Modo impresión stock — clase en body */
 body.print-stock #screen-propuesta{display:none!important}
 body.print-stock #screen-stock{display:block!important}
@@ -699,6 +704,8 @@ input[type=text]#p-obs{background:#F5F7FA!important;border:1px solid #D5DCE6!imp
         <div class="pr"><label>Gestoría / Patentamiento</label><input type="number" id="pa2" placeholder="0" oninput="cP()"></div>
         <div class="pr"><label>Gastos bancarios campaña</label><input type="number" id="pa3" placeholder="0" oninput="cP()"></div>
         <div class="pr"><label>Gastos de otorgamiento</label><input type="number" id="pa3b" placeholder="0" oninput="cP()"></div>
+        <!-- Fila solo visible en impresión: suma pa3 + pa3b como "Gastos bancarios" -->
+        <div class="pr print-gastos-sum" style="display:none"><label>Gastos bancarios</label><span id="pa3-sum" style="font-weight:700;text-align:right;flex:1">0</span></div>
         <div class="pr"><label>Intereses crédito (total)</label><input type="number" id="pa4" placeholder="0" oninput="cP()"></div>
         <div class="pr"><label>Comisión / Premio banco</label><input type="number" id="pa5" placeholder="0" oninput="cP()"></div>
         <div class="pr"><label>Seguro automotor</label><input type="number" id="pa6" placeholder="0" oninput="cP()"></div>
@@ -3456,6 +3463,9 @@ function cP(){
   document.querySelectorAll('[data-xa]').forEach(el=>tA+=parseFloat(el.value)||0);
   document.querySelectorAll('[data-xb]').forEach(el=>tB+=parseFloat(el.value)||0);
   $$('ta').textContent=fmt(tA); $$('tb2').textContent=fmt(tB);
+  // Actualizar suma de gastos bancarios para la fila de impresión
+  const _pa3sum=$$('pa3-sum');
+  if(_pa3sum){const _g=(parseFloat($$('pa3')?.value)||0)+(parseFloat($$('pa3b')?.value)||0);_pa3sum.textContent=_g?fmt(_g):'$ 0';}
   const diff=tA-tB, pct=tA>0?Math.min(100,tB/tA*100):0;
   const si=$$('si'),sv=$$('slv'),st=$$('slt'),ss=$$('sls'),pf=$$('pf');
   sv.textContent=fmt(Math.abs(diff)); pf.style.width=pct+'%';
@@ -3891,7 +3901,8 @@ function abrirDetallePropuesta(p){
         <div style="font-size:8px;letter-spacing:2px;color:#164194;text-transform:uppercase;font-weight:800;margin-bottom:6px;border-bottom:2px solid #164194;padding-bottom:3px">A — Qué incluye</div>
         ${fila('Precio del vehículo',aPrecio)}
         ${fila('Gestoría / Patentamiento',aGestoria)}
-        ${fila('Gastos bancarios',(aGastosBanc+aGastosBancAd)||0,'#0069b4')}
+        ${fila('Gastos bancarios campaña',aGastosBanc,'#0069b4')}
+        ${fila('Gastos de otorgamiento',aGastosBancAd,'#0069b4')}
         ${fila('Intereses crédito',aIntereses,'#0069b4')}
         ${fila('Comisión banco',aComision,'#0069b4')}
         ${fila('Seguro automotor',aSeguro)}
