@@ -3279,15 +3279,20 @@ function sCredCamp(id){
   const cv=camp.find(c=>c.id===id);
   const mt=parseFloat($$('pb1').value)||0;
   if(cv&&mt>0){
-    // Gastos bancarios campaña (quebranto con IVA)
-    if(cv.comision>0){
+    // Si el nombre contiene "fee", es ingreso del concesionario → NO es gasto bancario campaña
+    const esFee=/fee/i.test(cv.nombre||'');
+    // Gastos bancarios campaña (quebranto con IVA) — solo si NO es fee
+    if(cv.comision>0 && !esFee){
       const quebranto=Math.round(mt*(cv.comision/100)*1.21);
       const el=$$('pa3'); if(el) el.value=quebranto;
+    } else {
+      const el=$$('pa3'); if(el) el.value='';
     }
     // Gastos adicionales ALMAR:
+    // — Con fee: banco paga comisión al concesionario → ALMAR cobra igual 2% (como si hubiera comisión)
     // — Sin comisión bancaria → 3% del monto
-    // — Con comisión bancaria → 2% del monto
-    const pctAlmar=cv.comision>0?0.02:0.03;
+    // — Con comisión bancaria (quebranto) → 2% del monto
+    const pctAlmar=(cv.comision>0)?0.02:0.03;
     const gastosAlmar=Math.round(mt*pctAlmar);
     const el3b=$$('pa3b'); if(el3b) el3b.value=gastosAlmar;
   }
@@ -3304,15 +3309,33 @@ function calcCred(){
   if(credCampId&&mt>0){
     const cv=camp.find(c=>c.id===credCampId);
     if(cv){
-      // Gastos bancarios campaña (quebranto con IVA)
-      if(cv.comision>0){
+      // Si el nombre contiene "fee", es ingreso del concesionario → NO es gasto bancario campaña
+      const esFee=/fee/i.test(cv.nombre||'');
+      // Gastos bancarios campaña (quebranto con IVA) — solo si NO es fee
+      if(cv.comision>0 && !esFee){
         const quebranto=Math.round(mt*(cv.comision/100)*1.21);
         $$('pa3').value=quebranto;
+      } else {
+        $$('pa3').value='';
       }
-      // Gastos adicionales ALMAR: 3% sin comisión bancaria / 2% con comisión bancaria
-      const pctAlmar=cv.comision>0?0.02:0.03;
+      // Gastos adicionales ALMAR: 3% sin comisión / 2% con comisión (fee cuenta como "con comisión")
+      const pctAlmar=(cv.comision>0)?0.02:0.03;
       const gastosAlmar=Math.round(mt*pctAlmar);
       $$('pa3b').value=gastosAlmar;
+      // Recalcular Total A y saldo pendiente directamente (sin llamar cP() para evitar loop)
+      const iA=['pa1','pa2','pa3','pa3b','pa4','pa5','pa6'];
+      const iB=['pb1','pb2','pb3','pb4','pb5','pb6'];
+      let tA=iA.reduce((s,id)=>s+(parseFloat($$(id)?.value)||0),0);
+      let tB=iB.reduce((s,id)=>s+(parseFloat($$(id)?.value)||0),0);
+      document.querySelectorAll('[data-xa]').forEach(el=>tA+=parseFloat(el.value)||0);
+      document.querySelectorAll('[data-xb]').forEach(el=>tB+=parseFloat(el.value)||0);
+      $$('ta').textContent=fmt(tA); $$('tb2').textContent=fmt(tB);
+      const diff=tA-tB, pct=tA>0?Math.min(100,tB/tA*100):0;
+      const si=$$('si'),sv=$$('slv'),st=$$('slt'),ss=$$('sls'),pf=$$('pf');
+      sv.textContent=fmt(Math.abs(diff)); pf.style.width=pct+'%';
+      if(diff<=0){si.className='si2 ok';st.textContent='OPERACIÓN CUBIERTA';ss.textContent=diff<0?`Excedente ${fmt(Math.abs(diff))}`:'Exactamente cubierta';pf.style.background='var(--g)'}
+      else if(diff<=tA*0.1){si.className='si2 warn';st.textContent='CASI CUBIERTO';ss.textContent=`Falta ${fmt(diff)}`;pf.style.background='var(--y)'}
+      else{si.className='si2 falta';st.textContent='SALDO PENDIENTE';ss.textContent='Falta cubrir este monto';pf.style.background='var(--r)'}
     }
   }
   box.style.display='block';
@@ -3868,8 +3891,7 @@ function abrirDetallePropuesta(p){
         <div style="font-size:8px;letter-spacing:2px;color:#164194;text-transform:uppercase;font-weight:800;margin-bottom:6px;border-bottom:2px solid #164194;padding-bottom:3px">A — Qué incluye</div>
         ${fila('Precio del vehículo',aPrecio)}
         ${fila('Gestoría / Patentamiento',aGestoria)}
-        ${fila('Gastos bancarios campaña',aGastosBanc,'#0069b4')}
-        ${fila('Gastos de otorgamiento',aGastosBancAd,'#0069b4')}
+        ${fila('Gastos bancarios',(aGastosBanc+aGastosBancAd)||0,'#0069b4')}
         ${fila('Intereses crédito',aIntereses,'#0069b4')}
         ${fila('Comisión banco',aComision,'#0069b4')}
         ${fila('Seguro automotor',aSeguro)}
