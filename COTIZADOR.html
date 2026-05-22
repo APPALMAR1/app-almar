@@ -705,7 +705,7 @@ input[type=text]#p-obs{background:#F5F7FA!important;border:1px solid #D5DCE6!imp
         <div class="pr"><label>Gastos bancarios campaña</label><input type="number" id="pa3" placeholder="0" oninput="cP()"></div>
         <div class="pr"><label>Gastos de otorgamiento</label><input type="number" id="pa3b" placeholder="0" oninput="cP()"></div>
         <!-- Fila solo visible en impresión: suma pa3 + pa3b como "Gastos bancarios" -->
-        <div class="pr print-gastos-sum" style="display:none"><label>Gastos bancarios</label><span id="pa3-sum" style="font-weight:700;text-align:right;flex:1">0</span></div>
+        <div class="pr print-gastos-sum" style="display:none"><label>Gastos bancarios</label><input type="number" id="pa3-sum" readonly tabindex="-1" style="pointer-events:none" value="0"></div>
         <div class="pr"><label>Intereses crédito (total)</label><input type="number" id="pa4" placeholder="0" oninput="cP()"></div>
         <div class="pr"><label>Comisión / Premio banco</label><input type="number" id="pa5" placeholder="0" oninput="cP()"></div>
         <div class="pr"><label>Seguro automotor</label><input type="number" id="pa6" placeholder="0" oninput="cP()"></div>
@@ -3465,7 +3465,7 @@ function cP(){
   $$('ta').textContent=fmt(tA); $$('tb2').textContent=fmt(tB);
   // Actualizar suma de gastos bancarios para la fila de impresión
   const _pa3sum=$$('pa3-sum');
-  if(_pa3sum){const _g=(parseFloat($$('pa3')?.value)||0)+(parseFloat($$('pa3b')?.value)||0);_pa3sum.textContent=_g?fmt(_g):'$ 0';}
+  if(_pa3sum){const _g=(parseFloat($$('pa3')?.value)||0)+(parseFloat($$('pa3b')?.value)||0);_pa3sum.value=_g||0;}
   const diff=tA-tB, pct=tA>0?Math.min(100,tB/tA*100):0;
   const si=$$('si'),sv=$$('slv'),st=$$('slt'),ss=$$('sls'),pf=$$('pf');
   sv.textContent=fmt(Math.abs(diff)); pf.style.width=pct+'%';
