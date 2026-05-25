@@ -1091,9 +1091,21 @@ input[type=text]#p-obs{background:#F5F7FA!important;border:1px solid #D5DCE6!imp
 
   <!-- DATOS PERSONALES -->
   <div style="font-size:9px;font-weight:800;letter-spacing:1.5px;color:var(--y);text-transform:uppercase;margin-bottom:8px">📋 Datos del cliente</div>
-  <div style="display:flex;gap:8px;margin-bottom:8px">
-    <div style="flex:1"><label class="m" style="font-size:10px">Nombre *</label><input type="text" id="lf-nombre" placeholder="Juan Pérez" style="margin:2px 0 0"></div>
-    <div style="flex:1"><label class="m" style="font-size:10px">Teléfono</label><input type="text" id="lf-tel" placeholder="3764..." style="margin:2px 0 0"></div>
+  <!-- Búsqueda de cliente existente -->
+  <div style="margin-bottom:8px">
+    <div style="display:flex;gap:8px;margin-bottom:6px">
+      <div style="flex:1"><label class="m" style="font-size:10px">Nombre *</label><input type="text" id="lf-nombre" placeholder="Juan Pérez" oninput="labOnNombreTel()" style="margin:2px 0 0"></div>
+      <div style="flex:1"><label class="m" style="font-size:10px">Teléfono</label><input type="text" id="lf-tel" placeholder="3764..." oninput="labOnNombreTel()" style="margin:2px 0 0"></div>
+    </div>
+    <div style="margin-bottom:6px"><label class="m" style="font-size:10px">Email</label><input type="text" id="lf-email" placeholder="email@ejemplo.com" oninput="labOnNombreTel()" style="margin:2px 0 0;width:100%"></div>
+    <!-- Sugerencias de clientes existentes -->
+    <div id="lf-cliente-sugs" style="margin-bottom:4px"></div>
+    <!-- Badge de cliente vinculado -->
+    <div id="lf-cliente-vinc" style="display:none;margin-bottom:6px"></div>
+    <!-- Historial previo del cliente en el Laboratorio -->
+    <div id="lf-hist-prev" style="display:none;margin-bottom:6px;padding:8px 10px;background:rgba(65,192,240,.08);border:1px solid rgba(65,192,240,.2);border-radius:8px"></div>
+    <input type="hidden" id="lf-cliente-id">
+    <input type="hidden" id="lf-cliente-nm">
   </div>
   <div style="display:flex;gap:8px;margin-bottom:12px">
     <div style="flex:1"><label class="m" style="font-size:10px">Vendedor asignado</label>
@@ -5373,9 +5385,10 @@ bLogin();
 <script>
 
 // ══════════════════════════════════════════════════════════════════
-//  LABORATORIO COMERCIAL — Motor de matching
-//  Lee: camp (CAMP_D), STK_D, OKM_D, cuota(), fmt()
+//  LABORATORIO COMERCIAL — Motor de matching v2
+//  Lee: camp (CAMP_D), STK_D, OKM_D, cuota(), cuotaPorCoef(), fmt()
 //  Guarda: localStorage 'lab_perfiles'
+//  Clientes: _clientesCache (base compartida con Propuestas)
 // ══════════════════════════════════════════════════════════════════
 
 // ── Storage ──────────────────────────────────────────────────────
@@ -5390,33 +5403,73 @@ function labSetPerfiles(arr){
 // ── ID único ─────────────────────────────────────────────────────
 function labUID(){ return 'lab_'+Date.now()+'_'+Math.random().toString(36).slice(2,7); }
 
-// ── Formateo de urgencia ─────────────────────────────────────────
-function labUrgLabel(u){ return u==='caliente'?'🔥 Caliente':u==='tibia'?'🟡 Tibia':'❄ Fría'; }
-function labEstLabel(e){
-  if(e==='match')   return '<span class="lab-est-badge lab-est-match">🎯 Match</span>';
-  if(e==='espera')  return '<span class="lab-est-badge lab-est-espera">⏳ Espera</span>';
-  if(e==='cerrado') return '<span class="lab-est-badge lab-est-cerrado">✅ Cerrado</span>';
-  return '<span class="lab-est-badge lab-est-activo">🟢 Activo</span>';
+// ── Año actual ───────────────────────────────────────────────────
+const _hoy = new Date().getFullYear();
+
+// ── LTV real según banco y antigüedad del vehículo ───────────────
+// Devuelve {ltv, montoMax, plazoMax} aplicables para ese banco y auto
+function labLTV(banco, annoAuto, esUsadoUnit){
+  const ant = _hoy - annoAuto; // antigüedad en años
+  if(!esUsadoUnit){
+    // 0km — regla general
+    return {ltv:80, montoMax:55000000, plazoMax:60};
+  }
+  // Reglas por banco para usados
+  if(banco==='BBVA'){
+    if(ant<=7)  return {ltv:70, montoMax:40000000, plazoMax:60};
+    if(ant===8) return {ltv:60, montoMax:40000000, plazoMax:48};
+    if(ant===9) return {ltv:60, montoMax:40000000, plazoMax:36};
+    return null; // más de 9 años BBVA no financia
+  }
+  if(banco==='PSA Finance'){
+    if(ant<=2)  return {ltv:80, montoMax:50000000, plazoMax:60};
+    if(ant<=6)  return {ltv:75, montoMax:30000000, plazoMax:60};
+    if(ant<=8)  return {ltv:50, montoMax:15000000, plazoMax:48};
+    if(ant===9) return {ltv:50, montoMax:15000000, plazoMax:36};
+    if(ant===10)return {ltv:50, montoMax:15000000, plazoMax:24};
+    return null;
+  }
+  if(banco==='FCA'){
+    if(ant<=9) return {ltv:70, montoMax:15000000, plazoMax:60};
+    return null;
+  }
+  if(banco==='GPAT'){
+    if(ant<=9) return {ltv:70, montoMax:40000000, plazoMax:60};
+    return null;
+  }
+  if(banco==='MOBILIZE'){
+    if(ant<=10) return {ltv:70, montoMax:20000000, plazoMax:60};
+    return null;
+  }
+  if(banco==='ICBC'){
+    if(ant<=7) return {ltv:70, montoMax:30000000, plazoMax:60};
+    return null;
+  }
+  // Bancos sin regla específica para usados — usar ltv de la campaña
+  return {ltv:70, montoMax:20000000, plazoMax:60};
 }
 
 // ── Motor de matching ─────────────────────────────────────────────
 // Dado un perfil, devuelve array de matches ordenados por cuota ascendente
 function labMatch(perfil){
-  const entrega    = parseFloat(perfil.entrega)||0;
-  const partePago  = parseFloat(perfil.partePago)||0;
-  const cheques    = parseFloat(perfil.cheques)||0;
-  const cuotaMax   = parseFloat(perfil.cuotaMax)||0;
-  const totalDisp  = entrega + partePago + cheques; // capacidad total de pago inicial
+  const entrega   = parseFloat(perfil.entrega)||0;
+  const partePago = parseFloat(perfil.partePago)||0;
+  const cheques   = parseFloat(perfil.cheques)||0;
+  const cuotaMax  = parseFloat(perfil.cuotaMax)||0;
+  const totalDisp = entrega + partePago + cheques;
 
   if(totalDisp<=0 && cuotaMax<=0) return [];
 
-  // Unidades candidatas: stock usado (disponible/nuevo ingreso) + 0km
+  // Unidades candidatas
   const usados = STK_D.filter(u=>{
     const est=(u.estado||'').toLowerCase();
     return u.precio>0 && (est==='disponible'||est==='nuevo ingreso'||est==='en preparacion');
   });
   const nuevos = (window.OKM_D||[]).filter(u=>u.precio>0);
-  const unidades = [...usados.map(u=>({...u,_tipo:'usado'})), ...nuevos.map(u=>({...u,_tipo:'0km'}))];
+  const unidades = [
+    ...usados.map(u=>({...u,_tipo:'usado',_esUsado:true})),
+    ...nuevos.map(u=>({...u,_tipo:'0km',_esUsado:false}))
+  ];
 
   const results=[];
 
@@ -5424,58 +5477,75 @@ function labMatch(perfil){
     const precio = parseFloat(u.precio)||0;
     if(precio<=0) return;
 
-    // Filtrar por preferencia de marca si la tiene
+    // Filtrar por preferencia de marca
     if(perfil.marcaPref && perfil.marcaPref.trim()!==''){
       const mp=perfil.marcaPref.trim().toUpperCase();
       const um=(u.marca||'').toUpperCase();
       if(!um.includes(mp) && !mp.includes(um)) return;
     }
 
-    // Necesidad de financiación: precio - totalDisponible
-    const necesita = precio - totalDisp;
-    if(necesita<0){
-      // Puede pagar todo sin crédito
+    // ¿Puede pagar todo al contado?
+    if(totalDisp >= precio){
       results.push({
-        unidad:u, campana:null,
-        cuotaCalc:0, necesita:0,
-        totalDisp, precio,
+        unidad:u, campana:null, plazo:0,
+        cuotaCalc:0, necesita:0, gastosOtorg:0,
+        totalDisp, precio, sobra: totalDisp-precio,
         nota:'Puede comprar al contado'
       });
       return;
     }
 
-    // Buscar campañas que financien la diferencia y cuya cuota quepa
     if(cuotaMax<=0) return; // sin capacidad de cuota → solo contado
 
-    const mt = necesita; // monto a financiar
-    const activas = camp.filter(c=>c.activa&&!c.usados);
+    // Necesita financiar: precio - lo que puede entregar
+    const necesita = precio - totalDisp;
 
-    activas.forEach(c=>{
-      // LTV y montoMax
-      const topeLTV  = precio*(c.ltv/100);
-      const topeMax  = c.montoMax||Infinity;
-      const tope     = Math.min(topeLTV, topeMax);
-      if(mt > tope) return; // esta campaña no alcanza
+    // Campañas activas aplicables al tipo de unidad
+    const campanas = camp.filter(c=>{
+      if(!c.activa) return false;
+      if(u._esUsado && !c.usados) return false;   // usados necesitan c.usados===true
+      if(!u._esUsado && c.usados) return false;    // 0km no usa campañas de usados
+      return true;
+    });
 
-      // Calcular gastos bancarios (comisión sobre monto)
-      const gastosBank = c.comision>0 ? Math.round(mt*(c.comision/100)*1.21) : 0;
-      const gastosAlmar= c.comision>0 ? Math.round(mt*0.02) : Math.round(mt*0.03);
-      const mtTotal    = mt + gastosBank; // monto efectivo a financiar incluyendo comisión
+    campanas.forEach(c=>{
+      // Obtener LTV real para este banco y antigüedad
+      const ltvInfo = labLTV(c.banco, u.anno||_hoy, u._esUsado);
+      if(!ltvInfo) return; // banco no financia esta antigüedad
 
-      // Probar todos los plazos disponibles hasta plazoMax
-      PL.filter(n=>n<=c.plazoMax).forEach(n=>{
+      // Tope efectivo = min(LTV% del precio, montoMax campaña, montoMax banco)
+      const topeLTV    = precio * (ltvInfo.ltv/100);
+      const topeMax    = Math.min(
+        c.montoMax||Infinity,
+        ltvInfo.montoMax
+      );
+      const tope = Math.min(topeLTV, topeMax);
+
+      if(necesita > tope) return; // no alcanza
+
+      // Gastos de otorgamiento (solo los que cobra el banco como costo del crédito)
+      // El "fee" BBVA/GPAT es un premio al concesionario, NO se suma al crédito
+      // Solo se suma la comisión si es un gasto efectivo al cliente (ej: ICBC)
+      const esGastoCobrado = c.comision>0 && c.banco!=='BBVA' && c.banco!=='GPAT';
+      const gastosOtorg = esGastoCobrado ? Math.round(necesita*(c.comision/100)) : 0;
+      const montoCred   = necesita + gastosOtorg; // monto real a financiar
+
+      // Plazos disponibles (limitados también por el banco para esa antigüedad)
+      const plazoLim = Math.min(c.plazoMax, ltvInfo.plazoMax);
+      PL.filter(n=>n<=plazoLim).forEach(n=>{
         let q;
         if(c.coefs && c.coefs[n]){
-          q = cuotaPorCoef(mtTotal, c.coefs[n][0]);
+          // Usa coeficiente [1] = promedio (más conservador)
+          q = Math.round(montoCred/1000 * c.coefs[n][1] * (c.coefBase||1000)/1000);
         } else {
-          q = Math.round(cuota(mtTotal, c.tna, n));
+          q = Math.round(cuota(montoCred, c.tna, n));
         }
         if(q<=cuotaMax){
           results.push({
             unidad:u, campana:c, plazo:n,
-            cuotaCalc:q, necesita:mt,
-            gastosBank, gastosAlmar, mtTotal,
-            totalDisp, precio,
+            cuotaCalc:q, necesita, gastosOtorg, montoCred,
+            topeLTV, tope, ltvInfo,
+            totalDisp, precio, sobra:0,
             nota:''
           });
         }
@@ -5483,24 +5553,58 @@ function labMatch(perfil){
     });
   });
 
-  // Ordenar: primero los más accesibles (cuota más baja), luego precio más bajo
+  // Ordenar: al contado primero, luego por cuota ascendente, luego precio ascendente
   results.sort((a,b)=>{
+    if(a.campana===null && b.campana!==null) return -1;
+    if(a.campana!==null && b.campana===null) return 1;
     if(a.cuotaCalc!==b.cuotaCalc) return a.cuotaCalc-b.cuotaCalc;
     return a.precio-b.precio;
   });
 
-  // Deduplicar: un resultado por unidad (el mejor plazo)
+  // Deduplicar: mejor resultado por unidad+banco
   const seen=new Set();
   return results.filter(r=>{
-    const key=(r.unidad.dominio||r.unidad.version||'')+'_'+(r.campana?.id||'contado');
+    const key=(r.unidad.dominio||r.unidad.version||r.unidad.modelo||'')+'_'+(r.campana?.banco||'contado');
     if(seen.has(key)) return false;
     seen.add(key);
     return true;
-  }).slice(0,20); // máximo 20 matches
+  }).slice(0,25);
+}
+
+// ── Buscar cliente en base compartida ────────────────────────────
+function labBuscarCliente(nombre, tel, email){
+  const cli = window._clientesCache||[];
+  if(!cli.length) return [];
+  const n=(nombre||'').toLowerCase().trim();
+  const t=(tel||'').replace(/\D/g,'');
+  const e=(email||'').toLowerCase().trim();
+  return cli.filter(c=>{
+    const cn=((c.Nombre||'')+' '+(c.Apellido||'')).toLowerCase();
+    const ct=String(c.Telefono||'').replace(/\D/g,'');
+    const ce=(c.Email||'').toLowerCase();
+    if(t && t.length>=6 && ct.includes(t)) return true;
+    if(e && e.length>3 && ce===e) return true;
+    if(n && n.length>=3 && cn.includes(n)) return true;
+    return false;
+  }).slice(0,5);
+}
+
+// ── Buscar perfiles previos del mismo cliente en el Laboratorio ──
+function labPerfilesAnteriores(clienteId, perfilIdActual){
+  return labGetPerfiles().filter(p=>
+    p.clienteVinculadoId===clienteId && p.id!==perfilIdActual
+  );
 }
 
 // ── Render lista principal ────────────────────────────────────────
 function rLab(){
+  // Asegurar que tenemos clientes cargados
+  if(!window._clientesCache || window._clientesCache.length===0){
+    fetch(PROPUESTAS_URL+'?action=getClientes&t='+Date.now(),{cache:'no-store'})
+      .then(r=>r.json())
+      .then(data=>{ window._clientesCache=data.data||data||[]; })
+      .catch(()=>{});
+  }
   const perfiles = labGetPerfiles();
   labRenderStats(perfiles);
   labFiltrar();
@@ -5527,17 +5631,21 @@ function labFiltrar(){
   const filtUrg=$$('lab-filtro-urg')?.value||'';
   let perfiles=labGetPerfiles();
 
-  // Re-calcular matches para cada perfil activo
+  // Re-calcular matches y actualizar estado
   perfiles=perfiles.map(p=>{
-    if(p.estado==='cerrado') return p;
+    if(p.estado==='cerrado') return {...p, _matches:[]};
     const matches=labMatch(p);
     const nuevoEst = matches.length>0 ? 'match' : 'espera';
     return {...p, estado:nuevoEst, _matches:matches};
   });
-  labSetPerfiles(perfiles.map(p=>({...p, _matches:undefined})));
+  // Guardar estados actualizados (sin _matches para no inflar el storage)
+  labSetPerfiles(perfiles.map(({_matches,...p})=>p));
   labRenderStats(perfiles);
 
-  if(busq) perfiles=perfiles.filter(p=>(p.nombre||'').toLowerCase().includes(busq)||(p.tel||'').includes(busq));
+  if(busq) perfiles=perfiles.filter(p=>
+    (p.nombre||'').toLowerCase().includes(busq)||
+    (p.tel||'').includes(busq)
+  );
   if(filtEst) perfiles=perfiles.filter(p=>p.estado===filtEst);
   if(filtUrg) perfiles=perfiles.filter(p=>p.urgencia===filtUrg);
 
@@ -5549,8 +5657,8 @@ function labFiltrar(){
 
   lista.innerHTML='';
   perfiles.forEach(p=>{
-    const matches=p._matches||labMatch(p);
-    const tieneMatch=matches.length>0&&p.estado!=='cerrado';
+    const matches=p._matches||[];
+    const tieneMatch=matches.length>0 && p.estado!=='cerrado';
     const totalDisp=(parseFloat(p.entrega)||0)+(parseFloat(p.partePago)||0)+(parseFloat(p.cheques)||0);
 
     const card=document.createElement('div');
@@ -5569,54 +5677,70 @@ function labFiltrar(){
     let matchPreview='';
     if(tieneMatch){
       const m=matches[0];
-      const autoStr=`${m.unidad.marca||''} ${m.unidad.modelo||''} ${(m.unidad.version||'').substring(0,30)}`;
+      const autoStr=`${m.unidad.marca||''} ${m.unidad.modelo||''} ${(m.unidad.version||'').substring(0,28)}`.trim();
       matchPreview=`<div style="margin-top:8px;padding:8px 10px;background:rgba(65,192,240,.1);border:1px solid rgba(65,192,240,.3);border-radius:7px;font-size:11px">
-        <div style="color:#41c0f0;font-weight:700;margin-bottom:2px">🎯 Mejor match (${matches.length} opciones)</div>
-        <div style="color:var(--t);font-weight:600">${autoStr.trim()}</div>
-        <div style="color:var(--m);font-size:10px">${fmt(m.unidad.precio)} · ${m.campana?m.campana.banco+' '+m.plazo+'c — cuota '+fmt(m.cuotaCalc):'Contado'}</div>
+        <div style="color:#41c0f0;font-weight:700;margin-bottom:2px">🎯 ${matches.length} match${matches.length>1?'es':''} encontrado${matches.length>1?'s':''}</div>
+        <div style="color:var(--t);font-weight:600">${autoStr}</div>
+        <div style="color:var(--m);font-size:10px">${fmt(m.unidad.precio)}${m.campana?' · '+m.campana.banco+' '+m.plazo+'c · cuota '+fmt(m.cuotaCalc):' · Al contado'}</div>
       </div>`;
     }
 
     const vend=p.vendedor?' · '+p.vendedor:'';
     const fecha=p.fecha?new Date(p.fecha).toLocaleDateString('es-AR'):'';
+    const clienteTag=p.clienteVinculadoNombre?
+      `<span style="font-size:9px;background:var(--rg);color:var(--r);padding:1px 6px;border-radius:10px;font-weight:700">👤 ${p.clienteVinculadoNombre}</span> `:
+      '';
 
     card.innerHTML=`
-      ${tieneMatch?'<div class="lab-match-badge">🎯 '+matches.length+' MATCHES</div>':''}
+      ${tieneMatch?'<div class="lab-match-badge">🎯 '+matches.length+'</div>':''}
       <div class="lab-nom">${p.nombre||'Sin nombre'}</div>
       <div class="lab-tel">${p.tel||'Sin teléfono'}${vend}${fecha?' · '+fecha:''}</div>
-      ${urgEl}
-      <div class="lab-caps">${caps}</div>
-      ${p.marcaPref?`<div style="font-size:10px;color:var(--m);margin-bottom:4px">🚗 Preferencia: ${p.marcaPref}</div>`:''}
-      ${p.obs?`<div style="font-size:10px;color:var(--m);margin-bottom:4px">💬 ${p.obs.substring(0,80)}${p.obs.length>80?'...':''}</div>`:''}
+      ${clienteTag}${urgEl}
+      <div class="lab-caps" style="margin-top:6px">${caps}</div>
+      ${p.marcaPref?`<div style="font-size:10px;color:var(--m);margin-top:4px">🚗 Preferencia: ${p.marcaPref}</div>`:''}
+      ${p.obs?`<div style="font-size:10px;color:var(--m);margin-top:2px">💬 ${p.obs.substring(0,80)}${p.obs.length>80?'...':''}</div>`:''}
       ${matchPreview}
     `;
     lista.appendChild(card);
   });
 }
 
+// ── Etiquetas ─────────────────────────────────────────────────────
+function labUrgLabel(u){ return u==='caliente'?'🔥 Caliente':u==='tibia'?'🟡 Tibia':'❄ Fría'; }
+function labEstLabel(e){
+  if(e==='match')   return '<span class="lab-est-badge lab-est-match">🎯 Match</span>';
+  if(e==='espera')  return '<span class="lab-est-badge lab-est-espera">⏳ Espera</span>';
+  if(e==='cerrado') return '<span class="lab-est-badge lab-est-cerrado">✅ Cerrado</span>';
+  return '<span class="lab-est-badge lab-est-activo">🟢 Activo</span>';
+}
+
 // ── Modal nuevo/editar ────────────────────────────────────────────
 function labNuevoPerfil(){
-  // Limpiar formulario
-  ['lf-nombre','lf-tel','lf-entrega','lf-cuota','lf-partepago','lf-cheques','lf-marca-pref','lf-obs'].forEach(id=>{
+  ['lf-nombre','lf-tel','lf-email','lf-entrega','lf-cuota','lf-partepago','lf-cheques','lf-marca-pref','lf-obs'].forEach(id=>{
     const el=$$(id); if(el) el.value='';
   });
   const lfu=$$('lf-urgencia'); if(lfu) lfu.value='caliente';
   const lft=$$('lf-tipo'); if(lft) lft.value='';
   const lfid=$$('lf-id'); if(lfid) lfid.value='';
-  $$('lf-total-disp').textContent='$ 0';
-  $$('lf-match-preview').style.display='none';
-  $$('lf-match-empty').style.display='none';
+  const lfcid=$$('lf-cliente-id'); if(lfcid) lfcid.value='';
+  const lfcnm=$$('lf-cliente-nm'); if(lfcnm) lfcnm.value='';
+  if($$('lf-total-disp')) $$('lf-total-disp').textContent='$ 0';
+  if($$('lf-match-preview')) $$('lf-match-preview').style.display='none';
+  if($$('lf-match-empty')) $$('lf-match-empty').style.display='none';
+  if($$('lf-cliente-sugs')) $$('lf-cliente-sugs').innerHTML='';
+  if($$('lf-cliente-vinc')) $$('lf-cliente-vinc').style.display='none';
+  if($$('lf-hist-prev')) $$('lf-hist-prev').style.display='none';
 
   // Poblar vendedores
   const sv=$$('lf-vendedor');
   if(sv){
     sv.innerHTML='<option value="">— Sin asignar —</option>';
-    USERS.filter(u=>esVendedor(u)||esSupervisor(u)).forEach(u=>{
+    (window.USERS||[]).filter(u=>esVendedor(u)||esSupervisor(u)).forEach(u=>{
       const o=document.createElement('option');
       o.value=u.name; o.textContent=u.name;
       sv.appendChild(o);
     });
-    if(CU) sv.value=CU.name;
+    if(window.CU) sv.value=CU.name;
   }
   $$('lab-modal-overlay').style.display='block';
 }
@@ -5625,6 +5749,85 @@ function labCerrarModal(){
   $$('lab-modal-overlay').style.display='none';
 }
 
+// ── Búsqueda en tiempo real de clientes mientras tipea ───────────
+function labOnNombreTel(){
+  const nombre=$$('lf-nombre')?.value||'';
+  const tel=$$('lf-tel')?.value||'';
+  const email=$$('lf-email')?.value||'';
+  const sugsEl=$$('lf-cliente-sugs');
+  if(!sugsEl) return;
+
+  // Solo buscar si hay suficiente texto
+  if(nombre.length<3 && tel.replace(/\D/g,'').length<6 && email.length<4){
+    sugsEl.innerHTML=''; return;
+  }
+  const encontrados=labBuscarCliente(nombre, tel, email);
+  if(!encontrados.length){ sugsEl.innerHTML=''; return; }
+
+  sugsEl.innerHTML=`
+    <div style="font-size:9px;color:var(--m);font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-bottom:4px">
+      👤 Cliente existente en la base
+    </div>
+    ${encontrados.map(c=>{
+      const fullName=`${c.Nombre||''} ${c.Apellido||''}`.trim();
+      const perfsAnt=labGetPerfiles().filter(p=>p.clienteVinculadoId===c.NroCliente);
+      return `<div onclick="labVincularCliente('${c.NroCliente}','${fullName}','${c.Telefono||''}','${c.Email||''}')"
+        style="padding:8px 10px;background:var(--s3);border:1px solid var(--bdr);border-radius:6px;cursor:pointer;margin-bottom:4px">
+        <div style="font-weight:700;font-size:12px;color:var(--t)">${fullName}</div>
+        <div style="font-size:10px;color:var(--m)">📱 ${c.Telefono||'—'} · 📧 ${c.Email||'—'}</div>
+        <div style="font-size:10px;color:var(--m)">Última visita: ${c.UltimaVisita||'—'} · Marca: ${c.UltimasMarca||'—'} ${c.UltimoModelo||''}</div>
+        ${perfsAnt.length>0?`<div style="font-size:9px;color:#41c0f0;margin-top:3px">🧪 ${perfsAnt.length} perfil${perfsAnt.length>1?'es':''} previo${perfsAnt.length>1?'s':''} en el Laboratorio</div>`:''}
+        <div style="font-size:9px;color:var(--r);margin-top:2px;font-weight:700">← Tocá para vincular</div>
+      </div>`;
+    }).join('')}
+  `;
+}
+
+function labVincularCliente(id, nombre, tel, email){
+  if($$('lf-cliente-id')) $$('lf-cliente-id').value=id;
+  if($$('lf-cliente-nm')) $$('lf-cliente-nm').value=nombre;
+  if($$('lf-nombre')&&!$$('lf-nombre').value) $$('lf-nombre').value=nombre;
+  if($$('lf-tel')&&!$$('lf-tel').value) $$('lf-tel').value=tel;
+  if($$('lf-email')&&!$$('lf-email').value) $$('lf-email').value=email;
+  if($$('lf-cliente-sugs')) $$('lf-cliente-sugs').innerHTML='';
+
+  // Mostrar badge de vinculación
+  const vc=$$('lf-cliente-vinc');
+  if(vc){
+    vc.style.display='block';
+    vc.innerHTML=`<div style="padding:6px 10px;background:rgba(0,105,180,.15);border:1px solid var(--r);border-radius:6px;font-size:11px;display:flex;align-items:center;gap:8px">
+      <span>✅ Vinculado a: <strong>${nombre}</strong></span>
+      <span onclick="labDesvincularCliente()" style="cursor:pointer;color:var(--m);font-size:10px">✕ Quitar</span>
+    </div>`;
+  }
+
+  // Mostrar historial previo en el Laboratorio
+  const perfsAnt=labGetPerfiles().filter(p=>p.clienteVinculadoId===id);
+  const hp=$$('lf-hist-prev');
+  if(hp && perfsAnt.length>0){
+    hp.style.display='block';
+    hp.innerHTML=`<div style="font-size:9px;color:#41c0f0;font-weight:800;letter-spacing:.5px;text-transform:uppercase;margin-bottom:6px">🧪 Perfiles anteriores de este cliente</div>
+    ${perfsAnt.map(p=>{
+      const fechaStr=p.fecha?new Date(p.fecha).toLocaleDateString('es-AR'):'—';
+      const totalD=(parseFloat(p.entrega)||0)+(parseFloat(p.partePago)||0)+(parseFloat(p.cheques)||0);
+      return `<div style="padding:6px 10px;background:var(--s3);border-radius:6px;margin-bottom:4px;font-size:10px">
+        <div style="font-weight:700;color:var(--t)">${fechaStr} · ${labEstLabel(p.estado)}</div>
+        <div style="color:var(--m)">Entrega: ${fmt(parseFloat(p.entrega)||0)} · Cuota máx: ${fmt(parseFloat(p.cuotaMax)||0)}/mes</div>
+        <div style="color:var(--m)">Disponible total: ${fmt(totalD)}${p.marcaPref?' · Prefería: '+p.marcaPref:''}</div>
+        ${p.obs?`<div style="color:var(--m);font-style:italic">"${p.obs.substring(0,60)}..."</div>`:''}
+      </div>`;
+    }).join('')}`;
+  } else if(hp){ hp.style.display='none'; }
+}
+
+function labDesvincularCliente(){
+  if($$('lf-cliente-id')) $$('lf-cliente-id').value='';
+  if($$('lf-cliente-nm')) $$('lf-cliente-nm').value='';
+  if($$('lf-cliente-vinc')) $$('lf-cliente-vinc').style.display='none';
+  if($$('lf-hist-prev')) $$('lf-hist-prev').style.display='none';
+}
+
+// ── Cálculo de matches en tiempo real (modal) ─────────────────────
 function labCalcMatch(){
   const entrega   = parseFloat($$('lf-entrega')?.value)||0;
   const partePago = parseFloat($$('lf-partepago')?.value)||0;
@@ -5632,27 +5835,26 @@ function labCalcMatch(){
   const cuotaMax  = parseFloat($$('lf-cuota')?.value)||0;
   const totalDisp = entrega+partePago+cheques;
 
-  $$('lf-total-disp').textContent=fmt(totalDisp);
+  if($$('lf-total-disp')) $$('lf-total-disp').textContent=fmt(totalDisp);
 
   if(totalDisp<=0&&cuotaMax<=0){
-    $$('lf-match-preview').style.display='none';
-    $$('lf-match-empty').style.display='none';
+    if($$('lf-match-preview')) $$('lf-match-preview').style.display='none';
+    if($$('lf-match-empty')) $$('lf-match-empty').style.display='none';
     return;
   }
 
-  // Perfil temporal para calcular
   const perfilTemp={
     entrega, partePago, cheques, cuotaMax,
     marcaPref:$$('lf-marca-pref')?.value||'',
-    urgencia:'caliente', estado:'activo'
+    urgencia:'caliente'
   };
   const matches=labMatch(perfilTemp);
-
   const ml=$$('lf-match-lista');
   const mp=$$('lf-match-preview');
   const me=$$('lf-match-empty');
+  if(!ml||!mp||!me) return;
 
-  if(matches.length===0){
+  if(!matches.length){
     mp.style.display='none';
     me.style.display='block';
     return;
@@ -5661,30 +5863,35 @@ function labCalcMatch(){
   mp.style.display='block';
   ml.innerHTML='';
 
-  matches.slice(0,5).forEach(m=>{
+  matches.slice(0,6).forEach(m=>{
     const u=m.unidad;
-    const autoStr=`${u.marca||''} ${u.modelo||''} ${(u.version||'').substring(0,35)}`.trim();
+    const autoStr=`${u.marca||''} ${u.modelo||''} ${(u.version||'').substring(0,32)}`.trim();
+    const ant=_hoy-(u.anno||_hoy);
     const div=document.createElement('div');
     div.className='lab-match-item';
     div.innerHTML=`
-      <div class="lab-match-auto">${autoStr} <span style="font-weight:400;color:var(--m);font-size:10px">(${u._tipo==='0km'?'0 km':'Usado'})</span></div>
-      <div style="font-size:11px;color:var(--m);margin-bottom:4px">${fmt(u.precio)}</div>
+      <div class="lab-match-auto">${autoStr} <span style="font-weight:400;color:var(--m);font-size:10px">(${u._tipo==='0km'?'0 km':'Usado · '+ant+'a'})</span></div>
+      <div style="font-size:11px;color:var(--m);margin-bottom:4px">${fmt(u.precio)}${u.dominio?' · '+u.dominio:''}</div>
       ${m.campana?`
-        <div class="lab-match-camp">${m.campana.banco} — ${m.campana.nombre} · ${m.plazo} cuotas</div>
+        <div class="lab-match-camp">💳 ${m.campana.banco} — ${m.plazo} cuotas</div>
         <div class="lab-match-cuota">Cuota: ${fmt(m.cuotaCalc)}/mes</div>
-        <div class="lab-match-detalle">Financia: ${fmt(m.necesita)} · LTV ${m.campana.ltv}%${m.gastosBank>0?' · Gastos bancarios: '+fmt(m.gastosBank):''}</div>
-      `:`<div class="lab-match-cuota" style="color:var(--g)">✅ Puede comprar al contado</div>`}
+        <div class="lab-match-detalle">
+          Necesita financiar: ${fmt(m.necesita)} · LTV ${m.ltvInfo?.ltv||m.campana.ltv}%
+          ${m.gastosOtorg>0?' · Gastos: '+fmt(m.gastosOtorg):''}
+        </div>
+      `:`<div class="lab-match-cuota" style="color:var(--g)">✅ Puede comprar al contado${m.sobra>0?' · Sobran '+fmt(m.sobra):''}  </div>`}
     `;
     ml.appendChild(div);
   });
-  if(matches.length>5){
+  if(matches.length>6){
     const mas=document.createElement('div');
     mas.style.cssText='text-align:center;font-size:10px;color:var(--m);padding:6px';
-    mas.textContent=`+ ${matches.length-5} opciones más`;
+    mas.textContent=`+ ${matches.length-6} opciones más`;
     ml.appendChild(mas);
   }
 }
 
+// ── Guardar perfil ────────────────────────────────────────────────
 function labGuardarPerfil(){
   const nombre=($$('lf-nombre')?.value||'').trim();
   if(!nombre){ alert('Ingresá al menos el nombre del cliente.'); return; }
@@ -5692,11 +5899,14 @@ function labGuardarPerfil(){
   const id=$$('lf-id')?.value||labUID();
   const perfiles=labGetPerfiles();
   const idx=perfiles.findIndex(p=>p.id===id);
+  const clienteId=$$('lf-cliente-id')?.value||'';
+  const clienteNm=$$('lf-cliente-nm')?.value||nombre;
 
   const perfil={
     id,
     nombre,
     tel:($$('lf-tel')?.value||'').trim(),
+    email:($$('lf-email')?.value||'').trim(),
     vendedor:$$('lf-vendedor')?.value||'',
     urgencia:$$('lf-urgencia')?.value||'fria',
     entrega:parseFloat($$('lf-entrega')?.value)||0,
@@ -5706,6 +5916,8 @@ function labGuardarPerfil(){
     marcaPref:($$('lf-marca-pref')?.value||'').trim(),
     tipoPref:$$('lf-tipo')?.value||'',
     obs:($$('lf-obs')?.value||'').trim(),
+    clienteVinculadoId:clienteId,
+    clienteVinculadoNombre:clienteNm,
     estado:'activo',
     fecha:idx>=0?(perfiles[idx].fecha||new Date().toISOString()):new Date().toISOString(),
     fechaMod:new Date().toISOString(),
@@ -5728,51 +5940,82 @@ function labVerDetalle(id){
 
   $$('lab-det-titulo').textContent='🧪 '+p.nombre;
   const matches=labMatch(p);
-
   const totalDisp=(parseFloat(p.entrega)||0)+(parseFloat(p.partePago)||0)+(parseFloat(p.cheques)||0);
+
+  // Perfiles anteriores del mismo cliente
+  let histHTML='';
+  if(p.clienteVinculadoId){
+    const ant=labGetPerfiles().filter(x=>x.clienteVinculadoId===p.clienteVinculadoId&&x.id!==p.id);
+    if(ant.length>0){
+      histHTML=`<div style="margin-bottom:12px">
+        <div style="font-size:9px;font-weight:800;letter-spacing:1.5px;color:#41c0f0;text-transform:uppercase;margin-bottom:6px">🕐 Historial de este cliente en el Laboratorio</div>
+        ${ant.map(a=>{
+          const td=(parseFloat(a.entrega)||0)+(parseFloat(a.partePago)||0)+(parseFloat(a.cheques)||0);
+          const fa=a.fecha?new Date(a.fecha).toLocaleDateString('es-AR'):'—';
+          return `<div style="padding:8px 10px;background:var(--s3);border-radius:6px;margin-bottom:4px;font-size:11px">
+            <div style="display:flex;justify-content:space-between">
+              <span style="font-weight:700">${fa}</span>${labEstLabel(a.estado)}
+            </div>
+            <div style="color:var(--m);margin-top:2px">
+              Entrega: ${fmt(parseFloat(a.entrega)||0)} · Cuota máx: ${fmt(parseFloat(a.cuotaMax)||0)}/mes · Total: ${fmt(td)}
+            </div>
+            ${a.marcaPref?`<div style="color:var(--m);font-size:10px">Prefería: ${a.marcaPref}</div>`:''}
+            ${a.obs?`<div style="color:var(--m);font-style:italic;font-size:10px">"${a.obs.substring(0,80)}..."</div>`:''}
+          </div>`;
+        }).join('')}
+      </div>`;
+    }
+  }
 
   let matchesHTML='';
   if(p.estado==='cerrado'){
     matchesHTML='<div style="text-align:center;padding:16px;color:var(--m);font-size:12px">✅ Perfil cerrado</div>';
-  } else if(matches.length===0){
-    matchesHTML='<div style="padding:12px;background:var(--s3);border-radius:8px;font-size:12px;color:var(--m);text-align:center">⏳ Sin matches ahora.<br>El perfil quedará activo y se actualizará cuando ingrese una unidad adecuada.</div>';
+  } else if(!matches.length){
+    matchesHTML='<div style="padding:12px;background:var(--s3);border-radius:8px;font-size:12px;color:var(--m);text-align:center">⏳ Sin matches ahora.<br>Se actualizará automáticamente cuando ingrese una unidad adecuada.</div>';
   } else {
-    matchesHTML=matches.slice(0,10).map(m=>{
+    matchesHTML=matches.slice(0,12).map(m=>{
       const u=m.unidad;
-      const autoStr=`${u.marca||''} ${u.modelo||''} ${(u.version||'').substring(0,40)}`.trim();
-      const tipoStr=u._tipo==='0km'?'🏎 0 km':'🚗 Usado';
-      const domStr=u.dominio?` · ${u.dominio}`:'';
+      const autoStr=`${u.marca||''} ${u.modelo||''} ${(u.version||'').substring(0,38)}`.trim();
+      const ant=_hoy-(u.anno||_hoy);
+      const tipoStr=u._tipo==='0km'?'🏎 0 km':`🚗 Usado ${u.anno||''} (${ant}a)`;
       return `<div class="lab-match-item" style="margin-bottom:6px">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">
           <div>
             <div class="lab-match-auto">${autoStr}</div>
-            <div style="font-size:10px;color:var(--m);margin-bottom:4px">${tipoStr}${domStr} · ${fmt(u.precio)}</div>
+            <div style="font-size:10px;color:var(--m)">${tipoStr}${u.dominio?' · '+u.dominio:''}${u.color?' · '+u.color:''}</div>
           </div>
-          ${u.color?`<div style="font-size:10px;color:var(--m)">${u.color}</div>`:''}
+          <div style="font-weight:800;color:var(--t);font-size:12px;flex-shrink:0;margin-left:8px">${fmt(u.precio)}</div>
         </div>
         ${m.campana?`
-          <div class="lab-match-camp">💳 ${m.campana.banco} — ${m.campana.nombre}</div>
-          <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:4px">
-            <span style="font-size:11px">📅 <strong>${m.plazo} cuotas</strong> de <strong style="color:var(--g)">${fmt(m.cuotaCalc)}</strong></span>
-            <span style="font-size:10px;color:var(--m)">Financia: ${fmt(m.necesita)}</span>
-            ${m.gastosBank>0?`<span style="font-size:10px;color:var(--m)">Gastos: ${fmt(m.gastosBank)}</span>`:''}
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:3px">
+            <span class="lab-match-camp" style="margin:0">💳 ${m.campana.banco}</span>
+            <span style="font-size:11px;color:var(--t)"><strong>${m.plazo} cuotas</strong> de <strong style="color:var(--g)">${fmt(m.cuotaCalc)}/mes</strong></span>
           </div>
-          <div style="font-size:10px;color:var(--m);margin-top:3px">LTV ${m.campana.ltv}% · TNA ${m.campana.tna.toFixed(1).replace('.',',')}%${m.campana.tna===0?' (¡Tasa 0!)':''}</div>
-        `:`<div class="lab-match-cuota" style="color:var(--g)">✅ Puede comprar al contado con su capacidad disponible</div>`}
+          <div style="font-size:10px;color:var(--m)">
+            Financia: ${fmt(m.necesita)} · LTV ${m.ltvInfo?.ltv||m.campana.ltv}% (tope ${fmt(m.tope)})
+            ${m.gastosOtorg>0?' · Gastos: '+fmt(m.gastosOtorg):''}
+            · TNA ${m.campana.tna.toFixed(1).replace('.',',')}%${m.campana.tna===0?' 🎯':' '}
+          </div>
+        `:`
+          <div style="color:var(--g);font-weight:700;font-size:12px">✅ Al contado${m.sobra>0?' · Sobran '+fmt(m.sobra):''}</div>
+        `}
       </div>`;
     }).join('');
-    if(matches.length>10) matchesHTML+=`<div style="text-align:center;font-size:10px;color:var(--m);padding:6px">+ ${matches.length-10} opciones más disponibles</div>`;
+    if(matches.length>12)
+      matchesHTML+=`<div style="text-align:center;font-size:10px;color:var(--m);padding:6px">+ ${matches.length-12} opciones más</div>`;
   }
 
   $$('lab-det-body').innerHTML=`
-    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">
-      <span class="lab-urg lab-card ${p.urgencia}">${labUrgLabel(p.urgencia)}</span>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:10px">
+      <span class="lab-urg">${labUrgLabel(p.urgencia)}</span>
       ${labEstLabel(p.estado)}
-      ${p.vendedor?`<span style="font-size:10px;color:var(--m);align-self:center">· ${p.vendedor}</span>`:''}
+      ${p.vendedor?`<span style="font-size:10px;color:var(--m)">· ${p.vendedor}</span>`:''}
+      ${p.clienteVinculadoId?`<span style="font-size:9px;background:var(--rg);color:var(--r);padding:2px 8px;border-radius:10px;font-weight:700">👤 Cliente #${p.clienteVinculadoId}</span>`:''}
     </div>
-    ${p.tel?`<div style="font-size:12px;color:var(--m);margin-bottom:4px">📞 ${p.tel}</div>`:''}
+    ${p.tel?`<div style="font-size:12px;color:var(--m);margin-bottom:2px">📞 ${p.tel}</div>`:''}
+    ${p.email?`<div style="font-size:12px;color:var(--m);margin-bottom:8px">📧 ${p.email}</div>`:''}
     ${p.obs?`<div style="font-size:12px;color:var(--m);margin-bottom:10px;padding:8px;background:var(--s3);border-radius:6px">💬 ${p.obs}</div>`:''}
-
+    ${histHTML}
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px">
       <div style="background:var(--s3);border-radius:8px;padding:8px 12px">
         <div style="font-size:9px;color:var(--m);text-transform:uppercase;letter-spacing:.5px">Entrega efectivo</div>
@@ -5783,22 +6026,21 @@ function labVerDetalle(id){
         <div style="font-weight:700;color:var(--t)">${fmt(parseFloat(p.cuotaMax)||0)}</div>
       </div>
       ${parseFloat(p.partePago)>0?`<div style="background:var(--s3);border-radius:8px;padding:8px 12px">
-        <div style="font-size:9px;color:var(--m);text-transform:uppercase;letter-spacing:.5px">Parte de pago</div>
+        <div style="font-size:9px;color:var(--m);text-transform:uppercase;letter-spacing:.5px">Auto parte pago</div>
         <div style="font-weight:700;color:var(--t)">${fmt(parseFloat(p.partePago))}</div>
       </div>`:''}
       ${parseFloat(p.cheques)>0?`<div style="background:var(--s3);border-radius:8px;padding:8px 12px">
-        <div style="font-size:9px;color:var(--m);text-transform:uppercase;letter-spacing:.5px">Cheques/documentos</div>
+        <div style="font-size:9px;color:var(--m);text-transform:uppercase;letter-spacing:.5px">Cheques/docs</div>
         <div style="font-weight:700;color:var(--t)">${fmt(parseFloat(p.cheques))}</div>
       </div>`:''}
-      <div style="background:var(--rg);border-radius:8px;padding:8px 12px;grid-column:${parseFloat(p.partePago)>0||parseFloat(p.cheques)>0?'auto':'1/-1'}">
+      <div style="background:var(--rg);border-radius:8px;padding:8px 12px;grid-column:1/-1">
         <div style="font-size:9px;color:var(--m);text-transform:uppercase;letter-spacing:.5px">Total disponible</div>
-        <div style="font-weight:900;color:var(--g)">${fmt(totalDisp)}</div>
+        <div style="font-weight:900;font-size:16px;color:var(--g)">${fmt(totalDisp)}</div>
       </div>
     </div>
-    ${p.marcaPref?`<div style="font-size:11px;color:var(--m);margin-bottom:8px">🚗 Preferencia: <strong>${p.marcaPref}</strong>${p.tipoPref?' · '+p.tipoPref:''}</div>`:''}
-
+    ${p.marcaPref?`<div style="font-size:11px;color:var(--m);margin-bottom:10px">🚗 Preferencia: <strong>${p.marcaPref}</strong>${p.tipoPref?' · '+p.tipoPref:''}</div>`:''}
     <div style="font-size:9px;font-weight:800;letter-spacing:1.5px;color:#41c0f0;text-transform:uppercase;margin-bottom:8px">
-      🎯 ${matches.length>0?matches.length+' matches encontrados':'Sin matches ahora'}
+      🎯 ${matches.length>0?matches.length+' matches':'Sin matches por ahora'}
     </div>
     ${matchesHTML}
   `;
@@ -5817,13 +6059,12 @@ function labEditarDesdeDetalle(){
   const p=labGetPerfiles().find(x=>x.id===_labDetId);
   if(!p) return;
   labCerrarDet();
-
-  // Pre-cargar modal con datos existentes
   labNuevoPerfil();
   setTimeout(()=>{
     if($$('lf-id')) $$('lf-id').value=p.id;
     if($$('lf-nombre')) $$('lf-nombre').value=p.nombre||'';
     if($$('lf-tel')) $$('lf-tel').value=p.tel||'';
+    if($$('lf-email')) $$('lf-email').value=p.email||'';
     if($$('lf-vendedor')) $$('lf-vendedor').value=p.vendedor||'';
     if($$('lf-urgencia')) $$('lf-urgencia').value=p.urgencia||'caliente';
     if($$('lf-entrega')) $$('lf-entrega').value=p.entrega||'';
@@ -5833,18 +6074,18 @@ function labEditarDesdeDetalle(){
     if($$('lf-marca-pref')) $$('lf-marca-pref').value=p.marcaPref||'';
     if($$('lf-tipo')) $$('lf-tipo').value=p.tipoPref||'';
     if($$('lf-obs')) $$('lf-obs').value=p.obs||'';
+    if(p.clienteVinculadoId) labVincularCliente(p.clienteVinculadoId, p.clienteVinculadoNombre||p.nombre, p.tel||'', p.email||'');
     labCalcMatch();
-  },50);
+  },80);
 }
 
 function labCerrarPerfil(){
   if(!_labDetId) return;
-  if(!confirm('¿Marcar este perfil como cerrado? Seguirá visible pero no recibirá nuevos matches.')) return;
+  if(!confirm('¿Marcar este perfil como cerrado?')) return;
   const perfiles=labGetPerfiles();
   const idx=perfiles.findIndex(p=>p.id===_labDetId);
   if(idx>=0){ perfiles[idx].estado='cerrado'; labSetPerfiles(perfiles); }
-  labCerrarDet();
-  rLab();
+  labCerrarDet(); rLab();
 }
 // ══ FIN LABORATORIO COMERCIAL ══
 
