@@ -3276,11 +3276,11 @@ function rCampMini(){
   function crearBotonBanco(nombreBanco, esMarca){
     let campsDeBanco=act.filter(c=>c.banco===nombreBanco);
     if(esMarca){
-      // Financieras de marca: filtrar por marca exacta (CITROEN≠PEUGEOT, FIAT≠JEEP) y por modo usado/0km
-      campsDeBanco=campsDeBanco.filter(c=>(!c.marca||c.marca===ma)&&(esUsado?c.usados===true:!c.usados));
+      // Financieras de marca: filtrar por marca exacta (CITROEN≠PEUGEOT, FIAT≠JEEP), modo usado/0km y LTV/montoMax
+      campsDeBanco=campsDeBanco.filter(c=>(!c.marca||c.marca===ma)&&(esUsado?c.usados===true:!c.usados)&&campCubreMonto(c));
     } else {
-      // Bancos generales: no tienen usados:true, aplican siempre
-      campsDeBanco=campsDeBanco.filter(c=>!c.usados&&!c.marca);
+      // Bancos generales: sin marca, sin usados, y que alcancen el monto pedido
+      campsDeBanco=campsDeBanco.filter(c=>!c.usados&&!c.marca&&campCubreMonto(c));
     }
     const seleccionado=campsDeBanco.some(c=>c.id===credCampId);
     const d=document.createElement('div');
