@@ -3214,9 +3214,20 @@ function rCampMini(){
   const anno=parseInt($$('anno')?.value)||0;
   const act=camp.filter(c=>c.activa);
   const esUsado=t==='usado'||t==='mercado_usado';
+  // LTV + montoMax: calcular tope efectivo por campaña
+  const _pr=parseFloat($$('pa1')?.value)||0;  // precio del vehículo
+  const _mt=parseFloat($$('pb1')?.value)||0;  // monto a financiar pedido
+  // Función: ¿puede esta campaña financiar el monto pedido?
+  function campCubreMonto(c){
+    if(_mt<=0||_pr<=0) return true; // sin precio/monto → no filtrar
+    const topeMax=c.montoMax||Infinity;
+    const topeLTV=_pr*(c.ltv/100);
+    const tope=Math.min(topeMax,topeLTV);
+    return _mt<=tope; // la campaña alcanza si el monto pedido no supera el tope
+  }
 
   //  REGLA 1: BANCOS GENERALES (siempre al final, sin marca ni usados) 
-  const bancos=act.filter(c=>!c.marca&&!c.usados);
+  const bancos=act.filter(c=>!c.marca&&!c.usados&&campCubreMonto(c));
 
   //  REGLA 2: FINANCIERAS DE MARCA 
   let deMarca=[];
@@ -3245,7 +3256,7 @@ function rCampMini(){
   } else {
     // 0KM: financiera exacta de la marca (PEUGEOT→PSA PEUGEOT, CITROEN→PSA CITROEN, RENAULT→MOBILIZE, etc.)
     // Filtrar solo campañas donde c.marca === marca elegida (coincidencia exacta)
-    const campsMarca=act.filter(c=>c.marca&&c.marca===ma&&!c.usados);
+    const campsMarca=act.filter(c=>c.marca&&c.marca===ma&&!c.usados&&campCubreMonto(c));
     if(mo&&campsMarca.length){
       // Filtrar por modelo si la campaña tiene lista de modelos específicos
       const especificas=campsMarca.filter(c=>{
@@ -3265,8 +3276,8 @@ function rCampMini(){
   function crearBotonBanco(nombreBanco, esMarca){
     let campsDeBanco=act.filter(c=>c.banco===nombreBanco);
     if(esMarca){
-      // Financieras de marca: filtrar por modo usado/0km
-      campsDeBanco=campsDeBanco.filter(c=>esUsado?c.usados===true:!c.usados);
+      // Financieras de marca: filtrar por marca exacta (CITROEN≠PEUGEOT, FIAT≠JEEP) y por modo usado/0km
+      campsDeBanco=campsDeBanco.filter(c=>(!c.marca||c.marca===ma)&&(esUsado?c.usados===true:!c.usados));
     } else {
       // Bancos generales: no tienen usados:true, aplican siempre
       campsDeBanco=campsDeBanco.filter(c=>!c.usados&&!c.marca);
@@ -3459,7 +3470,26 @@ function calcCred(){
   const lal=$$('ltv-al'); lal.innerHTML='';
   if(credCampId&&pr>0){
     const cv=camp.find(c=>c.id===credCampId);
-    if(cv){const lp=mt/pr,lm=cv.ltv/100;lal.innerHTML=lp>lm?`<div class="al warn" style="margin-top:0;margin-bottom:6px">⚠️ Monto (${(lp*100).toFixed(0)}%) supera LTV ${cv.ltv}%. Máximo: ${fmt(pr*lm)}</div>`:`<div class="al ok" style="margin-top:0;margin-bottom:6px">✅ LTV OK — ${(lp*100).toFixed(0)}% (máx ${cv.ltv}%)</div>`}
+    if(cv){
+      const lm=cv.ltv/100;
+      const topeLTV=pr*lm;
+      const topeMax=cv.montoMax||Infinity;
+      const tope=Math.min(topeLTV,topeMax);
+      const lp=mt/pr; // porcentaje que representa el monto sobre el precio
+      const superaLTV=mt>topeLTV;
+      const superaMax=cv.montoMax&&mt>cv.montoMax;
+      if(superaLTV||superaMax){
+        let msg=`⚠️ Monto supera el tope de esta campaña. Máximo financiable: ${fmt(tope)}`;
+        if(superaLTV&&superaMax) msg+=` (LTV ${cv.ltv}%: ${fmt(topeLTV)} · Límite campaña: ${fmt(cv.montoMax)})`;
+        else if(superaLTV) msg+=` (LTV ${cv.ltv}% sobre precio ${fmt(pr)})`;
+        else msg+=` (límite de campaña)`;
+        lal.innerHTML=`<div class="al warn" style="margin-top:0;margin-bottom:6px">${msg}</div>`;
+      } else {
+        const pct=(lp*100).toFixed(0);
+        const topeStr=cv.montoMax?`${fmt(Math.min(topeLTV,cv.montoMax))}`:`${fmt(topeLTV)}`;
+        lal.innerHTML=`<div class="al ok" style="margin-top:0;margin-bottom:6px">✅ LTV OK — ${pct}% financiado · Tope: ${topeStr} (LTV ${cv.ltv}%${cv.montoMax?' · máx '+fmt(cv.montoMax):''})</div>`;
+      }
+    }
   }
 
   if(!credCampId){$$('qg-mini-wrap').style.display='none';$$('cg-mini').style.display='block';$$('cred-box-tit').style.display='block';return}
