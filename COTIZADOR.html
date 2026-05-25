@@ -495,6 +495,36 @@ select,input[type=text],input[type=number],input[type=tel],input[type=email]{
 /* ocultar selector campañas y cuotas en impresión — las cuotas van en col-A via print-cuotas */
 .addb,.cg-mini,.qg-mini,.cred-box-tit,.clbl2,#uva-al,#ltv-al,#qg-mini-wrap,#cred-box,#cred-camp-resumen{display:none!important}
 
+
+/* ══ LABORATORIO COMERCIAL ══ */
+.lab-card{background:var(--s2);border:1px solid var(--bdr);border-radius:10px;padding:14px;cursor:pointer;transition:all .18s;position:relative;overflow:hidden}
+.lab-card:hover{border-color:var(--r);background:var(--s3)}
+.lab-card.match{border-color:#41c0f0;background:rgba(65,192,240,.07)}
+.lab-card.caliente .lab-urg{background:#e74c3c;color:#fff}
+.lab-card.tibia .lab-urg{background:var(--y);color:#fff}
+.lab-card.fria .lab-urg{background:#555;color:#ccc}
+.lab-card.cerrado{opacity:.5}
+.lab-nom{font-family:var(--hf);font-weight:900;font-size:14px;color:var(--t);margin-bottom:2px}
+.lab-tel{font-size:11px;color:var(--m);margin-bottom:8px}
+.lab-caps{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.lab-cap{background:var(--s3);border:1px solid var(--bdr);border-radius:6px;padding:3px 8px;font-size:10px;color:var(--t)}
+.lab-cap strong{color:var(--g)}
+.lab-match-badge{position:absolute;top:10px;right:10px;background:#41c0f0;color:#fff;font-size:9px;font-weight:800;padding:3px 8px;border-radius:20px;letter-spacing:.5px}
+.lab-match-item{background:var(--s3);border:1px solid var(--bdr);border-radius:8px;padding:10px 12px}
+.lab-match-auto{font-weight:700;font-size:12px;color:var(--t);margin-bottom:4px}
+.lab-match-camp{font-size:10px;color:#41c0f0;margin-bottom:4px}
+.lab-match-cuota{font-size:11px;color:var(--g);font-weight:700}
+.lab-match-detalle{font-size:10px;color:var(--m);margin-top:2px}
+.lab-urg{font-size:9px;font-weight:800;padding:2px 8px;border-radius:20px;letter-spacing:.5px;display:inline-block;margin-bottom:6px}
+.lab-est-badge{font-size:9px;font-weight:700;padding:2px 8px;border-radius:20px;display:inline-block;margin-left:6px}
+.lab-est-activo{background:rgba(39,174,96,.2);color:#27AE60}
+.lab-est-match{background:rgba(65,192,240,.2);color:#41c0f0}
+.lab-est-espera{background:rgba(239,125,0,.2);color:var(--y)}
+.lab-est-cerrado{background:var(--s3);color:var(--m)}
+.lab-stat{flex:1;min-width:90px;background:var(--s2);border:1px solid var(--bdr);border-radius:8px;padding:10px 12px;text-align:center}
+.lab-stat-n{font-size:22px;font-weight:900;color:var(--t);line-height:1}
+.lab-stat-l{font-size:9px;color:var(--m);letter-spacing:.5px;text-transform:uppercase;margin-top:3px}
+
 /*  PROPUESTA 2 COLUMNAS  */
 .p2{display:grid!important;grid-template-columns:1fr 1fr!important;gap:3mm!important;align-items:start;margin-bottom:2mm!important}
 .pct2{font-size:8pt!important;font-weight:800;letter-spacing:.5px;padding:1mm 0!important;margin-bottom:1.5mm!important;border-bottom-width:2px!important}
@@ -998,6 +1028,154 @@ input[type=text]#p-obs{background:#F5F7FA!important;border:1px solid #D5DCE6!imp
     <input type="file" id="impxaut" accept=".xlsx,.xls" style="display:none" onchange="impXAutologica(event)">
     <input type="file" id="impx"  accept=".xlsx,.xls" style="display:none" onchange="impX(event)">
     <input type="file" id="impxc" accept=".xlsx,.xls" style="display:none" onchange="impXC(event)">
+  </div>
+</div>
+</div>
+
+
+<!-- ══ LABORATORIO COMERCIAL ══ -->
+<div id="screen-laboratorio" class="scr">
+<div class="page">
+
+  <div class="sh">
+    <div>
+      <div class="st2">🧪 Laboratorio Comercial</div>
+      <div class="ss2">Motor de matching · Perfiles financieros</div>
+    </div>
+    <button class="btn btn-r btn-sm" onclick="labNuevoPerfil()" style="margin-left:auto">+ Nuevo perfil</button>
+  </div>
+
+  <!-- RESUMEN RÁPIDO -->
+  <div id="lab-stats" style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap"></div>
+
+  <!-- FILTROS -->
+  <div class="card" style="padding:10px 14px;margin-bottom:8px">
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      <input type="text" id="lab-busq" placeholder="🔍 Nombre o teléfono..." oninput="labFiltrar()" style="flex:1;min-width:140px;margin:0">
+      <select id="lab-filtro-est" onchange="labFiltrar()" style="margin:0;min-width:120px">
+        <option value="">Todos los estados</option>
+        <option value="activo">🟢 Activo</option>
+        <option value="match">🎯 Match encontrado</option>
+        <option value="espera">⏳ En espera</option>
+        <option value="cerrado">✅ Cerrado</option>
+      </select>
+      <select id="lab-filtro-urg" onchange="labFiltrar()" style="margin:0;min-width:110px">
+        <option value="">Todas las urgencias</option>
+        <option value="caliente">🔥 Caliente</option>
+        <option value="tibia">🟡 Tibia</option>
+        <option value="fria">❄ Fría</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- LISTA DE PERFILES -->
+  <div id="lab-lista">
+    <div class="empty">
+      <div class="eico">🧪</div>
+      <div class="ettl">Sin perfiles cargados</div>
+      <div class="esub">Tocá <strong>+ Nuevo perfil</strong> para registrar un lead con su capacidad financiera real.</div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<!-- ══ MODAL: NUEVO/EDITAR PERFIL ══ -->
+<div id="lab-modal-overlay" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.75);z-index:3000;overflow-y:auto;padding:20px 0">
+<div id="lab-modal" style="max-width:520px;margin:0 auto;background:var(--s1);border-radius:12px;padding:20px;box-shadow:0 8px 40px rgba(0,0,0,.7)">
+
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+    <div style="font-family:var(--hf);font-weight:900;font-size:16px;color:var(--t)">🧪 Perfil de cliente</div>
+    <div onclick="labCerrarModal()" style="cursor:pointer;font-size:20px;color:var(--m);padding:4px 8px">✕</div>
+  </div>
+
+  <!-- DATOS PERSONALES -->
+  <div style="font-size:9px;font-weight:800;letter-spacing:1.5px;color:var(--y);text-transform:uppercase;margin-bottom:8px">📋 Datos del cliente</div>
+  <div style="display:flex;gap:8px;margin-bottom:8px">
+    <div style="flex:1"><label class="m" style="font-size:10px">Nombre *</label><input type="text" id="lf-nombre" placeholder="Juan Pérez" style="margin:2px 0 0"></div>
+    <div style="flex:1"><label class="m" style="font-size:10px">Teléfono</label><input type="text" id="lf-tel" placeholder="3764..." style="margin:2px 0 0"></div>
+  </div>
+  <div style="display:flex;gap:8px;margin-bottom:12px">
+    <div style="flex:1"><label class="m" style="font-size:10px">Vendedor asignado</label>
+      <select id="lf-vendedor" style="margin:2px 0 0"></select>
+    </div>
+    <div style="flex:1"><label class="m" style="font-size:10px">Urgencia</label>
+      <select id="lf-urgencia" style="margin:2px 0 0">
+        <option value="fria">❄ Fría</option>
+        <option value="tibia">🟡 Tibia</option>
+        <option value="caliente" selected>🔥 Caliente</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- CAPACIDAD FINANCIERA -->
+  <div style="font-size:9px;font-weight:800;letter-spacing:1.5px;color:var(--y);text-transform:uppercase;margin-bottom:8px">💰 Capacidad financiera real</div>
+  <div style="display:flex;gap:8px;margin-bottom:8px">
+    <div style="flex:1"><label class="m" style="font-size:10px">Entrega en efectivo $</label><input type="number" id="lf-entrega" placeholder="0" oninput="labCalcMatch()" style="margin:2px 0 0"></div>
+    <div style="flex:1"><label class="m" style="font-size:10px">Cuota máxima mensual $</label><input type="number" id="lf-cuota" placeholder="0" oninput="labCalcMatch()" style="margin:2px 0 0"></div>
+  </div>
+  <div style="display:flex;gap:8px;margin-bottom:8px">
+    <div style="flex:1"><label class="m" style="font-size:10px">Auto en parte de pago $</label><input type="number" id="lf-partepago" placeholder="0" oninput="labCalcMatch()" style="margin:2px 0 0"></div>
+    <div style="flex:1"><label class="m" style="font-size:10px">Cheques / documentos $</label><input type="number" id="lf-cheques" placeholder="0" oninput="labCalcMatch()" style="margin:2px 0 0"></div>
+  </div>
+  <div style="margin-bottom:12px">
+    <div style="display:flex;gap:6px;align-items:center;padding:8px 12px;background:var(--s3);border-radius:8px">
+      <span style="font-size:11px;color:var(--m)">Capacidad total disponible:</span>
+      <span id="lf-total-disp" style="font-weight:800;font-size:13px;color:var(--g)">$ 0</span>
+    </div>
+  </div>
+
+  <!-- PREFERENCIAS -->
+  <div style="font-size:9px;font-weight:800;letter-spacing:1.5px;color:var(--y);text-transform:uppercase;margin-bottom:8px">🚗 Preferencias de vehículo</div>
+  <div style="display:flex;gap:8px;margin-bottom:8px">
+    <div style="flex:1"><label class="m" style="font-size:10px">Tipo preferido</label>
+      <select id="lf-tipo" style="margin:2px 0 0">
+        <option value="">Cualquier tipo</option>
+        <option value="Auto">Auto</option>
+        <option value="Pickup/Utilitario">Pickup / Utilitario</option>
+        <option value="SUV">SUV</option>
+      </select>
+    </div>
+    <div style="flex:1"><label class="m" style="font-size:10px">Marca preferida</label>
+      <input type="text" id="lf-marca-pref" placeholder="Ej: Toyota, Fiat..." style="margin:2px 0 0">
+    </div>
+  </div>
+  <div style="margin-bottom:12px">
+    <label class="m" style="font-size:10px">Observaciones</label>
+    <textarea id="lf-obs" placeholder="Consultó por Mercedes, necesita 4 puertas, prefiere automático..." style="width:100%;margin:2px 0 0;min-height:60px;background:var(--inp);border:1px solid var(--bdr);border-radius:6px;padding:8px;color:var(--t);font-size:12px;resize:vertical"></textarea>
+  </div>
+
+  <!-- PREVIEW MATCH EN TIEMPO REAL -->
+  <div id="lf-match-preview" style="display:none;margin-bottom:12px">
+    <div style="font-size:9px;font-weight:800;letter-spacing:1.5px;color:#41c0f0;text-transform:uppercase;margin-bottom:8px">🎯 Matches encontrados ahora</div>
+    <div id="lf-match-lista" style="max-height:200px;overflow-y:auto;display:flex;flex-direction:column;gap:6px"></div>
+  </div>
+  <div id="lf-match-empty" style="display:none;padding:10px;background:var(--s3);border-radius:8px;font-size:11px;color:var(--m);margin-bottom:12px;text-align:center">
+    ⏳ No hay unidades en stock ahora que encajen — el perfil queda guardado y te avisamos cuando ingrese una.
+  </div>
+
+  <!-- ACCIONES -->
+  <div style="display:flex;gap:8px;justify-content:flex-end">
+    <button class="btn btn-ghost btn-sm" onclick="labCerrarModal()">Cancelar</button>
+    <button class="btn btn-r btn-sm" onclick="labGuardarPerfil()">💾 Guardar perfil</button>
+  </div>
+
+  <input type="hidden" id="lf-id">
+</div>
+</div>
+
+<!-- ══ MODAL: DETALLE DE PERFIL ══ -->
+<div id="lab-det-overlay" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.75);z-index:3000;overflow-y:auto;padding:20px 0">
+<div id="lab-det-modal" style="max-width:560px;margin:0 auto;background:var(--s1);border-radius:12px;padding:20px;box-shadow:0 8px 40px rgba(0,0,0,.7)">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+    <div style="font-family:var(--hf);font-weight:900;font-size:16px;color:var(--t)" id="lab-det-titulo">Perfil</div>
+    <div onclick="labCerrarDet()" style="cursor:pointer;font-size:20px;color:var(--m);padding:4px 8px">✕</div>
+  </div>
+  <div id="lab-det-body"></div>
+  <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
+    <button class="btn btn-ghost btn-sm" onclick="labCerrarDet()">Cerrar</button>
+    <button class="btn btn-sm" id="lab-det-btn-editar" style="background:var(--y);color:#fff" onclick="labEditarDesdeDetalle()">✏️ Editar</button>
+    <button class="btn btn-r btn-sm" id="lab-det-btn-cerrar" onclick="labCerrarPerfil()">✅ Marcar cerrado</button>
   </div>
 </div>
 </div>
@@ -1698,6 +1876,7 @@ const SC={
   admin:      {t:'Panel Admin',            s:'Solo administrador'},
   propguard:  {t:'Propuestas Guardadas',   s:'Historial del equipo · Ordenado por fecha'},
   clientes:   {t:'Base de Clientes',       s:'Todos los clientes registrados'},
+  laboratorio:{t:'Laboratorio Comercial', s:'Motor de matching · Perfiles financieros de clientes'},
 };
 function goTo(n){
   clD();
@@ -1715,6 +1894,7 @@ function goTo(n){
   if(n==='admin')rAdm();
   if(n==='propguard')cargarPropuestasGuardadas();
   if(n==='clientes'){cargarClientes();}
+  if(n==='laboratorio'){rLab();}
 }
 function tgD(){$$('dr').classList.toggle('on');$$('ov').classList.toggle('on')}
 function clD(){$$('dr').classList.remove('on');$$('ov').classList.remove('on')}
@@ -1737,6 +1917,7 @@ function bDr(){
       ...(esSupervisor(CU)?[{s:'supervisor',i:'📊',l:'Panel Supervisor',sup:true}]:[]),
       {sec:'Herramientas'},
       {s:'cotizador',i:'🔢',l:'Cotizador rápido'},
+      {s:'laboratorio',i:'🧪',l:'Laboratorio Comercial',sup:false},
       {sec:'Inventario'},
       {s:'stock',i:'🚗',l:'Stock Usados'},
       {s:'okm',i:'🏎',l:'Stock 0 km'},
@@ -1770,6 +1951,7 @@ function bBN(){
     {s:'stock',i:'🚗',l:'Stock'},
     {s:'okm',i:'🏎',l:'0 km'},
     {s:'precios',i:'💰',l:'Precios'},
+    {s:'laboratorio',i:'🧪',l:'Lab'},
   ];
   if(esSupervisor(CU)||esGerencia(CU)){
     items.splice(-1,0,{s:'clientes',i:'👥',l:'Clientes',sup:true});
@@ -5187,6 +5369,485 @@ bLogin();
     })
     .catch(()=>{}); // Silencioso si falla
 })();
+</script>
+<script>
+
+// ══════════════════════════════════════════════════════════════════
+//  LABORATORIO COMERCIAL — Motor de matching
+//  Lee: camp (CAMP_D), STK_D, OKM_D, cuota(), fmt()
+//  Guarda: localStorage 'lab_perfiles'
+// ══════════════════════════════════════════════════════════════════
+
+// ── Storage ──────────────────────────────────────────────────────
+function labGetPerfiles(){
+  try{ return JSON.parse(localStorage.getItem('lab_perfiles')||'[]'); }
+  catch(e){ return []; }
+}
+function labSetPerfiles(arr){
+  localStorage.setItem('lab_perfiles', JSON.stringify(arr));
+}
+
+// ── ID único ─────────────────────────────────────────────────────
+function labUID(){ return 'lab_'+Date.now()+'_'+Math.random().toString(36).slice(2,7); }
+
+// ── Formateo de urgencia ─────────────────────────────────────────
+function labUrgLabel(u){ return u==='caliente'?'🔥 Caliente':u==='tibia'?'🟡 Tibia':'❄ Fría'; }
+function labEstLabel(e){
+  if(e==='match')   return '<span class="lab-est-badge lab-est-match">🎯 Match</span>';
+  if(e==='espera')  return '<span class="lab-est-badge lab-est-espera">⏳ Espera</span>';
+  if(e==='cerrado') return '<span class="lab-est-badge lab-est-cerrado">✅ Cerrado</span>';
+  return '<span class="lab-est-badge lab-est-activo">🟢 Activo</span>';
+}
+
+// ── Motor de matching ─────────────────────────────────────────────
+// Dado un perfil, devuelve array de matches ordenados por cuota ascendente
+function labMatch(perfil){
+  const entrega    = parseFloat(perfil.entrega)||0;
+  const partePago  = parseFloat(perfil.partePago)||0;
+  const cheques    = parseFloat(perfil.cheques)||0;
+  const cuotaMax   = parseFloat(perfil.cuotaMax)||0;
+  const totalDisp  = entrega + partePago + cheques; // capacidad total de pago inicial
+
+  if(totalDisp<=0 && cuotaMax<=0) return [];
+
+  // Unidades candidatas: stock usado (disponible/nuevo ingreso) + 0km
+  const usados = STK_D.filter(u=>{
+    const est=(u.estado||'').toLowerCase();
+    return u.precio>0 && (est==='disponible'||est==='nuevo ingreso'||est==='en preparacion');
+  });
+  const nuevos = (window.OKM_D||[]).filter(u=>u.precio>0);
+  const unidades = [...usados.map(u=>({...u,_tipo:'usado'})), ...nuevos.map(u=>({...u,_tipo:'0km'}))];
+
+  const results=[];
+
+  unidades.forEach(u=>{
+    const precio = parseFloat(u.precio)||0;
+    if(precio<=0) return;
+
+    // Filtrar por preferencia de marca si la tiene
+    if(perfil.marcaPref && perfil.marcaPref.trim()!==''){
+      const mp=perfil.marcaPref.trim().toUpperCase();
+      const um=(u.marca||'').toUpperCase();
+      if(!um.includes(mp) && !mp.includes(um)) return;
+    }
+
+    // Necesidad de financiación: precio - totalDisponible
+    const necesita = precio - totalDisp;
+    if(necesita<0){
+      // Puede pagar todo sin crédito
+      results.push({
+        unidad:u, campana:null,
+        cuotaCalc:0, necesita:0,
+        totalDisp, precio,
+        nota:'Puede comprar al contado'
+      });
+      return;
+    }
+
+    // Buscar campañas que financien la diferencia y cuya cuota quepa
+    if(cuotaMax<=0) return; // sin capacidad de cuota → solo contado
+
+    const mt = necesita; // monto a financiar
+    const activas = camp.filter(c=>c.activa&&!c.usados);
+
+    activas.forEach(c=>{
+      // LTV y montoMax
+      const topeLTV  = precio*(c.ltv/100);
+      const topeMax  = c.montoMax||Infinity;
+      const tope     = Math.min(topeLTV, topeMax);
+      if(mt > tope) return; // esta campaña no alcanza
+
+      // Calcular gastos bancarios (comisión sobre monto)
+      const gastosBank = c.comision>0 ? Math.round(mt*(c.comision/100)*1.21) : 0;
+      const gastosAlmar= c.comision>0 ? Math.round(mt*0.02) : Math.round(mt*0.03);
+      const mtTotal    = mt + gastosBank; // monto efectivo a financiar incluyendo comisión
+
+      // Probar todos los plazos disponibles hasta plazoMax
+      PL.filter(n=>n<=c.plazoMax).forEach(n=>{
+        let q;
+        if(c.coefs && c.coefs[n]){
+          q = cuotaPorCoef(mtTotal, c.coefs[n][0]);
+        } else {
+          q = Math.round(cuota(mtTotal, c.tna, n));
+        }
+        if(q<=cuotaMax){
+          results.push({
+            unidad:u, campana:c, plazo:n,
+            cuotaCalc:q, necesita:mt,
+            gastosBank, gastosAlmar, mtTotal,
+            totalDisp, precio,
+            nota:''
+          });
+        }
+      });
+    });
+  });
+
+  // Ordenar: primero los más accesibles (cuota más baja), luego precio más bajo
+  results.sort((a,b)=>{
+    if(a.cuotaCalc!==b.cuotaCalc) return a.cuotaCalc-b.cuotaCalc;
+    return a.precio-b.precio;
+  });
+
+  // Deduplicar: un resultado por unidad (el mejor plazo)
+  const seen=new Set();
+  return results.filter(r=>{
+    const key=(r.unidad.dominio||r.unidad.version||'')+'_'+(r.campana?.id||'contado');
+    if(seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  }).slice(0,20); // máximo 20 matches
+}
+
+// ── Render lista principal ────────────────────────────────────────
+function rLab(){
+  const perfiles = labGetPerfiles();
+  labRenderStats(perfiles);
+  labFiltrar();
+}
+
+function labRenderStats(perfiles){
+  const st=$$('lab-stats'); if(!st) return;
+  const activos  = perfiles.filter(p=>p.estado==='activo'||p.estado==='match').length;
+  const matches  = perfiles.filter(p=>p.estado==='match').length;
+  const espera   = perfiles.filter(p=>p.estado==='espera').length;
+  const cerrados = perfiles.filter(p=>p.estado==='cerrado').length;
+  st.innerHTML=`
+    <div class="lab-stat"><div class="lab-stat-n">${perfiles.length}</div><div class="lab-stat-l">Total</div></div>
+    <div class="lab-stat"><div class="lab-stat-n" style="color:#27AE60">${activos}</div><div class="lab-stat-l">Activos</div></div>
+    <div class="lab-stat"><div class="lab-stat-n" style="color:#41c0f0">${matches}</div><div class="lab-stat-l">Con match</div></div>
+    <div class="lab-stat"><div class="lab-stat-n" style="color:var(--y)">${espera}</div><div class="lab-stat-l">En espera</div></div>
+    <div class="lab-stat"><div class="lab-stat-n" style="color:var(--m)">${cerrados}</div><div class="lab-stat-l">Cerrados</div></div>
+  `;
+}
+
+function labFiltrar(){
+  const busq=($$('lab-busq')?.value||'').toLowerCase();
+  const filtEst=$$('lab-filtro-est')?.value||'';
+  const filtUrg=$$('lab-filtro-urg')?.value||'';
+  let perfiles=labGetPerfiles();
+
+  // Re-calcular matches para cada perfil activo
+  perfiles=perfiles.map(p=>{
+    if(p.estado==='cerrado') return p;
+    const matches=labMatch(p);
+    const nuevoEst = matches.length>0 ? 'match' : 'espera';
+    return {...p, estado:nuevoEst, _matches:matches};
+  });
+  labSetPerfiles(perfiles.map(p=>({...p, _matches:undefined})));
+  labRenderStats(perfiles);
+
+  if(busq) perfiles=perfiles.filter(p=>(p.nombre||'').toLowerCase().includes(busq)||(p.tel||'').includes(busq));
+  if(filtEst) perfiles=perfiles.filter(p=>p.estado===filtEst);
+  if(filtUrg) perfiles=perfiles.filter(p=>p.urgencia===filtUrg);
+
+  const lista=$$('lab-lista'); if(!lista) return;
+  if(!perfiles.length){
+    lista.innerHTML='<div class="empty"><div class="eico">🔍</div><div class="ettl">Sin resultados</div><div class="esub">Probá cambiar los filtros.</div></div>';
+    return;
+  }
+
+  lista.innerHTML='';
+  perfiles.forEach(p=>{
+    const matches=p._matches||labMatch(p);
+    const tieneMatch=matches.length>0&&p.estado!=='cerrado';
+    const totalDisp=(parseFloat(p.entrega)||0)+(parseFloat(p.partePago)||0)+(parseFloat(p.cheques)||0);
+
+    const card=document.createElement('div');
+    card.className=`lab-card ${p.urgencia||'fria'} ${p.estado==='cerrado'?'cerrado':''} ${tieneMatch?'match':''}`;
+    card.style.cssText='margin-bottom:8px';
+    card.onclick=()=>labVerDetalle(p.id);
+
+    const urgEl=`<span class="lab-urg">${labUrgLabel(p.urgencia)}</span>${labEstLabel(p.estado)}`;
+    const caps=[
+      `<span class="lab-cap">💵 Entrega <strong>${fmt(parseFloat(p.entrega)||0)}</strong></span>`,
+      `<span class="lab-cap">📅 Cuota máx <strong>${fmt(parseFloat(p.cuotaMax)||0)}/mes</strong></span>`,
+      parseFloat(p.partePago)>0?`<span class="lab-cap">🚗 P.Pago <strong>${fmt(parseFloat(p.partePago))}</strong></span>`:'',
+      parseFloat(p.cheques)>0?`<span class="lab-cap">📄 Cheques <strong>${fmt(parseFloat(p.cheques))}</strong></span>`:'',
+    ].filter(Boolean).join('');
+
+    let matchPreview='';
+    if(tieneMatch){
+      const m=matches[0];
+      const autoStr=`${m.unidad.marca||''} ${m.unidad.modelo||''} ${(m.unidad.version||'').substring(0,30)}`;
+      matchPreview=`<div style="margin-top:8px;padding:8px 10px;background:rgba(65,192,240,.1);border:1px solid rgba(65,192,240,.3);border-radius:7px;font-size:11px">
+        <div style="color:#41c0f0;font-weight:700;margin-bottom:2px">🎯 Mejor match (${matches.length} opciones)</div>
+        <div style="color:var(--t);font-weight:600">${autoStr.trim()}</div>
+        <div style="color:var(--m);font-size:10px">${fmt(m.unidad.precio)} · ${m.campana?m.campana.banco+' '+m.plazo+'c — cuota '+fmt(m.cuotaCalc):'Contado'}</div>
+      </div>`;
+    }
+
+    const vend=p.vendedor?' · '+p.vendedor:'';
+    const fecha=p.fecha?new Date(p.fecha).toLocaleDateString('es-AR'):'';
+
+    card.innerHTML=`
+      ${tieneMatch?'<div class="lab-match-badge">🎯 '+matches.length+' MATCHES</div>':''}
+      <div class="lab-nom">${p.nombre||'Sin nombre'}</div>
+      <div class="lab-tel">${p.tel||'Sin teléfono'}${vend}${fecha?' · '+fecha:''}</div>
+      ${urgEl}
+      <div class="lab-caps">${caps}</div>
+      ${p.marcaPref?`<div style="font-size:10px;color:var(--m);margin-bottom:4px">🚗 Preferencia: ${p.marcaPref}</div>`:''}
+      ${p.obs?`<div style="font-size:10px;color:var(--m);margin-bottom:4px">💬 ${p.obs.substring(0,80)}${p.obs.length>80?'...':''}</div>`:''}
+      ${matchPreview}
+    `;
+    lista.appendChild(card);
+  });
+}
+
+// ── Modal nuevo/editar ────────────────────────────────────────────
+function labNuevoPerfil(){
+  // Limpiar formulario
+  ['lf-nombre','lf-tel','lf-entrega','lf-cuota','lf-partepago','lf-cheques','lf-marca-pref','lf-obs'].forEach(id=>{
+    const el=$$(id); if(el) el.value='';
+  });
+  const lfu=$$('lf-urgencia'); if(lfu) lfu.value='caliente';
+  const lft=$$('lf-tipo'); if(lft) lft.value='';
+  const lfid=$$('lf-id'); if(lfid) lfid.value='';
+  $$('lf-total-disp').textContent='$ 0';
+  $$('lf-match-preview').style.display='none';
+  $$('lf-match-empty').style.display='none';
+
+  // Poblar vendedores
+  const sv=$$('lf-vendedor');
+  if(sv){
+    sv.innerHTML='<option value="">— Sin asignar —</option>';
+    USERS.filter(u=>esVendedor(u)||esSupervisor(u)).forEach(u=>{
+      const o=document.createElement('option');
+      o.value=u.name; o.textContent=u.name;
+      sv.appendChild(o);
+    });
+    if(CU) sv.value=CU.name;
+  }
+  $$('lab-modal-overlay').style.display='block';
+}
+
+function labCerrarModal(){
+  $$('lab-modal-overlay').style.display='none';
+}
+
+function labCalcMatch(){
+  const entrega   = parseFloat($$('lf-entrega')?.value)||0;
+  const partePago = parseFloat($$('lf-partepago')?.value)||0;
+  const cheques   = parseFloat($$('lf-cheques')?.value)||0;
+  const cuotaMax  = parseFloat($$('lf-cuota')?.value)||0;
+  const totalDisp = entrega+partePago+cheques;
+
+  $$('lf-total-disp').textContent=fmt(totalDisp);
+
+  if(totalDisp<=0&&cuotaMax<=0){
+    $$('lf-match-preview').style.display='none';
+    $$('lf-match-empty').style.display='none';
+    return;
+  }
+
+  // Perfil temporal para calcular
+  const perfilTemp={
+    entrega, partePago, cheques, cuotaMax,
+    marcaPref:$$('lf-marca-pref')?.value||'',
+    urgencia:'caliente', estado:'activo'
+  };
+  const matches=labMatch(perfilTemp);
+
+  const ml=$$('lf-match-lista');
+  const mp=$$('lf-match-preview');
+  const me=$$('lf-match-empty');
+
+  if(matches.length===0){
+    mp.style.display='none';
+    me.style.display='block';
+    return;
+  }
+  me.style.display='none';
+  mp.style.display='block';
+  ml.innerHTML='';
+
+  matches.slice(0,5).forEach(m=>{
+    const u=m.unidad;
+    const autoStr=`${u.marca||''} ${u.modelo||''} ${(u.version||'').substring(0,35)}`.trim();
+    const div=document.createElement('div');
+    div.className='lab-match-item';
+    div.innerHTML=`
+      <div class="lab-match-auto">${autoStr} <span style="font-weight:400;color:var(--m);font-size:10px">(${u._tipo==='0km'?'0 km':'Usado'})</span></div>
+      <div style="font-size:11px;color:var(--m);margin-bottom:4px">${fmt(u.precio)}</div>
+      ${m.campana?`
+        <div class="lab-match-camp">${m.campana.banco} — ${m.campana.nombre} · ${m.plazo} cuotas</div>
+        <div class="lab-match-cuota">Cuota: ${fmt(m.cuotaCalc)}/mes</div>
+        <div class="lab-match-detalle">Financia: ${fmt(m.necesita)} · LTV ${m.campana.ltv}%${m.gastosBank>0?' · Gastos bancarios: '+fmt(m.gastosBank):''}</div>
+      `:`<div class="lab-match-cuota" style="color:var(--g)">✅ Puede comprar al contado</div>`}
+    `;
+    ml.appendChild(div);
+  });
+  if(matches.length>5){
+    const mas=document.createElement('div');
+    mas.style.cssText='text-align:center;font-size:10px;color:var(--m);padding:6px';
+    mas.textContent=`+ ${matches.length-5} opciones más`;
+    ml.appendChild(mas);
+  }
+}
+
+function labGuardarPerfil(){
+  const nombre=($$('lf-nombre')?.value||'').trim();
+  if(!nombre){ alert('Ingresá al menos el nombre del cliente.'); return; }
+
+  const id=$$('lf-id')?.value||labUID();
+  const perfiles=labGetPerfiles();
+  const idx=perfiles.findIndex(p=>p.id===id);
+
+  const perfil={
+    id,
+    nombre,
+    tel:($$('lf-tel')?.value||'').trim(),
+    vendedor:$$('lf-vendedor')?.value||'',
+    urgencia:$$('lf-urgencia')?.value||'fria',
+    entrega:parseFloat($$('lf-entrega')?.value)||0,
+    cuotaMax:parseFloat($$('lf-cuota')?.value)||0,
+    partePago:parseFloat($$('lf-partepago')?.value)||0,
+    cheques:parseFloat($$('lf-cheques')?.value)||0,
+    marcaPref:($$('lf-marca-pref')?.value||'').trim(),
+    tipoPref:$$('lf-tipo')?.value||'',
+    obs:($$('lf-obs')?.value||'').trim(),
+    estado:'activo',
+    fecha:idx>=0?(perfiles[idx].fecha||new Date().toISOString()):new Date().toISOString(),
+    fechaMod:new Date().toISOString(),
+  };
+
+  if(idx>=0) perfiles[idx]=perfil;
+  else perfiles.unshift(perfil);
+  labSetPerfiles(perfiles);
+  labCerrarModal();
+  rLab();
+}
+
+// ── Detalle de perfil ─────────────────────────────────────────────
+let _labDetId=null;
+function labVerDetalle(id){
+  _labDetId=id;
+  const perfiles=labGetPerfiles();
+  const p=perfiles.find(x=>x.id===id);
+  if(!p) return;
+
+  $$('lab-det-titulo').textContent='🧪 '+p.nombre;
+  const matches=labMatch(p);
+
+  const totalDisp=(parseFloat(p.entrega)||0)+(parseFloat(p.partePago)||0)+(parseFloat(p.cheques)||0);
+
+  let matchesHTML='';
+  if(p.estado==='cerrado'){
+    matchesHTML='<div style="text-align:center;padding:16px;color:var(--m);font-size:12px">✅ Perfil cerrado</div>';
+  } else if(matches.length===0){
+    matchesHTML='<div style="padding:12px;background:var(--s3);border-radius:8px;font-size:12px;color:var(--m);text-align:center">⏳ Sin matches ahora.<br>El perfil quedará activo y se actualizará cuando ingrese una unidad adecuada.</div>';
+  } else {
+    matchesHTML=matches.slice(0,10).map(m=>{
+      const u=m.unidad;
+      const autoStr=`${u.marca||''} ${u.modelo||''} ${(u.version||'').substring(0,40)}`.trim();
+      const tipoStr=u._tipo==='0km'?'🏎 0 km':'🚗 Usado';
+      const domStr=u.dominio?` · ${u.dominio}`:'';
+      return `<div class="lab-match-item" style="margin-bottom:6px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div>
+            <div class="lab-match-auto">${autoStr}</div>
+            <div style="font-size:10px;color:var(--m);margin-bottom:4px">${tipoStr}${domStr} · ${fmt(u.precio)}</div>
+          </div>
+          ${u.color?`<div style="font-size:10px;color:var(--m)">${u.color}</div>`:''}
+        </div>
+        ${m.campana?`
+          <div class="lab-match-camp">💳 ${m.campana.banco} — ${m.campana.nombre}</div>
+          <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:4px">
+            <span style="font-size:11px">📅 <strong>${m.plazo} cuotas</strong> de <strong style="color:var(--g)">${fmt(m.cuotaCalc)}</strong></span>
+            <span style="font-size:10px;color:var(--m)">Financia: ${fmt(m.necesita)}</span>
+            ${m.gastosBank>0?`<span style="font-size:10px;color:var(--m)">Gastos: ${fmt(m.gastosBank)}</span>`:''}
+          </div>
+          <div style="font-size:10px;color:var(--m);margin-top:3px">LTV ${m.campana.ltv}% · TNA ${m.campana.tna.toFixed(1).replace('.',',')}%${m.campana.tna===0?' (¡Tasa 0!)':''}</div>
+        `:`<div class="lab-match-cuota" style="color:var(--g)">✅ Puede comprar al contado con su capacidad disponible</div>`}
+      </div>`;
+    }).join('');
+    if(matches.length>10) matchesHTML+=`<div style="text-align:center;font-size:10px;color:var(--m);padding:6px">+ ${matches.length-10} opciones más disponibles</div>`;
+  }
+
+  $$('lab-det-body').innerHTML=`
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">
+      <span class="lab-urg lab-card ${p.urgencia}">${labUrgLabel(p.urgencia)}</span>
+      ${labEstLabel(p.estado)}
+      ${p.vendedor?`<span style="font-size:10px;color:var(--m);align-self:center">· ${p.vendedor}</span>`:''}
+    </div>
+    ${p.tel?`<div style="font-size:12px;color:var(--m);margin-bottom:4px">📞 ${p.tel}</div>`:''}
+    ${p.obs?`<div style="font-size:12px;color:var(--m);margin-bottom:10px;padding:8px;background:var(--s3);border-radius:6px">💬 ${p.obs}</div>`:''}
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px">
+      <div style="background:var(--s3);border-radius:8px;padding:8px 12px">
+        <div style="font-size:9px;color:var(--m);text-transform:uppercase;letter-spacing:.5px">Entrega efectivo</div>
+        <div style="font-weight:700;color:var(--t)">${fmt(parseFloat(p.entrega)||0)}</div>
+      </div>
+      <div style="background:var(--s3);border-radius:8px;padding:8px 12px">
+        <div style="font-size:9px;color:var(--m);text-transform:uppercase;letter-spacing:.5px">Cuota máx/mes</div>
+        <div style="font-weight:700;color:var(--t)">${fmt(parseFloat(p.cuotaMax)||0)}</div>
+      </div>
+      ${parseFloat(p.partePago)>0?`<div style="background:var(--s3);border-radius:8px;padding:8px 12px">
+        <div style="font-size:9px;color:var(--m);text-transform:uppercase;letter-spacing:.5px">Parte de pago</div>
+        <div style="font-weight:700;color:var(--t)">${fmt(parseFloat(p.partePago))}</div>
+      </div>`:''}
+      ${parseFloat(p.cheques)>0?`<div style="background:var(--s3);border-radius:8px;padding:8px 12px">
+        <div style="font-size:9px;color:var(--m);text-transform:uppercase;letter-spacing:.5px">Cheques/documentos</div>
+        <div style="font-weight:700;color:var(--t)">${fmt(parseFloat(p.cheques))}</div>
+      </div>`:''}
+      <div style="background:var(--rg);border-radius:8px;padding:8px 12px;grid-column:${parseFloat(p.partePago)>0||parseFloat(p.cheques)>0?'auto':'1/-1'}">
+        <div style="font-size:9px;color:var(--m);text-transform:uppercase;letter-spacing:.5px">Total disponible</div>
+        <div style="font-weight:900;color:var(--g)">${fmt(totalDisp)}</div>
+      </div>
+    </div>
+    ${p.marcaPref?`<div style="font-size:11px;color:var(--m);margin-bottom:8px">🚗 Preferencia: <strong>${p.marcaPref}</strong>${p.tipoPref?' · '+p.tipoPref:''}</div>`:''}
+
+    <div style="font-size:9px;font-weight:800;letter-spacing:1.5px;color:#41c0f0;text-transform:uppercase;margin-bottom:8px">
+      🎯 ${matches.length>0?matches.length+' matches encontrados':'Sin matches ahora'}
+    </div>
+    ${matchesHTML}
+  `;
+
+  $$('lab-det-btn-cerrar').style.display=p.estado==='cerrado'?'none':'';
+  $$('lab-det-overlay').style.display='block';
+}
+
+function labCerrarDet(){
+  $$('lab-det-overlay').style.display='none';
+  _labDetId=null;
+}
+
+function labEditarDesdeDetalle(){
+  if(!_labDetId) return;
+  const p=labGetPerfiles().find(x=>x.id===_labDetId);
+  if(!p) return;
+  labCerrarDet();
+
+  // Pre-cargar modal con datos existentes
+  labNuevoPerfil();
+  setTimeout(()=>{
+    if($$('lf-id')) $$('lf-id').value=p.id;
+    if($$('lf-nombre')) $$('lf-nombre').value=p.nombre||'';
+    if($$('lf-tel')) $$('lf-tel').value=p.tel||'';
+    if($$('lf-vendedor')) $$('lf-vendedor').value=p.vendedor||'';
+    if($$('lf-urgencia')) $$('lf-urgencia').value=p.urgencia||'caliente';
+    if($$('lf-entrega')) $$('lf-entrega').value=p.entrega||'';
+    if($$('lf-cuota')) $$('lf-cuota').value=p.cuotaMax||'';
+    if($$('lf-partepago')) $$('lf-partepago').value=p.partePago||'';
+    if($$('lf-cheques')) $$('lf-cheques').value=p.cheques||'';
+    if($$('lf-marca-pref')) $$('lf-marca-pref').value=p.marcaPref||'';
+    if($$('lf-tipo')) $$('lf-tipo').value=p.tipoPref||'';
+    if($$('lf-obs')) $$('lf-obs').value=p.obs||'';
+    labCalcMatch();
+  },50);
+}
+
+function labCerrarPerfil(){
+  if(!_labDetId) return;
+  if(!confirm('¿Marcar este perfil como cerrado? Seguirá visible pero no recibirá nuevos matches.')) return;
+  const perfiles=labGetPerfiles();
+  const idx=perfiles.findIndex(p=>p.id===_labDetId);
+  if(idx>=0){ perfiles[idx].estado='cerrado'; labSetPerfiles(perfiles); }
+  labCerrarDet();
+  rLab();
+}
+// ══ FIN LABORATORIO COMERCIAL ══
+
 </script>
 </body>
 </html>
