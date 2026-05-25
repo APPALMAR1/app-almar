@@ -425,10 +425,12 @@ select option{background:var(--s2)}
 #tb,#bn,#dr,#ov,#login,#thm,.no-print,.scr{display:none!important}
 #screen-propuesta{display:block!important}
 
+/* Ocultar fila de gastos sumada en pantalla normal */
+.no-screen-gastos{display:none}
 /* Gastos bancarios en impresión: ocultar los dos separados, mostrar el sumado */
 #screen-propuesta .pr:has(#pa3),
 #screen-propuesta .pr:has(#pa3b){display:none!important}
-#screen-propuesta .print-gastos-sum{display:flex!important}
+#screen-propuesta .print-gastos-sum{display:grid!important;grid-template-columns:1fr auto;align-items:center;gap:4px;padding:1mm 0!important;border-bottom:1px solid #F0F4F8!important}
 
 /* Modo impresión stock — clase en body */
 body.print-stock #screen-propuesta{display:none!important}
@@ -705,7 +707,7 @@ input[type=text]#p-obs{background:#F5F7FA!important;border:1px solid #D5DCE6!imp
         <div class="pr"><label>Gastos bancarios campaña</label><input type="number" id="pa3" placeholder="0" oninput="cP()"></div>
         <div class="pr"><label>Gastos de otorgamiento</label><input type="number" id="pa3b" placeholder="0" oninput="cP()"></div>
         <!-- Fila solo visible en impresión: suma pa3 + pa3b como "Gastos bancarios" -->
-        <div class="pr print-gastos-sum" style="display:none"><label>Gastos bancarios</label><input type="number" id="pa3-sum" readonly tabindex="-1" style="pointer-events:none" value="0"></div>
+        <div class="pr print-gastos-sum no-screen-gastos"><label>Gastos bancarios</label><input type="number" id="pa3-sum" readonly tabindex="-1" style="pointer-events:none" value="0"></div>
         <div class="pr"><label>Intereses crédito (total)</label><input type="number" id="pa4" placeholder="0" oninput="cP()"></div>
         <div class="pr"><label>Comisión / Premio banco</label><input type="number" id="pa5" placeholder="0" oninput="cP()"></div>
         <div class="pr"><label>Seguro automotor</label><input type="number" id="pa6" placeholder="0" oninput="cP()"></div>
