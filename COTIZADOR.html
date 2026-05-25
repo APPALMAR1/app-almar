@@ -425,12 +425,10 @@ select option{background:var(--s2)}
 #tb,#bn,#dr,#ov,#login,#thm,.no-print,.scr{display:none!important}
 #screen-propuesta{display:block!important}
 
-/* Ocultar fila de gastos sumada en pantalla normal */
-.no-screen-gastos{display:none}
 /* Gastos bancarios en impresión: ocultar los dos separados, mostrar el sumado */
 #screen-propuesta .pr:has(#pa3),
 #screen-propuesta .pr:has(#pa3b){display:none!important}
-#screen-propuesta .print-gastos-sum{display:grid!important;grid-template-columns:1fr auto;align-items:center;gap:4px;padding:1mm 0!important;border-bottom:1px solid #F0F4F8!important}
+#screen-propuesta .print-gastos-sum{display:flex!important}
 
 /* Modo impresión stock — clase en body */
 body.print-stock #screen-propuesta{display:none!important}
@@ -707,7 +705,7 @@ input[type=text]#p-obs{background:#F5F7FA!important;border:1px solid #D5DCE6!imp
         <div class="pr"><label>Gastos bancarios campaña</label><input type="number" id="pa3" placeholder="0" oninput="cP()"></div>
         <div class="pr"><label>Gastos de otorgamiento</label><input type="number" id="pa3b" placeholder="0" oninput="cP()"></div>
         <!-- Fila solo visible en impresión: suma pa3 + pa3b como "Gastos bancarios" -->
-        <div class="pr print-gastos-sum no-screen-gastos"><label>Gastos bancarios</label><input type="number" id="pa3-sum" readonly tabindex="-1" style="pointer-events:none" value="0"></div>
+        <div class="pr print-gastos-sum" style="display:none"><label>Gastos bancarios</label><input type="number" id="pa3-sum" readonly tabindex="-1" style="pointer-events:none" value="0"></div>
         <div class="pr"><label>Intereses crédito (total)</label><input type="number" id="pa4" placeholder="0" oninput="cP()"></div>
         <div class="pr"><label>Comisión / Premio banco</label><input type="number" id="pa5" placeholder="0" oninput="cP()"></div>
         <div class="pr"><label>Seguro automotor</label><input type="number" id="pa6" placeholder="0" oninput="cP()"></div>
@@ -2202,6 +2200,18 @@ function renderClientes(rows){
 
 //  PROPUESTAS — GUARDAR Y CARGAR 
 function guardarPropuesta(){
+  // Verificar saldo cubierto antes de guardar
+  const _iA=['pa1','pa2','pa3','pa3b','pa4','pa5','pa6'];
+  const _iB=['pb1','pb2','pb3','pb4','pb5','pb6'];
+  let _tA=_iA.reduce((s,id)=>s+(parseFloat($$(id)?.value)||0),0);
+  let _tB=_iB.reduce((s,id)=>s+(parseFloat($$(id)?.value)||0),0);
+  document.querySelectorAll('[data-xa]').forEach(el=>_tA+=parseFloat(el.value)||0);
+  document.querySelectorAll('[data-xb]').forEach(el=>_tB+=parseFloat(el.value)||0);
+  if(_tA>0 && _tA-_tB>0){
+    alert('⚠️ La operación no está cubierta.
+Completá las formas de pago antes de guardar.');
+    return;
+  }
   try{
   // Validar campos cliente
   const errores=validarCamposCliente();
@@ -3345,6 +3355,8 @@ function calcCred(){
       if(diff<=0){si.className='si2 ok';st.textContent='OPERACIÓN CUBIERTA';ss.textContent=diff<0?`Excedente ${fmt(Math.abs(diff))}`:'Exactamente cubierta';pf.style.background='var(--g)'}
       else if(diff<=tA*0.1){si.className='si2 warn';st.textContent='CASI CUBIERTO';ss.textContent=`Falta ${fmt(diff)}`;pf.style.background='var(--y)'}
       else{si.className='si2 falta';st.textContent='SALDO PENDIENTE';ss.textContent='Falta cubrir este monto';pf.style.background='var(--r)'}
+      // Bloquear/desbloquear botones según saldo
+      _actualizarBotonesSaldo(diff);
     }
   }
   box.style.display='block';
@@ -3532,7 +3544,35 @@ function gWA(){
 function cpWA(){const t=gWA();if(navigator.clipboard)navigator.clipboard.writeText(t).then(()=>alert('✅ Copiado. Pegalo en WhatsApp.')).catch(()=>fbCopy(t));else fbCopy(t)}
 function fbCopy(t){const ta=document.createElement('textarea');ta.value=t;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');alert('✅ Copiado.')}catch(e){}document.body.removeChild(ta)}
 function vWA(){const p=$$('wap');if(p.style.display==='block'){p.style.display='none';return}p.innerHTML='<div class="waprev">'+gWA().replace(/\n/g,'<br>').replace(/\*(.*?)\*/g,'<strong>$1</strong>')+'</div>';p.style.display='block';cpWA()}
-function prtP(){$$('phf').textContent=tod();$$('phv').textContent=CU?CU.name:'';window.print()}
+function _actualizarBotonesSaldo(diff){
+  const cubierto = diff <= 0;
+  const btnGuardar = document.querySelector('.btn-g[onclick*="gCot"]');
+  const btnImprimir = document.querySelector('.btn-ghost[onclick*="prtP"]');
+  const btnEmail = document.querySelector('.btn-ghost[onclick*="emailPropuesta"]');
+  const avisoId = 'aviso-saldo-pendiente';
+  let aviso = $$(avisoId);
+  if(!aviso){
+    aviso = document.createElement('div');
+    aviso.id = avisoId;
+    aviso.style.cssText = 'display:none;background:rgba(231,76,60,.12);border:1.5px solid var(--r);border-radius:8px;padding:10px 14px;font-size:11px;font-weight:700;color:var(--r);text-align:center;margin-bottom:8px';
+    aviso.textContent = '⚠️ La operación no está cubierta. Completá las formas de pago antes de guardar o imprimir.';
+    const brow = document.querySelector('.brow.no-print');
+    if(brow) brow.parentNode.insertBefore(aviso, brow);
+  }
+  if(cubierto){
+    aviso.style.display = 'none';
+    if(btnGuardar){btnGuardar.disabled=false;btnGuardar.style.opacity='';btnGuardar.style.cursor='';}
+    if(btnImprimir){btnImprimir.disabled=false;btnImprimir.style.opacity='';btnImprimir.style.cursor='';}
+    if(btnEmail){btnEmail.disabled=false;btnEmail.style.opacity='';btnEmail.style.cursor='';}
+  } else {
+    aviso.style.display = 'block';
+    if(btnGuardar){btnGuardar.disabled=true;btnGuardar.style.opacity='0.4';btnGuardar.style.cursor='not-allowed';}
+    if(btnImprimir){btnImprimir.disabled=true;btnImprimir.style.opacity='0.4';btnImprimir.style.cursor='not-allowed';}
+    if(btnEmail){btnEmail.disabled=true;btnEmail.style.opacity='0.4';btnEmail.style.cursor='not-allowed';}
+  }
+}
+
+function prtP(){if(document.querySelector('.btn-ghost[onclick*="prtP"]')?.disabled)return;$$('phf').textContent=tod();$$('phv').textContent=CU?CU.name:'';window.print()}
 
 //  HISTORIAL 
 function gCot(){
