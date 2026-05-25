@@ -5495,7 +5495,8 @@ function labMatch(perfil){
       return;
     }
 
-    if(cuotaMax<=0) return; // sin capacidad de cuota → solo contado
+    // Si cuotaMax=0 → no hay límite de cuota declarado, mostrar igual con cuota calculada
+    const sinLimiteCuota = cuotaMax<=0;
 
     // Necesita financiar: precio - lo que puede entregar
     const necesita = precio - totalDisp;
@@ -5540,12 +5541,13 @@ function labMatch(perfil){
         } else {
           q = Math.round(cuota(montoCred, c.tna, n));
         }
-        if(q<=cuotaMax){
+        if(sinLimiteCuota || q<=cuotaMax){
           results.push({
             unidad:u, campana:c, plazo:n,
             cuotaCalc:q, necesita, gastosOtorg, montoCred,
             topeLTV, tope, ltvInfo,
             totalDisp, precio, sobra:0,
+            sinLimiteCuota,
             nota:''
           });
         }
@@ -5681,7 +5683,7 @@ function labFiltrar(){
       matchPreview=`<div style="margin-top:8px;padding:8px 10px;background:rgba(65,192,240,.1);border:1px solid rgba(65,192,240,.3);border-radius:7px;font-size:11px">
         <div style="color:#41c0f0;font-weight:700;margin-bottom:2px">🎯 ${matches.length} match${matches.length>1?'es':''} encontrado${matches.length>1?'s':''}</div>
         <div style="color:var(--t);font-weight:600">${autoStr}</div>
-        <div style="color:var(--m);font-size:10px">${fmt(m.unidad.precio)}${m.campana?' · '+m.campana.banco+' '+m.plazo+'c · cuota '+fmt(m.cuotaCalc):' · Al contado'}</div>
+        <div style="color:var(--m);font-size:10px">${fmt(m.unidad.precio)}${m.campana?' · '+m.campana.banco+' '+m.plazo+'c · cuota '+fmt(m.cuotaCalc)+(m.sinLimiteCuota?' (aprox)':''):' · Al contado'}</div>
       </div>`;
     }
 
@@ -5874,7 +5876,9 @@ function labCalcMatch(){
       <div style="font-size:11px;color:var(--m);margin-bottom:4px">${fmt(u.precio)}${u.dominio?' · '+u.dominio:''}</div>
       ${m.campana?`
         <div class="lab-match-camp">💳 ${m.campana.banco} — ${m.plazo} cuotas</div>
-        <div class="lab-match-cuota">Cuota: ${fmt(m.cuotaCalc)}/mes</div>
+        <div class="lab-match-cuota" style="color:${m.sinLimiteCuota?'var(--y)':'var(--g)'}">
+          Cuota: ${fmt(m.cuotaCalc)}/mes${m.sinLimiteCuota?' <span style=\'font-size:9px;color:var(--m)\'>— ingresá cuota máx para filtrar</span>':''}
+        </div>
         <div class="lab-match-detalle">
           Necesita financiar: ${fmt(m.necesita)} · LTV ${m.ltvInfo?.ltv||m.campana.ltv}%
           ${m.gastosOtorg>0?' · Gastos: '+fmt(m.gastosOtorg):''}
@@ -5989,7 +5993,7 @@ function labVerDetalle(id){
         ${m.campana?`
           <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:3px">
             <span class="lab-match-camp" style="margin:0">💳 ${m.campana.banco}</span>
-            <span style="font-size:11px;color:var(--t)"><strong>${m.plazo} cuotas</strong> de <strong style="color:var(--g)">${fmt(m.cuotaCalc)}/mes</strong></span>
+            <span style="font-size:11px;color:var(--t)"><strong>${m.plazo} cuotas</strong> de <strong style="color:${m.sinLimiteCuota?'var(--y)':'var(--g)'}">${fmt(m.cuotaCalc)}/mes</strong>${m.sinLimiteCuota?'<span style=\'font-size:9px;color:var(--m);margin-left:4px\'>aprox.</span>':''}</span>
           </div>
           <div style="font-size:10px;color:var(--m)">
             Financia: ${fmt(m.necesita)} · LTV ${m.ltvInfo?.ltv||m.campana.ltv}% (tope ${fmt(m.tope)})
