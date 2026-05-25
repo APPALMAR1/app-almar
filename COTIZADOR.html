@@ -2208,8 +2208,7 @@ function guardarPropuesta(){
   document.querySelectorAll('[data-xa]').forEach(el=>_tA+=parseFloat(el.value)||0);
   document.querySelectorAll('[data-xb]').forEach(el=>_tB+=parseFloat(el.value)||0);
   if(_tA>0 && _tA-_tB>0){
-    alert('⚠️ La operación no está cubierta.
-Completá las formas de pago antes de guardar.');
+    alert('⚠️ La operación no está cubierta. Completá las formas de pago antes de guardar.');
     return;
   }
   try{
