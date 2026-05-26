@@ -5910,8 +5910,8 @@ function labMatch(perfil){
   if(modoContado){
     if(contado <= 0) return [];
     const unidades = [
-      ...(window.STK_D||[]).filter(u=>{ const e=(u.estado||'').toLowerCase(); return u.precio>0&&(e==='disponible'||e==='nuevo ingreso'||e==='en preparacion'); }).map(u=>({...u,_tipo:'usado',_esUsado:true})),
-      ...(window.OKM_D||[]).filter(u=>u.precio>0).map(u=>({...u,_tipo:'0km',_esUsado:false}))
+      ...(typeof STK_D!=="undefined"?STK_D:[]).filter(u=>{ const e=(u.estado||'').toLowerCase(); return u.precio>0&&(e==='disponible'||e==='nuevo ingreso'||e==='en preparacion'); }).map(u=>({...u,_tipo:'usado',_esUsado:true})),
+      ...(typeof OKM_D!=="undefined"?OKM_D:[]).filter(u=>u.precio>0).map(u=>({...u,_tipo:'0km',_esUsado:false}))
     ];
     const busca = perfil.buscaMarca&&perfil.buscaModelo ? ((perfil.buscaMarca+' '+perfil.buscaModelo).toUpperCase().trim()) : null;
     const results = [];
@@ -5939,11 +5939,11 @@ function labMatch(perfil){
   if(totalSinCred <= 0 && sinLimiteCuota) return [];
 
   // Unidades candidatas
-  const usados = (window.STK_D||[]).filter(u=>{
+  const usados = (typeof STK_D!=="undefined"?STK_D:[]).filter(u=>{
     const est=(u.estado||'').toLowerCase();
     return u.precio>0 && (est==='disponible'||est==='nuevo ingreso'||est==='en preparacion');
   });
-  const nuevos = (window.OKM_D||[]).filter(u=>u.precio>0);
+  const nuevos = (typeof OKM_D!=="undefined"?OKM_D:[]).filter(u=>u.precio>0);
   const unidades = [
     ...usados.map(u=>({...u, _tipo:'usado', _esUsado:true})),
     ...nuevos.map(u=>({...u, _tipo:'0km',   _esUsado:false}))
