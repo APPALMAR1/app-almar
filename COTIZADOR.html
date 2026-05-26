@@ -1122,13 +1122,27 @@ input[type=text]#p-obs{background:#F5F7FA!important;border:1px solid #D5DCE6!imp
 
   <!-- CAPACIDAD FINANCIERA -->
   <div style="font-size:9px;font-weight:800;letter-spacing:1.5px;color:var(--y);text-transform:uppercase;margin-bottom:8px">💰 Capacidad financiera real</div>
-  <div style="display:flex;gap:8px;margin-bottom:8px">
-    <div style="flex:1"><label class="m" style="font-size:10px">Entrega en efectivo $</label><input type="number" id="lf-entrega" placeholder="0" oninput="labCalcMatch()" style="margin:2px 0 0"></div>
-    <div style="flex:1"><label class="m" style="font-size:10px">Cuota máxima mensual $</label><input type="number" id="lf-cuota" placeholder="0" oninput="labCalcMatch()" style="margin:2px 0 0"></div>
+  <!-- Modo de pago -->
+  <div style="display:flex;gap:6px;margin-bottom:10px">
+    <button id="lf-modo-fin" onclick="labSetModo('financiado')" class="btn btn-sm" style="flex:1;font-size:11px;background:var(--r);color:#fff">💳 Con financiación</button>
+    <button id="lf-modo-con" onclick="labSetModo('contado')" class="btn btn-sm" style="flex:1;font-size:11px;background:var(--s3);color:var(--m)">💵 Al contado</button>
   </div>
-  <div style="display:flex;gap:8px;margin-bottom:8px">
-    <div style="flex:1"><label class="m" style="font-size:10px">Auto en parte de pago $</label><input type="number" id="lf-partepago" placeholder="0" oninput="labCalcMatch()" style="margin:2px 0 0"></div>
-    <div style="flex:1"><label class="m" style="font-size:10px">Cheques / documentos $</label><input type="number" id="lf-cheques" placeholder="0" oninput="labCalcMatch()" style="margin:2px 0 0"></div>
+  <!-- Bloque financiado -->
+  <div id="lf-bloque-fin">
+    <div style="display:flex;gap:8px;margin-bottom:8px">
+      <div style="flex:1"><label class="m" style="font-size:10px">Entrega en efectivo $</label><input type="number" id="lf-entrega" placeholder="0" oninput="labCalcMatch()" style="margin:2px 0 0"></div>
+      <div style="flex:1"><label class="m" style="font-size:10px">Cuota máxima mensual $</label><input type="number" id="lf-cuota" placeholder="0" oninput="labCalcMatch()" style="margin:2px 0 0"></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:8px">
+      <div style="flex:1"><label class="m" style="font-size:10px">Auto en parte de pago $</label><input type="number" id="lf-partepago" placeholder="0" oninput="labCalcMatch()" style="margin:2px 0 0"></div>
+      <div style="flex:1"><label class="m" style="font-size:10px">Cheques / documentos $</label><input type="number" id="lf-cheques" placeholder="0" oninput="labCalcMatch()" style="margin:2px 0 0"></div>
+    </div>
+  </div>
+  <!-- Bloque contado -->
+  <div id="lf-bloque-con" style="display:none;margin-bottom:8px">
+    <label class="m" style="font-size:10px">Monto disponible al contado $</label>
+    <input type="number" id="lf-contado" placeholder="0" oninput="labCalcMatch()" style="margin:2px 0 0;width:100%">
+    <div style="font-size:10px;color:var(--m);margin-top:4px">El sistema alertará cuando ingrese una unidad dentro de ese presupuesto.</div>
   </div>
   <div style="margin-bottom:12px">
     <div style="display:flex;gap:6px;align-items:center;padding:8px 12px;background:var(--s3);border-radius:8px">
@@ -1137,8 +1151,18 @@ input[type=text]#p-obs{background:#F5F7FA!important;border:1px solid #D5DCE6!imp
     </div>
   </div>
 
+  <!-- QUÉ BUSCA -->
+  <div style="font-size:9px;font-weight:800;letter-spacing:1.5px;color:var(--y);text-transform:uppercase;margin-bottom:8px">🎯 ¿Qué vehículo busca?</div>
+  <div style="display:flex;gap:8px;margin-bottom:6px">
+    <div style="flex:1"><label class="m" style="font-size:10px">Marca deseada</label><input type="text" id="lf-busca-marca" placeholder="Ej: Toyota" oninput="labCalcMatch()" style="margin:2px 0 0"></div>
+    <div style="flex:1"><label class="m" style="font-size:10px">Modelo deseado</label><input type="text" id="lf-busca-modelo" placeholder="Ej: Hilux" oninput="labCalcMatch()" style="margin:2px 0 0"></div>
+  </div>
+  <div style="display:flex;gap:6px;margin-bottom:10px;align-items:center">
+    <input type="checkbox" id="lf-acepta-similares" onchange="labCalcMatch()" checked style="width:auto;margin:0">
+    <label style="font-size:11px;color:var(--m);cursor:pointer" for="lf-acepta-similares">Acepta modelos similares del mismo segmento</label>
+  </div>
   <!-- PREFERENCIAS -->
-  <div style="font-size:9px;font-weight:800;letter-spacing:1.5px;color:var(--y);text-transform:uppercase;margin-bottom:8px">🚗 Preferencias de vehículo</div>
+  <div style="font-size:9px;font-weight:800;letter-spacing:1.5px;color:var(--y);text-transform:uppercase;margin-bottom:8px">🚗 Preferencias adicionales</div>
   <div style="display:flex;gap:8px;margin-bottom:8px">
     <div style="flex:1"><label class="m" style="font-size:10px">Tipo preferido</label>
       <select id="lf-tipo" style="margin:2px 0 0">
@@ -1213,6 +1237,316 @@ const esGerencia  = u => u?.role==='gerencia'||u?.role==='master';
 const esMaster    = u => u?.role==='master';
 const puedeVerTodos = u => esSupervisor(u)||esGerencia(u);
 const PL=[6,12,18,24,30,36,48,60];
+
+const SEG_D={
+  'TOYOTA COROLLA':{seg:'C',car:'Sedan',prop:'nafta'},
+  'TOYOTA COROLLA CROSS':{seg:'C',car:'SUV',prop:'nafta'},
+  'TOYOTA YARIS':{seg:'B',car:'Hatchback',prop:'nafta'},
+  'TOYOTA ETIOS':{seg:'B',car:'Sedan',prop:'nafta'},
+  'TOYOTA HILUX':{seg:'D',car:'Pickup Mediana',prop:'diesel'},
+  'TOYOTA HILUX SW4':{seg:'D',car:'SUV',prop:'diesel'},
+  'TOYOTA SW4':{seg:'D',car:'SUV',prop:'diesel'},
+  'TOYOTA RAV4':{seg:'C',car:'SUV',prop:'nafta'},
+  'TOYOTA LAND CRUISER':{seg:'D',car:'SUV',prop:'diesel'},
+  'TOYOTA HIACE':{seg:'C',car:'Furgon',prop:'diesel'},
+  'TOYOTA PRIUS':{seg:'C',car:'Sedan',prop:'hibrido'},
+  'VOLKSWAGEN GOL':{seg:'B',car:'Hatchback',prop:'nafta'},
+  'VOLKSWAGEN GOL TREND':{seg:'B',car:'Hatchback',prop:'nafta'},
+  'VOLKSWAGEN POLO':{seg:'B',car:'Hatchback',prop:'nafta'},
+  'VOLKSWAGEN NUEVO POLO':{seg:'B',car:'Hatchback',prop:'nafta'},
+  'VOLKSWAGEN VIRTUS':{seg:'B',car:'Sedan',prop:'nafta'},
+  'VOLKSWAGEN NUEVO VIRTUS':{seg:'B',car:'Sedan',prop:'nafta'},
+  'VOLKSWAGEN VENTO':{seg:'C',car:'Sedan',prop:'nafta'},
+  'VOLKSWAGEN VOYAGE':{seg:'B',car:'Sedan',prop:'nafta'},
+  'VOLKSWAGEN BORA':{seg:'C',car:'Sedan',prop:'nafta'},
+  'VOLKSWAGEN SURAN':{seg:'B',car:'Hatchback',prop:'nafta'},
+  'VOLKSWAGEN FOX':{seg:'B',car:'Hatchback',prop:'nafta'},
+  'VOLKSWAGEN UP!':{seg:'A',car:'Hatchback',prop:'nafta'},
+  'VOLKSWAGEN GOLF':{seg:'C',car:'Hatchback',prop:'nafta'},
+  'VOLKSWAGEN PASSAT':{seg:'D',car:'Sedan',prop:'nafta'},
+  'VOLKSWAGEN T-CROSS':{seg:'B',car:'SUV',prop:'nafta'},
+  'VOLKSWAGEN TAOS':{seg:'C',car:'SUV',prop:'nafta'},
+  'VOLKSWAGEN NIVUS':{seg:'B',car:'SUV',prop:'nafta'},
+  'VOLKSWAGEN TIGUAN':{seg:'C',car:'SUV',prop:'nafta'},
+  'VOLKSWAGEN AMAROK':{seg:'D',car:'Pickup Mediana',prop:'diesel'},
+  'VOLKSWAGEN SAVEIRO':{seg:'B',car:'Pickup Chica',prop:'nafta'},
+  'VOLKSWAGEN CADDY':{seg:'B',car:'Furgon',prop:'nafta'},
+  'VOLKSWAGEN GACEL':{seg:'B',car:'Sedan',prop:'nafta'},
+  'VOLKSWAGEN SENDA':{seg:'B',car:'Hatchback',prop:'nafta'},
+  'VOLKSWAGEN POINTER':{seg:'B',car:'Hatchback',prop:'nafta'},
+  'VOLKSWAGEN JETTA':{seg:'C',car:'Sedan',prop:'nafta'},
+  'FORD KA':{seg:'A',car:'Hatchback',prop:'nafta'},
+  'FORD FIESTA':{seg:'B',car:'Hatchback',prop:'nafta'},
+  'FORD FIESTA KINETIC':{seg:'B',car:'Hatchback',prop:'nafta'},
+  'FORD FOCUS':{seg:'C',car:'Hatchback',prop:'nafta'},
+  'FORD FOCUS II':{seg:'C',car:'Hatchback',prop:'nafta'},
+  'FORD ECOSPORT':{seg:'B',car:'SUV',prop:'nafta'},
+  'FORD TERRITORY':{seg:'C',car:'SUV',prop:'nafta'},
+  'FORD KUGA':{seg:'C',car:'SUV',prop:'nafta'},
+  'FORD ESCORT':{seg:'B',car:'Sedan',prop:'nafta'},
+  'FORD MONDEO':{seg:'D',car:'Sedan',prop:'nafta'},
+  'FORD GALAXY':{seg:'C',car:'Monovolumen',prop:'nafta'},
+  'FORD FALCON':{seg:'C',car:'Sedan',prop:'nafta'},
+  'FORD RANGER':{seg:'D',car:'Pickup Mediana',prop:'diesel'},
+  'FORD F-100':{seg:'D',car:'Pickup Mediana',prop:'nafta'},
+  'FORD F-150':{seg:'D',car:'Pickup Grande',prop:'nafta'},
+  'FORD COURIER':{seg:'B',car:'Furgon',prop:'nafta'},
+  'FORD TRANSIT':{seg:'C',car:'Furgon',prop:'diesel'},
+  'FORD MAVERICK':{seg:'B',car:'Pickup Chica',prop:'nafta'},
+  'FORD SIERRA':{seg:'C',car:'Sedan',prop:'nafta'},
+  'CHEVROLET ONIX':{seg:'B',car:'Hatchback',prop:'nafta'},
+  'CHEVROLET ONIX PLUS':{seg:'B',car:'Sedan',prop:'nafta'},
+  'CHEVROLET PRISMA':{seg:'B',car:'Sedan',prop:'nafta'},
+  'CHEVROLET COBALT':{seg:'B',car:'Sedan',prop:'nafta'},
+  'CHEVROLET TRACKER':{seg:'B',car:'SUV',prop:'nafta'},
+  'CHEVROLET CRUZE':{seg:'C',car:'Sedan',prop:'nafta'},
+  'CHEVROLET CAPTIVA':{seg:'C',car:'SUV',prop:'nafta'},
+  'CHEVROLET EQUINOX':{seg:'C',car:'SUV',prop:'nafta'},
+  'CHEVROLET BLAZER':{seg:'C',car:'SUV',prop:'nafta'},
+  'CHEVROLET TRAILBLAZER':{seg:'D',car:'SUV',prop:'diesel'},
+  'CHEVROLET SPIN':{seg:'B',car:'Monovolumen',prop:'nafta'},
+  'CHEVROLET MERIVA':{seg:'B',car:'Monovolumen',prop:'nafta'},
+  'CHEVROLET ZAFIRA':{seg:'C',car:'Monovolumen',prop:'nafta'},
+  'CHEVROLET AGILE':{seg:'B',car:'Hatchback',prop:'nafta'},
+  'CHEVROLET CELTA':{seg:'A',car:'Hatchback',prop:'nafta'},
+  'CHEVROLET CLASSIC':{seg:'B',car:'Sedan',prop:'nafta'},
+  'CHEVROLET CORSA':{seg:'B',car:'Hatchback',prop:'nafta'},
+  'CHEVROLET ASTRA':{seg:'C',car:'Hatchback',prop:'nafta'},
+  'CHEVROLET VECTRA':{seg:'C',car:'Sedan',prop:'nafta'},
+  'CHEVROLET AVEO':{seg:'B',car:'Sedan',prop:'nafta'},
+  'CHEVROLET SONIC':{seg:'B',car:'Hatchback',prop:'nafta'},
+  'CHEVROLET SPARK':{seg:'A',car:'Hatchback',prop:'nafta'},
+  'CHEVROLET MONTANA':{seg:'B',car:'Pickup Chica',prop:'nafta'},
+  'CHEVROLET S10':{seg:'D',car:'Pickup Mediana',prop:'diesel'},
+  'CHEVROLET D-20':{seg:'D',car:'Pickup Mediana',prop:'diesel'},
+  'CHEVROLET LUV':{seg:'C',car:'Pickup Mediana',prop:'diesel'},
+  'CHEVROLET C-10':{seg:'D',car:'Pickup Mediana',prop:'nafta'},
+  'CHEVROLET SILVERADO':{seg:'D',car:'Pickup Grande',prop:'diesel'},
+  'FIAT CRONOS':{seg:'B',car:'Sedan',prop:'nafta'},
+  'FIAT ARGO':{seg:'B',car:'Hatchback',prop:'nafta'},
+  'FIAT PULSE':{seg:'B',car:'SUV',prop:'nafta'},
+  'FIAT FASTBACK':{seg:'C',car:'SUV',prop:'nafta'},
+  'FIAT MOBI':{seg:'A',car:'Hatchback',prop:'nafta'},
+  'FIAT PALIO':{seg:'B',car:'Hatchback',prop:'nafta'},
+  'FIAT SIENA':{seg:'B',car:'Sedan',prop:'nafta'},
+  'FIAT GRAND SIENA':{seg:'B',car:'Sedan',prop:'nafta'},
+  'FIAT PUNTO':{seg:'B',car:'Hatchback',prop:'nafta'},
+  'FIAT BRAVO':{seg:'C',car:'Hatchback',prop:'nafta'},
+  'FIAT LINEA':{seg:'C',car:'Sedan',prop:'nafta'},
+  'FIAT IDEA':{seg:'B',car:'Hatchback',prop:'nafta'},
+  'FIAT UNO':{seg:'A',car:'Hatchback',prop:'nafta'},
+  'FIAT UNO VAN':{seg:'A',car:'Furgon',prop:'nafta'},
+  'FIAT VIVACE':{seg:'A',car:'Hatchback',prop:'nafta'},
+  'FIAT DUNA':{seg:'B',car:'Sedan',prop:'nafta'},
+  'FIAT SPAZIO':{seg:'A',car:'Hatchback',prop:'nafta'},
+  'FIAT 600':{seg:'A',car:'Hatchback',prop:'nafta'},
+  'FIAT 500':{seg:'B',car:'Hatchback',prop:'nafta'},
+  'FIAT SE':{seg:'A',car:'Hatchback',prop:'nafta'},
+  'FIAT QUBO':{seg:'B',car:'Monovolumen',prop:'nafta'},
+  'FIAT FIORINO QUBO':{seg:'B',car:'Monovolumen',prop:'nafta'},
+  'FIAT STRADA':{seg:'B',car:'Pickup Chica',prop:'nafta'},
+  'FIAT TORO':{seg:'C',car:'Pickup Chica',prop:'diesel'},
+  'FIAT TITANO':{seg:'D',car:'Pickup Mediana',prop:'diesel'},
+  'FIAT FIORINO':{seg:'B',car:'Furgon',prop:'nafta'},
+  'FIAT NUEVO FIORINO':{seg:'B',car:'Furgon',prop:'nafta'},
+  'FIAT DUCATO':{seg:'C',car:'Furgon',prop:'diesel'},
+  'PEUGEOT 208':{seg:'B',car:'Hatchback',prop:'nafta'},
+  'PEUGEOT 2008':{seg:'B',car:'SUV',prop:'nafta'},
+  'PEUGEOT 308':{seg:'C',car:'Hatchback',prop:'nafta'},
+  'PEUGEOT 3008':{seg:'C',car:'SUV',prop:'nafta'},
+  'PEUGEOT 408':{seg:'C',car:'Sedan',prop:'nafta'},
+  'PEUGEOT 5008':{seg:'D',car:'SUV',prop:'nafta'},
+  'PEUGEOT 207 COMPACT':{seg:'B',car:'Hatchback',prop:'nafta'},
+  'PEUGEOT 206':{seg:'B',car:'Hatchback',prop:'nafta'},
+  'PEUGEOT 205':{seg:'A',car:'Hatchback',prop:'nafta'},
+  'PEUGEOT 106':{seg:'A',car:'Hatchback',prop:'nafta'},
+  'PEUGEOT 306':{seg:'B',car:'Hatchback',prop:'nafta'},
+  'PEUGEOT 307':{seg:'C',car:'Hatchback',prop:'nafta'},
+  'PEUGEOT 301':{seg:'B',car:'Sedan',prop:'nafta'},
+  'PEUGEOT 504':{seg:'C',car:'Sedan',prop:'nafta'},
+  'PEUGEOT 505':{seg:'C',car:'Sedan',prop:'nafta'},
+  'PEUGEOT 405':{seg:'C',car:'Sedan',prop:'nafta'},
+  'PEUGEOT PARTNER':{seg:'B',car:'Furgon',prop:'nafta'},
+  'PEUGEOT EXPERT':{seg:'C',car:'Furgon',prop:'diesel'},
+  'PEUGEOT BOXER':{seg:'D',car:'Furgon',prop:'diesel'},
+  'CITROEN C3':{seg:'B',car:'Hatchback',prop:'nafta'},
+  'CITROEN NUEVO C3':{seg:'B',car:'Hatchback',prop:'nafta'},
+  'CITROEN C3 AIRCROSS':{seg:'B',car:'SUV',prop:'nafta'},
+  'CITROEN AIRCROSS':{seg:'B',car:'SUV',prop:'nafta'},
+  'CITROEN BASALT':{seg:'B',car:'SUV',prop:'nafta'},
+  'CITROEN C4':{seg:'C',car:'Hatchback',prop:'nafta'},
+  'CITROEN C4 LOUNGE':{seg:'C',car:'Sedan',prop:'nafta'},
+  'CITROEN C4 CACTUS':{seg:'B',car:'SUV',prop:'nafta'},
+  'CITROEN C4 PICASSO':{seg:'C',car:'Monovolumen',prop:'nafta'},
+  'CITROEN C-ELYSEE':{seg:'B',car:'Sedan',prop:'nafta'},
+  'CITROEN XSARA PICASSO':{seg:'B',car:'Monovolumen',prop:'nafta'},
+  'CITROEN C5':{seg:'D',car:'Sedan',prop:'nafta'},
+  'CITROEN C5 AIRCROSS':{seg:'C',car:'SUV',prop:'nafta'},
+  'CITROEN BERLINGO':{seg:'B',car:'Furgon',prop:'nafta'},
+  'CITROEN BERLINGO FURGON':{seg:'B',car:'Furgon',prop:'nafta'},
+  'CITROEN JUMPER':{seg:'D',car:'Furgon',prop:'diesel'},
+  'CITROEN JUMPY':{seg:'C',car:'Furgon',prop:'diesel'},
+  'RENAULT KWID':{seg:'A',car:'Hatchback',prop:'nafta'},
+  'RENAULT SANDERO':{seg:'B',car:'Hatchback',prop:'nafta'},
+  'RENAULT NUEVO SANDERO':{seg:'B',car:'Hatchback',prop:'nafta'},
+  'RENAULT STEPWAY':{seg:'B',car:'Hatchback',prop:'nafta'},
+  'RENAULT CLIO':{seg:'B',car:'Hatchback',prop:'nafta'},
+  'RENAULT CLIO MIO':{seg:'B',car:'Hatchback',prop:'nafta'},
+  'RENAULT LOGAN':{seg:'B',car:'Sedan',prop:'nafta'},
+  'RENAULT NUEVO LOGAN':{seg:'B',car:'Sedan',prop:'nafta'},
+  'RENAULT SYMBOL':{seg:'B',car:'Sedan',prop:'nafta'},
+  'RENAULT FLUENCE':{seg:'C',car:'Sedan',prop:'nafta'},
+  'RENAULT MEGANE':{seg:'C',car:'Hatchback',prop:'nafta'},
+  'RENAULT MEGANE II':{seg:'C',car:'Hatchback',prop:'nafta'},
+  'RENAULT MEGANE III':{seg:'C',car:'Hatchback',prop:'nafta'},
+  'RENAULT DUSTER':{seg:'C',car:'SUV',prop:'nafta'},
+  'RENAULT DUSTER OROCH':{seg:'C',car:'Pickup Chica',prop:'nafta'},
+  'RENAULT OROCH':{seg:'C',car:'Pickup Chica',prop:'nafta'},
+  'RENAULT ARKANA':{seg:'C',car:'SUV',prop:'nafta'},
+  'RENAULT KARDIAN':{seg:'B',car:'SUV',prop:'nafta'},
+  'RENAULT CAPTUR':{seg:'B',car:'SUV',prop:'nafta'},
+  'RENAULT KOLEOS':{seg:'D',car:'SUV',prop:'nafta'},
+  'RENAULT TWINGO':{seg:'A',car:'Hatchback',prop:'nafta'},
+  'RENAULT 12':{seg:'B',car:'Sedan',prop:'nafta'},
+  'RENAULT 19':{seg:'B',car:'Hatchback',prop:'nafta'},
+  'RENAULT 11':{seg:'B',car:'Hatchback',prop:'nafta'},
+  'RENAULT 18':{seg:'C',car:'Sedan',prop:'nafta'},
+  'RENAULT 21':{seg:'C',car:'Sedan',prop:'nafta'},
+  'RENAULT KANGOO':{seg:'B',car:'Furgon',prop:'nafta'},
+  'RENAULT KANGOO II':{seg:'B',car:'Furgon',prop:'nafta'},
+  'RENAULT KANGOO FURGON':{seg:'B',car:'Furgon',prop:'nafta'},
+  'RENAULT MASTER':{seg:'C',car:'Furgon',prop:'diesel'},
+  'RENAULT NUEVO MASTER':{seg:'C',car:'Furgon',prop:'diesel'},
+  'RENAULT TRAFIC':{seg:'C',car:'Furgon',prop:'diesel'},
+  'RENAULT ALASKAN':{seg:'D',car:'Pickup Mediana',prop:'diesel'},
+  'RENAULT EXPRESS':{seg:'B',car:'Furgon',prop:'nafta'},
+  'HONDA CIVIC':{seg:'C',car:'Sedan',prop:'nafta'},
+  'HONDA FIT':{seg:'B',car:'Hatchback',prop:'nafta'},
+  'HONDA HR-V':{seg:'B',car:'SUV',prop:'nafta'},
+  'HONDA WR-V':{seg:'B',car:'SUV',prop:'nafta'},
+  'HONDA ZR-V':{seg:'C',car:'SUV',prop:'nafta'},
+  'HONDA CRV':{seg:'C',car:'SUV',prop:'nafta'},
+  'HONDA CR-V':{seg:'C',car:'SUV',prop:'nafta'},
+  'HONDA CITY':{seg:'B',car:'Sedan',prop:'nafta'},
+  'HONDA ACCORD':{seg:'D',car:'Sedan',prop:'nafta'},
+  'NISSAN MARCH':{seg:'A',car:'Hatchback',prop:'nafta'},
+  'NISSAN VERSA':{seg:'B',car:'Sedan',prop:'nafta'},
+  'NISSAN TIIDA':{seg:'B',car:'Hatchback',prop:'nafta'},
+  'NISSAN SENTRA':{seg:'C',car:'Sedan',prop:'nafta'},
+  'NISSAN KICKS':{seg:'B',car:'SUV',prop:'nafta'},
+  'NISSAN QASHQAI':{seg:'C',car:'SUV',prop:'nafta'},
+  'NISSAN X-TRAIL':{seg:'C',car:'SUV',prop:'nafta'},
+  'NISSAN FRONTIER':{seg:'D',car:'Pickup Mediana',prop:'diesel'},
+  'NISSAN NP300 FRONTIER':{seg:'D',car:'Pickup Mediana',prop:'diesel'},
+  'NISSAN CABINA DOBLE':{seg:'D',car:'Pickup Mediana',prop:'diesel'},
+  'JEEP RENEGADE':{seg:'B',car:'SUV',prop:'nafta'},
+  'JEEP COMPASS':{seg:'C',car:'SUV',prop:'nafta'},
+  'JEEP CHEROKEE':{seg:'C',car:'SUV',prop:'nafta'},
+  'JEEP GRAND CHEROKEE':{seg:'D',car:'SUV',prop:'nafta'},
+  'JEEP WRANGLER':{seg:'D',car:'SUV',prop:'nafta'},
+  'JEEP RAMPAGE':{seg:'C',car:'Pickup Chica',prop:'nafta'},
+  'RAM 1500':{seg:'D',car:'Pickup Grande',prop:'nafta'},
+  'RAM DAKOTA':{seg:'D',car:'Pickup Mediana',prop:'diesel'},
+  'RAM RAMPAGE':{seg:'C',car:'Pickup Chica',prop:'nafta'},
+  'DODGE JOURNEY':{seg:'C',car:'SUV',prop:'nafta'},
+  'HYUNDAI HB 20':{seg:'B',car:'Hatchback',prop:'nafta'},
+  'HYUNDAI HB 20 S':{seg:'B',car:'Sedan',prop:'nafta'},
+  'HYUNDAI CRETA':{seg:'B',car:'SUV',prop:'nafta'},
+  'HYUNDAI TUCSON':{seg:'C',car:'SUV',prop:'nafta'},
+  'HYUNDAI NEW TUCSON':{seg:'C',car:'SUV',prop:'nafta'},
+  'HYUNDAI SANTA FE':{seg:'D',car:'SUV',prop:'nafta'},
+  'HYUNDAI ELANTRA':{seg:'C',car:'Sedan',prop:'nafta'},
+  'HYUNDAI ACCENT':{seg:'B',car:'Sedan',prop:'nafta'},
+  'HYUNDAI H-1':{seg:'C',car:'Furgon',prop:'diesel'},
+  'HYUNDAI H-100':{seg:'C',car:'Furgon',prop:'diesel'},
+  'KIA PICANTO':{seg:'A',car:'Hatchback',prop:'nafta'},
+  'KIA MORNING':{seg:'A',car:'Hatchback',prop:'nafta'},
+  'KIA RIO':{seg:'B',car:'Hatchback',prop:'nafta'},
+  'KIA CERATO':{seg:'C',car:'Sedan',prop:'nafta'},
+  'KIA SPORTAGE':{seg:'C',car:'SUV',prop:'nafta'},
+  'KIA SELTOS':{seg:'B',car:'SUV',prop:'nafta'},
+  'KIA SORENTO':{seg:'D',car:'SUV',prop:'nafta'},
+  'KIA K2500':{seg:'C',car:'Furgon',prop:'diesel'},
+  'AUDI A1':{seg:'B',car:'Hatchback',prop:'nafta'},
+  'AUDI A3':{seg:'C',car:'Hatchback',prop:'nafta'},
+  'AUDI A4':{seg:'D',car:'Sedan',prop:'nafta'},
+  'AUDI A5':{seg:'D',car:'Coupe',prop:'nafta'},
+  'AUDI A6':{seg:'E',car:'Sedan',prop:'nafta'},
+  'AUDI Q2':{seg:'B',car:'SUV',prop:'nafta'},
+  'AUDI Q3':{seg:'C',car:'SUV',prop:'nafta'},
+  'AUDI Q5':{seg:'D',car:'SUV',prop:'nafta'},
+  'AUDI Q7':{seg:'E',car:'SUV',prop:'nafta'},
+  'MERCEDES BENZ A180':{seg:'C',car:'Hatchback',prop:'nafta'},
+  'MERCEDES BENZ A200':{seg:'C',car:'Hatchback',prop:'nafta'},
+  'MERCEDES BENZ C180':{seg:'D',car:'Sedan',prop:'nafta'},
+  'MERCEDES BENZ C200':{seg:'D',car:'Sedan',prop:'nafta'},
+  'MERCEDES BENZ C250':{seg:'D',car:'Sedan',prop:'nafta'},
+  'MERCEDES BENZ E200':{seg:'E',car:'Sedan',prop:'nafta'},
+  'MERCEDES BENZ E250':{seg:'E',car:'Sedan',prop:'nafta'},
+  'MERCEDES BENZ GLA 200':{seg:'C',car:'SUV',prop:'nafta'},
+  'MERCEDES BENZ GLC 200':{seg:'D',car:'SUV',prop:'nafta'},
+  'MERCEDES BENZ GLC 300':{seg:'D',car:'SUV',prop:'nafta'},
+  'MERCEDES BENZ MB 180 D':{seg:'B',car:'Furgon',prop:'diesel'},
+  'MERCEDES BENZ SPRINTER':{seg:'D',car:'Furgon',prop:'diesel'},
+  'MERCEDES BENZ VITO':{seg:'C',car:'Furgon',prop:'diesel'},
+  'MERCEDES BENZ VIANO':{seg:'D',car:'Furgon',prop:'diesel'},
+  'BMW 118':{seg:'C',car:'Hatchback',prop:'nafta'},
+  'BMW 120':{seg:'C',car:'Hatchback',prop:'nafta'},
+  'BMW 320':{seg:'D',car:'Sedan',prop:'nafta'},
+  'BMW 325':{seg:'D',car:'Sedan',prop:'nafta'},
+  'BMW 328':{seg:'D',car:'Sedan',prop:'nafta'},
+  'BMW 520':{seg:'E',car:'Sedan',prop:'nafta'},
+  'BMW 530':{seg:'E',car:'Sedan',prop:'nafta'},
+  'BMW X1':{seg:'C',car:'SUV',prop:'nafta'},
+  'BMW X3':{seg:'D',car:'SUV',prop:'nafta'},
+  'BMW X5':{seg:'E',car:'SUV',prop:'nafta'},
+  'CHERY QQ':{seg:'A',car:'Hatchback',prop:'nafta'},
+  'CHERY TIGGO':{seg:'C',car:'SUV',prop:'nafta'},
+  'CHERY TIGGO 2':{seg:'B',car:'SUV',prop:'nafta'},
+  'CHERY TIGGO 3':{seg:'B',car:'SUV',prop:'nafta'},
+  'CHERY TIGGO 4':{seg:'B',car:'SUV',prop:'nafta'},
+  'CHERY TIGGO 5':{seg:'C',car:'SUV',prop:'nafta'},
+  'CHERY TIGGO 7':{seg:'C',car:'SUV',prop:'nafta'},
+  'CHERY TIGGO 8':{seg:'D',car:'SUV',prop:'nafta'},
+  'CHERY ARRIZO 5':{seg:'B',car:'Sedan',prop:'nafta'},
+  'MITSUBISHI L200':{seg:'D',car:'Pickup Mediana',prop:'diesel'},
+  'MITSUBISHI LANCER':{seg:'C',car:'Sedan',prop:'nafta'},
+  'MITSUBISHI OUTLANDER':{seg:'C',car:'SUV',prop:'nafta'},
+  'MITSUBISHI PAJERO':{seg:'D',car:'SUV',prop:'diesel'},
+  'DS DS 3':{seg:'B',car:'Hatchback',prop:'nafta'},
+  'DS DS3':{seg:'B',car:'Hatchback',prop:'nafta'},
+  'DS DS3 CROSSBACK':{seg:'B',car:'SUV',prop:'nafta'},
+  'DS DS4':{seg:'C',car:'Hatchback',prop:'nafta'},
+  'DS DS7':{seg:'C',car:'SUV',prop:'nafta'},
+  'DS DS7 CROSSBACK':{seg:'C',car:'SUV',prop:'nafta'},
+  'SUZUKI FUN':{seg:'A',car:'Hatchback',prop:'nafta'},
+  'SUZUKI SWIFT':{seg:'B',car:'Hatchback',prop:'nafta'},
+  'SUZUKI VITARA':{seg:'B',car:'SUV',prop:'nafta'},
+  'SUZUKI GRAND VITARA':{seg:'C',car:'SUV',prop:'nafta'},
+  'SUZUKI JIMNY':{seg:'B',car:'SUV',prop:'nafta'},
+  'ISUZU PICK-UP':{seg:'D',car:'Pickup Mediana',prop:'diesel'},
+  'ISUZU D-MAX':{seg:'D',car:'Pickup Mediana',prop:'diesel'},
+  'ISUZU TFR':{seg:'D',car:'Pickup Mediana',prop:'diesel'},
+  'IVECO DAILY':{seg:'D',car:'Furgon',prop:'diesel'},
+  'DFSK GLORY 500':{seg:'C',car:'SUV',prop:'nafta'},
+  'DFSK GLORY 580':{seg:'D',car:'SUV',prop:'nafta'},
+  'DFSK E5':{seg:'C',car:'SUV',prop:'nafta'},
+  'FOTON TUNLAND':{seg:'D',car:'Pickup Mediana',prop:'diesel'},
+  'FOTON TM1':{seg:'C',car:'Pickup Mediana',prop:'diesel'},
+  'FOTON TM2':{seg:'D',car:'Pickup Mediana',prop:'diesel'},
+  'RENAULT 9':{seg:'B',car:'Sedan',prop:'nafta'},
+  'RENAULT 6':{seg:'A',car:'Hatchback',prop:'nafta'},
+  'RENAULT LAGUNA':{seg:'D',car:'Sedan',prop:'nafta'},
+  'RENAULT FUEGO':{seg:'C',car:'Coupe',prop:'nafta'},
+  'IKA JEEP':{seg:'D',car:'SUV',prop:'nafta'},
+  'IKA OTROS':{seg:'D',car:'SUV',prop:'nafta'},
+  'JEEP OTROS':{seg:'D',car:'SUV',prop:'nafta'},
+  'MITSUBISHI L300':{seg:'C',car:'Furgon',prop:'diesel'},
+  'FIAT 128':{seg:'A',car:'Hatchback',prop:'nafta'},
+  'DODGE D-100':{seg:'D',car:'Pickup Mediana',prop:'nafta'},
+  'TOYOTA CORONA':{seg:'C',car:'Sedan',prop:'nafta'},
+  'VOLKSWAGEN 1500':{seg:'B',car:'Sedan',prop:'nafta'},
+};
 
 const CAMP_D=[
   //  BANCOS 
@@ -1376,7 +1710,8 @@ const CAMP_D=[
   {id:573,banco:"PSA Finance",nombre:"PEUGEOT — UVA $26M 48c",tipo:"UVA",tna:12.9,comision:6.0,plazoMax:48,ltv:80,activa:true,marca:"PEUGEOT",modelos:["208","PARTNER","2008"],montoMax:26000000},
   // PSA Finance CITROEN — Lista actualizada Mayo 2026
   // TASAS EXPRESS — Toda la gama (Opción P.Personal hasta $15M y Prendario hasta $18M)
-  // ── PSA Finance CITROËN — Circular 430.26 Mayo 2026 ──────────────────────────
+
+// ── PSA Finance CITROËN — Circular 430.26 Mayo 2026 ──────────────────────────
   // TASA EXPRESS — Toda la gama (P.Personal $8M + Prendario $18M)
   {id:501,banco:"PSA Finance",nombre:"CITROËN — TASA EXPRESS 24c P.Personal",tipo:"TRAD",tna:0.0,comision:11.5,plazoMax:24,ltv:80,activa:true,marca:"CITROEN",modelos:null,montoMax:15000000},
   {id:502,banco:"PSA Finance",nombre:"CITROËN — TASA EXPRESS 30c P.Personal",tipo:"TRAD",tna:0.0,comision:11.5,plazoMax:30,ltv:80,activa:true,marca:"CITROEN",modelos:null,montoMax:13000000},
@@ -5444,6 +5779,50 @@ bLogin();
 // ══════════════════════════════════════════════════════════════════
 
 // ── Storage ──────────────────────────────────────────────────────
+
+// ── Segmentos: función de cross-matching ─────────────────────────
+// Retorna score de compatibilidad entre dos modelos (0, 50, 70, 100)
+function labSegScore(marcaMod1, marcaMod2){
+  const k1 = marcaMod1.toUpperCase().trim();
+  const k2 = marcaMod2.toUpperCase().trim();
+  if(k1===k2) return 100; // mismo modelo exacto
+  const s1 = SEG_D[k1], s2 = SEG_D[k2];
+  if(!s1||!s2) return 0;  // alguno sin datos
+  const mismoSeg  = s1.seg===s2.seg;
+  const mismoCar  = s1.car===s2.car;
+  const segAdyacente = Math.abs(s1.seg.charCodeAt(0)-s2.seg.charCodeAt(0))===1;
+  if(mismoSeg  && mismoCar)  return 100; // match perfecto
+  if(mismoSeg  && !mismoCar) return 70;  // mismo segmento, carrocería alternativa
+  if(!mismoSeg && mismoCar && segAdyacente) return 50; // carrocería igual, seg adyacente
+  return 0;
+}
+
+// Retorna el segmento de una unidad del stock
+function labGetSeg(u){
+  const key = ((u.marca||'')+' '+(u.modelo||'')).toUpperCase().trim();
+  return SEG_D[key]||null;
+}
+
+
+// ── Modo contado / financiado ─────────────────────────────────────
+let _labModo = 'financiado';
+function labSetModo(modo){
+  _labModo = modo;
+  const bFin=$$('lf-modo-fin'),bCon=$$('lf-modo-con');
+  const blFin=$$('lf-bloque-fin'),blCon=$$('lf-bloque-con');
+  if(modo==='contado'){
+    if(bFin){bFin.style.background='var(--s3)';bFin.style.color='var(--m)';}
+    if(bCon){bCon.style.background='var(--g)';bCon.style.color='#fff';}
+    if(blFin) blFin.style.display='none';
+    if(blCon) blCon.style.display='block';
+  } else {
+    if(bFin){bFin.style.background='var(--r)';bFin.style.color='#fff';}
+    if(bCon){bCon.style.background='var(--s3)';bCon.style.color='var(--m)';}
+    if(blFin) blFin.style.display='block';
+    if(blCon) blCon.style.display='none';
+  }
+  labCalcMatch();
+}
 function labGetPerfiles(){
   try{ return JSON.parse(localStorage.getItem('lab_perfiles')||'[]'); }
   catch(e){ return []; }
@@ -5522,8 +5901,40 @@ function labMatch(perfil){
   const partePago = parseFloat(perfil.partePago)||0;
   const cheques   = parseFloat(perfil.cheques)||0;
   const cuotaMax  = parseFloat(perfil.cuotaMax)||0;
+  const contado   = parseFloat(perfil.contado)||0;
+  const modoContado = perfil.modo === 'contado';
   const totalSinCred = entrega + partePago + cheques;
   const sinLimiteCuota = cuotaMax <= 0;
+
+  // Modo contado: buscar unidades donde precio ≤ monto contado
+  if(modoContado){
+    if(contado <= 0) return [];
+    const unidades = [
+      ...(window.STK_D||[]).filter(u=>{ const e=(u.estado||'').toLowerCase(); return u.precio>0&&(e==='disponible'||e==='nuevo ingreso'||e==='en preparacion'); }).map(u=>({...u,_tipo:'usado',_esUsado:true})),
+      ...(window.OKM_D||[]).filter(u=>u.precio>0).map(u=>({...u,_tipo:'0km',_esUsado:false}))
+    ];
+    const busca = perfil.buscaMarca&&perfil.buscaModelo ? ((perfil.buscaMarca+' '+perfil.buscaModelo).toUpperCase().trim()) : null;
+    const results = [];
+    unidades.forEach(u=>{
+      const precio = parseFloat(u.precio)||0;
+      if(precio<=0||precio>contado) return;
+      if(perfil.marcaPref){
+        const mp=(perfil.marcaPref||'').toUpperCase();
+        if(!(u.marca||'').toUpperCase().includes(mp)&&!mp.includes((u.marca||'').toUpperCase())) return;
+      }
+      const uKey = ((u.marca||'')+' '+(u.modelo||'')).toUpperCase().trim();
+      let score = busca ? labSegScore(busca, uKey) : 100;
+      if(busca && !perfil.aceptaSimilares && score < 100) return;
+      results.push({ unidad:u, campana:null, plazo:0, cuotaCalc:0,
+        mBruto:0, mUtil:0, gastosDE:0, necesita:0,
+        capacidadTotal:contado, totalSinCred:contado, precio,
+        sobra:contado-precio, sinLimiteCuota:false,
+        modoContado:true, segScore:score, nota:'Contado' });
+    });
+    results.sort((a,b)=>b.segScore-a.segScore||b.precio-a.precio);
+    const seen=new Set();
+    return results.filter(r=>{ const k=(r.unidad.dominio||r.unidad.modelo||''); if(seen.has(k)) return false; seen.add(k); return true; }).slice(0,20);
+  }
 
   if(totalSinCred <= 0 && sinLimiteCuota) return [];
 
@@ -5604,17 +6015,9 @@ function labMatch(perfil){
           if(!um.includes(mp) && !mp.includes(um)) return;
         }
 
-        // ¿Puede comprar al contado?
-        if(totalSinCred >= precio){
-          results.push({
-            unidad:u, campana:null, plazo:0,
-            cuotaCalc:0, mBruto:0, mUtil:0, gastosDE:0,
-            necesita:0, capacidadTotal:totalSinCred,
-            totalSinCred, precio, sobra:totalSinCred-precio,
-            sinLimiteCuota, nota:'Contado'
-          });
-          return;
-        }
+        // Si puede pagar al contado → no mostrar en el Lab (es obvio)
+        // El Lab solo muestra coincidencias donde la financiación hace posible la compra
+        if(totalSinCred >= precio) return;
 
         if(sinLimiteCuota){
           // Verificar compatibilidad también en modo sin límite de cuota
@@ -6001,20 +6404,29 @@ function labDesvincularCliente(){
 
 // ── Preview de matches en tiempo real (modal) ─────────────────────
 function labCalcMatch(){
+  const modoContado = _labModo === 'contado';
   const entrega   = parseFloat($$('lf-entrega')?.value)||0;
   const partePago = parseFloat($$('lf-partepago')?.value)||0;
   const cheques   = parseFloat($$('lf-cheques')?.value)||0;
   const cuotaMax  = parseFloat($$('lf-cuota')?.value)||0;
-  const total     = entrega+partePago+cheques;
+  const contado   = parseFloat($$('lf-contado')?.value)||0;
+  const total     = modoContado ? contado : entrega+partePago+cheques;
   if($$('lf-total-disp')) $$('lf-total-disp').textContent=fmt(total);
 
-  if(total<=0&&cuotaMax<=0){
+  if(total<=0&&cuotaMax<=0&&!modoContado){
     if($$('lf-match-preview')) $$('lf-match-preview').style.display='none';
     if($$('lf-match-empty'))   $$('lf-match-empty').style.display='none';
     return;
   }
 
-  const perfTemp={entrega,partePago,cheques,cuotaMax,marcaPref:$$('lf-marca-pref')?.value||''};
+  const perfTemp={
+    entrega, partePago, cheques, cuotaMax, contado,
+    modo: _labModo,
+    marcaPref:$$('lf-marca-pref')?.value||'',
+    buscaMarca:($$('lf-busca-marca')?.value||'').trim(),
+    buscaModelo:($$('lf-busca-modelo')?.value||'').trim(),
+    aceptaSimilares:$$('lf-acepta-similares')?.checked!==false,
+  };
   const ms = labMatch(perfTemp);
   const ml=$$('lf-match-lista'), mp=$$('lf-match-preview'), me=$$('lf-match-empty');
   if(!ml||!mp||!me) return;
@@ -6072,6 +6484,11 @@ function labGuardarPerfil(){
     cuotaMax:parseFloat($$('lf-cuota')?.value)||0,
     partePago:parseFloat($$('lf-partepago')?.value)||0,
     cheques:parseFloat($$('lf-cheques')?.value)||0,
+    contado:parseFloat($$('lf-contado')?.value)||0,
+    modo:_labModo||'financiado',
+    buscaMarca:($$('lf-busca-marca')?.value||'').trim(),
+    buscaModelo:($$('lf-busca-modelo')?.value||'').trim(),
+    aceptaSimilares:$$('lf-acepta-similares')?.checked!==false,
     marcaPref:($$('lf-marca-pref')?.value||'').trim(),
     tipoPref:$$('lf-tipo')?.value||'',
     obs:($$('lf-obs')?.value||'').trim(),
