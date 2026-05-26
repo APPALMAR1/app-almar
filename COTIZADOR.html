@@ -5497,7 +5497,18 @@ function labLTV(banco, annoAuto, esUsadoUnit){
     if(ant<=7) return {ltv:70, montoMax:30000000, plazoMax:60};
     return null;
   }
-  return {ltv:70, montoMax:20000000, plazoMax:60};
+  if(banco==='CREDICUOTAS'){
+    // Financia usados desde 2011 en adelante (hasta 15 años)
+    if(ant<=15) return {ltv:80, montoMax:50000000, plazoMax:48};
+    return null;
+  }
+  if(banco==='SANTANDER'){
+    if(ant<=10) return {ltv:70, montoMax:30000000, plazoMax:60};
+    return null;
+  }
+  // Bancos generales sin regla específica
+  if(ant<=10) return {ltv:70, montoMax:20000000, plazoMax:60};
+  return null;
 }
 
 // ── MOTOR PRINCIPAL v3 ────────────────────────────────────────────
@@ -5571,7 +5582,22 @@ function labMatch(perfil){
         const precio = parseFloat(u.precio)||0;
         if(precio <= 0) return;
 
-        // Filtro por preferencia de marca
+        // ── Compatibilidad campaña ↔ tipo de unidad ──
+        if(u._esUsado){
+          // Usados: campañas VO (c.usados===true) O bancos generales (!c.marca && !c.usados)
+          const esBancoGeneral = !c.marca && !c.usados;
+          const esCampanaVO    = c.usados === true;
+          if(!esBancoGeneral && !esCampanaVO) return;
+        } else {
+          // 0km: excluir campañas exclusivas de usados
+          if(c.usados === true) return;
+        }
+
+        // ── Compatibilidad campaña ↔ marca de la unidad ──
+        // Campañas de marca solo aplican a su marca
+        if(c.marca && c.marca !== (u.marca||'').toUpperCase()) return;
+
+        // Filtro por preferencia de marca del perfil
         if(perfil.marcaPref && perfil.marcaPref.trim()!==''){
           const mp = perfil.marcaPref.trim().toUpperCase();
           const um = (u.marca||'').toUpperCase();
@@ -5591,6 +5617,16 @@ function labMatch(perfil){
         }
 
         if(sinLimiteCuota){
+          // Verificar compatibilidad también en modo sin límite de cuota
+          if(u._esUsado){
+            const esBancoGeneral = !c.marca && !c.usados;
+            const esCampanaVO    = c.usados === true;
+            if(!esBancoGeneral && !esCampanaVO) return;
+          } else {
+            if(c.usados === true) return;
+          }
+          if(c.marca && c.marca !== (u.marca||'').toUpperCase()) return;
+
           // Sin límite de cuota: calcular qué cuota daría para esta unidad
           const necesita = precio - totalSinCred;
           const ltvInfo = labLTV(c.banco, u.anno||_hoy, u._esUsado);
