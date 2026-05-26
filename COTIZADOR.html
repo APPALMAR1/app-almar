@@ -5437,10 +5437,10 @@ bLogin();
 <script>
 
 // ══════════════════════════════════════════════════════════════════
-//  LABORATORIO COMERCIAL — Motor de matching v2
-//  Lee: camp (CAMP_D), STK_D, OKM_D, cuota(), cuotaPorCoef(), fmt()
-//  Guarda: localStorage 'lab_perfiles'
-//  Clientes: _clientesCache (base compartida con Propuestas)
+//  LABORATORIO COMERCIAL — Motor v3
+//  Lógica: monto útil = financiado - CE(% + IVA 21%)
+//  Capacidad = entrega + partePago + cheques + monto_util_financiado
+//  Matching: busca unidad donde precio ≤ capacidad total y LTV ok
 // ══════════════════════════════════════════════════════════════════
 
 // ── Storage ──────────────────────────────────────────────────────
@@ -5451,37 +5451,35 @@ function labGetPerfiles(){
 function labSetPerfiles(arr){
   localStorage.setItem('lab_perfiles', JSON.stringify(arr));
 }
-
-// ── ID único ─────────────────────────────────────────────────────
 function labUID(){ return 'lab_'+Date.now()+'_'+Math.random().toString(36).slice(2,7); }
-
-// ── Año actual ───────────────────────────────────────────────────
 const _hoy = new Date().getFullYear();
 
-// ── LTV real según banco y antigüedad del vehículo ───────────────
-// Devuelve {ltv, montoMax, plazoMax} aplicables para ese banco y auto
+// ── Etiquetas ─────────────────────────────────────────────────────
+function labUrgLabel(u){ return u==='caliente'?'🔥 Caliente':u==='tibia'?'🟡 Tibia':'❄ Fría'; }
+function labEstLabel(e){
+  if(e==='match')   return '<span class="lab-est-badge lab-est-match">🎯 Match</span>';
+  if(e==='espera')  return '<span class="lab-est-badge lab-est-espera">⏳ Espera</span>';
+  if(e==='cerrado') return '<span class="lab-est-badge lab-est-cerrado">✅ Cerrado</span>';
+  return '<span class="lab-est-badge lab-est-activo">🟢 Activo</span>';
+}
+
+// ── LTV por banco y antigüedad ────────────────────────────────────
 function labLTV(banco, annoAuto, esUsadoUnit){
-  const ant = _hoy - annoAuto; // antigüedad en años
-  if(!esUsadoUnit){
-    // 0km — regla general
-    return {ltv:80, montoMax:55000000, plazoMax:60};
-  }
-  // Reglas por banco para usados
+  const ant = _hoy - (annoAuto||_hoy);
+  if(!esUsadoUnit) return {ltv:80, montoMax:55000000, plazoMax:60};
   if(banco==='BBVA'){
     if(ant<=7)  return {ltv:70, montoMax:40000000, plazoMax:60};
     if(ant===8) return {ltv:60, montoMax:40000000, plazoMax:48};
     if(ant===9) return {ltv:60, montoMax:40000000, plazoMax:36};
-    return null; // más de 9 años BBVA no financia
+    return null;
   }
   if(banco==='PSA Finance'){
-    // Circular 430.26 / 441.26: <3a=80%/$50M · <7a=75%/$30M · 7-8a=50%/$15M/48m · 9a=50%/$15M/36m · 10a=50%/$15M/24m
-    // Usados desde 2016 en adelante (máx 10 años). Más de 10 años: no financia.
     if(ant<=2)  return {ltv:80, montoMax:50000000, plazoMax:60};
     if(ant<=6)  return {ltv:75, montoMax:30000000, plazoMax:60};
     if(ant===7||ant===8) return {ltv:50, montoMax:15000000, plazoMax:48};
     if(ant===9) return {ltv:50, montoMax:15000000, plazoMax:36};
     if(ant===10)return {ltv:50, montoMax:15000000, plazoMax:24};
-    return null; // más de 10 años: PSA Finance no financia usados
+    return null;
   }
   if(banco==='FCA'){
     if(ant<=9) return {ltv:70, montoMax:15000000, plazoMax:60};
@@ -5499,132 +5497,255 @@ function labLTV(banco, annoAuto, esUsadoUnit){
     if(ant<=7) return {ltv:70, montoMax:30000000, plazoMax:60};
     return null;
   }
-  // Bancos sin regla específica para usados — usar ltv de la campaña
   return {ltv:70, montoMax:20000000, plazoMax:60};
 }
 
-// ── Motor de matching ─────────────────────────────────────────────
-// Dado un perfil, devuelve array de matches ordenados por cuota ascendente
+// ── MOTOR PRINCIPAL v3 ────────────────────────────────────────────
+// Para cada campaña y plazo:
+//   1. Encuentra el monto M tal que cuota(M, tna, n) ≤ cuotaMax
+//   2. Descuenta el CE (aporte concesionario + IVA 21%) → monto útil
+//   3. Capacidad total = entrega + partePago + cheques + monto útil
+//   4. Busca unidades donde precio ≤ capacidad total Y LTV ok
 function labMatch(perfil){
   const entrega   = parseFloat(perfil.entrega)||0;
   const partePago = parseFloat(perfil.partePago)||0;
   const cheques   = parseFloat(perfil.cheques)||0;
   const cuotaMax  = parseFloat(perfil.cuotaMax)||0;
-  const totalDisp = entrega + partePago + cheques;
+  const totalSinCred = entrega + partePago + cheques;
+  const sinLimiteCuota = cuotaMax <= 0;
 
-  if(totalDisp<=0 && cuotaMax<=0) return [];
+  if(totalSinCred <= 0 && sinLimiteCuota) return [];
 
   // Unidades candidatas
-  const usados = STK_D.filter(u=>{
+  const usados = (window.STK_D||[]).filter(u=>{
     const est=(u.estado||'').toLowerCase();
     return u.precio>0 && (est==='disponible'||est==='nuevo ingreso'||est==='en preparacion');
   });
   const nuevos = (window.OKM_D||[]).filter(u=>u.precio>0);
   const unidades = [
-    ...usados.map(u=>({...u,_tipo:'usado',_esUsado:true})),
-    ...nuevos.map(u=>({...u,_tipo:'0km',_esUsado:false}))
+    ...usados.map(u=>({...u, _tipo:'usado', _esUsado:true})),
+    ...nuevos.map(u=>({...u, _tipo:'0km',   _esUsado:false}))
   ];
 
-  const results=[];
+  const results = [];
+  const campActivas = camp.filter(c=>c.activa);
 
-  unidades.forEach(u=>{
-    const precio = parseFloat(u.precio)||0;
-    if(precio<=0) return;
-
-    // Filtrar por preferencia de marca
-    if(perfil.marcaPref && perfil.marcaPref.trim()!==''){
-      const mp=perfil.marcaPref.trim().toUpperCase();
-      const um=(u.marca||'').toUpperCase();
-      if(!um.includes(mp) && !mp.includes(um)) return;
+  // ── Calcular cuánto puede financiar por campaña/plazo ─────────
+  // Para cada campaña activa calculamos el monto M máximo tal que cuota ≤ cuotaMax
+  // Usando la fórmula inversa de la cuota francesa
+  function montoMaxFinanciable(c, n){
+    if(sinLimiteCuota) return Infinity; // sin límite declarado
+    const tna = c.tna/100;
+    const tem = Math.pow(1+tna, 1/12)-1;
+    if(tem <= 0){
+      // TNA=0: cuota = M/n  →  M = cuotaMax * n
+      return cuotaMax * n;
     }
+    // cuota = M * tem / (1 - (1+tem)^-n)  →  M = cuota / (tem/(1-(1+tem)^-n))
+    const factor = tem / (1 - Math.pow(1+tem, -n));
+    return cuotaMax / factor;
+  }
 
-    // ¿Puede pagar todo al contado?
-    if(totalDisp >= precio){
-      results.push({
-        unidad:u, campana:null, plazo:0,
-        cuotaCalc:0, necesita:0, gastosOtorg:0,
-        totalDisp, precio, sobra: totalDisp-precio,
-        nota:'Puede comprar al contado'
-      });
-      return;
-    }
+  campActivas.forEach(c=>{
+    const plazos = PL.filter(n=>n<=c.plazoMax);
+    plazos.forEach(n=>{
+      // Monto bruto máximo financiable con esa cuota
+      const mBruto = montoMaxFinanciable(c, n);
+      if(mBruto <= 0) return;
 
-    // Si cuotaMax=0 → no hay límite de cuota declarado, mostrar igual con cuota calculada
-    const sinLimiteCuota = cuotaMax<=0;
+      // Descontar CE (aporte concesionario): el cliente paga el CE sobre el monto
+      // CE está expresado como % → gastos = mBruto * (CE/100) * 1.21 (con IVA)
+      // El monto útil = mBruto - gastos, pero los gastos se calculan sobre el bruto
+      // mBruto = mUtil + mUtil*(CE/100)*1.21  →  mUtil = mBruto / (1 + CE/100*1.21)
+      const ceRate = (c.comision||0)/100;
+      const mUtil = ceRate > 0 ? mBruto / (1 + ceRate * 1.21) : mBruto;
+      const gastosCE = mBruto - mUtil;
 
-    // Necesita financiar: precio - lo que puede entregar
-    const necesita = precio - totalDisp;
+      // Capacidad total de compra
+      const capacidadTotal = totalSinCred + (sinLimiteCuota ? 0 : mUtil);
 
-    // Campañas activas aplicables al tipo de unidad
-    const campanas = camp.filter(c=>{
-      if(!c.activa) return false;
-      if(u._esUsado && !c.usados) return false;   // usados necesitan c.usados===true
-      if(!u._esUsado && c.usados) return false;    // 0km no usa campañas de usados
-      return true;
-    });
+      if(capacidadTotal <= 0) return;
 
-    campanas.forEach(c=>{
-      // Obtener LTV real para este banco y antigüedad
-      const ltvInfo = labLTV(c.banco, u.anno||_hoy, u._esUsado);
-      if(!ltvInfo) return; // banco no financia esta antigüedad
+      // Buscar unidades que encajen en esa capacidad
+      unidades.forEach(u=>{
+        const precio = parseFloat(u.precio)||0;
+        if(precio <= 0) return;
 
-      // Tope efectivo = min(LTV% del precio, montoMax campaña, montoMax banco)
-      const topeLTV    = precio * (ltvInfo.ltv/100);
-      const topeMax    = Math.min(
-        c.montoMax||Infinity,
-        ltvInfo.montoMax
-      );
-      const tope = Math.min(topeLTV, topeMax);
-
-      if(necesita > tope) return; // no alcanza
-
-      // Gastos de otorgamiento (solo los que cobra el banco como costo del crédito)
-      // El "fee" BBVA/GPAT es un premio al concesionario, NO se suma al crédito
-      // Solo se suma la comisión si es un gasto efectivo al cliente (ej: ICBC)
-      const esGastoCobrado = c.comision>0 && c.banco!=='BBVA' && c.banco!=='GPAT';
-      const gastosOtorg = esGastoCobrado ? Math.round(necesita*(c.comision/100)) : 0;
-      const montoCred   = necesita + gastosOtorg; // monto real a financiar
-
-      // Plazos disponibles (limitados también por el banco para esa antigüedad)
-      const plazoLim = Math.min(c.plazoMax, ltvInfo.plazoMax);
-      PL.filter(n=>n<=plazoLim).forEach(n=>{
-        let q;
-        if(c.coefs && c.coefs[n]){
-          // Usa coeficiente [1] = promedio (más conservador)
-          q = Math.round(montoCred/1000 * c.coefs[n][1] * (c.coefBase||1000)/1000);
-        } else {
-          q = Math.round(cuota(montoCred, c.tna, n));
+        // Filtro por preferencia de marca
+        if(perfil.marcaPref && perfil.marcaPref.trim()!==''){
+          const mp = perfil.marcaPref.trim().toUpperCase();
+          const um = (u.marca||'').toUpperCase();
+          if(!um.includes(mp) && !mp.includes(um)) return;
         }
-        if(sinLimiteCuota || q<=cuotaMax){
+
+        // ¿Puede comprar al contado?
+        if(totalSinCred >= precio){
+          results.push({
+            unidad:u, campana:null, plazo:0,
+            cuotaCalc:0, mBruto:0, mUtil:0, gastosDE:0,
+            necesita:0, capacidadTotal:totalSinCred,
+            totalSinCred, precio, sobra:totalSinCred-precio,
+            sinLimiteCuota, nota:'Contado'
+          });
+          return;
+        }
+
+        if(sinLimiteCuota){
+          // Sin límite de cuota: calcular qué cuota daría para esta unidad
+          const necesita = precio - totalSinCred;
+          const ltvInfo = labLTV(c.banco, u.anno||_hoy, u._esUsado);
+          if(!ltvInfo) return;
+          const tope = Math.min(precio*(ltvInfo.ltv/100), c.montoMax||Infinity, ltvInfo.montoMax);
+          if(necesita > tope) return;
+          const ceR = (c.comision||0)/100;
+          const mBrutoNec = ceR>0 ? necesita*(1+ceR*1.21) : necesita;
+          const tna = c.tna/100;
+          const tem = Math.pow(1+tna,1/12)-1;
+          const q = tem>0 ? Math.round(mBrutoNec*tem/(1-Math.pow(1+tem,-n))) : Math.round(mBrutoNec/n);
+          const gastosNec = mBrutoNec - necesita;
           results.push({
             unidad:u, campana:c, plazo:n,
-            cuotaCalc:q, necesita, gastosOtorg, montoCred,
-            topeLTV, tope, ltvInfo,
-            totalDisp, precio, sobra:0,
-            sinLimiteCuota,
-            nota:''
+            cuotaCalc:q, mBruto:mBrutoNec, mUtil:necesita, gastosDE:gastosNec,
+            necesita, capacidadTotal:totalSinCred+necesita,
+            totalSinCred, precio, sobra:0,
+            sinLimiteCuota:true, nota:''
           });
+          return;
         }
+
+        // Con límite de cuota: ¿precio ≤ capacidad total?
+        if(precio > capacidadTotal) return;
+
+        // Verificar LTV sobre el monto real a financiar
+        const necesita = precio - totalSinCred;
+        if(necesita <= 0) return; // ya cubierto al contado (no debería llegar aquí)
+
+        const ltvInfo = labLTV(c.banco, u.anno||_hoy, u._esUsado);
+        if(!ltvInfo) return;
+
+        const tope = Math.min(precio*(ltvInfo.ltv/100), c.montoMax||Infinity, ltvInfo.montoMax);
+
+        // El monto bruto real = necesita + CE → verificar que mUtil >= necesita
+        const ceR = (c.comision||0)/100;
+        const mBrutoReal = ceR>0 ? necesita*(1+ceR*1.21) : necesita;
+        if(mBrutoReal > tope) return; // LTV no alcanza
+
+        // Calcular cuota real con el monto bruto
+        const tna = c.tna/100;
+        const tem = Math.pow(1+tna,1/12)-1;
+        const q = tem>0 ? Math.round(mBrutoReal*tem/(1-Math.pow(1+tem,-n))) : Math.round(mBrutoReal/n);
+        if(q > cuotaMax) return; // cuota no entra
+
+        const gastosReal = mBrutoReal - necesita;
+
+        results.push({
+          unidad:u, campana:c, plazo:n,
+          cuotaCalc:q, mBruto:mBrutoReal, mUtil:necesita, gastosDE:gastosReal,
+          necesita, capacidadTotal:totalSinCred+necesita,
+          ltvInfo, tope, totalSinCred, precio, sobra:0,
+          sinLimiteCuota:false, nota:''
+        });
       });
     });
   });
 
-  // Ordenar: al contado primero, luego por cuota ascendente, luego precio ascendente
+  // Ordenar: contado primero, luego por precio desc (mejor auto posible), cuota asc
   results.sort((a,b)=>{
     if(a.campana===null && b.campana!==null) return -1;
     if(a.campana!==null && b.campana===null) return 1;
-    if(a.cuotaCalc!==b.cuotaCalc) return a.cuotaCalc-b.cuotaCalc;
-    return a.precio-b.precio;
+    if(b.precio !== a.precio) return b.precio - a.precio; // mejor auto primero
+    return a.cuotaCalc - b.cuotaCalc;
   });
 
-  // Deduplicar: mejor resultado por unidad+banco
-  const seen=new Set();
+  // Deduplicar: mejor resultado por unidad+banco (no por plazo)
+  const seen = new Set();
   return results.filter(r=>{
-    const key=(r.unidad.dominio||r.unidad.version||r.unidad.modelo||'')+'_'+(r.campana?.banco||'contado');
+    const dom = r.unidad.dominio||r.unidad.version||r.unidad.modelo||'';
+    const key = dom+'_'+(r.campana?.banco||'contado')+'_'+r.plazo;
     if(seen.has(key)) return false;
     seen.add(key);
     return true;
-  }).slice(0,25);
+  }).slice(0,30);
+}
+
+// ── Abrir coincidencia en la Propuesta Comercial ──────────────────
+function labAbrirEnCotizador(matchIdx){
+  const perfs = labGetPerfiles();
+  const p = perfs.find(x=>x.id===_labDetId||x.id===_labModalId);
+  if(!p) return;
+  const matches = labMatch(p);
+  const m = matches[matchIdx];
+  if(!m) return;
+  const u = m.unidad;
+
+  // Ir a propuesta y cargar la unidad
+  labCerrarDet();
+  labCerrarModal();
+  goTo('propuesta');
+
+  setTimeout(()=>{
+    // Limpiar formulario primero
+    if(typeof limpiar === 'function') limpiar();
+
+    // Cargar tipo
+    const tipoEl = $$('tipo');
+    if(tipoEl){
+      tipoEl.value = u._esUsado ? 'usado' : 'lista_precios';
+      if(typeof onTipo === 'function') onTipo();
+    }
+
+    setTimeout(()=>{
+      // Cargar marca
+      const marcaEl = $$('marca');
+      if(marcaEl && u.marca){
+        marcaEl.value = u.marca.toUpperCase();
+        marcaEl.disabled = false;
+        if(typeof onMarca === 'function') onMarca();
+      }
+
+      setTimeout(()=>{
+        // Cargar modelo
+        const modeloEl = $$('modelo');
+        if(modeloEl && u.modelo){
+          modeloEl.value = u.modelo.toUpperCase();
+          modeloEl.disabled = false;
+          if(typeof onModelo === 'function') onModelo();
+        }
+
+        // Precio
+        if(u.precio > 0){
+          const pa1 = $$('pa1');
+          if(pa1){ pa1.value = u.precio; if(typeof cP === 'function') cP(); }
+        }
+
+        // Año / color / km / dominio
+        if(u.anno){ const el=$$('anno'); if(el){el.value=u.anno;el.disabled=false;} }
+        if(u.color){ const el=$$('color'); if(el) el.value=u.color; }
+        if(u.km){ const el=$$('km'); if(el) el.value=u.km; }
+
+        // Monto del crédito = lo que necesita financiar
+        if(m.campana && m.necesita > 0){
+          const pb1 = $$('pb1');
+          if(pb1){ pb1.value = Math.round(m.mBruto); if(typeof cP === 'function') cP(); }
+        }
+
+        // Anticipo = entrega + parte de pago + cheques
+        const totalSinCred = (parseFloat(p.entrega)||0)+(parseFloat(p.partePago)||0)+(parseFloat(p.cheques)||0);
+        if(totalSinCred > 0){
+          const pb2 = $$('pb2');
+          if(pb2){ pb2.value = Math.round(totalSinCred); if(typeof cP === 'function') cP(); }
+        }
+
+        // Nota interna con el detalle del match
+        if(m.campana){
+          const obs = $$('obs-interna');
+          if(obs) obs.value = `[LAB] ${m.campana.banco} — ${m.campana.nombre} · ${m.plazo}c · Cuota: ${fmt(m.cuotaCalc)} · Financiado: ${fmt(m.mBruto)} · CE: ${fmt(m.gastosDE)} · Útil: ${fmt(m.mUtil)}`;
+        }
+
+        if(typeof updR === 'function') updR();
+      }, 120);
+    }, 100);
+  }, 200);
 }
 
 // ── Buscar cliente en base compartida ────────────────────────────
@@ -5632,11 +5753,11 @@ function labBuscarCliente(nombre, tel, email){
   const cli = window._clientesCache||[];
   if(!cli.length) return [];
   const n=(nombre||'').toLowerCase().trim();
-  const t=(tel||'').replace(/\D/g,'');
+  const t=(tel||'').replace(/[^0-9]/g,'');
   const e=(email||'').toLowerCase().trim();
   return cli.filter(c=>{
     const cn=((c.Nombre||'')+' '+(c.Apellido||'')).toLowerCase();
-    const ct=String(c.Telefono||'').replace(/\D/g,'');
+    const ct=String(c.Telefono||'').replace(/[^0-9]/g,'');
     const ce=(c.Email||'').toLowerCase();
     if(t && t.length>=6 && ct.includes(t)) return true;
     if(e && e.length>3 && ce===e) return true;
@@ -5645,27 +5766,7 @@ function labBuscarCliente(nombre, tel, email){
   }).slice(0,5);
 }
 
-// ── Buscar perfiles previos del mismo cliente en el Laboratorio ──
-function labPerfilesAnteriores(clienteId, perfilIdActual){
-  return labGetPerfiles().filter(p=>
-    p.clienteVinculadoId===clienteId && p.id!==perfilIdActual
-  );
-}
-
-// ── Render lista principal ────────────────────────────────────────
-function rLab(){
-  // Asegurar que tenemos clientes cargados
-  if(!window._clientesCache || window._clientesCache.length===0){
-    fetch(PROPUESTAS_URL+'?action=getClientes&t='+Date.now(),{cache:'no-store'})
-      .then(r=>r.json())
-      .then(data=>{ window._clientesCache=data.data||data||[]; })
-      .catch(()=>{});
-  }
-  const perfiles = labGetPerfiles();
-  labRenderStats(perfiles);
-  labFiltrar();
-}
-
+// ── Render stats ─────────────────────────────────────────────────
 function labRenderStats(perfiles){
   const st=$$('lab-stats'); if(!st) return;
   const activos  = perfiles.filter(p=>p.estado==='activo'||p.estado==='match').length;
@@ -5681,270 +5782,239 @@ function labRenderStats(perfiles){
   `;
 }
 
+// ── rLab: pantalla principal ──────────────────────────────────────
+function rLab(){
+  if(!window._clientesCache||window._clientesCache.length===0){
+    fetch(PROPUESTAS_URL+'?action=getClientes&t='+Date.now(),{cache:'no-store'})
+      .then(r=>r.json()).then(d=>{window._clientesCache=d.data||d||[];}).catch(()=>{});
+  }
+  labFiltrar();
+}
+
+// ── Filtrar y renderizar lista ────────────────────────────────────
 function labFiltrar(){
   const busq=($$('lab-busq')?.value||'').toLowerCase();
   const filtEst=$$('lab-filtro-est')?.value||'';
   const filtUrg=$$('lab-filtro-urg')?.value||'';
-  let perfiles=labGetPerfiles();
 
-  // Re-calcular matches y actualizar estado
-  perfiles=perfiles.map(p=>{
+  let perfiles = labGetPerfiles();
+
+  // Recalcular estados (sin guardar _matches en storage)
+  const conMatches = perfiles.map(p=>{
     if(p.estado==='cerrado') return {...p, _matches:[]};
-    const matches=labMatch(p);
-    const nuevoEst = matches.length>0 ? 'match' : 'espera';
-    return {...p, estado:nuevoEst, _matches:matches};
+    const ms = labMatch(p);
+    return {...p, estado: ms.length>0?'match':'espera', _matches:ms};
   });
-  // Guardar estados actualizados (sin _matches para no inflar el storage)
-  labSetPerfiles(perfiles.map(({_matches,...p})=>p));
-  labRenderStats(perfiles);
 
-  if(busq) perfiles=perfiles.filter(p=>
-    (p.nombre||'').toLowerCase().includes(busq)||
-    (p.tel||'').includes(busq)
-  );
-  if(filtEst) perfiles=perfiles.filter(p=>p.estado===filtEst);
-  if(filtUrg) perfiles=perfiles.filter(p=>p.urgencia===filtUrg);
+  // Guardar estados actualizados
+  labSetPerfiles(conMatches.map(({_matches,...p})=>p));
+  labRenderStats(conMatches);
 
-  const lista=$$('lab-lista'); if(!lista) return;
-  if(!perfiles.length){
-    lista.innerHTML='<div class="empty"><div class="eico">🔍</div><div class="ettl">Sin resultados</div><div class="esub">Probá cambiar los filtros.</div></div>';
+  let lista = conMatches;
+  if(busq) lista=lista.filter(p=>(p.nombre||'').toLowerCase().includes(busq)||(p.tel||'').includes(busq));
+  if(filtEst) lista=lista.filter(p=>p.estado===filtEst);
+  if(filtUrg) lista=lista.filter(p=>p.urgencia===filtUrg);
+
+  const cont=$$('lab-lista'); if(!cont) return;
+  if(!lista.length){
+    cont.innerHTML='<div class="empty"><div class="eico">🔍</div><div class="ettl">Sin resultados</div><div class="esub">Probá cambiar los filtros.</div></div>';
     return;
   }
 
-  lista.innerHTML='';
-  perfiles.forEach(p=>{
-    const matches=p._matches||[];
-    const tieneMatch=matches.length>0 && p.estado!=='cerrado';
-    const totalDisp=(parseFloat(p.entrega)||0)+(parseFloat(p.partePago)||0)+(parseFloat(p.cheques)||0);
+  cont.innerHTML='';
+  lista.forEach(p=>{
+    const ms = p._matches||[];
+    const tieneMatch = ms.length>0 && p.estado!=='cerrado';
+    const totalSinCred = (parseFloat(p.entrega)||0)+(parseFloat(p.partePago)||0)+(parseFloat(p.cheques)||0);
 
-    const card=document.createElement('div');
+    const card = document.createElement('div');
     card.className=`lab-card ${p.urgencia||'fria'} ${p.estado==='cerrado'?'cerrado':''} ${tieneMatch?'match':''}`;
     card.style.cssText='margin-bottom:8px';
     card.onclick=()=>labVerDetalle(p.id);
 
-    const urgEl=`<span class="lab-urg">${labUrgLabel(p.urgencia)}</span>${labEstLabel(p.estado)}`;
     const caps=[
       `<span class="lab-cap">💵 Entrega <strong>${fmt(parseFloat(p.entrega)||0)}</strong></span>`,
-      `<span class="lab-cap">📅 Cuota máx <strong>${fmt(parseFloat(p.cuotaMax)||0)}/mes</strong></span>`,
+      parseFloat(p.cuotaMax)>0?`<span class="lab-cap">📅 Cuota máx <strong>${fmt(parseFloat(p.cuotaMax))}/mes</strong></span>`:'<span class="lab-cap">📅 Cuota <strong>sin límite</strong></span>',
       parseFloat(p.partePago)>0?`<span class="lab-cap">🚗 P.Pago <strong>${fmt(parseFloat(p.partePago))}</strong></span>`:'',
       parseFloat(p.cheques)>0?`<span class="lab-cap">📄 Cheques <strong>${fmt(parseFloat(p.cheques))}</strong></span>`:'',
     ].filter(Boolean).join('');
 
-    let matchPreview='';
+    let matchPrev = '';
     if(tieneMatch){
-      const m=matches[0];
-      const autoStr=`${m.unidad.marca||''} ${m.unidad.modelo||''} ${(m.unidad.version||'').substring(0,28)}`.trim();
-      matchPreview=`<div style="margin-top:8px;padding:8px 10px;background:rgba(65,192,240,.1);border:1px solid rgba(65,192,240,.3);border-radius:7px;font-size:11px">
-        <div style="color:#41c0f0;font-weight:700;margin-bottom:2px">🎯 ${matches.length} match${matches.length>1?'es':''} encontrado${matches.length>1?'s':''}</div>
-        <div style="color:var(--t);font-weight:600">${autoStr}</div>
-        <div style="color:var(--m);font-size:10px">${fmt(m.unidad.precio)}${m.campana?' · '+m.campana.banco+' '+m.plazo+'c · cuota '+fmt(m.cuotaCalc)+(m.sinLimiteCuota?' (aprox)':''):' · Al contado'}</div>
+      const m=ms[0];
+      const autoStr=`${m.unidad.marca||''} ${m.unidad.modelo||''} ${(m.unidad.version||'').substring(0,25)}`.trim();
+      matchPrev=`<div style="margin-top:8px;padding:8px 10px;background:rgba(65,192,240,.1);border:1px solid rgba(65,192,240,.3);border-radius:7px;font-size:11px">
+        <div style="color:#41c0f0;font-weight:700;margin-bottom:2px">🎯 ${ms.length} coincidencia${ms.length>1?'s':''}</div>
+        <div style="color:var(--t);font-weight:600">${autoStr} · ${fmt(m.precio)}</div>
+        <div style="color:var(--m);font-size:10px">${m.campana?m.campana.banco+' · '+m.plazo+'c · '+fmt(m.cuotaCalc)+'/mes':'Al contado'}</div>
+      </div>`;
+    } else if(p.estado==='espera'){
+      matchPrev=`<div style="margin-top:8px;padding:7px 10px;background:rgba(239,125,0,.08);border:1px solid rgba(239,125,0,.2);border-radius:7px;font-size:10px;color:var(--y)">
+        ⏳ Sin stock ahora · Se alertará cuando ingrese una unidad que coincida
       </div>`;
     }
 
-    const vend=p.vendedor?' · '+p.vendedor:'';
-    const fecha=p.fecha?new Date(p.fecha).toLocaleDateString('es-AR'):'';
-    const clienteTag=p.clienteVinculadoNombre?
-      `<span style="font-size:9px;background:var(--rg);color:var(--r);padding:1px 6px;border-radius:10px;font-weight:700">👤 ${p.clienteVinculadoNombre}</span> `:
-      '';
-
+    const fecha = p.fecha?new Date(p.fecha).toLocaleDateString('es-AR'):'';
     card.innerHTML=`
-      ${tieneMatch?'<div class="lab-match-badge">🎯 '+matches.length+'</div>':''}
+      ${tieneMatch?`<div class="lab-match-badge">🎯 ${ms.length}</div>`:''}
       <div class="lab-nom">${p.nombre||'Sin nombre'}</div>
-      <div class="lab-tel">${p.tel||'Sin teléfono'}${vend}${fecha?' · '+fecha:''}</div>
-      ${clienteTag}${urgEl}
+      <div class="lab-tel">${p.tel||''}${p.vendedor?' · '+p.vendedor:''}${fecha?' · '+fecha:''}</div>
+      <span class="lab-urg">${labUrgLabel(p.urgencia)}</span>${labEstLabel(p.estado)}
       <div class="lab-caps" style="margin-top:6px">${caps}</div>
-      ${p.marcaPref?`<div style="font-size:10px;color:var(--m);margin-top:4px">🚗 Preferencia: ${p.marcaPref}</div>`:''}
-      ${p.obs?`<div style="font-size:10px;color:var(--m);margin-top:2px">💬 ${p.obs.substring(0,80)}${p.obs.length>80?'...':''}</div>`:''}
-      ${matchPreview}
+      ${p.marcaPref?`<div style="font-size:10px;color:var(--m);margin-top:3px">🚗 Pref: ${p.marcaPref}</div>`:''}
+      ${p.obs?`<div style="font-size:10px;color:var(--m);margin-top:2px">💬 ${p.obs.substring(0,70)}${p.obs.length>70?'...':''}</div>`:''}
+      ${matchPrev}
     `;
-    lista.appendChild(card);
+    cont.appendChild(card);
   });
 }
 
-// ── Etiquetas ─────────────────────────────────────────────────────
-function labUrgLabel(u){ return u==='caliente'?'🔥 Caliente':u==='tibia'?'🟡 Tibia':'❄ Fría'; }
-function labEstLabel(e){
-  if(e==='match')   return '<span class="lab-est-badge lab-est-match">🎯 Match</span>';
-  if(e==='espera')  return '<span class="lab-est-badge lab-est-espera">⏳ Espera</span>';
-  if(e==='cerrado') return '<span class="lab-est-badge lab-est-cerrado">✅ Cerrado</span>';
-  return '<span class="lab-est-badge lab-est-activo">🟢 Activo</span>';
-}
+// ── Variables de estado modal ─────────────────────────────────────
+let _labDetId   = null;
+let _labModalId = null;
 
-// ── Modal nuevo/editar ────────────────────────────────────────────
+// ── Modal nuevo perfil ────────────────────────────────────────────
 function labNuevoPerfil(){
+  _labModalId = null;
   ['lf-nombre','lf-tel','lf-email','lf-entrega','lf-cuota','lf-partepago','lf-cheques','lf-marca-pref','lf-obs'].forEach(id=>{
     const el=$$(id); if(el) el.value='';
   });
-  const lfu=$$('lf-urgencia'); if(lfu) lfu.value='caliente';
-  const lft=$$('lf-tipo'); if(lft) lft.value='';
-  const lfid=$$('lf-id'); if(lfid) lfid.value='';
-  const lfcid=$$('lf-cliente-id'); if(lfcid) lfcid.value='';
-  const lfcnm=$$('lf-cliente-nm'); if(lfcnm) lfcnm.value='';
+  const lu=$$('lf-urgencia'); if(lu) lu.value='caliente';
+  const lt=$$('lf-tipo');     if(lt) lt.value='';
+  const li=$$('lf-id');       if(li) li.value='';
+  const lci=$$('lf-cliente-id'); if(lci) lci.value='';
+  const lcn=$$('lf-cliente-nm'); if(lcn) lcn.value='';
   if($$('lf-total-disp')) $$('lf-total-disp').textContent='$ 0';
   if($$('lf-match-preview')) $$('lf-match-preview').style.display='none';
-  if($$('lf-match-empty')) $$('lf-match-empty').style.display='none';
-  if($$('lf-cliente-sugs')) $$('lf-cliente-sugs').innerHTML='';
-  if($$('lf-cliente-vinc')) $$('lf-cliente-vinc').style.display='none';
-  if($$('lf-hist-prev')) $$('lf-hist-prev').style.display='none';
+  if($$('lf-match-empty'))   $$('lf-match-empty').style.display='none';
+  if($$('lf-cliente-sugs'))  $$('lf-cliente-sugs').innerHTML='';
+  if($$('lf-cliente-vinc'))  $$('lf-cliente-vinc').style.display='none';
+  if($$('lf-hist-prev'))     $$('lf-hist-prev').style.display='none';
 
-  // Poblar vendedores
   const sv=$$('lf-vendedor');
   if(sv){
     sv.innerHTML='<option value="">— Sin asignar —</option>';
     (window.USERS||[]).filter(u=>esVendedor(u)||esSupervisor(u)).forEach(u=>{
       const o=document.createElement('option');
-      o.value=u.name; o.textContent=u.name;
-      sv.appendChild(o);
+      o.value=u.name; o.textContent=u.name; sv.appendChild(o);
     });
     if(window.CU) sv.value=CU.name;
   }
   $$('lab-modal-overlay').style.display='block';
 }
-
 function labCerrarModal(){
   $$('lab-modal-overlay').style.display='none';
+  _labModalId = null;
 }
 
-// ── Búsqueda en tiempo real de clientes mientras tipea ───────────
+// ── Búsqueda de cliente en tiempo real ───────────────────────────
 function labOnNombreTel(){
   const nombre=$$('lf-nombre')?.value||'';
   const tel=$$('lf-tel')?.value||'';
   const email=$$('lf-email')?.value||'';
-  const sugsEl=$$('lf-cliente-sugs');
-  if(!sugsEl) return;
-
-  // Solo buscar si hay suficiente texto
-  if(nombre.length<3 && tel.replace(/\D/g,'').length<6 && email.length<4){
-    sugsEl.innerHTML=''; return;
-  }
-  const encontrados=labBuscarCliente(nombre, tel, email);
-  if(!encontrados.length){ sugsEl.innerHTML=''; return; }
-
+  const sugsEl=$$('lf-cliente-sugs'); if(!sugsEl) return;
+  if(nombre.length<3 && tel.replace(/[^0-9]/g,'').length<6 && email.length<4){sugsEl.innerHTML='';return;}
+  const encontrados=labBuscarCliente(nombre,tel,email);
+  if(!encontrados.length){sugsEl.innerHTML='';return;}
   sugsEl.innerHTML=`
-    <div style="font-size:9px;color:var(--m);font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-bottom:4px">
-      👤 Cliente existente en la base
-    </div>
+    <div style="font-size:9px;color:var(--m);font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-bottom:4px">👤 Clientes en la base</div>
     ${encontrados.map(c=>{
-      const fullName=`${c.Nombre||''} ${c.Apellido||''}`.trim();
-      const perfsAnt=labGetPerfiles().filter(p=>p.clienteVinculadoId===c.NroCliente);
-      return `<div onclick="labVincularCliente('${c.NroCliente}','${fullName}','${c.Telefono||''}','${c.Email||''}')"
+      const fn=`${c.Nombre||''} ${c.Apellido||''}`.trim();
+      const pa=labGetPerfiles().filter(x=>x.clienteVinculadoId===c.NroCliente);
+      return `<div onclick="labVincularCliente('${c.NroCliente}','${fn}','${c.Telefono||''}','${c.Email||''}')"
         style="padding:8px 10px;background:var(--s3);border:1px solid var(--bdr);border-radius:6px;cursor:pointer;margin-bottom:4px">
-        <div style="font-weight:700;font-size:12px;color:var(--t)">${fullName}</div>
-        <div style="font-size:10px;color:var(--m)">📱 ${c.Telefono||'—'} · 📧 ${c.Email||'—'}</div>
-        <div style="font-size:10px;color:var(--m)">Última visita: ${c.UltimaVisita||'—'} · Marca: ${c.UltimasMarca||'—'} ${c.UltimoModelo||''}</div>
-        ${perfsAnt.length>0?`<div style="font-size:9px;color:#41c0f0;margin-top:3px">🧪 ${perfsAnt.length} perfil${perfsAnt.length>1?'es':''} previo${perfsAnt.length>1?'s':''} en el Laboratorio</div>`:''}
-        <div style="font-size:9px;color:var(--r);margin-top:2px;font-weight:700">← Tocá para vincular</div>
+        <div style="font-weight:700;font-size:12px">${fn}</div>
+        <div style="font-size:10px;color:var(--m)">📱 ${c.Telefono||'—'} · Última visita: ${c.UltimaVisita||'—'} · ${c.UltimasMarca||''} ${c.UltimoModelo||''}</div>
+        ${pa.length?`<div style="font-size:9px;color:#41c0f0">🧪 ${pa.length} perfil${pa.length>1?'es':''} previo${pa.length>1?'s':''} en el Lab</div>`:''}
+        <div style="font-size:9px;color:var(--r);font-weight:700;margin-top:2px">← Tocá para vincular</div>
       </div>`;
-    }).join('')}
-  `;
+    }).join('')}`;
 }
-
-function labVincularCliente(id, nombre, tel, email){
+function labVincularCliente(id,nombre,tel,email){
   if($$('lf-cliente-id')) $$('lf-cliente-id').value=id;
   if($$('lf-cliente-nm')) $$('lf-cliente-nm').value=nombre;
   if($$('lf-nombre')&&!$$('lf-nombre').value) $$('lf-nombre').value=nombre;
   if($$('lf-tel')&&!$$('lf-tel').value) $$('lf-tel').value=tel;
   if($$('lf-email')&&!$$('lf-email').value) $$('lf-email').value=email;
   if($$('lf-cliente-sugs')) $$('lf-cliente-sugs').innerHTML='';
-
-  // Mostrar badge de vinculación
   const vc=$$('lf-cliente-vinc');
-  if(vc){
-    vc.style.display='block';
-    vc.innerHTML=`<div style="padding:6px 10px;background:rgba(0,105,180,.15);border:1px solid var(--r);border-radius:6px;font-size:11px;display:flex;align-items:center;gap:8px">
-      <span>✅ Vinculado a: <strong>${nombre}</strong></span>
-      <span onclick="labDesvincularCliente()" style="cursor:pointer;color:var(--m);font-size:10px">✕ Quitar</span>
-    </div>`;
-  }
-
-  // Mostrar historial previo en el Laboratorio
-  const perfsAnt=labGetPerfiles().filter(p=>p.clienteVinculadoId===id);
+  if(vc){ vc.style.display='block'; vc.innerHTML=`<div style="padding:6px 10px;background:rgba(0,105,180,.15);border:1px solid var(--r);border-radius:6px;font-size:11px;display:flex;align-items:center;gap:8px">
+    ✅ Vinculado: <strong>${nombre}</strong><span onclick="labDesvincularCliente()" style="cursor:pointer;color:var(--m);margin-left:auto;font-size:10px">✕</span></div>`;}
+  const pa=labGetPerfiles().filter(x=>x.clienteVinculadoId===id);
   const hp=$$('lf-hist-prev');
-  if(hp && perfsAnt.length>0){
+  if(hp&&pa.length>0){
     hp.style.display='block';
-    hp.innerHTML=`<div style="font-size:9px;color:#41c0f0;font-weight:800;letter-spacing:.5px;text-transform:uppercase;margin-bottom:6px">🧪 Perfiles anteriores de este cliente</div>
-    ${perfsAnt.map(p=>{
-      const fechaStr=p.fecha?new Date(p.fecha).toLocaleDateString('es-AR'):'—';
-      const totalD=(parseFloat(p.entrega)||0)+(parseFloat(p.partePago)||0)+(parseFloat(p.cheques)||0);
+    hp.innerHTML=`<div style="font-size:9px;color:#41c0f0;font-weight:800;letter-spacing:.5px;text-transform:uppercase;margin-bottom:6px">🧪 Historial en el Lab</div>
+    ${pa.map(x=>{
+      const fd=x.fecha?new Date(x.fecha).toLocaleDateString('es-AR'):'—';
+      const td=(parseFloat(x.entrega)||0)+(parseFloat(x.partePago)||0)+(parseFloat(x.cheques)||0);
       return `<div style="padding:6px 10px;background:var(--s3);border-radius:6px;margin-bottom:4px;font-size:10px">
-        <div style="font-weight:700;color:var(--t)">${fechaStr} · ${labEstLabel(p.estado)}</div>
-        <div style="color:var(--m)">Entrega: ${fmt(parseFloat(p.entrega)||0)} · Cuota máx: ${fmt(parseFloat(p.cuotaMax)||0)}/mes</div>
-        <div style="color:var(--m)">Disponible total: ${fmt(totalD)}${p.marcaPref?' · Prefería: '+p.marcaPref:''}</div>
-        ${p.obs?`<div style="color:var(--m);font-style:italic">"${p.obs.substring(0,60)}..."</div>`:''}
+        <strong>${fd}</strong> ${labEstLabel(x.estado)}
+        <div style="color:var(--m)">Entrega: ${fmt(parseFloat(x.entrega)||0)} · Cuota: ${fmt(parseFloat(x.cuotaMax)||0)}/mes · Total: ${fmt(td)}</div>
+        ${x.obs?`<div style="color:var(--m);font-style:italic">"${x.obs.substring(0,60)}"</div>`:''}
       </div>`;
     }).join('')}`;
   } else if(hp){ hp.style.display='none'; }
 }
-
 function labDesvincularCliente(){
   if($$('lf-cliente-id')) $$('lf-cliente-id').value='';
   if($$('lf-cliente-nm')) $$('lf-cliente-nm').value='';
   if($$('lf-cliente-vinc')) $$('lf-cliente-vinc').style.display='none';
-  if($$('lf-hist-prev')) $$('lf-hist-prev').style.display='none';
+  if($$('lf-hist-prev'))   $$('lf-hist-prev').style.display='none';
 }
 
-// ── Cálculo de matches en tiempo real (modal) ─────────────────────
+// ── Preview de matches en tiempo real (modal) ─────────────────────
 function labCalcMatch(){
   const entrega   = parseFloat($$('lf-entrega')?.value)||0;
   const partePago = parseFloat($$('lf-partepago')?.value)||0;
   const cheques   = parseFloat($$('lf-cheques')?.value)||0;
   const cuotaMax  = parseFloat($$('lf-cuota')?.value)||0;
-  const totalDisp = entrega+partePago+cheques;
+  const total     = entrega+partePago+cheques;
+  if($$('lf-total-disp')) $$('lf-total-disp').textContent=fmt(total);
 
-  if($$('lf-total-disp')) $$('lf-total-disp').textContent=fmt(totalDisp);
-
-  if(totalDisp<=0&&cuotaMax<=0){
+  if(total<=0&&cuotaMax<=0){
     if($$('lf-match-preview')) $$('lf-match-preview').style.display='none';
-    if($$('lf-match-empty')) $$('lf-match-empty').style.display='none';
+    if($$('lf-match-empty'))   $$('lf-match-empty').style.display='none';
     return;
   }
 
-  const perfilTemp={
-    entrega, partePago, cheques, cuotaMax,
-    marcaPref:$$('lf-marca-pref')?.value||'',
-    urgencia:'caliente'
-  };
-  const matches=labMatch(perfilTemp);
-  const ml=$$('lf-match-lista');
-  const mp=$$('lf-match-preview');
-  const me=$$('lf-match-empty');
+  const perfTemp={entrega,partePago,cheques,cuotaMax,marcaPref:$$('lf-marca-pref')?.value||''};
+  const ms = labMatch(perfTemp);
+  const ml=$$('lf-match-lista'), mp=$$('lf-match-preview'), me=$$('lf-match-empty');
   if(!ml||!mp||!me) return;
 
-  if(!matches.length){
-    mp.style.display='none';
-    me.style.display='block';
-    return;
-  }
-  me.style.display='none';
-  mp.style.display='block';
+  if(!ms.length){ mp.style.display='none'; me.style.display='block'; return; }
+  me.style.display='none'; mp.style.display='block';
   ml.innerHTML='';
 
-  matches.slice(0,6).forEach(m=>{
+  ms.slice(0,6).forEach((m,idx)=>{
     const u=m.unidad;
-    const autoStr=`${u.marca||''} ${u.modelo||''} ${(u.version||'').substring(0,32)}`.trim();
-    const ant=_hoy-(u.anno||_hoy);
+    const autoStr=`${u.marca||''} ${u.modelo||''} ${(u.version||'').substring(0,28)}`.trim();
     const div=document.createElement('div');
     div.className='lab-match-item';
     div.innerHTML=`
-      <div class="lab-match-auto">${autoStr} <span style="font-weight:400;color:var(--m);font-size:10px">(${u._tipo==='0km'?'0 km':'Usado · '+ant+'a'})</span></div>
+      <div class="lab-match-auto">${autoStr} <span style="color:var(--m);font-size:10px;font-weight:400">(${u._tipo==='0km'?'0km':'Usado'} · ${u.anno||''})</span></div>
       <div style="font-size:11px;color:var(--m);margin-bottom:4px">${fmt(u.precio)}${u.dominio?' · '+u.dominio:''}</div>
       ${m.campana?`
-        <div class="lab-match-camp">💳 ${m.campana.banco} — ${m.plazo} cuotas</div>
-        <div class="lab-match-cuota" style="color:${m.sinLimiteCuota?'var(--y)':'var(--g)'}">
-          Cuota: ${fmt(m.cuotaCalc)}/mes${m.sinLimiteCuota?' <span style=\'font-size:9px;color:var(--m)\'>— ingresá cuota máx para filtrar</span>':''}
-        </div>
+        <div class="lab-match-camp">💳 ${m.campana.banco} · ${m.plazo} cuotas</div>
+        <div class="lab-match-cuota" style="color:${m.sinLimiteCuota?'var(--y)':'var(--g)'}">Cuota: ${fmt(m.cuotaCalc)}/mes${m.sinLimiteCuota?' (aprox)':''}</div>
         <div class="lab-match-detalle">
-          Necesita financiar: ${fmt(m.necesita)} · LTV ${m.ltvInfo?.ltv||m.campana.ltv}%
-          ${m.gastosOtorg>0?' · Gastos: '+fmt(m.gastosOtorg):''}
+          Financia bruto: ${fmt(m.mBruto)} · CE: ${fmt(m.gastosDE)} · Neto: ${fmt(m.mUtil)}
+          · LTV ${m.ltvInfo?.ltv||m.campana.ltv}%
         </div>
-      `:`<div class="lab-match-cuota" style="color:var(--g)">✅ Puede comprar al contado${m.sobra>0?' · Sobran '+fmt(m.sobra):''}  </div>`}
+      `:`<div style="color:var(--g);font-weight:700;font-size:12px">✅ Al contado · sobran ${fmt(m.sobra)}</div>`}
+      <div style="text-align:right;margin-top:6px">
+        <button class="btn btn-r btn-sm" style="font-size:10px;padding:4px 10px" onclick="event.stopPropagation();_labModalId=$$('lf-id')?.value||null;labAbrirEnCotizador(${idx})">
+          📋 Abrir en Cotizador
+        </button>
+      </div>
     `;
     ml.appendChild(div);
   });
-  if(matches.length>6){
+  if(ms.length>6){
     const mas=document.createElement('div');
     mas.style.cssText='text-align:center;font-size:10px;color:var(--m);padding:6px';
-    mas.textContent=`+ ${matches.length-6} opciones más`;
+    mas.textContent=`+ ${ms.length-6} opciones más`;
     ml.appendChild(mas);
   }
 }
@@ -5952,17 +6022,12 @@ function labCalcMatch(){
 // ── Guardar perfil ────────────────────────────────────────────────
 function labGuardarPerfil(){
   const nombre=($$('lf-nombre')?.value||'').trim();
-  if(!nombre){ alert('Ingresá al menos el nombre del cliente.'); return; }
-
+  if(!nombre){alert('Ingresá al menos el nombre del cliente.');return;}
   const id=$$('lf-id')?.value||labUID();
   const perfiles=labGetPerfiles();
   const idx=perfiles.findIndex(p=>p.id===id);
-  const clienteId=$$('lf-cliente-id')?.value||'';
-  const clienteNm=$$('lf-cliente-nm')?.value||nombre;
-
   const perfil={
-    id,
-    nombre,
+    id, nombre,
     tel:($$('lf-tel')?.value||'').trim(),
     email:($$('lf-email')?.value||'').trim(),
     vendedor:$$('lf-vendedor')?.value||'',
@@ -5974,93 +6039,88 @@ function labGuardarPerfil(){
     marcaPref:($$('lf-marca-pref')?.value||'').trim(),
     tipoPref:$$('lf-tipo')?.value||'',
     obs:($$('lf-obs')?.value||'').trim(),
-    clienteVinculadoId:clienteId,
-    clienteVinculadoNombre:clienteNm,
+    clienteVinculadoId:$$('lf-cliente-id')?.value||'',
+    clienteVinculadoNombre:$$('lf-cliente-nm')?.value||nombre,
     estado:'activo',
     fecha:idx>=0?(perfiles[idx].fecha||new Date().toISOString()):new Date().toISOString(),
     fechaMod:new Date().toISOString(),
   };
-
-  if(idx>=0) perfiles[idx]=perfil;
-  else perfiles.unshift(perfil);
+  if(idx>=0) perfiles[idx]=perfil; else perfiles.unshift(perfil);
   labSetPerfiles(perfiles);
   labCerrarModal();
   rLab();
 }
 
-// ── Detalle de perfil ─────────────────────────────────────────────
-let _labDetId=null;
+// ── Detalle del perfil ────────────────────────────────────────────
 function labVerDetalle(id){
   _labDetId=id;
-  const perfiles=labGetPerfiles();
-  const p=perfiles.find(x=>x.id===id);
-  if(!p) return;
-
+  const p=labGetPerfiles().find(x=>x.id===id); if(!p) return;
   $$('lab-det-titulo').textContent='🧪 '+p.nombre;
-  const matches=labMatch(p);
-  const totalDisp=(parseFloat(p.entrega)||0)+(parseFloat(p.partePago)||0)+(parseFloat(p.cheques)||0);
 
-  // Perfiles anteriores del mismo cliente
+  const ms=labMatch(p);
+  const totalSinCred=(parseFloat(p.entrega)||0)+(parseFloat(p.partePago)||0)+(parseFloat(p.cheques)||0);
+
+  // Historial
   let histHTML='';
   if(p.clienteVinculadoId){
     const ant=labGetPerfiles().filter(x=>x.clienteVinculadoId===p.clienteVinculadoId&&x.id!==p.id);
-    if(ant.length>0){
+    if(ant.length){
       histHTML=`<div style="margin-bottom:12px">
-        <div style="font-size:9px;font-weight:800;letter-spacing:1.5px;color:#41c0f0;text-transform:uppercase;margin-bottom:6px">🕐 Historial de este cliente en el Laboratorio</div>
+        <div style="font-size:9px;font-weight:800;letter-spacing:1px;color:#41c0f0;text-transform:uppercase;margin-bottom:6px">🕐 Historial del cliente en el Lab</div>
         ${ant.map(a=>{
           const td=(parseFloat(a.entrega)||0)+(parseFloat(a.partePago)||0)+(parseFloat(a.cheques)||0);
-          const fa=a.fecha?new Date(a.fecha).toLocaleDateString('es-AR'):'—';
-          return `<div style="padding:8px 10px;background:var(--s3);border-radius:6px;margin-bottom:4px;font-size:11px">
-            <div style="display:flex;justify-content:space-between">
-              <span style="font-weight:700">${fa}</span>${labEstLabel(a.estado)}
-            </div>
-            <div style="color:var(--m);margin-top:2px">
-              Entrega: ${fmt(parseFloat(a.entrega)||0)} · Cuota máx: ${fmt(parseFloat(a.cuotaMax)||0)}/mes · Total: ${fmt(td)}
-            </div>
-            ${a.marcaPref?`<div style="color:var(--m);font-size:10px">Prefería: ${a.marcaPref}</div>`:''}
-            ${a.obs?`<div style="color:var(--m);font-style:italic;font-size:10px">"${a.obs.substring(0,80)}..."</div>`:''}
+          return `<div style="padding:7px 10px;background:var(--s3);border-radius:6px;margin-bottom:4px;font-size:10px">
+            <div style="display:flex;justify-content:space-between"><strong>${a.fecha?new Date(a.fecha).toLocaleDateString('es-AR'):'—'}</strong>${labEstLabel(a.estado)}</div>
+            <div style="color:var(--m)">Entrega ${fmt(parseFloat(a.entrega)||0)} · Cuota ${fmt(parseFloat(a.cuotaMax)||0)}/mes · Total ${fmt(td)}</div>
+            ${a.obs?`<div style="color:var(--m);font-style:italic">"${a.obs.substring(0,60)}"</div>`:''}
           </div>`;
         }).join('')}
       </div>`;
     }
   }
 
+  // Matches
   let matchesHTML='';
   if(p.estado==='cerrado'){
-    matchesHTML='<div style="text-align:center;padding:16px;color:var(--m);font-size:12px">✅ Perfil cerrado</div>';
-  } else if(!matches.length){
-    matchesHTML='<div style="padding:12px;background:var(--s3);border-radius:8px;font-size:12px;color:var(--m);text-align:center">⏳ Sin matches ahora.<br>Se actualizará automáticamente cuando ingrese una unidad adecuada.</div>';
+    matchesHTML='<div style="text-align:center;padding:16px;color:var(--m)">✅ Perfil cerrado</div>';
+  } else if(!ms.length){
+    matchesHTML=`<div style="padding:12px;background:var(--s3);border-radius:8px;font-size:12px;color:var(--m);text-align:center">
+      ⏳ Sin coincidencias en stock ahora.<br>
+      <span style="font-size:11px">El perfil permanece activo. Cuando ingrese una unidad que coincida con la capacidad del cliente se mostrará aquí automáticamente.</span>
+    </div>`;
   } else {
-    matchesHTML=matches.slice(0,12).map(m=>{
+    matchesHTML=ms.slice(0,15).map((m,idx)=>{
       const u=m.unidad;
-      const autoStr=`${u.marca||''} ${u.modelo||''} ${(u.version||'').substring(0,38)}`.trim();
+      const autoStr=`${u.marca||''} ${u.modelo||''} ${(u.version||'').substring(0,35)}`.trim();
       const ant=_hoy-(u.anno||_hoy);
-      const tipoStr=u._tipo==='0km'?'🏎 0 km':`🚗 Usado ${u.anno||''} (${ant}a)`;
-      return `<div class="lab-match-item" style="margin-bottom:6px">
+      return `<div class="lab-match-item" style="margin-bottom:8px">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">
           <div>
             <div class="lab-match-auto">${autoStr}</div>
-            <div style="font-size:10px;color:var(--m)">${tipoStr}${u.dominio?' · '+u.dominio:''}${u.color?' · '+u.color:''}</div>
+            <div style="font-size:10px;color:var(--m)">${u._tipo==='0km'?'🏎 0km':`🚗 Usado ${u.anno||''}${ant>0?' ('+ant+'a)':''}`}${u.dominio?' · '+u.dominio:''}${u.color?' · '+u.color:''}</div>
           </div>
-          <div style="font-weight:800;color:var(--t);font-size:12px;flex-shrink:0;margin-left:8px">${fmt(u.precio)}</div>
+          <div style="font-weight:800;font-size:13px;margin-left:8px;flex-shrink:0">${fmt(u.precio)}</div>
         </div>
         ${m.campana?`
-          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:3px">
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:6px 8px;background:rgba(65,192,240,.08);border-radius:6px;margin-bottom:4px">
             <span class="lab-match-camp" style="margin:0">💳 ${m.campana.banco}</span>
-            <span style="font-size:11px;color:var(--t)"><strong>${m.plazo} cuotas</strong> de <strong style="color:${m.sinLimiteCuota?'var(--y)':'var(--g)'}">${fmt(m.cuotaCalc)}/mes</strong>${m.sinLimiteCuota?'<span style=\'font-size:9px;color:var(--m);margin-left:4px\'>aprox.</span>':''}</span>
+            <span style="font-size:11px"><strong>${m.plazo} cuotas</strong> de <strong style="color:${m.sinLimiteCuota?'var(--y)':'var(--g)'}">${fmt(m.cuotaCalc)}/mes</strong>${m.sinLimiteCuota?' <em style="font-size:9px;color:var(--m)">(aprox)</em>':''}</span>
           </div>
-          <div style="font-size:10px;color:var(--m)">
-            Financia: ${fmt(m.necesita)} · LTV ${m.ltvInfo?.ltv||m.campana.ltv}% (tope ${fmt(m.tope)})
-            ${m.gastosOtorg>0?' · Gastos: '+fmt(m.gastosOtorg):''}
-            · TNA ${m.campana.tna.toFixed(1).replace('.',',')}%${m.campana.tna===0?' 🎯':' '}
+          <div style="font-size:10px;color:var(--m);margin-bottom:6px">
+            Bruto: ${fmt(m.mBruto)} · CE: ${fmt(m.gastosDE)} · <strong>Útil: ${fmt(m.mUtil)}</strong>
+            · LTV ${m.ltvInfo?.ltv||m.campana.ltv}%
+            · TNA ${m.campana.tna}%${m.campana.tna===0?' 🎯':''}
           </div>
-        `:`
-          <div style="color:var(--g);font-weight:700;font-size:12px">✅ Al contado${m.sobra>0?' · Sobran '+fmt(m.sobra):''}</div>
-        `}
+          <div style="font-size:10px;color:var(--m);margin-bottom:6px">
+            Capacidad total: ${fmt(totalSinCred)} entrega + ${fmt(m.mUtil)} neto = <strong style="color:var(--g)">${fmt(totalSinCred+m.mUtil)}</strong>
+          </div>
+        `:`<div style="color:var(--g);font-weight:700;margin-bottom:6px">✅ Al contado · sobran ${fmt(m.sobra)}</div>`}
+        <button class="btn btn-r btn-sm" style="width:100%;font-size:11px" onclick="labAbrirEnCotizador(${idx})">
+          📋 Abrir esta coincidencia en la Propuesta Comercial
+        </button>
       </div>`;
     }).join('');
-    if(matches.length>12)
-      matchesHTML+=`<div style="text-align:center;font-size:10px;color:var(--m);padding:6px">+ ${matches.length-12} opciones más</div>`;
+    if(ms.length>15) matchesHTML+=`<div style="text-align:center;font-size:10px;color:var(--m);padding:6px">+ ${ms.length-15} más</div>`;
   }
 
   $$('lab-det-body').innerHTML=`
@@ -6068,37 +6128,36 @@ function labVerDetalle(id){
       <span class="lab-urg">${labUrgLabel(p.urgencia)}</span>
       ${labEstLabel(p.estado)}
       ${p.vendedor?`<span style="font-size:10px;color:var(--m)">· ${p.vendedor}</span>`:''}
-      ${p.clienteVinculadoId?`<span style="font-size:9px;background:var(--rg);color:var(--r);padding:2px 8px;border-radius:10px;font-weight:700">👤 Cliente #${p.clienteVinculadoId}</span>`:''}
     </div>
     ${p.tel?`<div style="font-size:12px;color:var(--m);margin-bottom:2px">📞 ${p.tel}</div>`:''}
     ${p.email?`<div style="font-size:12px;color:var(--m);margin-bottom:8px">📧 ${p.email}</div>`:''}
-    ${p.obs?`<div style="font-size:12px;color:var(--m);margin-bottom:10px;padding:8px;background:var(--s3);border-radius:6px">💬 ${p.obs}</div>`:''}
+    ${p.obs?`<div style="padding:8px;background:var(--s3);border-radius:6px;font-size:12px;color:var(--m);margin-bottom:10px">💬 ${p.obs}</div>`:''}
     ${histHTML}
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px">
       <div style="background:var(--s3);border-radius:8px;padding:8px 12px">
         <div style="font-size:9px;color:var(--m);text-transform:uppercase;letter-spacing:.5px">Entrega efectivo</div>
-        <div style="font-weight:700;color:var(--t)">${fmt(parseFloat(p.entrega)||0)}</div>
+        <div style="font-weight:700">${fmt(parseFloat(p.entrega)||0)}</div>
       </div>
       <div style="background:var(--s3);border-radius:8px;padding:8px 12px">
-        <div style="font-size:9px;color:var(--m);text-transform:uppercase;letter-spacing:.5px">Cuota máx/mes</div>
-        <div style="font-weight:700;color:var(--t)">${fmt(parseFloat(p.cuotaMax)||0)}</div>
+        <div style="font-size:9px;color:var(--m);text-transform:uppercase;letter-spacing:.5px">${parseFloat(p.cuotaMax)>0?'Cuota máx/mes':'Cuota'}</div>
+        <div style="font-weight:700">${parseFloat(p.cuotaMax)>0?fmt(parseFloat(p.cuotaMax))+'/mes':'Sin límite'}</div>
       </div>
       ${parseFloat(p.partePago)>0?`<div style="background:var(--s3);border-radius:8px;padding:8px 12px">
-        <div style="font-size:9px;color:var(--m);text-transform:uppercase;letter-spacing:.5px">Auto parte pago</div>
-        <div style="font-weight:700;color:var(--t)">${fmt(parseFloat(p.partePago))}</div>
+        <div style="font-size:9px;color:var(--m);text-transform:uppercase;letter-spacing:.5px">Parte de pago</div>
+        <div style="font-weight:700">${fmt(parseFloat(p.partePago))}</div>
       </div>`:''}
       ${parseFloat(p.cheques)>0?`<div style="background:var(--s3);border-radius:8px;padding:8px 12px">
         <div style="font-size:9px;color:var(--m);text-transform:uppercase;letter-spacing:.5px">Cheques/docs</div>
-        <div style="font-weight:700;color:var(--t)">${fmt(parseFloat(p.cheques))}</div>
+        <div style="font-weight:700">${fmt(parseFloat(p.cheques))}</div>
       </div>`:''}
       <div style="background:var(--rg);border-radius:8px;padding:8px 12px;grid-column:1/-1">
-        <div style="font-size:9px;color:var(--m);text-transform:uppercase;letter-spacing:.5px">Total disponible</div>
-        <div style="font-weight:900;font-size:16px;color:var(--g)">${fmt(totalDisp)}</div>
+        <div style="font-size:9px;color:var(--m);text-transform:uppercase;letter-spacing:.5px">Total disponible (sin financiación)</div>
+        <div style="font-weight:900;font-size:16px;color:var(--g)">${fmt(totalSinCred)}</div>
       </div>
     </div>
     ${p.marcaPref?`<div style="font-size:11px;color:var(--m);margin-bottom:10px">🚗 Preferencia: <strong>${p.marcaPref}</strong>${p.tipoPref?' · '+p.tipoPref:''}</div>`:''}
-    <div style="font-size:9px;font-weight:800;letter-spacing:1.5px;color:#41c0f0;text-transform:uppercase;margin-bottom:8px">
-      🎯 ${matches.length>0?matches.length+' matches':'Sin matches por ahora'}
+    <div style="font-size:9px;font-weight:800;letter-spacing:1px;color:#41c0f0;text-transform:uppercase;margin-bottom:8px">
+      🎯 ${ms.length>0?ms.length+' coincidencia'+( ms.length>1?'s':''):'Sin coincidencias por ahora'}
     </div>
     ${matchesHTML}
   `;
@@ -6114,24 +6173,20 @@ function labCerrarDet(){
 
 function labEditarDesdeDetalle(){
   if(!_labDetId) return;
-  const p=labGetPerfiles().find(x=>x.id===_labDetId);
-  if(!p) return;
+  const p=labGetPerfiles().find(x=>x.id===_labDetId); if(!p) return;
   labCerrarDet();
   labNuevoPerfil();
   setTimeout(()=>{
     if($$('lf-id')) $$('lf-id').value=p.id;
-    if($$('lf-nombre')) $$('lf-nombre').value=p.nombre||'';
-    if($$('lf-tel')) $$('lf-tel').value=p.tel||'';
-    if($$('lf-email')) $$('lf-email').value=p.email||'';
-    if($$('lf-vendedor')) $$('lf-vendedor').value=p.vendedor||'';
-    if($$('lf-urgencia')) $$('lf-urgencia').value=p.urgencia||'caliente';
-    if($$('lf-entrega')) $$('lf-entrega').value=p.entrega||'';
-    if($$('lf-cuota')) $$('lf-cuota').value=p.cuotaMax||'';
-    if($$('lf-partepago')) $$('lf-partepago').value=p.partePago||'';
-    if($$('lf-cheques')) $$('lf-cheques').value=p.cheques||'';
-    if($$('lf-marca-pref')) $$('lf-marca-pref').value=p.marcaPref||'';
-    if($$('lf-tipo')) $$('lf-tipo').value=p.tipoPref||'';
-    if($$('lf-obs')) $$('lf-obs').value=p.obs||'';
+    _labModalId=p.id;
+    const campos={
+      'lf-nombre':p.nombre,'lf-tel':p.tel,'lf-email':p.email,
+      'lf-vendedor':p.vendedor,'lf-urgencia':p.urgencia,
+      'lf-entrega':p.entrega,'lf-cuota':p.cuotaMax,
+      'lf-partepago':p.partePago,'lf-cheques':p.cheques,
+      'lf-marca-pref':p.marcaPref,'lf-tipo':p.tipoPref,'lf-obs':p.obs,
+    };
+    Object.entries(campos).forEach(([id,val])=>{ const el=$$(id); if(el&&val!=null) el.value=val; });
     if(p.clienteVinculadoId) labVincularCliente(p.clienteVinculadoId, p.clienteVinculadoNombre||p.nombre, p.tel||'', p.email||'');
     labCalcMatch();
   },80);
