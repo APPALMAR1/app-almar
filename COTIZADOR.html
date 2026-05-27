@@ -4130,7 +4130,7 @@ function calcCred(){
     } else {
       d.innerHTML=`<div class="mpl">${n}M${dis?' ✗':''}</div><div class="mcv">${fmt(cuotaProm)}</div>${best?'<div class="mst">⭐</div>':''}`;
     }
-    g.appendChild(d);
+    if(!dis) g.appendChild(d);
   });
 
   // Botón "Elegir otro banco" debajo de las cuotas
