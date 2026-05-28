@@ -1157,6 +1157,22 @@ input[type=text]#p-obs{background:#F5F7FA!important;border:1px solid #D5DCE6!imp
     <div style="flex:1"><label class="m" style="font-size:10px">Marca deseada</label><input type="text" id="lf-busca-marca" placeholder="Ej: Toyota" oninput="labCalcMatch()" style="margin:2px 0 0"></div>
     <div style="flex:1"><label class="m" style="font-size:10px">Modelo deseado</label><input type="text" id="lf-busca-modelo" placeholder="Ej: Hilux" oninput="labCalcMatch()" style="margin:2px 0 0"></div>
   </div>
+  <div style="display:flex;gap:8px;margin-bottom:8px">
+    <div style="flex:1"><label class="m" style="font-size:10px">Segmento buscado</label>
+      <select id="lf-segmento" onchange="labCalcMatch()" style="margin:2px 0 0">
+        <option value="">Cualquier segmento</option>
+        <option value="A">A — Citycar / Chico</option>
+        <option value="B">B — Compacto / Hatchback</option>
+        <option value="C">C — Sedán / SUV mediano</option>
+        <option value="D">D — SUV grande / Pickup</option>
+        <option value="SUV">SUV (todos)</option>
+        <option value="Pickup">Pickup / Utilitario</option>
+      </select>
+    </div>
+    <div style="flex:1"><label class="m" style="font-size:10px">Precio Infoauto $ <span style="color:var(--y);font-size:9px">(base LTV banco)</span></label>
+      <input type="number" id="lf-infoauto" placeholder="0" oninput="labCalcMatch()" style="margin:2px 0 0">
+    </div>
+  </div>
   <div style="display:flex;gap:6px;margin-bottom:10px;align-items:center">
     <input type="checkbox" id="lf-acepta-similares" onchange="labCalcMatch()" checked style="width:auto;margin:0">
     <label style="font-size:11px;color:var(--m);cursor:pointer" for="lf-acepta-similares">Acepta modelos similares del mismo segmento</label>
@@ -5902,9 +5918,25 @@ function labMatch(perfil){
   const cheques   = parseFloat(perfil.cheques)||0;
   const cuotaMax  = parseFloat(perfil.cuotaMax)||0;
   const contado   = parseFloat(perfil.contado)||0;
+  const infoauto  = parseFloat(perfil.infoauto)||0;   // precio Infoauto para LTV
+  const segPref   = (perfil.segmento||'').trim().toUpperCase(); // segmento buscado
   const modoContado = perfil.modo === 'contado';
   const totalSinCred = entrega + partePago + cheques;
   const sinLimiteCuota = cuotaMax <= 0;
+  
+  // Helper: precio base para LTV (Infoauto si está, sino precio Almar)
+  function precioLTV(u){ return infoauto > 0 ? infoauto : (parseFloat(u.precio)||0); }
+  
+  // Helper: filtra por segmento si el cliente indicó preferencia
+  function encuadraSegmento(u){
+    if(!segPref) return true;
+    const seg = ((typeof SEG_D !== 'undefined' && SEG_D) ? (SEG_D[((u.marca||'')+' '+(u.modelo||'')).toUpperCase().trim()]||{}) : {});
+    const carroceria = (seg.car||u.carroceria||'').toUpperCase();
+    const segAuto = (seg.seg||'').toUpperCase();
+    if(segPref==='SUV') return carroceria.includes('SUV');
+    if(segPref==='PICKUP') return carroceria.includes('PICKUP') || carroceria.includes('FURGON') || carroceria.includes('UTILITARIO');
+    return segAuto === segPref;
+  }
 
   // Modo contado: buscar unidades donde precio ≤ monto contado
   if(modoContado){
@@ -5993,6 +6025,9 @@ function labMatch(perfil){
         const precio = parseFloat(u.precio)||0;
         if(precio <= 0) return;
 
+        // ── Filtro por segmento preferido ──
+        if(!encuadraSegmento(u)) return;
+
         // ── Compatibilidad campaña ↔ tipo de unidad ──
         if(u._esUsado){
           // Usados: campañas VO (c.usados===true) O bancos generales (!c.marca && !c.usados)
@@ -6034,7 +6069,7 @@ function labMatch(perfil){
           const necesita = precio - totalSinCred;
           const ltvInfo = labLTV(c.banco, u.anno||_hoy, u._esUsado);
           if(!ltvInfo) return;
-          const tope = Math.min(precio*(ltvInfo.ltv/100), c.montoMax||Infinity, ltvInfo.montoMax);
+          const tope = Math.min(precioLTV(u)*(ltvInfo.ltv/100), c.montoMax||Infinity, ltvInfo.montoMax);
           if(necesita > tope) return;
           const ceR = (c.comision||0)/100;
           const mBrutoNec = ceR>0 ? necesita*(1+ceR*1.21) : necesita;
@@ -6062,7 +6097,7 @@ function labMatch(perfil){
         const ltvInfo = labLTV(c.banco, u.anno||_hoy, u._esUsado);
         if(!ltvInfo) return;
 
-        const tope = Math.min(precio*(ltvInfo.ltv/100), c.montoMax||Infinity, ltvInfo.montoMax);
+        const tope = Math.min(precioLTV(u)*(ltvInfo.ltv/100), c.montoMax||Infinity, ltvInfo.montoMax);
 
         // El monto bruto real = necesita + CE → verificar que mUtil >= necesita
         const ceR = (c.comision||0)/100;
@@ -6276,6 +6311,8 @@ function labFiltrar(){
       parseFloat(p.cuotaMax)>0?`<span class="lab-cap">📅 Cuota máx <strong>${fmt(parseFloat(p.cuotaMax))}/mes</strong></span>`:'<span class="lab-cap">📅 Cuota <strong>sin límite</strong></span>',
       parseFloat(p.partePago)>0?`<span class="lab-cap">🚗 P.Pago <strong>${fmt(parseFloat(p.partePago))}</strong></span>`:'',
       parseFloat(p.cheques)>0?`<span class="lab-cap">📄 Cheques <strong>${fmt(parseFloat(p.cheques))}</strong></span>`:'',
+      parseFloat(p.infoauto)>0?`<span class="lab-cap" style="color:var(--y)">📊 Infoauto <strong>${fmt(parseFloat(p.infoauto))}</strong></span>`:'',
+      p.segmento?`<span class="lab-cap">🎯 Seg. <strong>${p.segmento}</strong></span>`:'',
     ].filter(Boolean).join('');
 
     let matchPrev = '';
@@ -6315,9 +6352,10 @@ let _labModalId = null;
 // ── Modal nuevo perfil ────────────────────────────────────────────
 function labNuevoPerfil(){
   _labModalId = null;
-  ['lf-nombre','lf-tel','lf-email','lf-entrega','lf-cuota','lf-partepago','lf-cheques','lf-marca-pref','lf-obs'].forEach(id=>{
+  ['lf-nombre','lf-tel','lf-email','lf-entrega','lf-cuota','lf-partepago','lf-cheques','lf-marca-pref','lf-obs','lf-busca-marca','lf-busca-modelo','lf-infoauto'].forEach(id=>{
     const el=$$(id); if(el) el.value='';
   });
+  const lseg=$$('lf-segmento'); if(lseg) lseg.value='';
   const lu=$$('lf-urgencia'); if(lu) lu.value='caliente';
   const lt=$$('lf-tipo');     if(lt) lt.value='';
   const li=$$('lf-id');       if(li) li.value='';
@@ -6425,6 +6463,8 @@ function labCalcMatch(){
     marcaPref:$$('lf-marca-pref')?.value||'',
     buscaMarca:($$('lf-busca-marca')?.value||'').trim(),
     buscaModelo:($$('lf-busca-modelo')?.value||'').trim(),
+    segmento:($$('lf-segmento')?.value||'').trim(),
+    infoauto:parseFloat($$('lf-infoauto')?.value)||0,
     aceptaSimilares:$$('lf-acepta-similares')?.checked!==false,
   };
   const ms = labMatch(perfTemp);
@@ -6440,17 +6480,44 @@ function labCalcMatch(){
     const autoStr=`${u.marca||''} ${u.modelo||''} ${(u.version||'').substring(0,28)}`.trim();
     const div=document.createElement('div');
     div.className='lab-match-item';
+    const infoautoLabel = perfTemp.infoauto>0 ? `<span style="font-size:9px;color:var(--y);margin-left:6px">Infoauto: ${fmt(perfTemp.infoauto)}</span>` : '';
+    const ltvLabel = m.ltvInfo ? `LTV ${m.ltvInfo.ltv}% · Tope: ${fmt(Math.min(precioLTV_val(m,perfTemp)*m.ltvInfo.ltv/100, m.ltvInfo.montoMax))}` : '';
+    function precioLTV_val(match, perf){ return perf.infoauto>0 ? perf.infoauto : match.precio; }
     div.innerHTML=`
       <div class="lab-match-auto">${autoStr} <span style="color:var(--m);font-size:10px;font-weight:400">(${u._tipo==='0km'?'0km':'Usado'} · ${u.anno||''})</span></div>
-      <div style="font-size:11px;color:var(--m);margin-bottom:4px">${fmt(u.precio)}${u.dominio?' · '+u.dominio:''}</div>
+      <div style="font-size:11px;color:var(--m);margin-bottom:4px">
+        💰 Precio Almar: <strong style="color:var(--t)">${fmt(u.precio)}</strong>${u.dominio?' · <span style="color:var(--m)">'+u.dominio+'</span>':''}${infoautoLabel}
+      </div>
       ${m.campana?`
-        <div class="lab-match-camp">💳 ${m.campana.banco} · ${m.plazo} cuotas</div>
-        <div class="lab-match-cuota" style="color:${m.sinLimiteCuota?'var(--y)':'var(--g)'}">Cuota: ${fmt(m.cuotaCalc)}/mes${m.sinLimiteCuota?' (aprox)':''}</div>
-        <div class="lab-match-detalle">
-          Financia bruto: ${fmt(m.mBruto)} · CE: ${fmt(m.gastosDE)} · Neto: ${fmt(m.mUtil)}
-          · LTV ${m.ltvInfo?.ltv||m.campana.ltv}%
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:4px">
+          <span style="background:rgba(65,192,240,.15);color:#41c0f0;border-radius:4px;padding:2px 7px;font-size:10px;font-weight:700">💳 ${m.campana.banco}</span>
+          <span style="background:rgba(65,192,240,.1);color:var(--m);border-radius:4px;padding:2px 7px;font-size:10px">${m.campana.nombre}</span>
+          <span style="background:rgba(65,192,240,.1);color:var(--m);border-radius:4px;padding:2px 7px;font-size:10px">${m.plazo} cuotas · TNA ${m.campana.tna}%</span>
         </div>
-      `:`<div style="color:var(--g);font-weight:700;font-size:12px">✅ Al contado · sobran ${fmt(m.sobra)}</div>`}
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:10px;margin-bottom:4px">
+          <div style="background:var(--s3);border-radius:4px;padding:5px 8px">
+            <div style="color:var(--m)">Cuota mensual</div>
+            <div style="color:${m.sinLimiteCuota?'var(--y)':'#2ecc71'};font-weight:800;font-size:13px">${fmt(m.cuotaCalc)}${m.sinLimiteCuota?' ≈':''}</div>
+          </div>
+          <div style="background:var(--s3);border-radius:4px;padding:5px 8px">
+            <div style="color:var(--m)">Financia</div>
+            <div style="color:var(--t);font-weight:700;font-size:12px">${fmt(m.mUtil)}</div>
+          </div>
+          <div style="background:var(--s3);border-radius:4px;padding:5px 8px">
+            <div style="color:var(--m)">Entrega total</div>
+            <div style="color:var(--t);font-weight:700;font-size:12px">${fmt(m.totalSinCred)}</div>
+          </div>
+          <div style="background:var(--s3);border-radius:4px;padding:5px 8px">
+            <div style="color:var(--m)">${ltvLabel||'Gastos bancarios'}</div>
+            <div style="color:var(--y);font-weight:700;font-size:12px">${ltvLabel?'':fmt(m.gastosDE)}</div>
+          </div>
+        </div>
+        ${m.gastosDE>0&&ltvLabel?`<div style="font-size:10px;color:var(--m);margin-bottom:2px">Gastos bancarios: ${fmt(m.gastosDE)}</div>`:''}
+      `:`
+        <div style="background:rgba(46,204,113,.1);border:1px solid rgba(46,204,113,.3);border-radius:6px;padding:8px 10px;font-size:12px;color:#2ecc71;font-weight:700">
+          ✅ Al contado — sobran ${fmt(m.sobra)}
+        </div>
+      `}
       <div style="text-align:right;margin-top:6px">
         <button class="btn btn-r btn-sm" style="font-size:10px;padding:4px 10px" onclick="event.stopPropagation();_labModalId=$$('lf-id')?.value||null;labAbrirEnCotizador(${idx})">
           📋 Abrir en Cotizador
@@ -6638,6 +6705,8 @@ function labEditarDesdeDetalle(){
       'lf-entrega':p.entrega,'lf-cuota':p.cuotaMax,
       'lf-partepago':p.partePago,'lf-cheques':p.cheques,
       'lf-marca-pref':p.marcaPref,'lf-tipo':p.tipoPref,'lf-obs':p.obs,
+      'lf-busca-marca':p.buscaMarca,'lf-busca-modelo':p.buscaModelo,
+      'lf-infoauto':p.infoauto||0,'lf-segmento':p.segmento||'',
     };
     Object.entries(campos).forEach(([id,val])=>{ const el=$$(id); if(el&&val!=null) el.value=val; });
     if(p.clienteVinculadoId) labVincularCliente(p.clienteVinculadoId, p.clienteVinculadoNombre||p.nombre, p.tel||'', p.email||'');
