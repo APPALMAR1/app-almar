@@ -733,6 +733,11 @@ input[type=text]#p-obs{background:#F5F7FA!important;border:1px solid #D5DCE6!imp
       <div class="ch"><div class="ci">📌</div><div class="ct">A — Qué incluye el precio</div></div>
       <div class="cb">
         <div class="pr"><label class="m">Precio del vehículo</label><input type="number" id="pa1" placeholder="0" oninput="cP()"></div>
+        <div id="pa1-ia-badge" style="display:none;margin:-6px 0 8px;padding:6px 10px;background:rgba(65,192,240,.08);border:1px solid rgba(65,192,240,.25);border-radius:6px;font-size:10px">
+          <span style="color:#41c0f0;font-weight:700">📊 Ref. Infoauto (base LTV banco):</span>
+          <span id="pa1-ia-precio" style="color:#2ecc71;font-weight:800;margin-left:6px"></span>
+          <span id="pa1-ia-desc" style="color:var(--m);font-size:9px;display:block;margin-top:2px"></span>
+        </div>
         <div class="pr"><label>Gestoría / Patentamiento</label><input type="number" id="pa2" placeholder="0" oninput="cP()"></div>
         <div class="pr"><label>Gastos bancarios campaña</label><input type="number" id="pa3" placeholder="0" oninput="cP()"></div>
         <div class="pr"><label>Gastos de otorgamiento</label><input type="number" id="pa3b" placeholder="0" oninput="cP()"></div>
@@ -1247,6 +1252,54 @@ input[type=text]#p-obs{background:#F5F7FA!important;border:1px solid #D5DCE6!imp
 </div>
 </div>
 
+
+<!-- MODAL BUSCADOR INFOAUTO PROPUESTA -->
+<div id="ia-prop-overlay" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.85);z-index:5000;overflow-y:auto;padding:20px 0">
+  <div style="max-width:500px;margin:0 auto;background:var(--s1);border-radius:12px;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.7)">
+    <div style="background:var(--r);padding:14px 16px;display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <div style="font-family:var(--hf);font-weight:900;font-size:14px;color:#fff">📊 Buscar vehículo en Infoauto</div>
+        <div style="font-size:10px;color:rgba(255,255,255,.7);margin-top:2px">Multimarcas Usado — precio de referencia bancaria</div>
+      </div>
+      <div onclick="iaPropCerrar()" style="cursor:pointer;color:rgba(255,255,255,.7);font-size:22px;line-height:1;padding:0 4px">✕</div>
+    </div>
+    <div style="padding:14px 16px">
+      <!-- PASO 1: MARCA -->
+      <div style="margin-bottom:12px">
+        <div style="font-size:9px;font-weight:800;letter-spacing:1px;color:var(--y);text-transform:uppercase;margin-bottom:6px">1 · Marca</div>
+        <input type="text" id="iap-marca-input" placeholder="Escribí para filtrar..." autocomplete="off"
+          oninput="iapFiltrarMarcas(this.value)"
+          style="margin:0 0 6px;font-size:12px;width:100%">
+        <div id="iap-marca-lista" style="max-height:150px;overflow-y:auto;border:1px solid var(--bdr);border-radius:6px"></div>
+      </div>
+      <!-- PASO 2: MODELO -->
+      <div id="iap-paso2" style="margin-bottom:12px;display:none">
+        <div style="font-size:9px;font-weight:800;letter-spacing:1px;color:var(--y);text-transform:uppercase;margin-bottom:4px">2 · Modelo</div>
+        <div id="iap-marca-sel" style="font-size:11px;color:#41c0f0;font-weight:700;margin-bottom:6px"></div>
+        <input type="text" id="iap-modelo-input" placeholder="Escribí para filtrar..." autocomplete="off"
+          oninput="iapFiltrarModelos(this.value)"
+          style="margin:0 0 6px;font-size:12px;width:100%">
+        <div id="iap-modelo-lista" style="max-height:150px;overflow-y:auto;border:1px solid var(--bdr);border-radius:6px"></div>
+        <div id="iap-modelo-loading" style="display:none;font-size:11px;color:var(--m);padding:10px;text-align:center">⏳ Cargando modelos...</div>
+      </div>
+      <!-- PASO 3: AÑO -->
+      <div id="iap-paso3" style="margin-bottom:12px;display:none">
+        <div style="font-size:9px;font-weight:800;letter-spacing:1px;color:var(--y);text-transform:uppercase;margin-bottom:4px">3 · Año</div>
+        <div id="iap-modelo-sel" style="font-size:11px;color:#41c0f0;font-weight:700;margin-bottom:8px"></div>
+        <div id="iap-anio-grid" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+      </div>
+      <!-- PASO 4: VERSION -->
+      <div id="iap-paso4" style="margin-bottom:8px;display:none">
+        <div style="font-size:9px;font-weight:800;letter-spacing:1px;color:var(--y);text-transform:uppercase;margin-bottom:4px">
+          4 · Versión <span id="iap-ver-count" style="color:var(--m);font-weight:400;font-size:9px"></span>
+        </div>
+        <div id="iap-anio-sel" style="font-size:11px;color:#41c0f0;font-weight:700;margin-bottom:6px"></div>
+        <div id="iap-version-lista" style="max-height:200px;overflow-y:auto;display:flex;flex-direction:column;gap:4px"></div>
+        <div id="iap-ver-loading" style="display:none;font-size:11px;color:var(--m);padding:10px;text-align:center">⏳ Obteniendo precio...</div>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- MODAL BUSCADOR INFOAUTO -->
 <div id="ia-modal-overlay" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.8);z-index:4000;overflow-y:auto;padding:20px 0">
@@ -2501,6 +2554,8 @@ const MKT_TIPOS={"ACURA": {"Auto": ["INTEGRA", "LEGEND"], "Utilitario/Pickup": [
 function onTipo(){
   ['marca','modelo','version','anno'].forEach(disEl);
   $$('ar').style.display='none'; $$('ar-al').innerHTML='';
+  // Reset badge Infoauto
+  const badge=document.getElementById('pa1-ia-badge'); if(badge) badge.style.display='none';
   const t=$$('tipo').value; if(!t)return;
   if(t==='mercado'){
     $$('subtipo').style.display='';
@@ -2522,7 +2577,9 @@ function onTipo(){
   } else if(t==='usado'){
     ms=[...new Set(stk.map(u=>u.marca))].sort();
   } else if(t==='mercado_usado'){
-    ms=Object.keys(MKT_TIPOS).sort();
+    // Usar Infoauto si está disponible
+    _iapIniciar();
+    return;
   } else {
     ms=Object.keys(MKT).sort();
   }
@@ -6999,6 +7056,255 @@ function labIALimpiar(){
   labCalcMatch();
 }
 // ══ FIN INTEGRACIÓN INFOAUTO ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+
+// ══ INFOAUTO PROPUESTA COMERCIAL ══════════════════════════════
+let _iapBrands   = null;
+let _iapModels   = null;
+let _iapBrandId  = null;
+let _iapBrandName= '';
+let _iapGrupoIdx = null;
+let _iapAnio     = null;
+let _iapCodia    = null;
+
+function $p(id){ return document.getElementById(id); }
+
+// Inicializar: setear campos propuesta y abrir modal
+function _iapIniciar(){
+  // Resetear selects de la propuesta
+  ['marca','modelo','version','anno'].forEach(id=>{
+    const el=$$(id); if(el){ el.innerHTML='<option value="">—</option>'; el.disabled=true; }
+  });
+  // Ocultar badge infoauto
+  const badge=$p('pa1-ia-badge'); if(badge) badge.style.display='none';
+  // Abrir modal
+  iaPropAbrir();
+}
+
+async function iaPropAbrir(){
+  _iapBrandId=null; _iapBrandName=''; _iapGrupoIdx=null; _iapAnio=null; _iapCodia=null;
+  $p('iap-paso2').style.display='none';
+  $p('iap-paso3').style.display='none';
+  $p('iap-paso4').style.display='none';
+  $p('iap-marca-input').value='';
+  $p('ia-prop-overlay').style.display='block';
+  document.body.style.overflow='hidden';
+  if(!_iapBrands || _iapBrands===_iaBrands){
+    // Reusar cache del LAB si ya está cargado
+    if(_iaBrands){ _iapBrands=_iaBrands; _iapRenderMarcas(_iaBrands); }
+    else await _iapLoadBrands();
+  } else {
+    _iapRenderMarcas(_iapBrands);
+  }
+}
+
+function iaPropCerrar(){
+  $p('ia-prop-overlay').style.display='none';
+  document.body.style.overflow='';
+}
+
+async function _iapLoadBrands(){
+  $p('iap-marca-lista').innerHTML='<div style="padding:12px;text-align:center;color:var(--m);font-size:11px">⏳ Cargando marcas...</div>';
+  try {
+    const res=await fetch(IA_PROXY+'/api/brands');
+    const data=await res.json();
+    if(!data.ok) throw new Error(data.error);
+    _iapBrands=data.brands;
+    _iaBrands=data.brands; // Compartir cache con LAB
+    _iapRenderMarcas(data.brands);
+  } catch(e){
+    $p('iap-marca-lista').innerHTML='<div style="padding:12px;color:var(--r);font-size:11px">❌ Error cargando marcas. Verificá conexión.</div>';
+  }
+}
+
+function _iapRenderMarcas(list){
+  const cont=$p('iap-marca-lista');
+  if(!list||!list.length){ cont.innerHTML='<div style="padding:8px;font-size:11px;color:var(--m)">Sin resultados</div>'; return; }
+  cont.innerHTML=list.slice(0,120).map(b=>
+    `<div data-id="${b.id}" data-name="${b.name.replace(/"/g,'&quot;')}"
+      style="padding:10px 14px;cursor:pointer;font-size:12px;color:var(--t);border-bottom:1px solid var(--bdr)"
+      onmousedown="iapSelMarca(this)"
+      onmouseover="this.style.background='rgba(65,192,240,.12)'"
+      onmouseout="this.style.background=''">${b.name}</div>`
+  ).join('');
+}
+
+function iapFiltrarMarcas(q){
+  if(!_iapBrands&&!_iaBrands) return;
+  const lista=_iapBrands||_iaBrands;
+  const q2=q.toUpperCase().trim();
+  _iapRenderMarcas(!q2?lista:lista.filter(b=>b.name.toUpperCase().includes(q2)));
+}
+
+async function iapSelMarca(el){
+  const id=parseInt(el.dataset.id);
+  const name=el.dataset.name;
+  _iapBrandId=id; _iapBrandName=name; _iapGrupoIdx=null; _iapAnio=null;
+  $p('iap-marca-input').value=name;
+  $p('iap-marca-lista').innerHTML='';
+  $p('iap-marca-sel').textContent='✓ '+name;
+  $p('iap-paso2').style.display='block';
+  $p('iap-paso3').style.display='none';
+  $p('iap-paso4').style.display='none';
+  $p('iap-modelo-input').value='';
+  $p('iap-modelo-loading').style.display='block';
+  $p('iap-modelo-lista').innerHTML='';
+  _iapModels=null;
+
+  try {
+    const res=await fetch(IA_PROXY+'/api/models?brand_id='+id);
+    const data=await res.json();
+    if(!data.ok) throw new Error(data.error);
+    _iapModels=data.models;
+    $p('iap-modelo-loading').style.display='none';
+    _iapRenderModelos(_iapModels);
+  } catch(e){
+    $p('iap-modelo-loading').style.display='none';
+    $p('iap-modelo-lista').innerHTML='<div style="padding:8px;color:var(--r);font-size:11px">❌ Error cargando modelos</div>';
+  }
+}
+
+function _iapRenderModelos(list){
+  const cont=$p('iap-modelo-lista');
+  if(!list||!list.length){ cont.innerHTML='<div style="padding:8px;font-size:11px;color:var(--m)">Sin modelos</div>'; return; }
+  cont.innerHTML=list.map((m,i)=>
+    `<div data-idx="${i}"
+      style="padding:10px 14px;cursor:pointer;font-size:12px;color:var(--t);border-bottom:1px solid var(--bdr)"
+      onmousedown="iapSelModelo(this)"
+      onmouseover="this.style.background='rgba(65,192,240,.12)'"
+      onmouseout="this.style.background=''">
+      <strong>${m.grupo}</strong>
+      <span style="color:var(--m);font-size:10px;margin-left:8px">${m.anioDesde||''}${m.anioHasta?'–'+m.anioHasta:''}</span>
+    </div>`
+  ).join('');
+}
+
+function iapFiltrarModelos(q){
+  if(!_iapModels) return;
+  const q2=q.toUpperCase().trim();
+  _iapRenderModelos(!q2?_iapModels:_iapModels.filter(m=>m.grupo.toUpperCase().includes(q2)));
+}
+
+function iapSelModelo(el){
+  const grupo=el.querySelector('strong').textContent;
+  const m=_iapModels.find(x=>x.grupo===grupo);
+  if(!m) return;
+  _iapGrupoIdx=_iapModels.indexOf(m); _iapAnio=null;
+  $p('iap-modelo-input').value=grupo;
+  $p('iap-modelo-lista').innerHTML='';
+  $p('iap-modelo-sel').textContent='✓ '+_iapBrandName+' '+grupo;
+
+  // Setear marca y modelo en los selects de la propuesta
+  selOpts('marca',[_iapBrandName],'');
+  $$('marca').value=_iapBrandName;
+  selOpts('modelo',[grupo],'');
+  $$('modelo').value=grupo;
+
+  // Años disponibles
+  const anioMin=m.anioDesde||2000;
+  const anioMax=m.anioHasta||new Date().getFullYear();
+  const grid=$p('iap-anio-grid');
+  grid.innerHTML='';
+  for(let y=anioMax; y>=anioMin; y--){
+    const btn=document.createElement('button');
+    btn.className='btn btn-ghost btn-sm';
+    btn.style.cssText='font-size:11px;padding:5px 10px;min-width:52px';
+    btn.textContent=y;
+    btn.onclick=(()=>{ const yr=y; return ()=>iapSelAnio(yr,btn); })();
+    grid.appendChild(btn);
+  }
+  $p('iap-paso3').style.display='block';
+  $p('iap-paso4').style.display='none';
+}
+
+function iapSelAnio(anio, btnEl){
+  _iapAnio=anio;
+  $p('iap-anio-grid').querySelectorAll('button').forEach(b=>{ b.style.background=''; b.style.color=''; });
+  if(btnEl){ btnEl.style.background='var(--r)'; btnEl.style.color='#fff'; }
+  $p('iap-anio-sel').textContent='✓ Año '+anio;
+
+  // Setear año en select de propuesta
+  selOpts('anno',[anio],'');
+  $$('anno').value=anio;
+
+  const m=_iapModels[_iapGrupoIdx];
+  const versiones=(m&&m.versiones||[]).filter(v=>(v.anioDesde||0)<=anio&&(v.anioHasta||9999)>=anio);
+  const count=$p('iap-ver-count'); if(count) count.textContent='('+versiones.length+' disponibles)';
+
+  const cont=$p('iap-version-lista');
+  $p('iap-ver-loading').style.display='none';
+  cont.innerHTML=versiones.length
+    ? versiones.map(v=>
+        `<div data-codia="${v.codia}" data-desc="${(v.descripcion||'').replace(/"/g,'&quot;')}"
+          style="padding:10px 12px;cursor:pointer;font-size:11px;color:var(--t);background:var(--s3);border-radius:6px;border:1px solid transparent;margin-bottom:2px"
+          onmousedown="iapSelVersion(this)"
+          onmouseover="this.style.borderColor='rgba(65,192,240,.5)';this.style.background='rgba(65,192,240,.1)'"
+          onmouseout="this.style.borderColor='transparent';this.style.background='var(--s3)'">
+          ${v.descripcion}
+          <span style="color:var(--m);font-size:9px;display:block;margin-top:2px">CODIA ${v.codia}</span>
+        </div>`
+      ).join('')
+    : '<div style="font-size:11px;color:var(--m);padding:8px">Sin versiones para este año.</div>';
+
+  $p('iap-paso4').style.display='block';
+}
+
+async function iapSelVersion(el){
+  const codia=el.dataset.codia;
+  const desc=el.dataset.desc;
+  $p('iap-ver-loading').style.display='block';
+  try {
+    const res=await fetch(IA_PROXY+'/api/price?codia='+codia+'&year='+_iapAnio);
+    const data=await res.json();
+
+    _iapCodia=parseInt(codia);
+
+    // Setear versión en select de propuesta
+    selOpts('version',[desc],'');
+    $$('version').value=desc;
+
+    // Cerrar modal
+    iaPropCerrar();
+
+    // Mostrar badge con precio Infoauto
+    const badge=$p('pa1-ia-badge');
+    const precioEl=$p('pa1-ia-precio');
+    const descEl=$p('pa1-ia-desc');
+
+    if(data.ok && data.precio){
+      const precio=data.precio;
+      if(precioEl) precioEl.textContent=fmt(precio);
+      if(descEl)   descEl.textContent=_iapBrandName+' '+desc+' ('+data.year+')'+(data.exacto?'':' · año más cercano');
+      if(badge)    badge.style.display='block';
+
+      // Autocompletar pa1 con precio Infoauto si está vacío
+      const pa1=$$('pa1');
+      if(pa1 && (!pa1.value || pa1.value==='0' || pa1.value==='')) {
+        pa1.value=precio;
+        cP();
+      }
+
+      // Mostrar alerta informativa
+      const aral=$$('ar-al');
+      if(aral) aral.innerHTML='<div class="al info">📊 <strong>Precio Infoauto cargado: '+fmt(precio)+'</strong> — Este es el precio de referencia que usan los bancos para calcular el LTV. Podés ajustar el precio de venta Almar en el campo de arriba.</div>';
+    } else {
+      if(badge) badge.style.display='none';
+      const aral=$$('ar-al');
+      if(aral) aral.innerHTML='<div class="al warn">⚠️ Sin precio Infoauto para este modelo/año. Ingresá el precio de venta manualmente.</div>';
+    }
+
+    // Actualizar campañas bancarias según año
+    if(typeof rCampMini==='function') rCampMini();
+    updR();
+
+  } catch(e){
+    $p('iap-ver-loading').style.display='none';
+    iaPropCerrar();
+    const aral=$$('ar-al');
+    if(aral) aral.innerHTML='<div class="al warn">⚠️ No se pudo obtener precio Infoauto. Ingresá el precio manualmente.</div>';
+  }
+}
+// ══ FIN INFOAUTO PROPUESTA COMERCIAL ══════════════════════════
 
 // ══ FIN LABORATORIO COMERCIAL ══
 
