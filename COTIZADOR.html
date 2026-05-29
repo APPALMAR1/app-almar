@@ -2599,9 +2599,17 @@ function onMarca(){
   let ms;
   if(t==='mercado'){
     const sub=$$('subtipo').value;
-    const todos=Object.keys(MKT[ma]||{});
-    const filtrados=(MKT_TIPOS[ma]||{})[sub]||[];
-    ms=sub?todos.filter(m=>filtrados.includes(m)).sort():todos.sort();
+    const todosMKT=Object.keys(MKT[ma]||{});
+    const todosTipos=((MKT_TIPOS[ma]||{})[sub]||[]);
+    // Si la marca tiene modelos en MKT, usarlos; sino usar MKT_TIPOS como fallback
+    if(todosMKT.length>0){
+      ms=sub?todosMKT.filter(m=>todosTipos.includes(m)||!todosTipos.length).sort():todosMKT.sort();
+    } else {
+      // Fallback: usar modelos de MKT_TIPOS
+      const tiposAll=(MKT_TIPOS[ma]||{});
+      const fallback=sub?(tiposAll[sub]||[]):[...(tiposAll['Auto']||[]),...(tiposAll['Utilitario/Pickup']||[])];
+      ms=[...new Set(fallback)].sort();
+    }
   } else if(t==='mercado_usado'){
     const tipos=MKT_TIPOS[ma]||{};
     const todos=[...(tipos['Auto']||[]),...(tipos['Utilitario/Pickup']||[])];
@@ -3684,8 +3692,13 @@ function syncPreciosOKM(){_cargarPrecios(false);}
 function _cargarPrecios(conFeedback){
   var el=$$('precios-content');
   if(conFeedback&&el) el.innerHTML='<div class="empty"><div class="eico">⏳</div><div class="ettl">Actualizando...</div><div class="esub">Conectando con Google Sheets.</div></div>';
-  fetch(PRECIOS_OKM_URL+'&t='+Date.now(),{cache:'no-store'})
-    .then(function(r){return r.text();})
+  
+  // Timeout de 12 segundos para no quedar bloqueado
+  var controller=new AbortController();
+  var timeoutId=setTimeout(function(){controller.abort();},12000);
+  
+  fetch(PRECIOS_OKM_URL+'&t='+Date.now(),{cache:'no-store',signal:controller.signal})
+    .then(function(r){clearTimeout(timeoutId);return r.text();})
     .then(function(csv){
       var data=parsePreciosCSV(csv);
       if(!data||!data.length) throw new Error('sin datos');
@@ -3696,9 +3709,30 @@ function _cargarPrecios(conFeedback){
       } else {if(conFeedback)rPrecios(data);}
       if(conFeedback) mostrarToast('✅ Precios actualizados');
     })
-    .catch(function(){
+    .catch(function(err){
+      clearTimeout(timeoutId);
+      // Intentar desde caché local
       var cached=localStorage.getItem('almar_precios_okm');
-      if(cached){try{var obj=JSON.parse(cached);if(obj.data&&obj.data.length){window._preciosData=obj.data;if(conFeedback){if(typeof actualizarBNA==='function'){actualizarBNA().then(function(){rPrecios(obj.data);}).catch(function(){rPrecios(obj.data);});}else{rPrecios(obj.data);}mostrarToast('⚠️ Sin conexión — precios guardados');}}}catch(e){}}
+      if(cached){
+        try{
+          var obj=JSON.parse(cached);
+          if(obj.data&&obj.data.length){
+            window._preciosData=obj.data;
+            if(conFeedback){
+              if(typeof actualizarBNA==='function'){
+                actualizarBNA().then(function(){rPrecios(obj.data);}).catch(function(){rPrecios(obj.data);});
+              } else { rPrecios(obj.data); }
+              var fechaCache=obj.fecha?new Date(obj.fecha).toLocaleDateString('es-AR'):'';
+              mostrarToast('⚠️ Sin conexión — precios del '+fechaCache);
+            }
+            return;
+          }
+        }catch(e){}
+      }
+      // Sin caché — mostrar mensaje de error claro
+      if(conFeedback&&el){
+        el.innerHTML='<div class="empty"><div class="eico">❌</div><div class="ettl">Sin conexión a Google Sheets</div><div class="esub">Verificá tu conexión a internet e intentá de nuevo. Si el problema persiste, importá la lista desde el Panel Admin.</div></div>';
+      }
     });
 }
 
@@ -5794,7 +5828,13 @@ let DRIVE_URL_H1=localStorage.getItem('almar_drive_h1')||'https://docs.google.co
 function syncDrive(){
   const btn=$$('btn-drive-sync'),bar=$$('drive-sync-bar');
   if(!btn||!bar)return;
-  if(location.protocol==='file:'){alert('Para la sincronizacion automatica\nabrí el cotizador con ABRIR_COTIZADOR.bat');return;}
+  if(location.protocol==='file:'){
+    // En archivo local — mostrar opción de abrir en producción
+    if(confirm('Esta función requiere conexión a internet.\n\n¿Abrís el Cotizador en producción?')){
+      window.open('https://app-almar.pages.dev/COTIZADOR.html','_blank');
+    }
+    return;
+  }
   btn.disabled=true;btn.textContent='Actualizando...';
   bar.style.display='block';bar.style.background='rgba(22,65,148,.15)';bar.style.color='var(--b)';bar.textContent='Conectando con Drive...';
   fetch(DRIVE_URL_H1+'&t='+Date.now(),{cache:'no-store'})
@@ -5885,8 +5925,10 @@ bLogin();
 (function autoSync(){
   // Solo si estamos online (no file://)
   if(location.protocol==='file:') return;
-  const URL_CSV='https://docs.google.com/spreadsheets/d/e/2PACX-1vRZc13F55AeNqNfw0rG-9vVA5-ETS0DH3tPLTS5JA6aDK-F87p5tfrR4U3eB-Cfug/pub?gid=1231420949&single=true&output=csv';
-  fetch(URL_CSV+'&t='+Date.now(),{cache:'no-store'})
+  const URL_CSV=DRIVE_URL_H1; // Usar la misma URL configurada en syncDrive
+  const controller=new AbortController();
+  const tid=setTimeout(()=>controller.abort(),15000);
+  fetch(URL_CSV+'&t='+Date.now(),{cache:'no-store',signal:controller.signal})
     .then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.text();})
     .then(csv=>{
       const autos=parseDrv(csv);
