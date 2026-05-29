@@ -1182,36 +1182,8 @@ input[type=text]#p-obs{background:#F5F7FA!important;border:1px solid #D5DCE6!imp
     <div id="lf-ia-sel-precio" style="color:#2ecc71;font-size:13px;font-weight:800"></div>
     <div style="text-align:right;margin-top:5px"><span onclick="labIALimpiar()" style="font-size:10px;color:var(--m);cursor:pointer;text-decoration:underline">✏️ Cambiar versión</span></div>
   </div>
-  <div id="lf-ia-box" style="margin-bottom:8px;display:none;background:rgba(65,192,240,.04);border:1px solid rgba(65,192,240,.15);border-radius:8px;padding:10px">
-    <div style="font-size:9px;font-weight:800;letter-spacing:1.5px;color:#41c0f0;text-transform:uppercase;margin-bottom:10px">🔍 Buscar precio en Infoauto</div>
-    <!-- PASO 1: MARCA -->
-    <div style="margin-bottom:8px;position:relative">
-      <label style="font-size:10px;color:var(--m);display:block;margin-bottom:3px">1 · Marca <span id="lf-ia-marca-ok" style="color:#2ecc71;display:none">✓</span></label>
-      <input type="text" id="lf-ia-marca-input" placeholder="Escribí la marca..." autocomplete="off"
-        style="margin:0;font-size:11px;width:100%" oninput="labIAFiltrarMarcas(this.value)" onfocus="labIAFiltrarMarcas(this.value)">
-      <div id="lf-ia-marca-sugs" style="display:none;position:absolute;z-index:999;background:var(--s2);border:1px solid var(--bdr);border-radius:6px;max-height:140px;overflow-y:auto;width:100%;top:calc(100% + 2px);left:0;box-shadow:0 4px 12px rgba(0,0,0,.4)"></div>
-    </div>
-    <!-- PASO 2: MODELO -->
-    <div style="margin-bottom:8px;position:relative;opacity:.4;pointer-events:none" id="lf-ia-paso2">
-      <label style="font-size:10px;color:var(--m);display:block;margin-bottom:3px">2 · Modelo <span id="lf-ia-modelo-ok" style="color:#2ecc71;display:none">✓</span></label>
-      <input type="text" id="lf-ia-modelo-input" placeholder="Escribí el modelo..." autocomplete="off"
-        style="margin:0;font-size:11px;width:100%" oninput="labIAFiltrarModelos(this.value)" onfocus="labIAFiltrarModelos(this.value)">
-      <div id="lf-ia-modelo-sugs" style="display:none;position:absolute;z-index:998;background:var(--s2);border:1px solid var(--bdr);border-radius:6px;max-height:140px;overflow-y:auto;width:100%;top:calc(100% + 2px);left:0;box-shadow:0 4px 12px rgba(0,0,0,.4)"></div>
-    </div>
-    <!-- PASO 3: AÑO -->
-    <div style="margin-bottom:8px;position:relative;opacity:.4;pointer-events:none" id="lf-ia-paso3">
-      <label style="font-size:10px;color:var(--m);display:block;margin-bottom:3px">3 · Año <span id="lf-ia-anio-ok" style="color:#2ecc71;display:none">✓</span></label>
-      <div id="lf-ia-anios" style="display:flex;flex-wrap:wrap;gap:4px"></div>
-    </div>
-    <!-- PASO 4: VERSION -->
-    <div style="margin-bottom:6px;position:relative;opacity:.4;pointer-events:none" id="lf-ia-paso4">
-      <label style="font-size:10px;color:var(--m);display:block;margin-bottom:3px">4 · Versión</label>
-      <div id="lf-ia-versiones" style="display:flex;flex-direction:column;gap:3px;max-height:150px;overflow-y:auto"></div>
-    </div>
-    <div id="lf-ia-status" style="font-size:10px;color:var(--m);margin-top:4px;display:none"></div>
-  </div>
   <div style="margin-bottom:8px">
-    <button class="btn btn-ghost btn-sm" onclick="labIAToggle()" id="lf-ia-btn"
+    <button class="btn btn-ghost btn-sm" onclick="labIAAbrir()" id="lf-ia-btn"
       style="font-size:10px;width:100%;color:#41c0f0;border-color:rgba(65,192,240,.3)">
       🔍 Buscar precio en Infoauto automáticamente
     </button>
@@ -1273,6 +1245,52 @@ input[type=text]#p-obs{background:#F5F7FA!important;border:1px solid #D5DCE6!imp
     <button class="btn btn-r btn-sm" id="lab-det-btn-cerrar" onclick="labCerrarPerfil()">✅ Marcar cerrado</button>
   </div>
 </div>
+</div>
+
+
+<!-- MODAL BUSCADOR INFOAUTO -->
+<div id="ia-modal-overlay" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.8);z-index:4000;overflow-y:auto;padding:20px 0">
+  <div style="max-width:480px;margin:0 auto;background:var(--s1);border-radius:12px;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.7)">
+    <!-- Header -->
+    <div style="background:var(--r);padding:14px 16px;display:flex;align-items:center;justify-content:space-between">
+      <div style="font-family:var(--hf);font-weight:900;font-size:14px;color:#fff">🔍 Buscar precio Infoauto</div>
+      <div onclick="labIACerrar()" style="cursor:pointer;color:rgba(255,255,255,.7);font-size:20px;padding:0 4px">✕</div>
+    </div>
+    <!-- Pasos -->
+    <div style="padding:14px 16px">
+      <!-- PASO 1: MARCA -->
+      <div style="margin-bottom:12px">
+        <div style="font-size:9px;font-weight:800;letter-spacing:1px;color:var(--y);text-transform:uppercase;margin-bottom:6px">1 · Marca</div>
+        <input type="text" id="ia-marca-input" placeholder="Escribí para filtrar..." autocomplete="off"
+          oninput="iaFiltrarMarcas(this.value)"
+          style="margin:0 0 6px;font-size:12px;width:100%">
+        <div id="ia-marca-lista" style="max-height:160px;overflow-y:auto;border:1px solid var(--bdr);border-radius:6px"></div>
+      </div>
+      <!-- PASO 2: MODELO -->
+      <div id="ia-paso2" style="margin-bottom:12px;display:none">
+        <div style="font-size:9px;font-weight:800;letter-spacing:1px;color:var(--y);text-transform:uppercase;margin-bottom:6px">2 · Modelo</div>
+        <div id="ia-marca-sel" style="font-size:11px;color:#41c0f0;font-weight:700;margin-bottom:6px"></div>
+        <input type="text" id="ia-modelo-input" placeholder="Escribí para filtrar..." autocomplete="off"
+          oninput="iaFiltrarModelos(this.value)"
+          style="margin:0 0 6px;font-size:12px;width:100%">
+        <div id="ia-modelo-lista" style="max-height:160px;overflow-y:auto;border:1px solid var(--bdr);border-radius:6px"></div>
+        <div id="ia-modelo-loading" style="display:none;font-size:11px;color:var(--m);padding:10px;text-align:center">⏳ Cargando modelos...</div>
+      </div>
+      <!-- PASO 3: AÑO -->
+      <div id="ia-paso3" style="margin-bottom:12px;display:none">
+        <div style="font-size:9px;font-weight:800;letter-spacing:1px;color:var(--y);text-transform:uppercase;margin-bottom:6px">3 · Año</div>
+        <div id="ia-modelo-sel" style="font-size:11px;color:#41c0f0;font-weight:700;margin-bottom:8px"></div>
+        <div id="ia-anio-grid" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+      </div>
+      <!-- PASO 4: VERSION -->
+      <div id="ia-paso4" style="margin-bottom:12px;display:none">
+        <div style="font-size:9px;font-weight:800;letter-spacing:1px;color:var(--y);text-transform:uppercase;margin-bottom:6px">4 · Versión <span id="ia-ver-count" style="color:var(--m);font-weight:400;font-size:9px"></span></div>
+        <div id="ia-anio-sel" style="font-size:11px;color:#41c0f0;font-weight:700;margin-bottom:6px"></div>
+        <div id="ia-version-lista" style="max-height:200px;overflow-y:auto;display:flex;flex-direction:column;gap:4px"></div>
+        <div id="ia-ver-loading" style="display:none;font-size:11px;color:var(--m);padding:10px;text-align:center">⏳ Obteniendo precio...</div>
+      </div>
+    </div>
+  </div>
 </div>
 
 </div><!-- /main -->
@@ -6400,14 +6418,9 @@ function labNuevoPerfil(){
   });
   const lseg=$$('lf-segmento'); if(lseg) lseg.value='';
   // Reset buscador Infoauto
-  _iaCodia=null; _iaBrandId=null; _iaGrupo=null; _iaAnio=null;
-  const iaBox=$$('lf-ia-box'); if(iaBox) iaBox.style.display='none';
+  _iaCodia=null; _iaBrandId=null; _iaBrandName=''; _iaGrupo=null; _iaGrupoData=null; _iaAnio=null;
   const iaSel=$$('lf-ia-seleccionado'); if(iaSel) iaSel.style.display='none';
-  const iaStatus=$$('lf-ia-status'); if(iaStatus) iaStatus.style.display='none';
-  ['lf-ia-marca-input','lf-ia-modelo-input'].forEach(id=>{ const el=$$(id); if(el) el.value=''; });
-  ['lf-ia-marca-ok','lf-ia-modelo-ok','lf-ia-anio-ok'].forEach(id=>{ const el=$$(id); if(el) el.style.display='none'; });
-  $$('lf-ia-anios')&&($$('lf-ia-anios').innerHTML='');
-  $$('lf-ia-versiones')&&($$('lf-ia-versiones').innerHTML='');
+  const iaOverlay=document.getElementById('ia-modal-overlay'); if(iaOverlay) iaOverlay.style.display='none';
   const lu=$$('lf-urgencia'); if(lu) lu.value='caliente';
   const lt=$$('lf-tipo');     if(lt) lt.value='';
   const li=$$('lf-id');       if(li) li.value='';
@@ -6776,188 +6789,183 @@ function labCerrarPerfil(){
 }
 
 // ══ INTEGRACIÓN INFOAUTO ══════════════════════════════════════
-const IA_PROXY = 'https://almar-infoauto-proxy.vercel.app';
-let _iaCodia   = null;
-let _iaBrands  = null;  // [{id, name}]
-let _iaModels  = null;  // modelos de la marca seleccionada
-let _iaBrandId = null;  // id de marca seleccionada
-let _iaGrupo   = null;  // grupo/modelo seleccionado
-let _iaAnio    = null;  // año seleccionado
+const IA_PROXY    = 'https://almar-infoauto-proxy.vercel.app';
+let _iaBrands     = null;  // [{id,name}] — todas las marcas
+let _iaModels     = null;  // grupos del brand seleccionado
+let _iaBrandId    = null;
+let _iaBrandName  = '';
+let _iaGrupo      = null;
+let _iaGrupoData  = null;  // {grupo, versiones, anioDesde, anioHasta}
+let _iaAnio       = null;
+let _iaCodia      = null;
 
-function _iaSetPaso(paso, activo){
-  const el = $$(`lf-ia-paso${paso}`);
-  if(el){ el.style.opacity=activo?'1':'.4'; el.style.pointerEvents=activo?'':'none'; }
+// ── ABRIR MODAL ─────────────────────────────────────────────
+async function labIAAbrir(){
+  $('ia-modal-overlay').style.display = 'block';
+  document.body.style.overflow = 'hidden';
+  // Reset todo
+  _iaBrandId=null; _iaBrandName=''; _iaGrupo=null; _iaGrupoData=null; _iaAnio=null; _iaCodia=null;
+  _iaReset();
+  // Cargar marcas si no están
+  if(!_iaBrands) await _iaLoadBrands();
+  else _iaRenderMarcas(_iaBrands);
 }
 
-// ── TOGGLE ──────────────────────────────────────────────────
-async function labIAToggle(){
-  const box = $$('lf-ia-box');
-  if(!box) return;
-  if(box.style.display !== 'none'){ box.style.display='none'; return; }
-  box.style.display = 'block';
-  if(!_iaBrands) await _labIALoadBrands();
+function labIACerrar(){
+  $('ia-modal-overlay').style.display = 'none';
+  document.body.style.overflow = '';
 }
 
-// ── CARGAR MARCAS ───────────────────────────────────────────
-async function _labIALoadBrands(){
+function _iaReset(){
+  ['ia-paso2','ia-paso3','ia-paso4'].forEach(id=>{ const el=$$(id); if(el) el.style.display='none'; });
+  $('ia-marca-input').value = '';
+  $('ia-modelo-input') && ($('ia-modelo-input').value='');
+}
+
+function $(id){ return document.getElementById(id); }
+
+// ── CARGAR Y MOSTRAR MARCAS ─────────────────────────────────
+async function _iaLoadBrands(){
+  $('ia-marca-lista').innerHTML = '<div style="padding:10px;font-size:11px;color:var(--m);text-align:center">⏳ Cargando marcas...</div>';
   try {
     const res  = await fetch(`${IA_PROXY}/api/brands`);
     const data = await res.json();
     if(!data.ok) throw new Error(data.error);
-    _iaBrands = data.brands; // [{id, name}]
+    _iaBrands = data.brands;
+    _iaRenderMarcas(_iaBrands);
   } catch(e){
-    const st = $$('lf-ia-status');
-    if(st){ st.textContent='❌ Error cargando marcas. Verificá conexión.'; st.style.display='block'; }
+    $('ia-marca-lista').innerHTML = '<div style="padding:10px;font-size:11px;color:var(--r)">❌ Error cargando marcas</div>';
   }
 }
 
-// ── FILTRAR MARCAS (tipeo) ───────────────────────────────────
-function labIAFiltrarMarcas(q){
-  const sugs = $$('lf-ia-marca-sugs');
-  if(!sugs) return;
-  if(!_iaBrands || !q || q.length < 1){ sugs.style.display='none'; return; }
-  const q2 = q.toUpperCase();
-  const hits = _iaBrands.filter(b => b.name.toUpperCase().includes(q2)).slice(0,8);
-  if(!hits.length){ sugs.style.display='none'; return; }
-  sugs.innerHTML = hits.map(b=>
-    `<div onclick="labIASelMarca(${b.id},'${b.name.replace(/'/g,"\\'")}');event.stopPropagation()"
-      style="padding:7px 10px;cursor:pointer;font-size:11px;color:var(--t);border-bottom:1px solid var(--bdr)"
+function _iaRenderMarcas(list){
+  const cont = $('ia-marca-lista');
+  if(!list.length){ cont.innerHTML='<div style="padding:8px;font-size:11px;color:var(--m)">Sin resultados</div>'; return; }
+  cont.innerHTML = list.slice(0,80).map(b=>
+    `<div onclick="iaSelMarca(${b.id},'${b.name.replace(/'/g,"\\'")}')"
+      style="padding:9px 12px;cursor:pointer;font-size:12px;color:var(--t);border-bottom:1px solid var(--bdr)"
       onmouseover="this.style.background='rgba(65,192,240,.1)'"
-      onmouseout="this.style.background=''">${b.name}</div>`
+      onmouseout="this.style.background=''">
+      ${b.name}
+    </div>`
   ).join('');
-  sugs.style.display = 'block';
 }
 
-// ── SELECCIONAR MARCA ────────────────────────────────────────
-async function labIASelMarca(id, name){
-  _iaBrandId = id; _iaGrupo = null; _iaAnio = null; _iaCodia = null;
-  const input = $$('lf-ia-marca-input');
-  const sugs  = $$('lf-ia-marca-sugs');
-  const ok    = $$('lf-ia-marca-ok');
-  if(input) input.value = name;
-  if(sugs)  sugs.style.display = 'none';
-  if(ok)    ok.style.display = 'inline';
+function iaFiltrarMarcas(q){
+  if(!_iaBrands) return;
+  const q2 = q.toUpperCase();
+  _iaRenderMarcas(!q2 ? _iaBrands : _iaBrands.filter(b=>b.name.toUpperCase().includes(q2)));
+}
 
-  // Reset pasos siguientes
-  const mi = $$('lf-ia-modelo-input'); if(mi){ mi.value=''; }
-  const mok= $$('lf-ia-modelo-ok');   if(mok) mok.style.display='none';
-  $$('lf-ia-modelo-sugs') && ($$('lf-ia-modelo-sugs').style.display='none');
-  $$('lf-ia-anios')       && ($$('lf-ia-anios').innerHTML='');
-  $$('lf-ia-versiones')   && ($$('lf-ia-versiones').innerHTML='');
-  $$('lf-ia-anio-ok')     && ($$('lf-ia-anio-ok').style.display='none');
-  _iaSetPaso(2,false); _iaSetPaso(3,false); _iaSetPaso(4,false);
-
+// ── SELECCIONAR MARCA → CARGAR MODELOS ──────────────────────
+async function iaSelMarca(id, name){
+  _iaBrandId=id; _iaBrandName=name; _iaGrupo=null; _iaGrupoData=null; _iaAnio=null;
+  $('ia-marca-input').value = name;
+  $('ia-marca-lista').innerHTML = '';
+  $('ia-marca-sel') && ($('ia-marca-sel').textContent = `✓ ${name}`);
   // Autocompletar campo marca del perfil
-  const fMarca = $$('lf-busca-marca');
-  if(fMarca && !fMarca.value) fMarca.value = name;
+  const fMarca = $$('lf-busca-marca'); if(fMarca&&!fMarca.value) fMarca.value = name;
+  // Mostrar paso 2
+  $('ia-paso2').style.display = 'block';
+  $('ia-modelo-input').value = '';
+  $('ia-modelo-loading').style.display = 'block';
+  $('ia-modelo-lista').innerHTML = '';
+  $('ia-paso3').style.display = 'none';
+  $('ia-paso4').style.display = 'none';
 
-  // Cargar modelos
-  const st = $$('lf-ia-status');
-  if(st){ st.textContent='⏳ Cargando modelos...'; st.style.display='block'; }
   try {
     const res  = await fetch(`${IA_PROXY}/api/models?brand_id=${id}`);
     const data = await res.json();
     if(!data.ok) throw new Error(data.error);
-    _iaModels = data.models;
-    _iaSetPaso(2, true);
-    if(st) st.style.display='none';
+    _iaModels = data.models; // [{grupo, anioDesde, anioHasta, versiones:[]}]
+    $('ia-modelo-loading').style.display = 'none';
+    _iaRenderModelos(_iaModels);
   } catch(e){
-    if(st){ st.textContent='❌ Error cargando modelos.'; }
+    $('ia-modelo-loading').style.display = 'none';
+    $('ia-modelo-lista').innerHTML = '<div style="padding:8px;font-size:11px;color:var(--r)">❌ Error cargando modelos</div>';
   }
 }
 
-// ── FILTRAR MODELOS (tipeo) ──────────────────────────────────
-function labIAFiltrarModelos(q){
-  const sugs = $$('lf-ia-modelo-sugs');
-  if(!sugs || !_iaModels) return;
-  const q2   = (q||'').toUpperCase();
-  const grupos = [...new Set(_iaModels.map(m=>m.grupo))].filter(g=>!q2||g.toUpperCase().includes(q2)).sort().slice(0,10);
-  if(!grupos.length){ sugs.style.display='none'; return; }
-  sugs.innerHTML = grupos.map(g=>
-    `<div onclick="labIASelModelo('${g.replace(/'/g,"\\'")}');event.stopPropagation()"
-      style="padding:7px 10px;cursor:pointer;font-size:11px;color:var(--t);border-bottom:1px solid var(--bdr)"
+function _iaRenderModelos(list){
+  const cont = $('ia-modelo-lista');
+  if(!list||!list.length){ cont.innerHTML='<div style="padding:8px;font-size:11px;color:var(--m)">Sin modelos disponibles</div>'; return; }
+  cont.innerHTML = list.map(m=>
+    `<div onclick="iaSelModelo('${m.grupo.replace(/'/g,"\\'")}',${JSON.stringify(m).replace(/</g,'&lt;')})"
+      style="padding:9px 12px;cursor:pointer;font-size:12px;color:var(--t);border-bottom:1px solid var(--bdr)"
       onmouseover="this.style.background='rgba(65,192,240,.1)'"
-      onmouseout="this.style.background=''">${g}</div>`
+      onmouseout="this.style.background=''">
+      <strong>${m.grupo}</strong>
+      <span style="color:var(--m);font-size:10px;margin-left:6px">${m.anioDesde||''}${m.anioHasta?'–'+m.anioHasta:''}</span>
+    </div>`
   ).join('');
-  sugs.style.display = 'block';
 }
 
-// ── SELECCIONAR MODELO ───────────────────────────────────────
-function labIASelModelo(grupo){
-  _iaGrupo = grupo; _iaAnio = null; _iaCodia = null;
-  const input = $$('lf-ia-modelo-input');
-  const sugs  = $$('lf-ia-modelo-sugs');
-  const ok    = $$('lf-ia-modelo-ok');
-  if(input) input.value = grupo;
-  if(sugs)  sugs.style.display = 'none';
-  if(ok)    ok.style.display   = 'inline';
+function iaFiltrarModelos(q){
+  if(!_iaModels) return;
+  const q2 = q.toUpperCase();
+  _iaRenderModelos(!q2 ? _iaModels : _iaModels.filter(m=>m.grupo.toUpperCase().includes(q2)));
+}
 
-  // Reset pasos siguientes
-  $$('lf-ia-anios')     && ($$('lf-ia-anios').innerHTML='');
-  $$('lf-ia-versiones') && ($$('lf-ia-versiones').innerHTML='');
-  $$('lf-ia-anio-ok')   && ($$('lf-ia-anio-ok').style.display='none');
-  _iaSetPaso(3,false); _iaSetPaso(4,false);
+// ── SELECCIONAR MODELO → MOSTRAR AÑOS ───────────────────────
+function iaSelModelo(grupo, data){
+  _iaGrupo=grupo; _iaGrupoData=data; _iaAnio=null;
+  $('ia-modelo-input').value = grupo;
+  $('ia-modelo-lista').innerHTML='';
+  $('ia-modelo-sel') && ($('ia-modelo-sel').textContent = `✓ ${_iaBrandName} ${grupo}`);
+  // Autocompletar campo modelo del perfil
+  const fModelo = $$('lf-busca-modelo'); if(fModelo&&!fModelo.value) fModelo.value = grupo;
 
-  // Autocompletar modelo en perfil
-  const fModelo = $$('lf-busca-modelo');
-  if(fModelo && !fModelo.value) fModelo.value = grupo;
-
-  // Calcular años disponibles para este grupo
-  const modGrupo = _iaModels.filter(m=>m.grupo===grupo);
-  const anioMin  = Math.min(...modGrupo.map(m=>m.anioDesde||2010));
-  const anioMax  = Math.max(...modGrupo.map(m=>m.anioHasta||new Date().getFullYear()));
-  const aniosCont = $$('lf-ia-anios');
-  if(!aniosCont) return;
-  aniosCont.innerHTML = '';
+  // Calcular años del grupo
+  const anioMin = data.anioDesde || 2000;
+  const anioMax = data.anioHasta || new Date().getFullYear();
+  const grid = $('ia-anio-grid');
+  grid.innerHTML = '';
   for(let y=anioMax; y>=anioMin; y--){
     const btn = document.createElement('button');
     btn.className = 'btn btn-ghost btn-sm';
-    btn.style.cssText = 'font-size:10px;padding:3px 8px;min-width:48px';
+    btn.style.cssText = 'font-size:11px;padding:5px 10px;min-width:52px';
     btn.textContent = y;
-    btn.onclick = ()=>labIASelAnio(y, btn);
-    aniosCont.appendChild(btn);
+    btn.onclick = ()=>iaSelAnio(y, btn);
+    grid.appendChild(btn);
   }
-  _iaSetPaso(3, true);
+  $('ia-paso3').style.display = 'block';
+  $('ia-paso4').style.display = 'none';
 }
 
-// ── SELECCIONAR AÑO ─────────────────────────────────────────
-function labIASelAnio(anio, btnEl){
-  _iaAnio = anio; _iaCodia = null;
+// ── SELECCIONAR AÑO → MOSTRAR VERSIONES ─────────────────────
+function iaSelAnio(anio, btnEl){
+  _iaAnio = anio;
   // Marcar botón activo
-  $$('lf-ia-anios').querySelectorAll('button').forEach(b=>{
-    b.style.background=''; b.style.color='';
-  });
+  $('ia-anio-grid').querySelectorAll('button').forEach(b=>{ b.style.background=''; b.style.color=''; });
   if(btnEl){ btnEl.style.background='var(--r)'; btnEl.style.color='#fff'; }
-  const ok = $$('lf-ia-anio-ok'); if(ok) ok.style.display='inline';
-  $$('lf-ia-versiones') && ($$('lf-ia-versiones').innerHTML='');
-  _iaSetPaso(4, false);
+  $('ia-anio-sel') && ($('ia-anio-sel').textContent = `✓ Año ${anio}`);
 
-  // Filtrar versiones para este grupo y año
-  const versiones = _iaModels.filter(m=>
-    m.grupo===_iaGrupo && (m.anioDesde||0)<=anio && (m.anioHasta||9999)>=anio
+  // Filtrar versiones para este año
+  const versiones = (_iaGrupoData?.versiones||[]).filter(v=>
+    (v.anioDesde||0)<=anio && (v.anioHasta||9999)>=anio
   );
-  const cont = $$('lf-ia-versiones');
-  if(!cont) return;
-  if(!versiones.length){
-    cont.innerHTML = '<div style="font-size:10px;color:var(--m);padding:6px">Sin versiones disponibles para este año.</div>';
-    _iaSetPaso(4, true);
-    return;
-  }
-  cont.innerHTML = versiones.map(v=>
-    `<div onclick="labIASelVersion(${v.codia},'${v.descripcion.replace(/'/g,"\\'")}');event.stopPropagation()"
-      style="padding:7px 10px;cursor:pointer;font-size:11px;color:var(--t);background:var(--s3);border-radius:5px;border:1px solid transparent"
-      onmouseover="this.style.borderColor='rgba(65,192,240,.5)';this.style.background='rgba(65,192,240,.08)'"
-      onmouseout="this.style.borderColor='transparent';this.style.background='var(--s3)'">
-      ${v.descripcion}
-    </div>`
-  ).join('');
-  _iaSetPaso(4, true);
+
+  const cont = $('ia-version-lista');
+  const count = $('ia-ver-count');
+  if(count) count.textContent = `(${versiones.length} disponibles)`;
+  cont.innerHTML = versiones.length
+    ? versiones.map(v=>
+        `<div onclick="iaSelVersion(${v.codia},'${v.descripcion.replace(/'/g,"\\'")}')"
+          style="padding:9px 12px;cursor:pointer;font-size:11px;color:var(--t);background:var(--s3);border-radius:6px;border:1px solid transparent"
+          onmouseover="this.style.borderColor='rgba(65,192,240,.5)';this.style.background='rgba(65,192,240,.08)'"
+          onmouseout="this.style.borderColor='transparent';this.style.background='var(--s3)'">
+          ${v.descripcion}
+          <span style="color:var(--m);font-size:9px;display:block">CODIA ${v.codia}</span>
+        </div>`
+      ).join('')
+    : '<div style="font-size:11px;color:var(--m);padding:8px">Sin versiones para este año</div>';
+
+  $('ia-paso4').style.display = 'block';
 }
 
 // ── SELECCIONAR VERSION → OBTENER PRECIO ────────────────────
-async function labIASelVersion(codia, desc){
-  const st = $$('lf-ia-status');
-  if(st){ st.textContent='⏳ Obteniendo precio...'; st.style.display='block'; }
+async function iaSelVersion(codia, desc){
+  $('ia-ver-loading').style.display = 'block';
   try {
     const res  = await fetch(`${IA_PROXY}/api/price?codia=${codia}&year=${_iaAnio}`);
     const data = await res.json();
@@ -6965,41 +6973,37 @@ async function labIASelVersion(codia, desc){
 
     _iaCodia = codia;
     const precio = data.precio;
+    // Setear precio en el campo
     const infoField = $$('lf-infoauto');
     if(infoField) infoField.value = precio;
 
-    const marcaNombre = $$('lf-ia-marca-input')?.value || '';
+    // Mostrar resumen en el form
     const selDesc   = $$('lf-ia-sel-desc');
     const selPrecio = $$('lf-ia-sel-precio');
     const selBox    = $$('lf-ia-seleccionado');
-    if(selDesc)   selDesc.textContent   = `${marcaNombre} ${desc} (${data.year})${data.exacto?'':' · año más cercano'}`;
+    if(selDesc)   selDesc.textContent   = `${_iaBrandName} ${desc} (${data.year})${data.exacto?'':' · año más cercano'}`;
     if(selPrecio) selPrecio.textContent = `Precio Infoauto: ${fmt(precio)}`;
     if(selBox)    selBox.style.display  = 'block';
-    if(st)        st.style.display      = 'none';
-    $$('lf-ia-box').style.display = 'none';
+
+    labIACerrar();
     labCalcMatch();
   } catch(e){
-    if(st){ st.textContent='⚠️ Sin precio. Ingresá manualmente.'; }
+    $('ia-ver-loading').style.display='none';
+    $('ia-version-lista').innerHTML += '<div style="font-size:11px;color:var(--r);padding:6px">⚠️ Sin precio disponible. Ingresá manualmente.</div>';
   }
 }
 
-// ── LIMPIAR ─────────────────────────────────────────────────
+// ── LIMPIAR SELECCIÓN ───────────────────────────────────────
 function labIALimpiar(){
-  _iaCodia=null; _iaBrandId=null; _iaGrupo=null; _iaAnio=null;
-  const infoField = $$('lf-infoauto'); if(infoField) infoField.value='';
-  const selBox = $$('lf-ia-seleccionado'); if(selBox) selBox.style.display='none';
-  ['lf-ia-marca-input','lf-ia-modelo-input'].forEach(id=>{ const el=$$(id); if(el) el.value=''; });
-  ['lf-ia-marca-ok','lf-ia-modelo-ok','lf-ia-anio-ok'].forEach(id=>{ const el=$$(id); if(el) el.style.display='none'; });
-  $$('lf-ia-anios')     && ($$('lf-ia-anios').innerHTML='');
-  $$('lf-ia-versiones') && ($$('lf-ia-versiones').innerHTML='');
-  _iaSetPaso(2,false); _iaSetPaso(3,false); _iaSetPaso(4,false);
-  const box = $$('lf-ia-box'); if(box) box.style.display='block';
+  _iaCodia=null; _iaBrandId=null; _iaBrandName=''; _iaGrupo=null; _iaGrupoData=null; _iaAnio=null;
+  const infoField=$$('lf-infoauto'); if(infoField) infoField.value='';
+  const selBox=$$('lf-ia-seleccionado'); if(selBox) selBox.style.display='none';
   labCalcMatch();
 }
 
 // ── RESET EN NUEVO PERFIL ────────────────────────────────────
-// (llamado desde labNuevoPerfil vía el patch de reset)
-// ══ FIN INTEGRACIÓN INFOAUTO ══════════════════════════════════════════════════════════════════════════════════════════════════
+// (el patch de labNuevoPerfil ya llama al reset)
+// ══ FIN INTEGRACIÓN INFOAUTO ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 
 // ══ FIN LABORATORIO COMERCIAL ══
 
