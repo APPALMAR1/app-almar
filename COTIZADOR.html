@@ -1175,31 +1175,43 @@ input[type=text]#p-obs{background:#F5F7FA!important;border:1px solid #D5DCE6!imp
       </div>
     </div>
   </div>
-  <!-- BUSCADOR INFOAUTO -->
-  <div id="lf-ia-box" style="margin-bottom:10px;display:none">
-    <div style="font-size:9px;font-weight:800;letter-spacing:1.5px;color:#41c0f0;text-transform:uppercase;margin-bottom:6px">🔍 Buscar versión en Infoauto</div>
-    <div style="display:flex;gap:6px;margin-bottom:6px">
-      <input type="text" id="lf-ia-busca" placeholder="Ej: Peugeot 208 1.6 Allure 2022..." 
-        style="flex:1;margin:0;font-size:11px" 
-        oninput="labIABuscar(this.value)"
-        autocomplete="off">
-      <button class="btn btn-sm" onclick="labIABuscar($$('lf-ia-busca').value)" 
-        style="font-size:10px;padding:4px 10px;background:var(--r);color:#fff;white-space:nowrap">
-        🔍 Buscar
-      </button>
-    </div>
-    <div id="lf-ia-status" style="font-size:10px;color:var(--m);margin-bottom:4px;display:none"></div>
-    <div id="lf-ia-resultados" style="max-height:160px;overflow-y:auto;display:flex;flex-direction:column;gap:3px"></div>
-    <div id="lf-ia-seleccionado" style="display:none;margin-top:6px;padding:7px 10px;background:rgba(65,192,240,.1);border:1px solid rgba(65,192,240,.3);border-radius:6px;font-size:10px">
-      <div style="color:#41c0f0;font-weight:700;margin-bottom:2px">✅ Versión seleccionada</div>
-      <div id="lf-ia-sel-desc" style="color:var(--t);font-weight:600"></div>
-      <div id="lf-ia-sel-precio" style="color:var(--g);font-size:12px;font-weight:800;margin-top:2px"></div>
-      <div style="text-align:right;margin-top:4px">
-        <span onclick="labIALimpiar()" style="font-size:10px;color:var(--m);cursor:pointer;text-decoration:underline">Cambiar versión</span>
-      </div>
+  <!-- BUSCADOR INFOAUTO EN CASCADA -->
+  <div id="lf-ia-seleccionado" style="display:none;margin-bottom:8px;padding:8px 10px;background:rgba(65,192,240,.08);border:1px solid rgba(65,192,240,.3);border-radius:8px;font-size:10px">
+    <div style="color:#41c0f0;font-weight:700;margin-bottom:3px">✅ Versión Infoauto seleccionada</div>
+    <div id="lf-ia-sel-desc" style="color:var(--t);font-weight:600;margin-bottom:2px"></div>
+    <div id="lf-ia-sel-precio" style="color:#2ecc71;font-size:13px;font-weight:800"></div>
+    <div style="text-align:right;margin-top:5px">
+      <span onclick="labIALimpiar()" style="font-size:10px;color:var(--m);cursor:pointer;text-decoration:underline">✏️ Cambiar versión</span>
     </div>
   </div>
-  <!-- BOTON PARA ABRIR BUSCADOR -->
+  <div id="lf-ia-box" style="margin-bottom:8px;display:none;background:rgba(65,192,240,.04);border:1px solid rgba(65,192,240,.15);border-radius:8px;padding:10px">
+    <div style="font-size:9px;font-weight:800;letter-spacing:1.5px;color:#41c0f0;text-transform:uppercase;margin-bottom:8px">🔍 Buscar precio en Infoauto</div>
+    <div style="margin-bottom:6px">
+      <label style="font-size:10px;color:var(--m);display:block;margin-bottom:3px">1 · Marca</label>
+      <select id="lf-ia-marca" onchange="labIAOnMarca()" style="margin:0;font-size:11px;width:100%">
+        <option value="">⏳ Cargando marcas...</option>
+      </select>
+    </div>
+    <div style="margin-bottom:6px;opacity:.4;pointer-events:none" id="lf-ia-paso2">
+      <label style="font-size:10px;color:var(--m);display:block;margin-bottom:3px">2 · Modelo</label>
+      <select id="lf-ia-modelo" onchange="labIAOnModelo()" style="margin:0;font-size:11px;width:100%">
+        <option value="">— Elegí la marca primero —</option>
+      </select>
+    </div>
+    <div style="margin-bottom:6px;opacity:.4;pointer-events:none" id="lf-ia-paso3">
+      <label style="font-size:10px;color:var(--m);display:block;margin-bottom:3px">3 · Año</label>
+      <select id="lf-ia-anio" onchange="labIAOnAnio()" style="margin:0;font-size:11px;width:100%">
+        <option value="">— Elegí el modelo primero —</option>
+      </select>
+    </div>
+    <div style="margin-bottom:6px;opacity:.4;pointer-events:none" id="lf-ia-paso4">
+      <label style="font-size:10px;color:var(--m);display:block;margin-bottom:3px">4 · Versión</label>
+      <select id="lf-ia-version" onchange="labIAOnVersion()" style="margin:0;font-size:11px;width:100%">
+        <option value="">— Elegí el año primero —</option>
+      </select>
+    </div>
+    <div id="lf-ia-status" style="font-size:10px;color:var(--m);margin-top:4px;display:none"></div>
+  </div>
   <div style="margin-bottom:8px">
     <button class="btn btn-ghost btn-sm" onclick="labIAToggle()" id="lf-ia-btn"
       style="font-size:10px;width:100%;color:#41c0f0;border-color:rgba(65,192,240,.3)">
@@ -6765,123 +6777,176 @@ function labCerrarPerfil(){
 
 // ══ INTEGRACIÓN INFOAUTO ══════════════════════════════════════
 const IA_PROXY = 'https://almar-infoauto-proxy.vercel.app';
-let _iaTimer = null;
 let _iaCodia = null;
-let _iaSearching = false;
+let _iaBrands = null; // cache local de marcas
+let _iaModels = null; // cache local de modelos de la marca seleccionada
 
-// Mostrar/ocultar buscador
-function labIAToggle(){
+// Activar/desactivar paso en cascada
+function _iaSetPaso(paso, activo){
+  const el = $$(`lf-ia-paso${paso}`);
+  if(el){ el.style.opacity = activo ? '1' : '.4'; el.style.pointerEvents = activo ? '' : 'none'; }
+}
+
+// Mostrar/ocultar buscador + cargar marcas si es primera vez
+async function labIAToggle(){
   const box = $$('lf-ia-box');
-  const btn = $$('lf-ia-btn');
   if(!box) return;
   const visible = box.style.display !== 'none';
-  box.style.display = visible ? 'none' : 'block';
-  if(!visible){
-    const marca = ($$('lf-busca-marca')?.value||'').trim();
-    const modelo = ($$('lf-busca-modelo')?.value||'').trim();
-    if(marca || modelo){
-      $$('lf-ia-busca').value = (marca+' '+modelo).trim();
-      labIABuscar($$('lf-ia-busca').value);
-    }
-    $$('lf-ia-busca')?.focus();
+  if(visible){ box.style.display='none'; return; }
+  box.style.display = 'block';
+  // Cargar marcas si no están cargadas
+  if(!_iaBrands){
+    await _labIALoadBrands();
   }
 }
 
-// Búsqueda con debounce (espera 600ms después del último tipeo)
-function labIABuscar(q){
-  clearTimeout(_iaTimer);
-  if(!q || q.trim().length < 3){
-    $$('lf-ia-resultados').innerHTML = '';
-    $$('lf-ia-status').style.display = 'none';
-    return;
+// Cargar marcas desde proxy
+async function _labIALoadBrands(){
+  const sel = $$('lf-ia-marca');
+  if(!sel) return;
+  sel.innerHTML = '<option value="">⏳ Cargando marcas...</option>';
+  try {
+    const res = await fetch(`${IA_PROXY}/api/brands`);
+    const data = await res.json();
+    if(!data.ok) throw new Error(data.error);
+    _iaBrands = data.brands;
+    sel.innerHTML = '<option value="">— Seleccioná una marca —</option>' +
+      data.brands.map(b => `<option value="${b.id}" data-name="${b.name}">${b.name}</option>`).join('');
+  } catch(err){
+    sel.innerHTML = '<option value="">❌ Error al cargar marcas</option>';
+    console.error('Brands error:', err);
   }
-  _iaTimer = setTimeout(()=>_labIAFetch(q.trim()), 600);
 }
 
-// Fetch al proxy
-async function _labIAFetch(q){
-  if(_iaSearching) return;
-  _iaSearching = true;
-  const status = $$('lf-ia-status');
-  const lista  = $$('lf-ia-resultados');
-  if(status){ status.textContent = '⏳ Buscando en Infoauto...'; status.style.display='block'; }
-  if(lista)  lista.innerHTML = '';
+// Paso 1: marca seleccionada → cargar modelos
+async function labIAOnMarca(){
+  const sel = $$('lf-ia-marca');
+  const brand_id = sel?.value;
+  const brand_name = sel?.options[sel.selectedIndex]?.dataset?.name || '';
 
-  // Extraer año del texto si lo tiene
-  const yearMatch = q.match(/\b(19|20)\d{2}\b/);
-  const year = yearMatch ? yearMatch[0] : new Date().getFullYear();
-  const qLimpio = q.replace(/\b(19|20)\d{2}\b/,'').trim();
+  // Reset pasos siguientes
+  const selModelo = $$('lf-ia-modelo');
+  const selAnio   = $$('lf-ia-anio');
+  const selVer    = $$('lf-ia-version');
+  if(selModelo) selModelo.innerHTML = '<option value="">⏳ Cargando modelos...</option>';
+  if(selAnio)   selAnio.innerHTML   = '<option value="">— Elegí el modelo primero —</option>';
+  if(selVer)    selVer.innerHTML    = '<option value="">— Elegí el año primero —</option>';
+  _iaSetPaso(2, false); _iaSetPaso(3, false); _iaSetPaso(4, false);
+
+  if(!brand_id) return;
+
+  // Pre-completar el campo marca del perfil
+  const fMarca = $$('lf-busca-marca');
+  if(fMarca && !fMarca.value) fMarca.value = brand_name;
 
   try {
-    const res = await fetch(`${IA_PROXY}/api/search?q=${encodeURIComponent(qLimpio)}&year=${year}`);
+    _iaSetPaso(2, true);
+    if(selModelo) selModelo.innerHTML = '<option value="">⏳ Cargando...</option>';
+    const res = await fetch(`${IA_PROXY}/api/models?brand_id=${brand_id}`);
     const data = await res.json();
+    if(!data.ok) throw new Error(data.error);
+    _iaModels = data.models;
 
-    if(!data.ok || !data.results?.length){
-      if(status){ status.textContent = '❌ Sin resultados. Probá con otra descripción.'; }
-      _iaSearching = false;
-      return;
-    }
-
-    if(status) status.style.display = 'none';
-
-    // Renderizar resultados
-    data.results.forEach(r => {
-      const div = document.createElement('div');
-      div.style.cssText = 'padding:6px 10px;background:var(--s3);border-radius:6px;cursor:pointer;font-size:10px;border:1px solid transparent;transition:all .15s';
-      div.innerHTML = `
-        <div style="font-weight:700;color:var(--t)">${r.marca} ${r.grupo} · <span style="color:var(--m);font-weight:400">${r.descripcion}</span></div>
-        <div style="color:var(--m);font-size:9px">Años: ${r.anioDesde||'?'} – ${r.anioHasta||'?'} · CODIA: ${r.codia}</div>
-      `;
-      div.onmouseover = ()=>{ div.style.borderColor='rgba(65,192,240,.5)'; div.style.background='rgba(65,192,240,.08)'; };
-      div.onmouseout  = ()=>{ div.style.borderColor='transparent'; div.style.background='var(--s3)'; };
-      div.onclick = ()=> _labIASeleccionar(r, year);
-      lista.appendChild(div);
-    });
-
+    // Agrupar por grupo (nombre de modelo)
+    const grupos = [...new Set(data.models.map(m => m.grupo))].sort();
+    selModelo.innerHTML = '<option value="">— Seleccioná un modelo —</option>' +
+      grupos.map(g => `<option value="${g}">${g}</option>`).join('');
   } catch(err){
-    if(status){ status.textContent = '⚠️ Error al conectar con Infoauto. Ingresá el precio manualmente.'; }
+    if(selModelo) selModelo.innerHTML = '<option value="">❌ Error al cargar modelos</option>';
   }
-  _iaSearching = false;
 }
 
-// Seleccionar una versión y obtener su precio
-async function _labIASeleccionar(r, year){
-  const status = $$('lf-ia-status');
-  const lista  = $$('lf-ia-resultados');
-  const selBox = $$('lf-ia-seleccionado');
-  const selDesc = $$('lf-ia-sel-desc');
-  const selPrecio = $$('lf-ia-sel-precio');
+// Paso 2: modelo seleccionado → cargar años disponibles
+function labIAOnModelo(){
+  const grupo = $$('lf-ia-modelo')?.value;
+  const selAnio = $$('lf-ia-anio');
+  const selVer  = $$('lf-ia-version');
+  if(selAnio)  selAnio.innerHTML  = '<option value="">— Elegí el año primero —</option>';
+  if(selVer)   selVer.innerHTML   = '<option value="">— Elegí el año primero —</option>';
+  _iaSetPaso(3, false); _iaSetPaso(4, false);
+  if(!grupo || !_iaModels) return;
 
-  if(lista)  lista.innerHTML = '';
+  // Pre-completar modelo en el perfil
+  const fModelo = $$('lf-busca-modelo');
+  if(fModelo && !fModelo.value) fModelo.value = grupo;
+
+  // Obtener rango de años de los modelos de este grupo
+  const modelsDelGrupo = _iaModels.filter(m => m.grupo === grupo);
+  const anioMin = Math.min(...modelsDelGrupo.map(m => m.anioDesde||2010));
+  const anioMax = Math.max(...modelsDelGrupo.map(m => m.anioHasta||new Date().getFullYear()));
+
+  const years = [];
+  for(let y = anioMax; y >= anioMin; y--) years.push(y);
+
+  _iaSetPaso(3, true);
+  if(selAnio){
+    selAnio.innerHTML = '<option value="">— Seleccioná el año —</option>' +
+      years.map(y => `<option value="${y}">${y}</option>`).join('');
+  }
+}
+
+// Paso 3: año seleccionado → cargar versiones
+function labIAOnAnio(){
+  const grupo = $$('lf-ia-modelo')?.value;
+  const anio  = parseInt($$('lf-ia-anio')?.value);
+  const selVer = $$('lf-ia-version');
+  if(selVer) selVer.innerHTML = '<option value="">— Elegí la versión primero —</option>';
+  _iaSetPaso(4, false);
+  if(!grupo || !anio || !_iaModels) return;
+
+  // Filtrar versiones de ese grupo y año
+  const versiones = _iaModels.filter(m =>
+    m.grupo === grupo &&
+    (m.anioDesde||0) <= anio &&
+    (m.anioHasta||9999) >= anio
+  );
+
+  _iaSetPaso(4, true);
+  if(selVer){
+    selVer.innerHTML = '<option value="">— Seleccioná la versión —</option>' +
+      versiones.map(v => `<option value="${v.codia}" data-desc="${v.descripcion}">${v.descripcion}</option>`).join('');
+  }
+}
+
+// Paso 4: versión seleccionada → obtener precio
+async function labIAOnVersion(){
+  const selVer = $$('lf-ia-version');
+  const codia  = selVer?.value;
+  const desc   = selVer?.options[selVer.selectedIndex]?.dataset?.desc || '';
+  const anio   = $$('lf-ia-anio')?.value;
+  const status = $$('lf-ia-status');
+  if(!codia || !anio) return;
+
   if(status){ status.textContent = '⏳ Obteniendo precio...'; status.style.display='block'; }
 
   try {
-    const res = await fetch(`${IA_PROXY}/api/price?codia=${r.codia}&year=${year}`);
+    const res = await fetch(`${IA_PROXY}/api/price?codia=${codia}&year=${anio}`);
     const data = await res.json();
+    if(!data.ok || !data.precio) throw new Error('Sin precio');
 
-    if(!data.ok || !data.precio){
-      if(status){ status.textContent = '❌ Sin precio disponible para este modelo/año.'; }
-      return;
-    }
-
-    // Guardar CODIA y setear precio en el campo
-    _iaCodia = r.codia;
+    _iaCodia = parseInt(codia);
     const precio = data.precio;
+
+    // Setear precio en el campo
     const infoField = $$('lf-infoauto');
     if(infoField) infoField.value = precio;
 
-    // Mostrar seleccionado
-    if(selDesc)   selDesc.textContent = `${r.marca} ${r.descripcion} (${data.year})${data.exacto?'':' — año más cercano'}`;
+    // Mostrar resumen
+    const marcaNombre = $$('lf-ia-marca')?.options[$$('lf-ia-marca').selectedIndex]?.dataset?.name || '';
+    const selDesc = $$('lf-ia-sel-desc');
+    const selPrecio = $$('lf-ia-sel-precio');
+    const selBox = $$('lf-ia-seleccionado');
+    if(selDesc)   selDesc.textContent   = `${marcaNombre} ${desc} (${data.year})${data.exacto?'':' — año más cercano'}`;
     if(selPrecio) selPrecio.textContent = `Precio Infoauto: ${fmt(precio)}`;
-    if(selBox)    selBox.style.display = 'block';
-    if(status)    status.style.display = 'none';
+    if(selBox)    selBox.style.display  = 'block';
+    if(status)    status.style.display  = 'none';
 
-    // Ocultar buscador y recalcular matching
+    // Cerrar buscador y recalcular
     $$('lf-ia-box').style.display = 'none';
     labCalcMatch();
 
   } catch(err){
-    if(status){ status.textContent = '⚠️ Error al obtener precio. Ingresá manualmente.'; }
+    if(status){ status.textContent = '⚠️ Sin precio disponible. Ingresá manualmente.'; }
   }
 }
 
@@ -6892,17 +6957,18 @@ function labIALimpiar(){
   if(infoField) infoField.value = '';
   const selBox = $$('lf-ia-seleccionado');
   if(selBox) selBox.style.display = 'none';
+  // Reset selects
+  ['lf-ia-modelo','lf-ia-anio','lf-ia-version'].forEach(id=>{
+    const el=$$(id); if(el) el.selectedIndex=0;
+  });
+  _iaSetPaso(2,false); _iaSetPaso(3,false); _iaSetPaso(4,false);
+  // Reabrir buscador
   const box = $$('lf-ia-box');
-  if(box){ box.style.display = 'block'; }
-  const busca = $$('lf-ia-busca');
-  if(busca){ busca.value = ''; busca.focus(); }
+  if(box) box.style.display = 'block';
   labCalcMatch();
 }
 
-// Limpiar buscador al abrir nuevo perfil
-const _labNuevoPerfilOrig = labNuevoPerfil;
-// (extendido inline via labNuevoPerfil patch abajo)
-// ══ FIN INTEGRACIÓN INFOAUTO ══════════════════════════════════
+// ══ FIN INTEGRACIÓN INFOAUTO ══════════════════════════════════════════════════════════════════
 
 // ══ FIN LABORATORIO COMERCIAL ══
 
