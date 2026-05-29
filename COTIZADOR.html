@@ -1170,8 +1170,41 @@ input[type=text]#p-obs{background:#F5F7FA!important;border:1px solid #D5DCE6!imp
       </select>
     </div>
     <div style="flex:1"><label class="m" style="font-size:10px">Precio Infoauto $ <span style="color:var(--y);font-size:9px">(base LTV banco)</span></label>
-      <input type="number" id="lf-infoauto" placeholder="0" oninput="labCalcMatch()" style="margin:2px 0 0">
+      <div style="position:relative;margin:2px 0 0">
+        <input type="number" id="lf-infoauto" placeholder="0 — o buscá abajo" oninput="labCalcMatch()" style="width:100%">
+      </div>
     </div>
+  </div>
+  <!-- BUSCADOR INFOAUTO -->
+  <div id="lf-ia-box" style="margin-bottom:10px;display:none">
+    <div style="font-size:9px;font-weight:800;letter-spacing:1.5px;color:#41c0f0;text-transform:uppercase;margin-bottom:6px">🔍 Buscar versión en Infoauto</div>
+    <div style="display:flex;gap:6px;margin-bottom:6px">
+      <input type="text" id="lf-ia-busca" placeholder="Ej: Peugeot 208 1.6 Allure 2022..." 
+        style="flex:1;margin:0;font-size:11px" 
+        oninput="labIABuscar(this.value)"
+        autocomplete="off">
+      <button class="btn btn-sm" onclick="labIABuscar($$('lf-ia-busca').value)" 
+        style="font-size:10px;padding:4px 10px;background:var(--r);color:#fff;white-space:nowrap">
+        🔍 Buscar
+      </button>
+    </div>
+    <div id="lf-ia-status" style="font-size:10px;color:var(--m);margin-bottom:4px;display:none"></div>
+    <div id="lf-ia-resultados" style="max-height:160px;overflow-y:auto;display:flex;flex-direction:column;gap:3px"></div>
+    <div id="lf-ia-seleccionado" style="display:none;margin-top:6px;padding:7px 10px;background:rgba(65,192,240,.1);border:1px solid rgba(65,192,240,.3);border-radius:6px;font-size:10px">
+      <div style="color:#41c0f0;font-weight:700;margin-bottom:2px">✅ Versión seleccionada</div>
+      <div id="lf-ia-sel-desc" style="color:var(--t);font-weight:600"></div>
+      <div id="lf-ia-sel-precio" style="color:var(--g);font-size:12px;font-weight:800;margin-top:2px"></div>
+      <div style="text-align:right;margin-top:4px">
+        <span onclick="labIALimpiar()" style="font-size:10px;color:var(--m);cursor:pointer;text-decoration:underline">Cambiar versión</span>
+      </div>
+    </div>
+  </div>
+  <!-- BOTON PARA ABRIR BUSCADOR -->
+  <div style="margin-bottom:8px">
+    <button class="btn btn-ghost btn-sm" onclick="labIAToggle()" id="lf-ia-btn"
+      style="font-size:10px;width:100%;color:#41c0f0;border-color:rgba(65,192,240,.3)">
+      🔍 Buscar precio en Infoauto automáticamente
+    </button>
   </div>
   <div style="display:flex;gap:6px;margin-bottom:10px;align-items:center">
     <input type="checkbox" id="lf-acepta-similares" onchange="labCalcMatch()" checked style="width:auto;margin:0">
@@ -6356,6 +6389,13 @@ function labNuevoPerfil(){
     const el=$$(id); if(el) el.value='';
   });
   const lseg=$$('lf-segmento'); if(lseg) lseg.value='';
+  // Reset buscador Infoauto
+  _iaCodia = null;
+  const iaBox=$$('lf-ia-box'); if(iaBox) iaBox.style.display='none';
+  const iaBusca=$$('lf-ia-busca'); if(iaBusca) iaBusca.value='';
+  const iaSel=$$('lf-ia-seleccionado'); if(iaSel) iaSel.style.display='none';
+  const iaStatus=$$('lf-ia-status'); if(iaStatus) iaStatus.style.display='none';
+  const iaRes=$$('lf-ia-resultados'); if(iaRes) iaRes.innerHTML='';
   const lu=$$('lf-urgencia'); if(lu) lu.value='caliente';
   const lt=$$('lf-tipo');     if(lt) lt.value='';
   const li=$$('lf-id');       if(li) li.value='';
@@ -6722,6 +6762,148 @@ function labCerrarPerfil(){
   if(idx>=0){ perfiles[idx].estado='cerrado'; labSetPerfiles(perfiles); }
   labCerrarDet(); rLab();
 }
+
+// ══ INTEGRACIÓN INFOAUTO ══════════════════════════════════════
+const IA_PROXY = 'https://almar-infoauto-proxy.vercel.app';
+let _iaTimer = null;
+let _iaCodia = null;
+let _iaSearching = false;
+
+// Mostrar/ocultar buscador
+function labIAToggle(){
+  const box = $$('lf-ia-box');
+  const btn = $$('lf-ia-btn');
+  if(!box) return;
+  const visible = box.style.display !== 'none';
+  box.style.display = visible ? 'none' : 'block';
+  if(!visible){
+    const marca = ($$('lf-busca-marca')?.value||'').trim();
+    const modelo = ($$('lf-busca-modelo')?.value||'').trim();
+    if(marca || modelo){
+      $$('lf-ia-busca').value = (marca+' '+modelo).trim();
+      labIABuscar($$('lf-ia-busca').value);
+    }
+    $$('lf-ia-busca')?.focus();
+  }
+}
+
+// Búsqueda con debounce (espera 600ms después del último tipeo)
+function labIABuscar(q){
+  clearTimeout(_iaTimer);
+  if(!q || q.trim().length < 3){
+    $$('lf-ia-resultados').innerHTML = '';
+    $$('lf-ia-status').style.display = 'none';
+    return;
+  }
+  _iaTimer = setTimeout(()=>_labIAFetch(q.trim()), 600);
+}
+
+// Fetch al proxy
+async function _labIAFetch(q){
+  if(_iaSearching) return;
+  _iaSearching = true;
+  const status = $$('lf-ia-status');
+  const lista  = $$('lf-ia-resultados');
+  if(status){ status.textContent = '⏳ Buscando en Infoauto...'; status.style.display='block'; }
+  if(lista)  lista.innerHTML = '';
+
+  // Extraer año del texto si lo tiene
+  const yearMatch = q.match(/\b(19|20)\d{2}\b/);
+  const year = yearMatch ? yearMatch[0] : new Date().getFullYear();
+  const qLimpio = q.replace(/\b(19|20)\d{2}\b/,'').trim();
+
+  try {
+    const res = await fetch(`${IA_PROXY}/api/search?q=${encodeURIComponent(qLimpio)}&year=${year}`);
+    const data = await res.json();
+
+    if(!data.ok || !data.results?.length){
+      if(status){ status.textContent = '❌ Sin resultados. Probá con otra descripción.'; }
+      _iaSearching = false;
+      return;
+    }
+
+    if(status) status.style.display = 'none';
+
+    // Renderizar resultados
+    data.results.forEach(r => {
+      const div = document.createElement('div');
+      div.style.cssText = 'padding:6px 10px;background:var(--s3);border-radius:6px;cursor:pointer;font-size:10px;border:1px solid transparent;transition:all .15s';
+      div.innerHTML = `
+        <div style="font-weight:700;color:var(--t)">${r.marca} ${r.grupo} · <span style="color:var(--m);font-weight:400">${r.descripcion}</span></div>
+        <div style="color:var(--m);font-size:9px">Años: ${r.anioDesde||'?'} – ${r.anioHasta||'?'} · CODIA: ${r.codia}</div>
+      `;
+      div.onmouseover = ()=>{ div.style.borderColor='rgba(65,192,240,.5)'; div.style.background='rgba(65,192,240,.08)'; };
+      div.onmouseout  = ()=>{ div.style.borderColor='transparent'; div.style.background='var(--s3)'; };
+      div.onclick = ()=> _labIASeleccionar(r, year);
+      lista.appendChild(div);
+    });
+
+  } catch(err){
+    if(status){ status.textContent = '⚠️ Error al conectar con Infoauto. Ingresá el precio manualmente.'; }
+  }
+  _iaSearching = false;
+}
+
+// Seleccionar una versión y obtener su precio
+async function _labIASeleccionar(r, year){
+  const status = $$('lf-ia-status');
+  const lista  = $$('lf-ia-resultados');
+  const selBox = $$('lf-ia-seleccionado');
+  const selDesc = $$('lf-ia-sel-desc');
+  const selPrecio = $$('lf-ia-sel-precio');
+
+  if(lista)  lista.innerHTML = '';
+  if(status){ status.textContent = '⏳ Obteniendo precio...'; status.style.display='block'; }
+
+  try {
+    const res = await fetch(`${IA_PROXY}/api/price?codia=${r.codia}&year=${year}`);
+    const data = await res.json();
+
+    if(!data.ok || !data.precio){
+      if(status){ status.textContent = '❌ Sin precio disponible para este modelo/año.'; }
+      return;
+    }
+
+    // Guardar CODIA y setear precio en el campo
+    _iaCodia = r.codia;
+    const precio = data.precio;
+    const infoField = $$('lf-infoauto');
+    if(infoField) infoField.value = precio;
+
+    // Mostrar seleccionado
+    if(selDesc)   selDesc.textContent = `${r.marca} ${r.descripcion} (${data.year})${data.exacto?'':' — año más cercano'}`;
+    if(selPrecio) selPrecio.textContent = `Precio Infoauto: ${fmt(precio)}`;
+    if(selBox)    selBox.style.display = 'block';
+    if(status)    status.style.display = 'none';
+
+    // Ocultar buscador y recalcular matching
+    $$('lf-ia-box').style.display = 'none';
+    labCalcMatch();
+
+  } catch(err){
+    if(status){ status.textContent = '⚠️ Error al obtener precio. Ingresá manualmente.'; }
+  }
+}
+
+// Limpiar selección
+function labIALimpiar(){
+  _iaCodia = null;
+  const infoField = $$('lf-infoauto');
+  if(infoField) infoField.value = '';
+  const selBox = $$('lf-ia-seleccionado');
+  if(selBox) selBox.style.display = 'none';
+  const box = $$('lf-ia-box');
+  if(box){ box.style.display = 'block'; }
+  const busca = $$('lf-ia-busca');
+  if(busca){ busca.value = ''; busca.focus(); }
+  labCalcMatch();
+}
+
+// Limpiar buscador al abrir nuevo perfil
+const _labNuevoPerfilOrig = labNuevoPerfil;
+// (extendido inline via labNuevoPerfil patch abajo)
+// ══ FIN INTEGRACIÓN INFOAUTO ══════════════════════════════════
+
 // ══ FIN LABORATORIO COMERCIAL ══
 
 </script>
