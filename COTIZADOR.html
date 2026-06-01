@@ -1135,7 +1135,7 @@ input[type=text]#p-obs{background:#F5F7FA!important;border:1px solid #D5DCE6!imp
   <!-- Bloque financiado -->
   <div id="lf-bloque-fin">
     <div style="display:flex;gap:8px;margin-bottom:8px">
-      <div style="flex:1"><label class="m" style="font-size:10px">Entrega en efectivo $</label><input type="number" id="lf-entrega" placeholder="0" oninput="labCalcMatch()" style="margin:2px 0 0"></div>
+      <div style="flex:1"><label class="m" style="font-size:10px">Entrega $</label><input type="number" id="lf-entrega" placeholder="0" oninput="labCalcMatch()" style="margin:2px 0 0"></div>
       <div style="flex:1"><label class="m" style="font-size:10px">Cuota máxima mensual $</label><input type="number" id="lf-cuota" placeholder="0" oninput="labCalcMatch()" style="margin:2px 0 0"></div>
     </div>
     <div style="display:flex;gap:8px;margin-bottom:8px">
@@ -6619,7 +6619,29 @@ function labCalcMatch(){
   const total     = modoContado ? contado : entrega+partePago+cheques;
   if($$('lf-total-disp')) $$('lf-total-disp').textContent=fmt(total);
 
-  if(total<=0&&cuotaMax<=0&&!modoContado){
+  // Modo financiación: requiere AMBOS campos (entrega + cuota) para mostrar coincidencias
+  if(!modoContado){
+    if(total<=0 && cuotaMax<=0){
+      if($$('lf-match-preview')) $$('lf-match-preview').style.display='none';
+      if($$('lf-match-empty'))   $$('lf-match-empty').style.display='none';
+      return;
+    }
+    if(cuotaMax<=0 && total>0){
+      // Hay entrega pero falta la cuota máxima
+      if($$('lf-match-preview')) $$('lf-match-preview').style.display='none';
+      const empty=$$('lf-match-empty');
+      if(empty){
+        empty.style.display='flex';
+        empty.innerHTML='<div style="text-align:center;padding:20px"><div style="font-size:28px;margin-bottom:8px">💡</div><div style="font-weight:700;color:var(--t);margin-bottom:6px">Completá la cuota máxima</div><div style="font-size:11px;color:var(--m)">Para mostrar coincidencias con financiación<br>necesitamos saber cuánto puede pagar por mes.</div></div>';
+      }
+      return;
+    }
+    if(total<=0 && cuotaMax>0){
+      // Hay cuota pero falta la entrega — permitir matching (puede financiar 100%)
+    }
+  }
+  // Modo contado: solo necesita el campo contado
+  if(modoContado && contado<=0){
     if($$('lf-match-preview')) $$('lf-match-preview').style.display='none';
     if($$('lf-match-empty'))   $$('lf-match-empty').style.display='none';
     return;
