@@ -6307,6 +6307,67 @@ function labMatch(perfil){
 }
 
 // ── Abrir coincidencia en la Propuesta Comercial ──────────────────
+
+// ── Guardar match seleccionado y abrir propuesta ─────────────
+function labGuardarYAbrir(matchIdx){
+  // 1. Determinar el perfil activo
+  let p, matches, m;
+
+  if(window._labLastMatches && window._labLastMatches[matchIdx]!==undefined){
+    matches = window._labLastMatches;
+    m = matches[matchIdx];
+    p = window._labLastPerfTemp;
+  } else {
+    const perfs = labGetPerfiles();
+    p = perfs.find(x=>x.id===_labDetId||x.id===_labModalId);
+    if(!p) return;
+    matches = labMatch(p);
+    m = matches[matchIdx];
+  }
+  if(!m||!p) return;
+
+  const u = m.unidad;
+
+  // 2. Guardar el perfil con el match seleccionado registrado
+  const perfs = labGetPerfiles();
+  let perfGuardado = perfs.find(x=>x.id===(_labDetId||_labModalId));
+
+  if(perfGuardado){
+    // Actualizar el perfil existente con el match seleccionado
+    perfGuardado.matchSeleccionado = {
+      matchIdx,
+      auto: `${u.marca} ${u.modelo} ${u.version||''}`.trim(),
+      precio: u.precio,
+      dominio: u.dominio,
+      banco: m.campana?.banco,
+      campana: m.campana?.nombre,
+      plazo: m.plazo,
+      cuota: m.cuotaCalc,
+      mBruto: m.mBruto,
+      fecha: new Date().toISOString()
+    };
+    labSetPerfiles(perfs);
+    mostrarToast('✅ Match guardado en el perfil');
+  } else if(p.nombre||p.tel){
+    // Perfil no guardado aún — guardar con labGuardarPerfil si existe
+    if(typeof labGuardarPerfil==='function'){
+      labGuardarPerfil();
+      mostrarToast('✅ Perfil y match guardados');
+    }
+  }
+
+  // 3. Cerrar paneles del LAB
+  labCerrarDet();
+  if(typeof labCerrarModal==='function') labCerrarModal();
+
+  // 4. Guardar matches y perfTemp globalmente para que labAbrirEnCotizador los use
+  window._labLastMatches  = matches;
+  window._labLastPerfTemp = p;
+
+  // 5. Abrir propuesta
+  labAbrirEnCotizador(matchIdx);
+}
+
 function labAbrirEnCotizador(matchIdx){
   let p, matches, m;
   if(window._labLastMatches && window._labLastMatches[matchIdx]!==undefined){
@@ -6573,7 +6634,7 @@ function labFiltrar(){
       const m=ms[0];
       const autoStr=`${m.unidad.marca||''} ${m.unidad.modelo||''} ${(m.unidad.version||'').substring(0,25)}`.trim();
       matchPrev=`<div style="margin-top:8px;padding:8px 10px;background:rgba(65,192,240,.1);border:1px solid rgba(65,192,240,.3);border-radius:7px;font-size:11px">
-        <div style="color:#41c0f0;font-weight:700;margin-bottom:2px">🎯 ${ms.length} coincidencia${ms.length>1?'s':''}</div>
+        <div style="color:#41c0f0;font-weight:700;margin-bottom:2px">🎯 ${ms.length} coincidencia${ms.length>1?'s':''} — <span style="font-size:10px;text-decoration:underline;cursor:pointer">ver todas</span></div>
         <div style="color:var(--t);font-weight:600">${autoStr} · ${fmt(m.precio)}</div>
         <div style="color:var(--m);font-size:10px">${m.campana?m.campana.banco+' · '+m.plazo+'c · '+fmt(m.cuotaCalc)+'/mes':'Al contado'}</div>
       </div>`;
@@ -6800,8 +6861,8 @@ function labCalcMatch(){
         </div>
       `}
       <div style="text-align:right;margin-top:6px">
-        <button class="btn btn-r btn-sm" style="font-size:10px;padding:4px 10px" onclick="event.stopPropagation();_labModalId=$$('lf-id')?.value||null;labAbrirEnCotizador(${idx})">
-          📋 Abrir en Cotizador
+        <button class="btn btn-r btn-sm" style="font-size:10px;padding:4px 10px" onclick="event.stopPropagation();_labModalId=$$('lf-id')?.value||null;labGuardarYAbrir(${idx})">
+          📋 Guardar y abrir Propuesta
         </button>
       </div>
     `;
@@ -6857,6 +6918,20 @@ function labVerDetalle(id){
   _labDetId=id;
   const p=labGetPerfiles().find(x=>x.id===id); if(!p) return;
   $$('lab-det-titulo').textContent='🧪 '+p.nombre;
+  // Mostrar match guardado previamente si existe
+  if(p.matchSeleccionado){
+    const ms_prev = p.matchSeleccionado;
+    const prevBadge = `<div style="font-size:10px;color:#2ecc71;margin-top:4px">✅ Último match: ${ms_prev.auto} · ${ms_prev.banco||''} ${ms_prev.plazo||''}c · ${fmt(ms_prev.cuota||0)}/mes · ${new Date(ms_prev.fecha).toLocaleDateString('es-AR')}</div>`;
+    setTimeout(()=>{
+      const tit=$$('lab-det-titulo');
+      if(tit && !tit.nextElementSibling?.classList?.contains('match-prev-badge')){
+        const div=document.createElement('div');
+        div.className='match-prev-badge';
+        div.innerHTML=prevBadge;
+        tit.after(div);
+      }
+    },50);
+  }
 
   const ms=labMatch(p);
   const totalSinCred=(parseFloat(p.entrega)||0)+(parseFloat(p.partePago)||0)+(parseFloat(p.cheques)||0);
@@ -6916,8 +6991,8 @@ function labVerDetalle(id){
             Capacidad total: ${fmt(totalSinCred)} entrega + ${fmt(m.mUtil)} neto = <strong style="color:var(--g)">${fmt(totalSinCred+m.mUtil)}</strong>
           </div>
         `:`<div style="color:var(--g);font-weight:700;margin-bottom:6px">✅ Al contado · sobran ${fmt(m.sobra)}</div>`}
-        <button class="btn btn-r btn-sm" style="width:100%;font-size:11px" onclick="labAbrirEnCotizador(${idx})">
-          📋 Abrir esta coincidencia en la Propuesta Comercial
+        <button class="btn btn-r btn-sm" style="width:100%;font-size:11px" onclick="labGuardarYAbrir(${idx})">
+          📋 Guardar match y abrir Propuesta Comercial
         </button>
       </div>`;
     }).join('');
