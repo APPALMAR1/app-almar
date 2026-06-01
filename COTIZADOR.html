@@ -1917,11 +1917,11 @@ function onTipo(){
   ['marca','modelo','version','anno'].forEach(disEl);
   $$('ar').style.display='none'; $$('ar-al').innerHTML='';
   const t=$$('tipo').value; if(!t)return;
-  if(t==='mercado'){
-    $$('subtipo').style.display='';
-    $$('subtipo').disabled=false;
-    $$('subtipo').value='';
-    ['marca','modelo','version','anno'].forEach(disEl);
+  // Multimarcas 0km y Usado → buscador Infoauto en cascada
+  if(t==='mercado'||t==='mercado_usado'){
+    $$('subtipo').style.display='none';
+    $$('subtipo').disabled=true;
+    abrirModalInfoauto(t);
     return;
   }
   $$('subtipo').style.display='none';
@@ -1936,8 +1936,6 @@ function onTipo(){
     }
   } else if(t==='usado'){
     ms=[...new Set(stk.map(u=>u.marca))].sort();
-  } else if(t==='mercado_usado'){
-    ms=Object.keys(MKT_TIPOS).sort();
   } else {
     ms=Object.keys(MKT).sort();
   }
@@ -5686,6 +5684,260 @@ function labGuardarMatch(){
   setTimeout(()=>bar.remove(),5000);
 }
 // ─── FIN LAB ────────────────────────────────────────────────────────────────
+</script>
+
+<!-- MODAL INFOAUTO PROPUESTA COMERCIAL -->
+<div id="pm-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:3000;overflow-y:auto;padding:16px;box-sizing:border-box" onclick="if(event.target===this)cerrarModalInfoauto()">
+  <div style="background:#fff;border-radius:14px;max-width:500px;margin:0 auto;box-shadow:0 8px 40px rgba(0,0,0,.22);overflow:hidden">
+    <!-- Header -->
+    <div style="background:var(--p,#0069b4);color:#fff;padding:14px 16px;display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <div style="font-weight:700;font-size:14px">🔍 Buscar vehículo en Infoauto</div>
+        <div id="pm-subtitulo" style="font-size:11px;opacity:.8;margin-top:2px">Multimarcas</div>
+      </div>
+      <button onclick="cerrarModalInfoauto()" style="background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:8px;padding:6px 10px;font-size:14px;cursor:pointer">✕</button>
+    </div>
+    <!-- Body -->
+    <div style="padding:16px;display:grid;gap:12px">
+      <!-- Marca -->
+      <div>
+        <label style="font-size:12px;font-weight:600;color:#333;display:block;margin-bottom:4px">Marca <span style="color:#e74c3c">*</span></label>
+        <select id="pm-marca" onchange="pmOnMarca()" style="width:100%;padding:9px 10px;border:1.5px solid #ddd;border-radius:8px;font-size:13px;background:#fff">
+          <option value="">⏳ Cargando…</option>
+        </select>
+      </div>
+      <!-- Modelo -->
+      <div>
+        <label style="font-size:12px;font-weight:600;color:#333;display:block;margin-bottom:4px">Modelo <span style="color:#e74c3c">*</span></label>
+        <select id="pm-modelo" onchange="pmOnModelo()" disabled style="width:100%;padding:9px 10px;border:1.5px solid #ddd;border-radius:8px;font-size:13px;background:#f5f5f5">
+          <option value="">— Seleccionar modelo —</option>
+        </select>
+      </div>
+      <!-- Año -->
+      <div>
+        <label style="font-size:12px;font-weight:600;color:#333;display:block;margin-bottom:4px">Año <span style="color:#e74c3c">*</span></label>
+        <select id="pm-anno" onchange="pmOnAnno()" disabled style="width:100%;padding:9px 10px;border:1.5px solid #ddd;border-radius:8px;font-size:13px;background:#f5f5f5">
+          <option value="">— Seleccionar año —</option>
+        </select>
+      </div>
+      <!-- Versión -->
+      <div>
+        <label style="font-size:12px;font-weight:600;color:#333;display:block;margin-bottom:4px">Versión <span style="color:#e74c3c">*</span></label>
+        <select id="pm-version" onchange="pmOnVersion()" disabled style="width:100%;padding:9px 10px;border:1.5px solid #ddd;border-radius:8px;font-size:13px;background:#f5f5f5">
+          <option value="">— Seleccionar versión —</option>
+        </select>
+      </div>
+      <!-- Loading/Error -->
+      <div id="pm-loading" style="display:none;text-align:center;font-size:12px;color:#0069b4;padding:8px">⏳ Consultando Infoauto…</div>
+      <div id="pm-err" style="display:none;background:#ffeaea;border:1px solid #f5c6cb;border-radius:8px;padding:10px;font-size:12px;color:#c0392b"></div>
+      <!-- Precio resultado -->
+      <div id="pm-precio-row" style="display:none;background:rgba(0,105,180,.07);border:1.5px solid rgba(0,105,180,.25);border-radius:10px;padding:12px 14px">
+        <div style="font-size:11px;color:#0069b4;font-weight:600;margin-bottom:2px">💰 Precio Infoauto (base LTV banco)</div>
+        <div id="pm-precio-txt" style="font-size:18px;font-weight:800;color:#0069b4"></div>
+      </div>
+    </div>
+    <!-- Footer -->
+    <div style="padding:0 16px 16px">
+      <button id="pm-confirmar" onclick="pmConfirmar()" disabled style="width:100%;padding:12px;background:#0069b4;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:not-allowed;opacity:.5;letter-spacing:.3px">
+        ✅ Confirmar vehículo
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+
+// ─── MODAL INFOAUTO — PROPUESTA COMERCIAL ───────────────────────────────────
+let _pmState = { brandId:null, brandName:null, grupo:null, year:null, codia:null, precio:0, modelosCache:null, tipoVenta:null };
+
+function pmShowLoad(v){ const e=$$('pm-loading'); if(e) e.style.display=v?'block':'none'; }
+function pmShowErr(msg){ const e=$$('pm-err'); if(!e)return; if(msg){e.style.display='block';e.textContent='❌ '+msg;}else e.style.display='none'; }
+function pmResetDesde(level){
+  if(level<=1){ const s=$$('pm-modelo'); if(s){s.innerHTML='<option value="">— Seleccionar modelo —</option>';s.disabled=true;} _pmState.grupo=null;_pmState.modelosCache=null; }
+  if(level<=2){ const s=$$('pm-anno'); if(s){s.innerHTML='<option value="">— Seleccionar año —</option>';s.disabled=true;} _pmState.year=null; }
+  if(level<=3){ const s=$$('pm-version'); if(s){s.innerHTML='<option value="">— Seleccionar versión —</option>';s.disabled=true;} _pmState.codia=null;_pmState.precio=0; $$('pm-precio-row').style.display='none'; const btn=$$('pm-confirmar');if(btn){btn.disabled=true;btn.style.opacity='.5';btn.style.cursor='not-allowed';} }
+}
+
+async function abrirModalInfoauto(tipoVenta){
+  _pmState.tipoVenta = tipoVenta;
+  $$('pm-subtitulo').textContent = tipoVenta==='mercado' ? 'Multimarcas 0 km' : 'Multimarcas Usado';
+  pmResetDesde(0);
+  pmShowErr(false);
+  $$('pm-overlay').style.display='block';
+  document.body.style.overflow='hidden';
+  // Cargar marcas (reusar cache del LAB si ya están cargadas)
+  const labSel=$$('lab-marca');
+  const pmSel=$$('pm-marca');
+  if(labSel && labSel.options.length>1){
+    // Copiar las opciones del LAB
+    pmSel.innerHTML='<option value="">— Seleccionar marca —</option>';
+    for(let i=1;i<labSel.options.length;i++){
+      const o=document.createElement('option');
+      o.value=labSel.options[i].value;
+      o.textContent=labSel.options[i].textContent;
+      pmSel.appendChild(o);
+    }
+  } else {
+    // Cargar desde el proxy
+    pmSel.innerHTML='<option value="">⏳ Cargando…</option>';
+    pmShowLoad(true);
+    try{
+      const r=await fetch(LAB_PROXY+'/api/brands');
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      const d=await r.json();
+      const brands=d.brands||d.data||d||[];
+      if(!brands.length) throw new Error('Sin marcas');
+      pmSel.innerHTML='<option value="">— Seleccionar marca —</option>';
+      brands.forEach(b=>{ const o=document.createElement('option'); o.value=b.id; o.textContent=b.name; pmSel.appendChild(o); });
+      // Alimentar también el select del LAB si estaba vacío
+      if(labSel && labSel.options.length<=1){
+        labSel.innerHTML='<option value="">— Seleccionar marca —</option>';
+        brands.forEach(b=>{ const o=document.createElement('option'); o.value=b.id; o.textContent=b.name; labSel.appendChild(o); });
+      }
+      pmShowLoad(false);
+    }catch(e){ pmShowErr('No se pudieron cargar marcas: '+e.message); pmSel.innerHTML='<option value="">— Error —</option>'; pmShowLoad(false); }
+  }
+}
+
+function cerrarModalInfoauto(){
+  $$('pm-overlay').style.display='none';
+  document.body.style.overflow='';
+  // Si se cierra sin confirmar, limpiar el tipo
+  if(!_pmState.precio){
+    const tipoEl=$$('tipo'); if(tipoEl) tipoEl.value='';
+  }
+}
+
+async function pmOnMarca(){
+  const brandId=$$('pm-marca').value;
+  const brandName=$$('pm-marca').selectedOptions[0]?.textContent||'';
+  _pmState.brandId=brandId||null;
+  _pmState.brandName=brandName;
+  pmResetDesde(1);
+  pmShowErr(false);
+  if(!brandId)return;
+  pmShowLoad(true);
+  try{
+    const r=await fetch(LAB_PROXY+'/api/models?brand_id='+encodeURIComponent(brandId));
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const d=await r.json();
+    const modelos=d.models||d.data||d||[];
+    if(!modelos.length) throw new Error('Sin modelos para esta marca');
+    _pmState.modelosCache=modelos;
+    const sel=$$('pm-modelo');
+    sel.innerHTML='<option value="">— Seleccionar modelo —</option>';
+    modelos.forEach(m=>{ const o=document.createElement('option'); o.value=m.grupo; o.textContent=m.grupo+(m.anioDesde&&m.anioHasta?' ('+m.anioDesde+'–'+m.anioHasta+')':''); sel.appendChild(o); });
+    sel.disabled=false;
+    pmShowLoad(false);
+  }catch(e){ pmShowErr('Error al cargar modelos: '+e.message); pmShowLoad(false); }
+}
+
+function pmOnModelo(){
+  const grupo=$$('pm-modelo').value;
+  _pmState.grupo=grupo||null;
+  pmResetDesde(2);
+  pmShowErr(false);
+  if(!grupo||!_pmState.modelosCache)return;
+  const md=_pmState.modelosCache.find(m=>m.grupo===grupo);
+  if(!md)return;
+  const sel=$$('pm-anno');
+  sel.innerHTML='<option value="">— Seleccionar año —</option>';
+  const desde=parseInt(md.anioDesde)||2000;
+  const hasta=parseInt(md.anioHasta)||new Date().getFullYear();
+  for(let y=hasta;y>=desde;y--){ const o=document.createElement('option'); o.value=y; o.textContent=y; sel.appendChild(o); }
+  sel.disabled=false;
+}
+
+async function pmOnAnno(){
+  const year=$$('pm-anno').value;
+  _pmState.year=year||null;
+  pmResetDesde(3);
+  pmShowErr(false);
+  if(!year||!_pmState.brandId||!_pmState.grupo)return;
+  pmShowLoad(true);
+  try{
+    const url=LAB_PROXY+'/api/versions?brand_id='+encodeURIComponent(_pmState.brandId)+'&grupo='+encodeURIComponent(_pmState.grupo)+'&year='+encodeURIComponent(year);
+    const r=await fetch(url);
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const d=await r.json();
+    let vers=d.versions||d.data||d.results||[];
+    if(!vers.length){
+      const mc=_pmState.modelosCache?.find(m=>m.grupo===_pmState.grupo);
+      if(mc) vers=(mc.versiones||[]).filter(v=>{ const de=parseInt(v.anioDesde)||0,ha=parseInt(v.anioHasta)||9999; return parseInt(year)>=de&&parseInt(year)<=ha; });
+    }
+    if(!vers.length) throw new Error('No hay versiones para ese año. Probá otro año.');
+    const sel=$$('pm-version');
+    sel.innerHTML='<option value="">— Seleccionar versión —</option>';
+    vers.forEach(v=>{ const o=document.createElement('option'); o.value=v.codia||v.id||v.codigo; o.textContent=v.descripcion||v.description||v.nombre||String(o.value); sel.appendChild(o); });
+    sel.disabled=false;
+    pmShowLoad(false);
+  }catch(e){ pmShowErr('Error al cargar versiones: '+e.message); pmShowLoad(false); }
+}
+
+async function pmOnVersion(){
+  const codia=$$('pm-version').value;
+  _pmState.codia=codia||null;
+  _pmState.precio=0;
+  $$('pm-precio-row').style.display='none';
+  const btn=$$('pm-confirmar'); if(btn){btn.disabled=true;btn.style.opacity='.5';btn.style.cursor='not-allowed';}
+  pmShowErr(false);
+  if(!codia||!_pmState.year)return;
+  pmShowLoad(true);
+  try{
+    const url=LAB_PROXY+'/api/price?codia='+encodeURIComponent(codia)+'&year='+encodeURIComponent(_pmState.year);
+    const r=await fetch(url);
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const d=await r.json();
+    const precio=d.precio||d.price||d.data?.precio||0;
+    if(!precio) throw new Error('Infoauto no devolvió precio para esta versión/año');
+    _pmState.precio=precio;
+    $$('pm-precio-txt').textContent=fmt(precio);
+    $$('pm-precio-row').style.display='block';
+    if(btn){btn.disabled=false;btn.style.opacity='1';btn.style.cursor='pointer';}
+    pmShowLoad(false);
+  }catch(e){ pmShowErr('Error al obtener precio: '+e.message); pmShowLoad(false); }
+}
+
+function pmConfirmar(){
+  if(!_pmState.precio) return;
+  // Armar nombre de la versión
+  const marcaNom = _pmState.brandName || $$('pm-marca').selectedOptions[0]?.textContent || '';
+  const modeloNom = _pmState.grupo || '';
+  const versionNom = $$('pm-version').selectedOptions[0]?.textContent || '';
+  const annoVal = _pmState.year || '';
+  // Cerrar modal
+  $$('pm-overlay').style.display='none';
+  document.body.style.overflow='';
+  // Poblar campos de propuesta
+  const set=(id,v)=>{ const el=$$(id); if(el) el.value=v; };
+  // Marca/Modelo en los selects: resetear y agregar la opción
+  const mSel=$$('marca'), moSel=$$('modelo'), vSel=$$('version'), aSel=$$('anno');
+  if(mSel){ mSel.innerHTML=`<option value="${marcaNom}">${marcaNom}</option>`; mSel.disabled=false; }
+  if(moSel){ moSel.innerHTML=`<option value="${modeloNom}">${modeloNom}</option>`; moSel.disabled=false; }
+  if(vSel){ vSel.innerHTML=`<option value="${versionNom}">${versionNom}</option>`; vSel.disabled=false; }
+  if(aSel){ aSel.innerHTML=`<option value="${annoVal}">${annoVal}</option>`; aSel.disabled=false; }
+  // Precio en pa1
+  set('pa1', _pmState.precio);
+  // Mostrar resumen auto
+  const rn=$$('rn'); if(rn) rn.textContent=`${marcaNom} ${modeloNom} ${versionNom} ${annoVal}`;
+  const ra=$$('ra'); if(ra) ra.textContent=annoVal;
+  const rc=$$('rc'); if(rc) rc.style.display='none';
+  const rk=$$('rk'); if(rk) rk.style.display='none';
+  $$('ar').style.display='block';
+  // Aviso con precio Infoauto
+  $$('ar-al').innerHTML=`<div class="al info" style="margin-top:4px">🔍 <strong>Precio Infoauto:</strong> ${fmt(_pmState.precio)} · Base para cálculo de LTV bancario</div>`;
+  // Recalcular
+  if(typeof cP==='function') cP();
+  if(typeof rCampMini==='function') rCampMini();
+  // Toast
+  const bar=document.createElement('div');
+  bar.style.cssText='position:fixed;bottom:60px;left:0;right:0;background:rgba(0,105,180,.93);color:#fff;font-size:12px;font-weight:700;text-align:center;padding:8px 12px;z-index:9999;border-radius:0';
+  bar.textContent='✅ '+marcaNom+' '+modeloNom+' '+annoVal+' — Precio Infoauto: '+fmt(_pmState.precio);
+  document.body.appendChild(bar);
+  setTimeout(()=>bar.remove(),5000);
+}
+// ─── FIN MODAL INFOAUTO PROPUESTA ───────────────────────────────────────────
+
 </script>
 </body>
 </html>
