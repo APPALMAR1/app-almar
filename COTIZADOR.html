@@ -6338,43 +6338,64 @@ function labAbrirEnCotizador(matchIdx){
       tipoEl.value='usado';
       if(typeof onTipo==='function') onTipo();
 
+      // Usar dominio para encontrar el auto exacto en stk
+      const stkUnit = stk.find(x=>
+        (u.dominio && x.dominio && x.dominio===u.dominio) ||
+        (x.marca===u.marca && x.modelo===u.modelo && x.version===u.version && x.anno===u.anno)
+      );
+
       setTimeout(()=>{
-        // Setear marca
+        // PASO 1: Marca
         const marcaEl=$$('marca');
-        if(marcaEl){
-          marcaEl.value=u.marca.toUpperCase();
+        if(marcaEl && u.marca){
+          marcaEl.value=u.marca;
           marcaEl.disabled=false;
           if(typeof onMarca==='function') onMarca();
         }
         setTimeout(()=>{
-          // Setear modelo
+          // PASO 2: Modelo
           const modeloEl=$$('modelo');
-          if(modeloEl){
-            modeloEl.value=u.modelo.toUpperCase();
+          if(modeloEl && u.modelo){
+            modeloEl.value=u.modelo;
             modeloEl.disabled=false;
             if(typeof onModelo==='function') onModelo();
           }
           setTimeout(()=>{
-            // Setear version
+            // PASO 3: Versión — usar valor exacto del stock
+            const version = stkUnit ? stkUnit.version : u.version;
             const verEl=$$('version');
-            if(verEl && u.version){
-              verEl.value=u.version;
+            if(verEl && version){
+              // Asegurarse que la opción existe en el select
+              const optExists = Array.from(verEl.options).some(o=>o.value===version);
+              if(!optExists){
+                const opt=document.createElement('option');
+                opt.value=version; opt.text=version;
+                verEl.appendChild(opt);
+              }
+              verEl.value=version;
               verEl.disabled=false;
               if(typeof onVer==='function') onVer();
             }
             setTimeout(()=>{
-              // Setear año — esto dispara onAuto() que carga precio/km/color
+              // PASO 4: Año
+              const anno = stkUnit ? stkUnit.anno : u.anno;
               const annoEl=$$('anno');
-              if(annoEl && u.anno){
-                annoEl.value=String(u.anno);
+              if(annoEl && anno){
+                const aOptExists = Array.from(annoEl.options).some(o=>parseInt(o.value)===parseInt(anno));
+                if(!aOptExists){
+                  const opt=document.createElement('option');
+                  opt.value=String(anno); opt.text=String(anno);
+                  annoEl.appendChild(opt);
+                }
+                annoEl.value=String(anno);
                 annoEl.disabled=false;
                 if(typeof onAuto==='function') onAuto();
               }
               // Cargar financiación del match
-              setTimeout(()=>_labCargarFinanciacion(m,p),150);
-            },120);
-          },120);
-        },120);
+              setTimeout(()=>_labCargarFinanciacion(m,p),200);
+            },150);
+          },150);
+        },150);
       },200);
 
     } else {
