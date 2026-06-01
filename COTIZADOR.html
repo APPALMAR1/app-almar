@@ -6309,113 +6309,133 @@ function labMatch(perfil){
 // ── Abrir coincidencia en la Propuesta Comercial ──────────────────
 function labAbrirEnCotizador(matchIdx){
   let p, matches, m;
-
-  // Intentar usar matches ya calculados (perfil en edición, no guardado aún)
-  if(window._labLastMatches && window._labLastMatches[matchIdx]){
+  if(window._labLastMatches && window._labLastMatches[matchIdx]!==undefined){
     matches = window._labLastMatches;
     m = matches[matchIdx];
     p = window._labLastPerfTemp;
   } else {
-    // Buscar perfil guardado por ID
     const perfs = labGetPerfiles();
     p = perfs.find(x=>x.id===_labDetId||x.id===_labModalId);
     if(!p) return;
     matches = labMatch(p);
     m = matches[matchIdx];
   }
-
   if(!m) return;
   const u = m.unidad;
 
-  // Ir a propuesta y cargar la unidad
   labCerrarDet();
   labCerrarModal();
   goTo('propuesta');
 
   setTimeout(()=>{
-    // Limpiar formulario primero
-    if(typeof limpiar === 'function') limpiar();
+    if(typeof limpiar==='function') limpiar();
 
-    // Cargar tipo
-    const tipoEl = $$('tipo');
-    if(tipoEl){
-      tipoEl.value = u._esUsado ? 'usado' : 'lista_precios';
-      if(typeof onTipo === 'function') onTipo();
-    }
+    const tipoEl=$$('tipo');
+    if(!tipoEl) return;
 
-    setTimeout(()=>{
-      if(u._esUsado && u.id){
-        // Para usados del stock: seleccionar directamente por ID
-        const stkEl = $$('stk-sel');
-        if(stkEl){
-          stkEl.value = u.id;
-          if(typeof onStkSel === 'function') onStkSel();
-        } else {
-          // Fallback: setear campos manualmente
-          if($$('pa1')){ $$('pa1').value=u.precio||0; }
-          if($$('anno')){ $$('anno').value=u.anno||''; $$('anno').disabled=false; }
-          if($$('color')){ $$('color').value=u.color||''; }
-          if($$('km')){ $$('km').value=u.km||0; }
-          if(typeof cP==='function') cP();
-        }
-      } else {
-        // Para 0km: cargar marca/modelo normalmente
-        const marcaEl = $$('marca');
-        if(marcaEl && u.marca){
-          marcaEl.value = u.marca.toUpperCase();
-          marcaEl.disabled = false;
-          if(typeof onMarca === 'function') onMarca();
-        }
-      }
+    if(u._esUsado){
+      // ── USADO DEL STOCK ───────────────────────────────────────
+      tipoEl.value='usado';
+      if(typeof onTipo==='function') onTipo();
 
       setTimeout(()=>{
-        // Cargar modelo (solo para 0km)
-        if(!u._esUsado){
-          const modeloEl = $$('modelo');
-          if(modeloEl && u.modelo){
-            modeloEl.value = u.modelo.toUpperCase();
-            modeloEl.disabled = false;
-            if(typeof onModelo === 'function') onModelo();
+        // Setear marca
+        const marcaEl=$$('marca');
+        if(marcaEl){
+          marcaEl.value=u.marca.toUpperCase();
+          marcaEl.disabled=false;
+          if(typeof onMarca==='function') onMarca();
+        }
+        setTimeout(()=>{
+          // Setear modelo
+          const modeloEl=$$('modelo');
+          if(modeloEl){
+            modeloEl.value=u.modelo.toUpperCase();
+            modeloEl.disabled=false;
+            if(typeof onModelo==='function') onModelo();
           }
-        }
+          setTimeout(()=>{
+            // Setear version
+            const verEl=$$('version');
+            if(verEl && u.version){
+              verEl.value=u.version;
+              verEl.disabled=false;
+              if(typeof onVer==='function') onVer();
+            }
+            setTimeout(()=>{
+              // Setear año — esto dispara onAuto() que carga precio/km/color
+              const annoEl=$$('anno');
+              if(annoEl && u.anno){
+                annoEl.value=String(u.anno);
+                annoEl.disabled=false;
+                if(typeof onAuto==='function') onAuto();
+              }
+              // Cargar financiación del match
+              setTimeout(()=>_labCargarFinanciacion(m,p),150);
+            },120);
+          },120);
+        },120);
+      },200);
 
-        // Precio
-        if(u.precio > 0){
-          const pa1 = $$('pa1');
-          if(pa1){ pa1.value = u.precio; if(typeof cP === 'function') cP(); }
-        }
+    } else {
+      // ── 0KM / MULTIMARCAS ─────────────────────────────────────
+      tipoEl.value = u._tipo==='0km' ? 'lista_precios' : 'mercado';
+      if(typeof onTipo==='function') onTipo();
 
-        // Año / color / km
-        if(!u._esUsado){
+      setTimeout(()=>{
+        const marcaEl=$$('marca');
+        if(marcaEl && u.marca){
+          marcaEl.value=u.marca.toUpperCase();
+          marcaEl.disabled=false;
+          if(typeof onMarca==='function') onMarca();
+        }
+        setTimeout(()=>{
+          const modeloEl=$$('modelo');
+          if(modeloEl && u.modelo){
+            modeloEl.value=u.modelo.toUpperCase();
+            modeloEl.disabled=false;
+            if(typeof onModelo==='function') onModelo();
+          }
+          // Precio manual para 0km
+          if(u.precio>0){ const pa1=$$('pa1'); if(pa1){pa1.value=u.precio;if(typeof cP==='function')cP();} }
           if(u.anno){ const el=$$('anno'); if(el){el.value=u.anno;el.disabled=false;} }
           if(u.color){ const el=$$('color'); if(el) el.value=u.color; }
-          if(u.km){ const el=$$('km'); if(el) el.value=u.km; }
-        }
-
-        // Monto del crédito = lo que necesita financiar
-        if(m.campana && m.necesita > 0){
-          const pb1 = $$('pb1');
-          if(pb1){ pb1.value = Math.round(m.mBruto); if(typeof cP === 'function') cP(); }
-        }
-
-        // Anticipo = entrega + parte de pago + cheques
-        const totalSinCred = (parseFloat(p.entrega)||0)+(parseFloat(p.partePago)||0)+(parseFloat(p.cheques)||0);
-        if(totalSinCred > 0){
-          const pb2 = $$('pb2');
-          if(pb2){ pb2.value = Math.round(totalSinCred); if(typeof cP === 'function') cP(); }
-        }
-
-        // Nota interna con el detalle del match
-        if(m.campana){
-          const obs = $$('obs-interna');
-          if(obs) obs.value = `[LAB] ${m.campana.banco} — ${m.campana.nombre} · ${m.plazo}c · Cuota: ${fmt(m.cuotaCalc)} · Financiado: ${fmt(m.mBruto)} · CE: ${fmt(m.gastosDE)} · Útil: ${fmt(m.mUtil)}`;
-        }
-
-        if(typeof updR === 'function') updR();
-      }, 120);
-    }, 100);
-  }, 200);
+          setTimeout(()=>_labCargarFinanciacion(m,p),200);
+        },120);
+      },200);
+    }
+  },200);
 }
+
+function _labCargarFinanciacion(m, p){
+  // Monto del crédito
+  if(m.campana && m.mBruto>0){
+    const pb1=$$('pb1'); if(pb1){pb1.value=Math.round(m.mBruto);if(typeof cP==='function')cP();}
+  }
+  // Anticipo en efectivo = entrega total del cliente
+  const totalSinCred=(parseFloat(p.entrega)||0)+(parseFloat(p.partePago)||0)+(parseFloat(p.cheques)||0);
+  if(totalSinCred>0){
+    const pb2=$$('pb2'); if(pb2){pb2.value=Math.round(totalSinCred);if(typeof cP==='function')cP();}
+  }
+  // Auto en parte de pago
+  if(parseFloat(p.partePago)>0){
+    const pb3=$$('pb3'); if(pb3){pb3.value=Math.round(parseFloat(p.partePago));if(typeof cP==='function')cP();}
+  }
+  // Nota interna con detalle del match
+  if(m.campana){
+    const obs=$$('obs-interna');
+    if(obs) obs.value=`[LAB] ${m.campana.banco} — ${m.campana.nombre} · ${m.plazo}c · Cuota: ${fmt(m.cuotaCalc)} · Financiado: ${fmt(m.mBruto)}`;
+  }
+  // Seleccionar campaña bancaria si el selector existe
+  if(m.campana && m.campana.id && typeof sCredCamp==='function'){
+    sCredCamp(m.campana.id);
+    if(m.plazo && typeof calcCred==='function') setTimeout(()=>{
+      const pb1=$$('pb1'); if(pb1&&parseFloat(pb1.value)>0) calcCred();
+    },300);
+  }
+  if(typeof updR==='function') updR();
+}
+
 
 // ── Buscar cliente en base compartida ────────────────────────────
 function labBuscarCliente(nombre, tel, email){
