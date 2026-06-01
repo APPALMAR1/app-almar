@@ -6429,11 +6429,24 @@ function labAbrirEnCotizador(matchIdx){
 }
 
 function _labCargarFinanciacion(m, p){
-  // Monto del crédito
+  // ── DATOS DEL CLIENTE ────────────────────────────────────────
+  if(p.nombre){
+    const partes = p.nombre.trim().split(' ');
+    const apellido = partes.length>1 ? partes.pop() : '';
+    const nombre   = partes.join(' ');
+    const pNom=$$('p-nombre'); if(pNom&&!pNom.value) pNom.value=nombre;
+    const pApe=$$('p-apellido'); if(pApe&&!pApe.value) pApe.value=apellido;
+  }
+  if(p.tel){ const el=$$('p-tel'); if(el&&!el.value) el.value=p.tel; }
+  if(p.email){ const el=$$('p-email'); if(el&&!el.value) el.value=p.email; }
+  // Disparar búsqueda de cliente existente
+  if(typeof buscarClienteExistente==='function') buscarClienteExistente();
+
+  // ── FINANCIACIÓN ────────────────────────────────────────────
   if(m.campana && m.mBruto>0){
     const pb1=$$('pb1'); if(pb1){pb1.value=Math.round(m.mBruto);if(typeof cP==='function')cP();}
   }
-  // Anticipo en efectivo = entrega total del cliente
+  // Anticipo en efectivo
   const totalSinCred=(parseFloat(p.entrega)||0)+(parseFloat(p.partePago)||0)+(parseFloat(p.cheques)||0);
   if(totalSinCred>0){
     const pb2=$$('pb2'); if(pb2){pb2.value=Math.round(totalSinCred);if(typeof cP==='function')cP();}
@@ -6442,12 +6455,16 @@ function _labCargarFinanciacion(m, p){
   if(parseFloat(p.partePago)>0){
     const pb3=$$('pb3'); if(pb3){pb3.value=Math.round(parseFloat(p.partePago));if(typeof cP==='function')cP();}
   }
+  // Cheques
+  if(parseFloat(p.cheques)>0){
+    const pb4=$$('pb4'); if(pb4){pb4.value=Math.round(parseFloat(p.cheques));if(typeof cP==='function')cP();}
+  }
   // Nota interna con detalle del match
   if(m.campana){
     const obs=$$('obs-interna');
     if(obs) obs.value=`[LAB] ${m.campana.banco} — ${m.campana.nombre} · ${m.plazo}c · Cuota: ${fmt(m.cuotaCalc)} · Financiado: ${fmt(m.mBruto)}`;
   }
-  // Seleccionar campaña bancaria si el selector existe
+  // Seleccionar campaña bancaria
   if(m.campana && m.campana.id && typeof sCredCamp==='function'){
     sCredCamp(m.campana.id);
     if(m.plazo && typeof calcCred==='function') setTimeout(()=>{
