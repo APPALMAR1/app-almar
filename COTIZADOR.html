@@ -752,7 +752,7 @@ input[type=text]#p-obs{background:#F5F7FA!important;border:1px solid #D5DCE6!imp
         </div>
 
         <div class="pr"><label>Auto usado en parte de pago</label><input type="number" id="pb2" placeholder="0" oninput="cP()"></div>
-        <div class="pr"><label>Anticipo en efectivo</label><input type="number" id="pb3" placeholder="0" oninput="cP()"></div>
+        <div class="pr"><label>Entrega $</label><input type="number" id="pb3" placeholder="0" oninput="cP()"></div>
         <div class="pr"><label>Cheques</label><input type="number" id="pb4" placeholder="0" oninput="cP()"></div>
         <div class="pr"><label>Documentos / Pagarés</label><input type="number" id="pb5" placeholder="0" oninput="cP()"></div>
         <div class="pr"><label>Otro crédito</label><input type="number" id="pb6" placeholder="0" oninput="cP()"></div>
@@ -975,6 +975,84 @@ input[type=text]#p-obs{background:#F5F7FA!important;border:1px solid #D5DCE6!imp
   </div>
 </div>
 </div>
+
+<!-- LAB — BUSCADOR INFOAUTO -->
+<div id="screen-lab" class="scr">
+<div class="page">
+  <div class="sh"><div><div class="st2">🔬 LAB — Buscador Infoauto</div><div class="ss2">Financiación · Matches por cuota y entrega</div></div></div>
+
+  <!-- SELECTOR EN CASCADA -->
+  <div class="card">
+    <div class="ch"><div class="ci">🚗</div><div class="ct">Búsqueda de vehículo en Infoauto</div></div>
+    <div style="display:grid;gap:10px;padding:4px 0">
+      <div class="fld">
+        <label>Marca</label>
+        <select id="lab-marca" onchange="labOnMarca()" style="width:100%">
+          <option value="">— Seleccionar marca —</option>
+        </select>
+      </div>
+      <div class="fld">
+        <label>Modelo</label>
+        <select id="lab-modelo" onchange="labOnModelo()" disabled style="width:100%">
+          <option value="">— Seleccionar modelo —</option>
+        </select>
+      </div>
+      <div class="fld">
+        <label>Año</label>
+        <select id="lab-anno" onchange="labOnAnno()" disabled style="width:100%">
+          <option value="">— Seleccionar año —</option>
+        </select>
+      </div>
+      <div class="fld">
+        <label>Versión</label>
+        <select id="lab-version" onchange="labOnVersion()" disabled style="width:100%">
+          <option value="">— Seleccionar versión —</option>
+        </select>
+      </div>
+      <div id="lab-precio-row" style="display:none">
+        <div class="al" style="background:rgba(0,105,180,.08);border-color:rgba(0,105,180,.3);color:#0069b4;font-weight:700;font-size:13px" id="lab-precio-txt"></div>
+      </div>
+    </div>
+    <div id="lab-loading" style="display:none;text-align:center;padding:12px;color:var(--m);font-size:12px">⏳ Consultando Infoauto…</div>
+    <div id="lab-err" style="display:none" class="al err"></div>
+  </div>
+
+  <!-- FILTROS DE FINANCIACIÓN -->
+  <div class="card" id="lab-fin-card" style="display:none">
+    <div class="ch"><div class="ci">💳</div><div class="ct">Parámetros de financiación</div></div>
+    <div style="display:grid;gap:10px;padding:4px 0">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="fld">
+          <label>Entrega $ <span style="color:#e74c3c;font-size:9px">*</span></label>
+          <input type="number" id="lab-entrega" placeholder="0" oninput="labCalcMatches()" style="width:100%">
+        </div>
+        <div class="fld">
+          <label>Cuota máx. $ <span style="color:#e74c3c;font-size:9px">*</span></label>
+          <input type="number" id="lab-cuota-max" placeholder="0" oninput="labCalcMatches()" style="width:100%">
+        </div>
+      </div>
+      <div id="lab-val-warn" class="al warn" style="display:none">⚠️ Para ver matches en modo financiación ingresá <strong>Entrega $</strong> y <strong>Cuota máxima</strong>.</div>
+    </div>
+  </div>
+
+  <!-- MATCHES -->
+  <div id="lab-matches-cont" style="display:none">
+    <div class="card">
+      <div class="ch"><div class="ci">✅</div><div class="ct" id="lab-matches-tit">Campañas compatibles</div></div>
+      <div id="lab-matches-lista" style="display:grid;gap:8px;padding:4px 0"></div>
+    </div>
+  </div>
+
+  <!-- BOTÓN GUARDAR MATCH -->
+  <div id="lab-guardar-cont" style="display:none;padding:0 0 16px">
+    <button class="btn btn-r" onclick="labGuardarMatch()" style="width:100%;font-size:13px;letter-spacing:.5px">
+      💾 Guardar match y abrir Propuesta Comercial
+    </button>
+    <div style="font-size:10px;color:var(--m);text-align:center;margin-top:6px">Los datos del vehículo y el banco seleccionado se cargarán automáticamente en la propuesta</div>
+  </div>
+</div>
+</div>
+<!-- FIN LAB -->
 
 <!-- GERENCIA -->
 <div id="screen-gerencia" class="scr">
@@ -1683,6 +1761,7 @@ const SC={
   admin:      {t:'Panel Admin',            s:'Solo administrador'},
   propguard:  {t:'Propuestas Guardadas',   s:'Historial del equipo · Ordenado por fecha'},
   clientes:   {t:'Base de Clientes',       s:'Todos los clientes registrados'},
+  lab:        {t:'LAB — Buscador Infoauto',s:'Financiación · Matches por cuota y entrega'},
 };
 function goTo(n){
   // Protección de acceso: admin solo para Master
@@ -1702,6 +1781,7 @@ function goTo(n){
   if(n==='admin')rAdm();
   if(n==='propguard')cargarPropuestasGuardadas();
   if(n==='clientes'){cargarClientes();}
+  if(n==='lab'){initLAB();}
 }
 function tgD(){$$('dr').classList.toggle('on');$$('ov').classList.toggle('on')}
 function clD(){$$('dr').classList.remove('on');$$('ov').classList.remove('on')}
@@ -1724,6 +1804,7 @@ function bDr(){
       ...(esSupervisor(CU)?[{s:'supervisor',i:'📊',l:'Panel Supervisor',sup:true}]:[]),
       {sec:'Herramientas'},
       {s:'cotizador',i:'🔢',l:'Cotizador rápido'},
+      {s:'lab',i:'🔬',l:'LAB Infoauto'},
       {sec:'Inventario'},
       {s:'stock',i:'🚗',l:'Stock Usados'},
       {s:'okm',i:'🏎',l:'Stock 0 km'},
@@ -1754,6 +1835,7 @@ function bBN(){
     {s:'propuesta',i:'📋',l:'Propuesta'},
     {s:'historial',i:'🕐',l:'Historial'},
     ...(esSupervisor(CU)?[{s:'supervisor',i:'📊',l:'Supervisor',sup:true}]:[]),
+    {s:'lab',i:'🔬',l:'LAB'},
     {s:'stock',i:'🚗',l:'Stock'},
     {s:'okm',i:'🏎',l:'0 km'},
     {s:'precios',i:'💰',l:'Precios'},
@@ -2653,7 +2735,7 @@ function renderCardPropuesta(p){
   const detB=`
     ${filaA('Cr\u00e9dito bancario',credito)}
     ${filaA('Usado en parte de pago',usado)}
-    ${filaA('Anticipo en efectivo',anticipo)}
+    ${filaA('Entrega $',anticipo)}
     ${filaA('Cheques',cheques)}
     ${filaA('Documentos / Pagar\u00e9s',docpag)}
     ${filaA('Otro cr\u00e9dito',otrocred)}
@@ -4119,7 +4201,7 @@ function abrirDetallePropuesta(p){
         <div style="font-size:8px;letter-spacing:2px;color:#1E8449;text-transform:uppercase;font-weight:800;margin-bottom:6px;border-bottom:2px solid #1E8449;padding-bottom:3px">B — Cómo lo paga</div>
         ${fila('Crédito bancario',bCredito,'#0069b4')}
         ${fila('Auto usado en parte de pago',bUsado,'#795548')}
-        ${fila('Anticipo en efectivo',bAnticipo)}
+        ${fila('Entrega $',bAnticipo)}
         ${fila('Cheques',bCheques)}
         ${fila('Documentos / Pagarés',bDocPag)}
         ${fila('Otro crédito',bOtroCred,'#0069b4')}
@@ -5156,7 +5238,7 @@ function emailPropuesta(){
   const iA=['pa1','pa2','pa3','pa3b','pa4','pa5','pa6'];
   const iB=['pb1','pb2','pb3','pb4','pb5','pb6'];
   const labA=['Precio del vehículo','Gestoría/Patentamiento','Gastos bancarios campaña','Gastos de otorgamiento','Intereses crédito','Comisión banco','Seguro automotor'];
-  const labB=['Crédito bancario','Usado en parte de pago','Anticipo efectivo','Cheques','Documentos/Pagarés','Otro crédito'];
+  const labB=['Crédito bancario','Usado en parte de pago','Entrega $','Cheques','Documentos/Pagarés','Otro crédito'];
   let linA='',linB='';
   iA.forEach((id,i)=>{const v=parseFloat($$(id)?.value)||0;if(v>0)linA+=`  • ${labA[i]}: ${fmt(v)}\n`});
   iB.forEach((id,i)=>{const v=parseFloat($$(id)?.value)||0;if(v>0)linB+=`  • ${labB[i]}: ${fmt(v)}\n`});
@@ -5296,6 +5378,253 @@ bLogin();
       setTimeout(()=>bar.remove(),4000);
     })
     .catch(()=>{}); // Silencioso si falla
+// ─── LAB — BUSCADOR INFOAUTO ──────────────────────────────────────────────
+const LAB_PROXY='https://almar-infoauto-proxy.vercel.app';
+let _labPrecioActual=0;
+let _labVersionData=null; // {versionId, precio, descripcion}
+let _labMatchSeleccionado=null;
+
+async function initLAB(){
+  // Cargar marcas al entrar
+  const sel=$$('lab-marca');
+  if(sel.options.length>1) return; // ya cargado
+  sel.innerHTML='<option value="">— Cargando marcas… —</option>';
+  labShowErr(false); labShowLoading(true);
+  try{
+    const r=await fetch(LAB_PROXY+'/marcas');
+    const d=await r.json();
+    const marcas=(d.data||d||[]).sort((a,b)=>(a.descripcion||a.nombre||'').localeCompare(b.descripcion||b.nombre||''));
+    sel.innerHTML='<option value="">— Seleccionar marca —</option>';
+    marcas.forEach(m=>{
+      const o=document.createElement('option');
+      o.value=m.id||m.codigo||m.idMarca||m.Id;
+      o.textContent=m.descripcion||m.nombre||m.Descripcion||String(o.value);
+      sel.appendChild(o);
+    });
+    labShowLoading(false);
+  }catch(e){
+    labShowErr('No se pudo conectar con Infoauto: '+e.message);
+    sel.innerHTML='<option value="">— Error al cargar —</option>';
+    labShowLoading(false);
+  }
+}
+
+async function labOnMarca(){
+  const marcaId=$$('lab-marca').value;
+  const mSel=$$('lab-modelo'); mSel.innerHTML='<option value="">— Seleccionar modelo —</option>'; mSel.disabled=true;
+  const aSel=$$('lab-anno'); aSel.innerHTML='<option value="">— Seleccionar año —</option>'; aSel.disabled=true;
+  const vSel=$$('lab-version'); vSel.innerHTML='<option value="">— Seleccionar versión —</option>'; vSel.disabled=true;
+  labResetResultado();
+  if(!marcaId) return;
+  labShowLoading(true); labShowErr(false);
+  try{
+    const r=await fetch(LAB_PROXY+'/modelos?marca='+marcaId);
+    const d=await r.json();
+    const modelos=(d.data||d||[]).sort((a,b)=>(a.descripcion||a.nombre||'').localeCompare(b.descripcion||b.nombre||''));
+    modelos.forEach(m=>{
+      const o=document.createElement('option');
+      o.value=m.id||m.codigo||m.idModelo||m.Id;
+      o.textContent=m.descripcion||m.nombre||m.Descripcion||String(o.value);
+      mSel.appendChild(o);
+    });
+    mSel.disabled=false;
+    labShowLoading(false);
+  }catch(e){ labShowErr('Error al cargar modelos: '+e.message); labShowLoading(false); }
+}
+
+async function labOnModelo(){
+  const marcaId=$$('lab-marca').value;
+  const modeloId=$$('lab-modelo').value;
+  const aSel=$$('lab-anno'); aSel.innerHTML='<option value="">— Seleccionar año —</option>'; aSel.disabled=true;
+  const vSel=$$('lab-version'); vSel.innerHTML='<option value="">— Seleccionar versión —</option>'; vSel.disabled=true;
+  labResetResultado();
+  if(!modeloId) return;
+  labShowLoading(true); labShowErr(false);
+  try{
+    const r=await fetch(LAB_PROXY+'/anios?marca='+marcaId+'&modelo='+modeloId);
+    const d=await r.json();
+    const anios=(d.data||d||[]).sort((a,b)=>Number(b.descripcion||b.anio||b)-Number(a.descripcion||a.anio||a));
+    anios.forEach(a=>{
+      const o=document.createElement('option');
+      o.value=a.id||a.codigo||a.anio||a.descripcion||a;
+      o.textContent=a.descripcion||a.anio||String(o.value);
+      aSel.appendChild(o);
+    });
+    aSel.disabled=false;
+    labShowLoading(false);
+  }catch(e){ labShowErr('Error al cargar años: '+e.message); labShowLoading(false); }
+}
+
+async function labOnAnno(){
+  const marcaId=$$('lab-marca').value;
+  const modeloId=$$('lab-modelo').value;
+  const annoId=$$('lab-anno').value;
+  const vSel=$$('lab-version'); vSel.innerHTML='<option value="">— Seleccionar versión —</option>'; vSel.disabled=true;
+  labResetResultado();
+  if(!annoId) return;
+  labShowLoading(true); labShowErr(false);
+  try{
+    const r=await fetch(LAB_PROXY+'/versiones?marca='+marcaId+'&modelo='+modeloId+'&anio='+annoId);
+    const d=await r.json();
+    const vers=(d.data||d||[]).sort((a,b)=>(a.descripcion||a.nombre||'').localeCompare(b.descripcion||b.nombre||''));
+    vers.forEach(v=>{
+      const o=document.createElement('option');
+      o.value=v.id||v.codigo||v.idVersion||v.Id;
+      o.textContent=v.descripcion||v.nombre||v.Descripcion||String(o.value);
+      o.dataset.precio=v.precio||v.Precio||0;
+      vSel.appendChild(o);
+    });
+    vSel.disabled=false;
+    labShowLoading(false);
+  }catch(e){ labShowErr('Error al cargar versiones: '+e.message); labShowLoading(false); }
+}
+
+async function labOnVersion(){
+  const vSel=$$('lab-version');
+  const vId=vSel.value;
+  labResetResultado();
+  if(!vId) return;
+  const optSel=vSel.options[vSel.selectedIndex];
+  let precio=parseFloat(optSel.dataset.precio)||0;
+  // Si no viene precio en el option, consultar precio
+  if(!precio){
+    const marcaId=$$('lab-marca').value;
+    const modeloId=$$('lab-modelo').value;
+    const annoId=$$('lab-anno').value;
+    labShowLoading(true); labShowErr(false);
+    try{
+      const r=await fetch(LAB_PROXY+'/precio?marca='+marcaId+'&modelo='+modeloId+'&anio='+annoId+'&version='+vId);
+      const d=await r.json();
+      precio=d.precio||d.Precio||d.data?.precio||0;
+      labShowLoading(false);
+    }catch(e){ labShowErr('Error al consultar precio: '+e.message); labShowLoading(false); return; }
+  }
+  _labPrecioActual=precio;
+  _labVersionData={versionId:vId,precio:precio,descripcion:optSel.textContent};
+  // Mostrar precio
+  const pRow=$$('lab-precio-row'); pRow.style.display='block';
+  $$('lab-precio-txt').textContent='💰 Precio Infoauto: '+fmt(precio);
+  // Mostrar filtros de financiación
+  $$('lab-fin-card').style.display='block';
+  labCalcMatches();
+}
+
+function labCalcMatches(){
+  if(!_labPrecioActual) return;
+  const entrega=parseFloat($$('lab-entrega')?.value)||0;
+  const cuotaMax=parseFloat($$('lab-cuota-max')?.value)||0;
+  const warn=$$('lab-val-warn');
+  if(!entrega||!cuotaMax){
+    warn.style.display='block';
+    $$('lab-matches-cont').style.display='none';
+    $$('lab-guardar-cont').style.display='none';
+    _labMatchSeleccionado=null;
+    return;
+  }
+  warn.style.display='none';
+  const precio=_labPrecioActual;
+  const montoFinanciar=precio-entrega;
+  if(montoFinanciar<=0){
+    $$('lab-matches-lista').innerHTML='<div class="al warn">⚠️ La entrega supera el precio del vehículo.</div>';
+    $$('lab-matches-cont').style.display='block';
+    $$('lab-guardar-cont').style.display='none';
+    return;
+  }
+  // Filtrar campañas activas que soporten el monto y cuota
+  const campanas=CAMP.filter(c=>c.activa&&!c.usados);
+  const matches=[];
+  campanas.forEach(c=>{
+    const plazoMax=c.plazoMax||36;
+    for(let n=6;n<=plazoMax;n+=6){
+      let cuota;
+      if(c.coeficiente){
+        cuota=cuotaPorCoef(montoFinanciar,c.coeficiente);
+      }else{
+        cuota=cuota_calc(montoFinanciar,c.tna,n);
+      }
+      if(cuota<=cuotaMax){
+        matches.push({camp:c,cuota:Math.round(cuota),plazo:n,monto:montoFinanciar,ltv:c.ltv||100,montoMax:c.montoMax||Infinity});
+        break; // menor plazo que cumple
+      }
+    }
+  });
+  // Filtrar por LTV y montoMax
+  const validos=matches.filter(m=>{
+    const ltvOk=m.monto<=(m.camp.ltv/100)*precio;
+    const montoOk=m.monto<=m.montoMax;
+    return ltvOk&&montoOk;
+  }).sort((a,b)=>a.cuota-b.cuota);
+  const lista=$$('lab-matches-lista');
+  $$('lab-matches-tit').textContent='Campañas compatibles ('+validos.length+')';
+  if(!validos.length){
+    lista.innerHTML='<div class="al warn">No hay campañas que encajen con esos parámetros. Revisá entrega o cuota.</div>';
+    $$('lab-matches-cont').style.display='block';
+    $$('lab-guardar-cont').style.display='none';
+    _labMatchSeleccionado=null;
+    return;
+  }
+  lista.innerHTML='';
+  validos.slice(0,12).forEach((m,i)=>{
+    const c=m.camp;
+    const div=document.createElement('div');
+    div.style.cssText='border:1px solid var(--brd);border-radius:8px;padding:10px 12px;cursor:pointer;transition:background .15s';
+    div.innerHTML=`
+      <div style="font-size:12px;font-weight:800;color:var(--b)">${c.banco} — ${c.nombre}</div>
+      <div style="font-size:11px;color:var(--m);margin-top:2px">TNA ${c.tna||'—'}% · ${m.plazo} cuotas · Cuota ~${fmt(m.cuota)}</div>
+      <div style="font-size:10px;color:var(--m);margin-top:1px">Financiado: ${fmt(m.monto)} · Entrega: ${fmt(entrega)}</div>
+    `;
+    div.onclick=()=>{
+      lista.querySelectorAll('div[data-match]').forEach(d=>{d.style.background='';d.style.borderColor='var(--brd)'});
+      div.style.background='rgba(0,105,180,.07)';div.style.borderColor='#0069b4';
+      _labMatchSeleccionado={camp:c,cuota:m.cuota,plazo:m.plazo,monto:m.monto,entrega};
+      $$('lab-guardar-cont').style.display='block';
+    };
+    div.dataset.match=i;
+    lista.appendChild(div);
+  });
+  $$('lab-matches-cont').style.display='block';
+  $$('lab-guardar-cont').style.display='none';
+  _labMatchSeleccionado=null;
+}
+
+function cuota_calc(mt,tna,n){
+  const tem=Math.pow(1+tna/100,1/12)-1;
+  return tem>0?mt*tem/(1-Math.pow(1+tem,-n)):mt/n;
+}
+
+function labGuardarMatch(){
+  if(!_labMatchSeleccionado||!_labVersionData) return;
+  const m=_labMatchSeleccionado;
+  const vd=_labVersionData;
+  // Poblar propuesta con datos del vehículo y financiación
+  const pa1=$$('pa1'); if(pa1) pa1.value=vd.precio;
+  const pb1=$$('pb1'); if(pb1){ pb1.value=m.monto; }
+  const pb3=$$('pb3'); if(pb3) pb3.value=m.entrega;
+  // Disparar cálculo
+  if(typeof cP==='function') cP();
+  if(typeof calcCred==='function') calcCred();
+  // Ir a propuesta
+  goTo('propuesta');
+  // Info toast
+  const bar=document.createElement('div');
+  bar.style.cssText='position:fixed;bottom:60px;left:0;right:0;background:rgba(0,105,180,.92);color:#fff;font-size:11px;font-weight:700;text-align:center;padding:6px;z-index:9999;';
+  bar.textContent='✓ Match cargado: '+m.camp.banco+' — '+m.plazo+' cuotas — '+fmt(m.cuota)+'/mes';
+  document.body.appendChild(bar);
+  setTimeout(()=>bar.remove(),4000);
+}
+
+function labResetResultado(){
+  _labPrecioActual=0; _labVersionData=null; _labMatchSeleccionado=null;
+  $$('lab-precio-row').style.display='none';
+  $$('lab-fin-card').style.display='none';
+  $$('lab-matches-cont').style.display='none';
+  $$('lab-guardar-cont').style.display='none';
+  $$('lab-val-warn').style.display='none';
+}
+function labShowLoading(v){ $$('lab-loading').style.display=v?'block':'none'; }
+function labShowErr(msg){ const e=$$('lab-err'); if(msg){e.style.display='block';e.textContent='❌ '+msg;}else e.style.display='none'; }
+// ─── FIN LAB ────────────────────────────────────────────────────────────────
+
 })();
 </script>
 </body>
