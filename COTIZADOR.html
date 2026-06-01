@@ -5379,250 +5379,310 @@ bLogin();
     })
     .catch(()=>{}); // Silencioso si falla
 // ─── LAB — BUSCADOR INFOAUTO ──────────────────────────────────────────────
-const LAB_PROXY='https://almar-infoauto-proxy.vercel.app';
-let _labPrecioActual=0;
-let _labVersionData=null; // {versionId, precio, descripcion}
-let _labMatchSeleccionado=null;
+// Endpoints correctos del proxy (solo acepta llamadas desde app-almar.pages.dev)
+// /api/brands          → { ok, brands:[{id,name}] }
+// /api/models?brand_id → { ok, models:[{grupo,anioDesde,anioHasta,versiones:[{codia,descripcion}]}] }
+// /api/versions?brand_id&grupo&year → versiones por año
+// /api/price?codia&year → { precio }
+// /api/search?q&year   → búsqueda libre
 
+const LAB_PROXY = 'https://almar-infoauto-proxy.vercel.app';
+
+// Estado interno
+let _labState = {
+  brandId: null,
+  grupo: null,       // nombre del grupo/modelo
+  year: null,
+  codia: null,
+  precio: 0,
+  modelosCache: null // { grupo, versiones[], anioDesde, anioHasta }[]
+};
+let _labMatchSeleccionado = null;
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+function labShowLoading(v){ const e=$$('lab-loading'); if(e) e.style.display=v?'flex':'none'; }
+function labShowErr(msg){
+  const e=$$('lab-err');
+  if(!e) return;
+  if(msg){ e.style.display='block'; e.textContent='❌ '+msg; }
+  else e.style.display='none';
+}
+function labResetDesde(level){
+  // level: 0=todo, 1=desde modelo, 2=desde año, 3=desde versión
+  if(level<=1){
+    const ms=$$('lab-modelo'); if(ms){ms.innerHTML='<option value="">— Seleccionar modelo —</option>';ms.disabled=true;}
+    _labState.grupo=null; _labState.modelosCache=null;
+  }
+  if(level<=2){
+    const as=$$('lab-anno'); if(as){as.innerHTML='<option value="">— Seleccionar año —</option>';as.disabled=true;}
+    _labState.year=null;
+  }
+  if(level<=3){
+    const vs=$$('lab-version'); if(vs){vs.innerHTML='<option value="">— Seleccionar versión —</option>';vs.disabled=true;}
+    _labState.codia=null; _labState.precio=0;
+    const pr=$$('lab-precio-row'); if(pr) pr.style.display='none';
+    $$('lab-fin-card').style.display='none';
+    $$('lab-matches-cont').style.display='none';
+    $$('lab-guardar-cont').style.display='none';
+  }
+}
+
+// ── INIT: cargar marcas ───────────────────────────────────────────────────────
 async function initLAB(){
-  // Cargar marcas al entrar
   const sel=$$('lab-marca');
+  if(!sel) return;
   if(sel.options.length>1) return; // ya cargado
-  sel.innerHTML='<option value="">— Cargando marcas… —</option>';
-  labShowErr(false); labShowLoading(true);
+  labShowErr(false);
+  labShowLoading(true);
+  sel.innerHTML='<option value="">⏳ Cargando marcas…</option>';
   try{
-    const r=await fetch(LAB_PROXY+'/marcas');
-    const d=await r.json();
-    const marcas=(d.data||d||[]).sort((a,b)=>(a.descripcion||a.nombre||'').localeCompare(b.descripcion||b.nombre||''));
+    const r = await fetch(LAB_PROXY+'/api/brands');
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const d = await r.json();
+    const brands = d.brands || d.data || d || [];
+    if(!brands.length) throw new Error('No se recibieron marcas');
     sel.innerHTML='<option value="">— Seleccionar marca —</option>';
-    marcas.forEach(m=>{
+    brands.forEach(b=>{
       const o=document.createElement('option');
-      o.value=m.id||m.codigo||m.idMarca||m.Id;
-      o.textContent=m.descripcion||m.nombre||m.Descripcion||String(o.value);
+      o.value=b.id;
+      o.textContent=b.name;
       sel.appendChild(o);
     });
     labShowLoading(false);
   }catch(e){
-    labShowErr('No se pudo conectar con Infoauto: '+e.message);
+    labShowErr('No se pudo cargar marcas Infoauto. Verificar conexión. ('+e.message+')');
     sel.innerHTML='<option value="">— Error al cargar —</option>';
     labShowLoading(false);
   }
 }
 
+// ── MARCA seleccionada → cargar modelos (grupos) ──────────────────────────────
 async function labOnMarca(){
-  const marcaId=$$('lab-marca').value;
-  const mSel=$$('lab-modelo'); mSel.innerHTML='<option value="">— Seleccionar modelo —</option>'; mSel.disabled=true;
-  const aSel=$$('lab-anno'); aSel.innerHTML='<option value="">— Seleccionar año —</option>'; aSel.disabled=true;
-  const vSel=$$('lab-version'); vSel.innerHTML='<option value="">— Seleccionar versión —</option>'; vSel.disabled=true;
-  labResetResultado();
-  if(!marcaId) return;
-  labShowLoading(true); labShowErr(false);
+  const brandId = $$('lab-marca').value;
+  _labState.brandId = brandId || null;
+  labResetDesde(1);
+  labShowErr(false);
+  if(!brandId) return;
+  labShowLoading(true);
   try{
-    const r=await fetch(LAB_PROXY+'/modelos?marca='+marcaId);
-    const d=await r.json();
-    const modelos=(d.data||d||[]).sort((a,b)=>(a.descripcion||a.nombre||'').localeCompare(b.descripcion||b.nombre||''));
+    const r = await fetch(LAB_PROXY+'/api/models?brand_id='+encodeURIComponent(brandId));
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const d = await r.json();
+    const modelos = d.models || d.data || d || [];
+    if(!modelos.length) throw new Error('Sin modelos para esta marca');
+    _labState.modelosCache = modelos;
+    const mSel = $$('lab-modelo');
+    mSel.innerHTML='<option value="">— Seleccionar modelo —</option>';
     modelos.forEach(m=>{
       const o=document.createElement('option');
-      o.value=m.id||m.codigo||m.idModelo||m.Id;
-      o.textContent=m.descripcion||m.nombre||m.Descripcion||String(o.value);
+      o.value=m.grupo;
+      o.textContent=m.grupo + (m.anioDesde&&m.anioHasta?' ('+m.anioDesde+'–'+m.anioHasta+')':'');
       mSel.appendChild(o);
     });
     mSel.disabled=false;
     labShowLoading(false);
-  }catch(e){ labShowErr('Error al cargar modelos: '+e.message); labShowLoading(false); }
-}
-
-async function labOnModelo(){
-  const marcaId=$$('lab-marca').value;
-  const modeloId=$$('lab-modelo').value;
-  const aSel=$$('lab-anno'); aSel.innerHTML='<option value="">— Seleccionar año —</option>'; aSel.disabled=true;
-  const vSel=$$('lab-version'); vSel.innerHTML='<option value="">— Seleccionar versión —</option>'; vSel.disabled=true;
-  labResetResultado();
-  if(!modeloId) return;
-  labShowLoading(true); labShowErr(false);
-  try{
-    const r=await fetch(LAB_PROXY+'/anios?marca='+marcaId+'&modelo='+modeloId);
-    const d=await r.json();
-    const anios=(d.data||d||[]).sort((a,b)=>Number(b.descripcion||b.anio||b)-Number(a.descripcion||a.anio||a));
-    anios.forEach(a=>{
-      const o=document.createElement('option');
-      o.value=a.id||a.codigo||a.anio||a.descripcion||a;
-      o.textContent=a.descripcion||a.anio||String(o.value);
-      aSel.appendChild(o);
-    });
-    aSel.disabled=false;
+  }catch(e){
+    labShowErr('Error al cargar modelos: '+e.message);
     labShowLoading(false);
-  }catch(e){ labShowErr('Error al cargar años: '+e.message); labShowLoading(false); }
+  }
 }
 
+// ── MODELO (grupo) seleccionado → cargar años ─────────────────────────────────
+function labOnModelo(){
+  const grupo = $$('lab-modelo').value;
+  _labState.grupo = grupo || null;
+  labResetDesde(2);
+  labShowErr(false);
+  if(!grupo || !_labState.modelosCache) return;
+  const modeloData = _labState.modelosCache.find(m=>m.grupo===grupo);
+  if(!modeloData) return;
+  const aSel = $$('lab-anno');
+  aSel.innerHTML='<option value="">— Seleccionar año —</option>';
+  const desde = parseInt(modeloData.anioDesde)||2000;
+  const hasta = parseInt(modeloData.anioHasta)||new Date().getFullYear();
+  // Años descendente
+  for(let y=hasta; y>=desde; y--){
+    const o=document.createElement('option');
+    o.value=y; o.textContent=y;
+    aSel.appendChild(o);
+  }
+  aSel.disabled=false;
+}
+
+// ── AÑO seleccionado → cargar versiones ───────────────────────────────────────
 async function labOnAnno(){
-  const marcaId=$$('lab-marca').value;
-  const modeloId=$$('lab-modelo').value;
-  const annoId=$$('lab-anno').value;
-  const vSel=$$('lab-version'); vSel.innerHTML='<option value="">— Seleccionar versión —</option>'; vSel.disabled=true;
-  labResetResultado();
-  if(!annoId) return;
-  labShowLoading(true); labShowErr(false);
+  const year = $$('lab-anno').value;
+  _labState.year = year || null;
+  labResetDesde(3);
+  labShowErr(false);
+  if(!year || !_labState.brandId || !_labState.grupo) return;
+  labShowLoading(true);
   try{
-    const r=await fetch(LAB_PROXY+'/versiones?marca='+marcaId+'&modelo='+modeloId+'&anio='+annoId);
-    const d=await r.json();
-    const vers=(d.data||d||[]).sort((a,b)=>(a.descripcion||a.nombre||'').localeCompare(b.descripcion||b.nombre||''));
-    vers.forEach(v=>{
+    const url = LAB_PROXY+'/api/versions?brand_id='+encodeURIComponent(_labState.brandId)
+      +'&grupo='+encodeURIComponent(_labState.grupo)
+      +'&year='+encodeURIComponent(year);
+    const r = await fetch(url);
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const d = await r.json();
+    // Si versions no viene del endpoint, usamos el cache local de modelos
+    let versiones = d.versions || d.data || d.results || [];
+    if(!versiones.length){
+      // Fallback: usar versiones del cache filtradas por año
+      const mc = _labState.modelosCache?.find(m=>m.grupo===_labState.grupo);
+      if(mc) versiones = (mc.versiones||[]).filter(v=>{
+        const desde=parseInt(v.anioDesde)||0;
+        const hasta=parseInt(v.anioHasta)||9999;
+        return parseInt(year)>=desde && parseInt(year)<=hasta;
+      });
+    }
+    if(!versiones.length) throw new Error('No hay versiones para ese año. Probá otro año.');
+    const vSel = $$('lab-version');
+    vSel.innerHTML='<option value="">— Seleccionar versión —</option>';
+    versiones.forEach(v=>{
       const o=document.createElement('option');
-      o.value=v.id||v.codigo||v.idVersion||v.Id;
-      o.textContent=v.descripcion||v.nombre||v.Descripcion||String(o.value);
-      o.dataset.precio=v.precio||v.Precio||0;
+      o.value=v.codia||v.id||v.codigo;
+      o.textContent=v.descripcion||v.description||v.nombre||String(o.value);
       vSel.appendChild(o);
     });
     vSel.disabled=false;
     labShowLoading(false);
-  }catch(e){ labShowErr('Error al cargar versiones: '+e.message); labShowLoading(false); }
-}
-
-async function labOnVersion(){
-  const vSel=$$('lab-version');
-  const vId=vSel.value;
-  labResetResultado();
-  if(!vId) return;
-  const optSel=vSel.options[vSel.selectedIndex];
-  let precio=parseFloat(optSel.dataset.precio)||0;
-  // Si no viene precio en el option, consultar precio
-  if(!precio){
-    const marcaId=$$('lab-marca').value;
-    const modeloId=$$('lab-modelo').value;
-    const annoId=$$('lab-anno').value;
-    labShowLoading(true); labShowErr(false);
-    try{
-      const r=await fetch(LAB_PROXY+'/precio?marca='+marcaId+'&modelo='+modeloId+'&anio='+annoId+'&version='+vId);
-      const d=await r.json();
-      precio=d.precio||d.Precio||d.data?.precio||0;
-      labShowLoading(false);
-    }catch(e){ labShowErr('Error al consultar precio: '+e.message); labShowLoading(false); return; }
+  }catch(e){
+    labShowErr('Error al cargar versiones: '+e.message);
+    labShowLoading(false);
   }
-  _labPrecioActual=precio;
-  _labVersionData={versionId:vId,precio:precio,descripcion:optSel.textContent};
-  // Mostrar precio
-  const pRow=$$('lab-precio-row'); pRow.style.display='block';
-  $$('lab-precio-txt').textContent='💰 Precio Infoauto: '+fmt(precio);
-  // Mostrar filtros de financiación
-  $$('lab-fin-card').style.display='block';
-  labCalcMatches();
 }
 
+// ── VERSIÓN seleccionada → consultar precio ────────────────────────────────────
+async function labOnVersion(){
+  const vSel = $$('lab-version');
+  const codia = vSel.value;
+  _labState.codia = codia || null;
+  _labState.precio = 0;
+  const pRow=$$('lab-precio-row'); if(pRow) pRow.style.display='none';
+  $$('lab-fin-card').style.display='none';
+  $$('lab-matches-cont').style.display='none';
+  $$('lab-guardar-cont').style.display='none';
+  labShowErr(false);
+  if(!codia || !_labState.year) return;
+  labShowLoading(true);
+  try{
+    const url = LAB_PROXY+'/api/price?codia='+encodeURIComponent(codia)+'&year='+encodeURIComponent(_labState.year);
+    const r = await fetch(url);
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const d = await r.json();
+    const precio = d.precio || d.price || d.data?.precio || 0;
+    if(!precio) throw new Error('Infoauto no devolvió precio para esta versión/año');
+    _labState.precio = precio;
+    $$('lab-precio-txt').textContent = '💰 Precio Infoauto: '+fmt(precio);
+    pRow.style.display='block';
+    $$('lab-fin-card').style.display='block';
+    labShowLoading(false);
+    labCalcMatches();
+  }catch(e){
+    labShowErr('Error al obtener precio: '+e.message);
+    labShowLoading(false);
+  }
+}
+
+// ── CALC MATCHES ──────────────────────────────────────────────────────────────
 function labCalcMatches(){
-  if(!_labPrecioActual) return;
-  const entrega=parseFloat($$('lab-entrega')?.value)||0;
-  const cuotaMax=parseFloat($$('lab-cuota-max')?.value)||0;
-  const warn=$$('lab-val-warn');
-  if(!entrega||!cuotaMax){
-    warn.style.display='block';
+  const precio = _labState.precio;
+  if(!precio) return;
+  const entrega   = parseFloat($$('lab-entrega')?.value)||0;
+  const cuotaMax  = parseFloat($$('lab-cuota-max')?.value)||0;
+  const warn = $$('lab-val-warn');
+  if(!entrega || !cuotaMax){
+    if(warn) warn.style.display='block';
     $$('lab-matches-cont').style.display='none';
     $$('lab-guardar-cont').style.display='none';
     _labMatchSeleccionado=null;
     return;
   }
-  warn.style.display='none';
-  const precio=_labPrecioActual;
-  const montoFinanciar=precio-entrega;
-  if(montoFinanciar<=0){
-    $$('lab-matches-lista').innerHTML='<div class="al warn">⚠️ La entrega supera el precio del vehículo.</div>';
-    $$('lab-matches-cont').style.display='block';
+  if(warn) warn.style.display='none';
+  const montoFin = precio - entrega;
+  const lista = $$('lab-matches-lista');
+  const cont  = $$('lab-matches-cont');
+  if(montoFin<=0){
+    lista.innerHTML='<div class="al warn">⚠️ La entrega supera el precio del vehículo.</div>';
+    cont.style.display='block';
     $$('lab-guardar-cont').style.display='none';
     return;
   }
-  // Filtrar campañas activas que soporten el monto y cuota
-  const campanas=CAMP.filter(c=>c.activa&&!c.usados);
+  // Filtrar campañas activas para 0km (no usados)
+  const campanas = (typeof CAMP!=='undefined'?CAMP:[]).filter(c=>c.activa&&!c.usados);
   const matches=[];
   campanas.forEach(c=>{
-    const plazoMax=c.plazoMax||36;
-    for(let n=6;n<=plazoMax;n+=6){
-      let cuota;
-      if(c.coeficiente){
-        cuota=cuotaPorCoef(montoFinanciar,c.coeficiente);
-      }else{
-        cuota=cuota_calc(montoFinanciar,c.tna,n);
-      }
-      if(cuota<=cuotaMax){
-        matches.push({camp:c,cuota:Math.round(cuota),plazo:n,monto:montoFinanciar,ltv:c.ltv||100,montoMax:c.montoMax||Infinity});
-        break; // menor plazo que cumple
+    const plazoMax = c.plazoMax||36;
+    const ltv = c.ltv||100;
+    const montoMax = c.montoMax||Infinity;
+    if(montoFin > (ltv/100)*precio) return; // LTV
+    if(montoFin > montoMax) return;          // monto máximo campaña
+    for(let n=6; n<=plazoMax; n+=6){
+      let cuotaCalc;
+      if(c.coeficiente){ cuotaCalc=cuotaPorCoef(montoFin,c.coeficiente); }
+      else { cuotaCalc=cuota(montoFin,c.tna,n); }
+      if(cuotaCalc<=cuotaMax){
+        matches.push({camp:c,cuota:Math.round(cuotaCalc),plazo:n,monto:montoFin,entrega});
+        break;
       }
     }
   });
-  // Filtrar por LTV y montoMax
-  const validos=matches.filter(m=>{
-    const ltvOk=m.monto<=(m.camp.ltv/100)*precio;
-    const montoOk=m.monto<=m.montoMax;
-    return ltvOk&&montoOk;
-  }).sort((a,b)=>a.cuota-b.cuota);
-  const lista=$$('lab-matches-lista');
-  $$('lab-matches-tit').textContent='Campañas compatibles ('+validos.length+')';
-  if(!validos.length){
-    lista.innerHTML='<div class="al warn">No hay campañas que encajen con esos parámetros. Revisá entrega o cuota.</div>';
-    $$('lab-matches-cont').style.display='block';
+  matches.sort((a,b)=>a.cuota-b.cuota);
+  $$('lab-matches-tit').textContent='Campañas compatibles ('+matches.length+')';
+  lista.innerHTML='';
+  if(!matches.length){
+    lista.innerHTML='<div class="al warn">No hay campañas que encajen. Aumentá la entrega o la cuota máxima.</div>';
+    cont.style.display='block';
     $$('lab-guardar-cont').style.display='none';
     _labMatchSeleccionado=null;
     return;
   }
-  lista.innerHTML='';
-  validos.slice(0,12).forEach((m,i)=>{
+  matches.slice(0,15).forEach((m,i)=>{
     const c=m.camp;
     const div=document.createElement('div');
-    div.style.cssText='border:1px solid var(--brd);border-radius:8px;padding:10px 12px;cursor:pointer;transition:background .15s';
+    div.dataset.idx=i;
+    div.style.cssText='border:1.5px solid var(--brd);border-radius:10px;padding:11px 14px;cursor:pointer;transition:all .15s;margin-bottom:0';
     div.innerHTML=`
-      <div style="font-size:12px;font-weight:800;color:var(--b)">${c.banco} — ${c.nombre}</div>
-      <div style="font-size:11px;color:var(--m);margin-top:2px">TNA ${c.tna||'—'}% · ${m.plazo} cuotas · Cuota ~${fmt(m.cuota)}</div>
-      <div style="font-size:10px;color:var(--m);margin-top:1px">Financiado: ${fmt(m.monto)} · Entrega: ${fmt(entrega)}</div>
+      <div style="font-size:12px;font-weight:800;color:var(--b);letter-spacing:.3px">${c.banco} — ${c.nombre}</div>
+      <div style="font-size:11px;color:var(--m);margin-top:3px">TNA ${c.tna!=null?c.tna+'%':'—'} · <strong>${m.plazo} cuotas</strong> · Cuota ~<strong style="color:#27ae60">${fmt(m.cuota)}</strong></div>
+      <div style="font-size:10px;color:var(--m);margin-top:2px">Financiado: ${fmt(m.monto)} · Entrega: ${fmt(m.entrega)}</div>
     `;
     div.onclick=()=>{
-      lista.querySelectorAll('div[data-match]').forEach(d=>{d.style.background='';d.style.borderColor='var(--brd)'});
-      div.style.background='rgba(0,105,180,.07)';div.style.borderColor='#0069b4';
-      _labMatchSeleccionado={camp:c,cuota:m.cuota,plazo:m.plazo,monto:m.monto,entrega};
+      lista.querySelectorAll('[data-idx]').forEach(d=>{d.style.background='';d.style.borderColor='var(--brd)'});
+      div.style.background='rgba(0,105,180,.09)';
+      div.style.borderColor='#0069b4';
+      _labMatchSeleccionado={camp:c,cuota:m.cuota,plazo:m.plazo,monto:m.monto,entrega:m.entrega};
       $$('lab-guardar-cont').style.display='block';
     };
-    div.dataset.match=i;
     lista.appendChild(div);
   });
-  $$('lab-matches-cont').style.display='block';
+  cont.style.display='block';
   $$('lab-guardar-cont').style.display='none';
   _labMatchSeleccionado=null;
 }
 
-function cuota_calc(mt,tna,n){
-  const tem=Math.pow(1+tna/100,1/12)-1;
-  return tem>0?mt*tem/(1-Math.pow(1+tem,-n)):mt/n;
-}
-
+// ── GUARDAR MATCH → ir a Propuesta ────────────────────────────────────────────
 function labGuardarMatch(){
-  if(!_labMatchSeleccionado||!_labVersionData) return;
-  const m=_labMatchSeleccionado;
-  const vd=_labVersionData;
-  // Poblar propuesta con datos del vehículo y financiación
-  const pa1=$$('pa1'); if(pa1) pa1.value=vd.precio;
-  const pb1=$$('pb1'); if(pb1){ pb1.value=m.monto; }
-  const pb3=$$('pb3'); if(pb3) pb3.value=m.entrega;
-  // Disparar cálculo
+  if(!_labMatchSeleccionado) return;
+  const m = _labMatchSeleccionado;
+  const precio = _labState.precio;
+  // Cargar datos en propuesta
+  const set=(id,v)=>{ const el=$$(id); if(el){el.value=v;} };
+  set('pa1', precio);     // Precio del vehículo
+  set('pb1', m.monto);    // Crédito bancario
+  set('pb3', m.entrega);  // Entrega $
+  // Recalcular
   if(typeof cP==='function') cP();
   if(typeof calcCred==='function') calcCred();
   // Ir a propuesta
   goTo('propuesta');
-  // Info toast
+  // Toast
   const bar=document.createElement('div');
-  bar.style.cssText='position:fixed;bottom:60px;left:0;right:0;background:rgba(0,105,180,.92);color:#fff;font-size:11px;font-weight:700;text-align:center;padding:6px;z-index:9999;';
-  bar.textContent='✓ Match cargado: '+m.camp.banco+' — '+m.plazo+' cuotas — '+fmt(m.cuota)+'/mes';
+  bar.style.cssText='position:fixed;bottom:60px;left:0;right:0;background:rgba(0,105,180,.93);color:#fff;font-size:12px;font-weight:700;text-align:center;padding:7px 12px;z-index:9999;border-radius:0';
+  bar.textContent='✅ '+m.camp.banco+' — '+m.plazo+' cuotas — '+fmt(m.cuota)+'/mes · Precio: '+fmt(precio);
   document.body.appendChild(bar);
-  setTimeout(()=>bar.remove(),4000);
+  setTimeout(()=>bar.remove(),5000);
 }
-
-function labResetResultado(){
-  _labPrecioActual=0; _labVersionData=null; _labMatchSeleccionado=null;
-  $$('lab-precio-row').style.display='none';
-  $$('lab-fin-card').style.display='none';
-  $$('lab-matches-cont').style.display='none';
-  $$('lab-guardar-cont').style.display='none';
-  $$('lab-val-warn').style.display='none';
-}
-function labShowLoading(v){ $$('lab-loading').style.display=v?'block':'none'; }
-function labShowErr(msg){ const e=$$('lab-err'); if(msg){e.style.display='block';e.textContent='❌ '+msg;}else e.style.display='none'; }
 // ─── FIN LAB ────────────────────────────────────────────────────────────────
 
 })();
