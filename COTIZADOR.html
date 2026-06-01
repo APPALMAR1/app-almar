@@ -6308,11 +6308,22 @@ function labMatch(perfil){
 
 // ── Abrir coincidencia en la Propuesta Comercial ──────────────────
 function labAbrirEnCotizador(matchIdx){
-  const perfs = labGetPerfiles();
-  const p = perfs.find(x=>x.id===_labDetId||x.id===_labModalId);
-  if(!p) return;
-  const matches = labMatch(p);
-  const m = matches[matchIdx];
+  let p, matches, m;
+
+  // Intentar usar matches ya calculados (perfil en edición, no guardado aún)
+  if(window._labLastMatches && window._labLastMatches[matchIdx]){
+    matches = window._labLastMatches;
+    m = matches[matchIdx];
+    p = window._labLastPerfTemp;
+  } else {
+    // Buscar perfil guardado por ID
+    const perfs = labGetPerfiles();
+    p = perfs.find(x=>x.id===_labDetId||x.id===_labModalId);
+    if(!p) return;
+    matches = labMatch(p);
+    m = matches[matchIdx];
+  }
+
   if(!m) return;
   const u = m.unidad;
 
@@ -6333,21 +6344,39 @@ function labAbrirEnCotizador(matchIdx){
     }
 
     setTimeout(()=>{
-      // Cargar marca
-      const marcaEl = $$('marca');
-      if(marcaEl && u.marca){
-        marcaEl.value = u.marca.toUpperCase();
-        marcaEl.disabled = false;
-        if(typeof onMarca === 'function') onMarca();
+      if(u._esUsado && u.id){
+        // Para usados del stock: seleccionar directamente por ID
+        const stkEl = $$('stk-sel');
+        if(stkEl){
+          stkEl.value = u.id;
+          if(typeof onStkSel === 'function') onStkSel();
+        } else {
+          // Fallback: setear campos manualmente
+          if($$('pa1')){ $$('pa1').value=u.precio||0; }
+          if($$('anno')){ $$('anno').value=u.anno||''; $$('anno').disabled=false; }
+          if($$('color')){ $$('color').value=u.color||''; }
+          if($$('km')){ $$('km').value=u.km||0; }
+          if(typeof cP==='function') cP();
+        }
+      } else {
+        // Para 0km: cargar marca/modelo normalmente
+        const marcaEl = $$('marca');
+        if(marcaEl && u.marca){
+          marcaEl.value = u.marca.toUpperCase();
+          marcaEl.disabled = false;
+          if(typeof onMarca === 'function') onMarca();
+        }
       }
 
       setTimeout(()=>{
-        // Cargar modelo
-        const modeloEl = $$('modelo');
-        if(modeloEl && u.modelo){
-          modeloEl.value = u.modelo.toUpperCase();
-          modeloEl.disabled = false;
-          if(typeof onModelo === 'function') onModelo();
+        // Cargar modelo (solo para 0km)
+        if(!u._esUsado){
+          const modeloEl = $$('modelo');
+          if(modeloEl && u.modelo){
+            modeloEl.value = u.modelo.toUpperCase();
+            modeloEl.disabled = false;
+            if(typeof onModelo === 'function') onModelo();
+          }
         }
 
         // Precio
@@ -6356,10 +6385,12 @@ function labAbrirEnCotizador(matchIdx){
           if(pa1){ pa1.value = u.precio; if(typeof cP === 'function') cP(); }
         }
 
-        // Año / color / km / dominio
-        if(u.anno){ const el=$$('anno'); if(el){el.value=u.anno;el.disabled=false;} }
-        if(u.color){ const el=$$('color'); if(el) el.value=u.color; }
-        if(u.km){ const el=$$('km'); if(el) el.value=u.km; }
+        // Año / color / km
+        if(!u._esUsado){
+          if(u.anno){ const el=$$('anno'); if(el){el.value=u.anno;el.disabled=false;} }
+          if(u.color){ const el=$$('color'); if(el) el.value=u.color; }
+          if(u.km){ const el=$$('km'); if(el) el.value=u.km; }
+        }
 
         // Monto del crédito = lo que necesita financiar
         if(m.campana && m.necesita > 0){
@@ -6658,6 +6689,8 @@ function labCalcMatch(){
     aceptaSimilares:$$('lf-acepta-similares')?.checked!==false,
   };
   const ms = labMatch(perfTemp);
+  window._labLastPerfTemp = perfTemp;
+  window._labLastMatches  = ms;
   const ml=$$('lf-match-lista'), mp=$$('lf-match-preview'), me=$$('lf-match-empty');
   if(!ml||!mp||!me) return;
 
