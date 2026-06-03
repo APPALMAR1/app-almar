@@ -1129,8 +1129,8 @@ input[type=text]#p-obs{background:#F5F7FA!important;border:1px solid #D5DCE6!imp
     <div style="flex:1"><label class="m" style="font-size:10px">Modelo deseado</label><input type="text" id="lf-busca-modelo" placeholder="Ej: Hilux" oninput="labCalcMatch()" style="margin:2px 0 0"></div>
   </div>
   <div style="display:flex;gap:8px;margin-bottom:8px">
-    <div style="flex:1"><label class="m" style="font-size:10px">Segmento buscado</label>
-      <select id="lf-segmento" onchange="labCalcMatch()" style="margin:2px 0 0">
+    <div style="flex:1"><label class="m" style="font-size:10px">Segmento buscado <span style="color:#e74c3c;font-weight:900">*</span></label>
+      <select id="lf-segmento" onchange="labCalcMatch()" style="margin:2px 0 0;border-color:rgba(239,125,0,.5)">
         <option value="">Cualquier segmento</option>
         <option value="A">A — Citycar / Chico</option>
         <option value="B">B — Compacto / Hatchback</option>
@@ -6382,6 +6382,18 @@ function labCalcMatch(){
   if(modoContado && contado<=0){
     if($$('lf-match-preview')) $$('lf-match-preview').style.display='none';
     if($$('lf-match-empty'))   $$('lf-match-empty').style.display='none';
+    return;
+  }
+
+  // ── VALIDACIÓN: requiere segmento antes de mostrar matches ───────────────
+  const segVal = ($$('lf-segmento')?.value||'').trim();
+  if(!segVal){
+    if($$('lf-match-preview')) $$('lf-match-preview').style.display='none';
+    const empty=$$('lf-match-empty');
+    if(empty){
+      empty.style.display='flex';
+      empty.innerHTML='<div style="text-align:center;padding:20px"><div style="font-size:28px;margin-bottom:8px">🎯</div><div style="font-weight:700;color:var(--t);margin-bottom:6px">Seleccioná un segmento</div><div style="font-size:11px;color:var(--m)">Elegí el tipo de vehículo que busca el cliente<br>para evitar mostrar modelos que no le interesan.</div></div>';
+    }
     return;
   }
 
