@@ -6357,6 +6357,9 @@ function labCalcMatch(){
   const total     = modoContado ? contado : entrega+partePago+cheques;
   if($$('lf-total-disp')) $$('lf-total-disp').textContent=fmt(total);
 
+  // Limpiar estado previo antes de re-evaluar
+  if($$('lf-match-empty')) $$('lf-match-empty').style.display='none';
+
   // Modo financiación: requiere AMBOS campos (entrega + cuota) para mostrar coincidencias
   if(!modoContado){
     if(total<=0 && cuotaMax<=0){
