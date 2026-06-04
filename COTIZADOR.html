@@ -1132,11 +1132,11 @@ input[type=text]#p-obs{background:#F5F7FA!important;border:1px solid #D5DCE6!imp
     <div style="flex:1"><label class="m" style="font-size:10px">Segmento buscado <span style="color:#e74c3c;font-weight:900">*</span></label>
       <select id="lf-segmento" onchange="labCalcMatch()" style="margin:2px 0 0;border-color:rgba(239,125,0,.5)">
         <option value="">Cualquier segmento</option>
-        <option value="A">A — Citycar / Chico</option>
-        <option value="B">B — Compacto / Hatchback</option>
-        <option value="C">C — Sedán / SUV mediano</option>
-        <option value="D">D — SUV grande / Pickup</option>
-        <option value="SUV">SUV (todos)</option>
+        <option value="A">A — Citycar / Chico (Mobi, Ka, QQ)</option>
+        <option value="B">B — Subcompacto (208, Onix, Polo, C3, Clio…)</option>
+        <option value="C">C — Compacto (Golf, Cruze, Corolla, 308…)</option>
+        <option value="SUV">SUV / Crossover (2008, Duster, Taos, Aircross…)</option>
+        <option value="PICKUP">Pick-up / Utilitario (Hilux, Amarok, Strada, Toro…)</option>
         <option value="Pickup">Pickup / Utilitario</option>
       </select>
     </div>
@@ -5565,6 +5565,47 @@ function labSegScore(marcaMod1, marcaMod2){
   return 0;
 }
 
+// Mapa de segmentos por marca+modelo (fuente: Infoauto)
+// seg: A=Citycar, B=Subcompacto, C=Compacto, D=Mediano, SUV=SUV/Crossover, PICKUP=Pick-up
+const SEG_D = {
+  "CHERY QQ":{"seg":"A","car":"HATCHBACK"},
+  "CHEVROLET AGILE":{"seg":"B","car":"HATCHBACK"},
+  "CHEVROLET CRUZE":{"seg":"C","car":"SEDAN"},
+  "CHEVROLET ONIX":{"seg":"B","car":"HATCHBACK"},
+  "CHEVROLET ONIX PLUS":{"seg":"B","car":"SEDAN"},
+  "CHEVROLET S10":{"seg":"PICKUP","car":"PICKUP"},
+  "CITROEN C3":{"seg":"B","car":"HATCHBACK"},
+  "CITROEN C3 AIRCROSS":{"seg":"SUV","car":"SUV"},
+  "DS DS 3":{"seg":"B","car":"HATCHBACK"},
+  "FIAT CRONOS":{"seg":"B","car":"SEDAN"},
+  "FIAT MOBI":{"seg":"A","car":"HATCHBACK"},
+  "FIAT STRADA":{"seg":"PICKUP","car":"PICKUP"},
+  "FIAT TORO":{"seg":"PICKUP","car":"PICKUP"},
+  "FORD F 150":{"seg":"PICKUP","car":"PICKUP"},
+  "FORD FIESTA":{"seg":"B","car":"HATCHBACK"},
+  "FORD KA":{"seg":"A","car":"HATCHBACK"},
+  "NISSAN SENTRA":{"seg":"C","car":"SEDAN"},
+  "PEUGEOT 2008":{"seg":"SUV","car":"SUV"},
+  "PEUGEOT 208":{"seg":"B","car":"HATCHBACK"},
+  "PEUGEOT 308":{"seg":"C","car":"HATCHBACK"},
+  "PEUGEOT 408":{"seg":"C","car":"SEDAN"},
+  "RENAULT CLIO":{"seg":"B","car":"HATCHBACK"},
+  "RENAULT DUSTER":{"seg":"SUV","car":"SUV"},
+  "RENAULT FLUENCE":{"seg":"C","car":"SEDAN"},
+  "RENAULT SANDERO":{"seg":"B","car":"HATCHBACK"},
+  "TOYOTA COROLLA":{"seg":"C","car":"SEDAN"},
+  "TOYOTA COROLLA CROSS":{"seg":"SUV","car":"SUV"},
+  "TOYOTA ETIOS":{"seg":"B","car":"SEDAN"},
+  "TOYOTA HILUX":{"seg":"PICKUP","car":"PICKUP"},
+  "VOLKSWAGEN AMAROK":{"seg":"PICKUP","car":"PICKUP"},
+  "VOLKSWAGEN GOL":{"seg":"B","car":"HATCHBACK"},
+  "VOLKSWAGEN GOLF":{"seg":"C","car":"HATCHBACK"},
+  "VOLKSWAGEN POLO":{"seg":"B","car":"HATCHBACK"},
+  "VOLKSWAGEN SAVEIRO":{"seg":"PICKUP","car":"PICKUP"},
+  "VOLKSWAGEN TAOS":{"seg":"SUV","car":"SUV"},
+  "VOLKSWAGEN VENTO":{"seg":"C","car":"SEDAN"},
+};
+
 // Retorna el segmento de una unidad del stock
 function labGetSeg(u){
   const key = ((u.marca||'')+' '+(u.modelo||'')).toUpperCase().trim();
@@ -5682,11 +5723,14 @@ function labMatch(perfil){
   // Helper: filtra por segmento si el cliente indicó preferencia
   function encuadraSegmento(u){
     if(!segPref) return true;
-    const seg = ((typeof SEG_D !== 'undefined' && SEG_D) ? (SEG_D[((u.marca||'')+' '+(u.modelo||'')).toUpperCase().trim()]||{}) : {});
-    const carroceria = (seg.car||u.carroceria||'').toUpperCase();
-    const segAuto = (seg.seg||'').toUpperCase();
-    if(segPref==='SUV') return carroceria.includes('SUV');
-    if(segPref==='PICKUP') return carroceria.includes('PICKUP') || carroceria.includes('FURGON') || carroceria.includes('UTILITARIO');
+    const key = ((u.marca||'')+' '+(u.modelo||'')).toUpperCase().trim();
+    const seg = SEG_D[key];
+    if(!seg) return false; // modelo no mapeado → excluir cuando hay filtro activo
+    const carroceria = (seg.car||'').toUpperCase();
+    const segAuto    = (seg.seg||'').toUpperCase();
+    if(segPref==='SUV')    return carroceria==='SUV';
+    if(segPref==='PICKUP') return carroceria==='PICKUP';
+    // Para A, B, C, D: coincidencia exacta de segmento
     return segAuto === segPref;
   }
 
