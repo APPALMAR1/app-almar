@@ -5694,8 +5694,8 @@ function labMatch(perfil){
   if(modoContado){
     if(contado <= 0) return [];
     const unidades = [
-      ...(typeof STK_D!=="undefined"?STK_D:[]).filter(u=>{ const e=(u.estado||'').toLowerCase(); return u.precio>0&&(e==='disponible'||e==='nuevo ingreso'||e==='en preparacion'); }).map(u=>({...u,_tipo:'usado',_esUsado:true})),
-      ...(typeof OKM_D!=="undefined"?OKM_D:[]).filter(u=>u.precio>0).map(u=>({...u,_tipo:'0km',_esUsado:false}))
+      ...(typeof stk!=='undefined'&&stk.length?stk:(typeof STK_D!=='undefined'?STK_D:[])).filter(u=>{ const e=(u.estado||'').toLowerCase(); return u.precio>0&&(e==='disponible'||e==='nuevo ingreso'||e==='en preparacion'); }).map(u=>({...u,_tipo:'usado',_esUsado:true})),
+      ...(typeof okm!=='undefined'&&okm.length?okm:(typeof OKM_D!=='undefined'?OKM_D:[])).filter(u=>u.precio>0&&(u.estado||'DISPONIBLE').toUpperCase()!=='VENDIDO').map(u=>({...u,_tipo:'0km',_esUsado:false}))
     ];
     const busca = perfil.buscaMarca&&perfil.buscaModelo ? ((perfil.buscaMarca+' '+perfil.buscaModelo).toUpperCase().trim()) : null;
     const results = [];
@@ -6039,9 +6039,17 @@ function labAbrirEnCotizador(matchIdx){
                 annoEl.value=String(anno);
                 annoEl.disabled=false;
                 if(typeof onAuto==='function') onAuto();
+                // Forzar precio pa1 desde el match (onAuto puede no cargarlo si el stock cambió)
+                setTimeout(()=>{
+                  const pa1=$$('pa1');
+                  if(pa1&&(!pa1.value||parseFloat(pa1.value)<=0)&&u.precio>0){
+                    pa1.value=u.precio;
+                    if(typeof cP==='function') cP();
+                  }
+                },300);
               }
               // Cargar financiación del match
-              setTimeout(()=>_labCargarFinanciacion(m,p),200);
+              setTimeout(()=>_labCargarFinanciacion(m,p),500);
             },150);
           },150);
         },150);
