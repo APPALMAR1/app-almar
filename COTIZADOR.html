@@ -3722,6 +3722,7 @@ function rCampMini(){
 
 function mostrarSubCampanas(banco, camps){
   const t=$$('tipo')?.value||'';
+  const ma=($$('marca')?.value||'').toUpperCase();
   const esUsado=t==='usado'||t==='mercado_usado';
   camps=camps.filter(c=>{
     if(esUsado){
@@ -3737,7 +3738,6 @@ function mostrarSubCampanas(banco, camps){
   if(!camps.length) return;
 
   // Ordenar: campañas de marca específica primero, generales después
-  const ma=($$('marca')?.value||'').toUpperCase();
   camps.sort((a,b)=>{
     const aMarca = a.marca && ma && a.marca.toUpperCase()===ma ? 0 : 1;
     const bMarca = b.marca && ma && b.marca.toUpperCase()===ma ? 0 : 1;
