@@ -3729,6 +3729,14 @@ function mostrarSubCampanas(banco, camps){
     }
   });
   if(!camps.length) return;
+
+  // Ordenar: campañas de marca específica primero, generales después
+  const ma=($$('marca')?.value||'').toUpperCase();
+  camps.sort((a,b)=>{
+    const aMarca = a.marca && ma && a.marca.toUpperCase()===ma ? 0 : 1;
+    const bMarca = b.marca && ma && b.marca.toUpperCase()===ma ? 0 : 1;
+    return aMarca - bMarca;
+  });
   window._subMenuAbierto=true;
   // Usar div separado para el submenu, fuera del flujo de calcCred
   let sub=$$('sub-camp-menu');
@@ -3754,7 +3762,26 @@ function mostrarSubCampanas(banco, camps){
   tit.textContent=banco+' \u2014 Eleg� una l�nea:';
   sub.appendChild(tit);
 
+  // Encabezado campañas de marca si existen
+  if(camps.some(c=>c.marca && ma && c.marca.toUpperCase()===ma)){
+    const marcaTit=document.createElement('div');
+    marcaTit.style.cssText='font-size:9px;font-weight:800;letter-spacing:1px;color:#ef7d00;text-transform:uppercase;padding:4px 0 6px';
+    marcaTit.textContent='⭐ Campaña '+ma;
+    sub.appendChild(marcaTit);
+  }
+
+  let mostrandoGenerales = false;
   camps.forEach(c=>{
+    // Separador entre campañas de marca y generales
+    if(!mostrandoGenerales && (!c.marca || c.marca.toUpperCase()!==ma)){
+      mostrandoGenerales = true;
+      if(camps.some(x=>x.marca && ma && x.marca.toUpperCase()===ma)){
+        const sep=document.createElement('div');
+        sep.style.cssText='font-size:9px;font-weight:800;letter-spacing:1px;color:var(--b);text-transform:uppercase;padding:6px 0 4px;border-top:1px solid var(--brd);margin-top:4px';
+        sep.textContent='🏦 Líneas generales';
+        sub.appendChild(sep);
+      }
+    }
     const seleccionado=credCampId===c.id;
     const d=document.createElement('div');
     d.style.cssText=`padding:10px 14px;border-radius:8px;cursor:pointer;border:1.5px solid ${seleccionado?'var(--b)':'var(--brd)'};background:${seleccionado?'rgba(0,105,180,.12)':'var(--bg)'};margin-bottom:4px`;
