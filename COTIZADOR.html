@@ -5840,7 +5840,26 @@ function labGetPerfiles(){
   catch(e){ return []; }
 }
 function labSetPerfiles(arr){
+  // Guardar local inmediatamente
   localStorage.setItem('lab_perfiles', JSON.stringify(arr));
+  // Sincronizar con Apps Script en segundo plano
+  fetch(PROPUESTAS_URL, {
+    method:'POST',
+    body: JSON.stringify({ action:'saveLabPerfiles', perfiles: arr })
+  }).catch(()=>{});
+}
+// Cargar perfiles desde Apps Script (sincroniza entre dispositivos)
+function labSyncPerfiles(callback){
+  fetch(PROPUESTAS_URL+'?action=getLabPerfiles&t='+Date.now(),{cache:'no-store'})
+    .then(r=>r.json())
+    .then(d=>{
+      if(d.data&&d.data.length>0){
+        localStorage.setItem('lab_perfiles', JSON.stringify(d.data));
+      }
+      if(callback) callback();
+    })
+    .catch(()=>{ if(callback) callback(); });
+}
 }
 function labUID(){ return 'lab_'+Date.now()+'_'+Math.random().toString(36).slice(2,7); }
 const _hoy = new Date().getFullYear();
@@ -6419,7 +6438,8 @@ function rLab(){
     fetch(PROPUESTAS_URL+'?action=getClientes&t='+Date.now(),{cache:'no-store'})
       .then(r=>r.json()).then(d=>{window._clientesCache=d.data||d||[];}).catch(()=>{});
   }
-  labFiltrar();
+  // Sincronizar perfiles desde Apps Script antes de renderizar
+  labSyncPerfiles(()=>labFiltrar());
 }
 
 // ── Filtrar y renderizar lista ────────────────────────────────────
