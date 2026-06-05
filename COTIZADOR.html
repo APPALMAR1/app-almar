@@ -7107,7 +7107,7 @@ async function abrirModalInfoauto(tipoVenta){
     pmSel.innerHTML='<option value="">⏳ Cargando…</option>';
     pmShowLoad(true);
     try{
-      const r=await fetch(LAB_PROXY+'/api/brands');
+      const r=await fetch(IA_PROXY+'/api/brands');
       if(!r.ok) throw new Error('HTTP '+r.status);
       const d=await r.json();
       const brands=d.brands||d.data||d||[];
@@ -7143,7 +7143,7 @@ async function pmOnMarca(){
   if(!brandId)return;
   pmShowLoad(true);
   try{
-    const r=await fetch(LAB_PROXY+'/api/models?brand_id='+encodeURIComponent(brandId));
+    const r=await fetch(IA_PROXY+'/api/models?brand_id='+encodeURIComponent(brandId));
     if(!r.ok) throw new Error('HTTP '+r.status);
     const d=await r.json();
     const modelos=d.models||d.data||d||[];
@@ -7181,7 +7181,7 @@ async function pmOnAnno(){
   if(!year||!_pmState.brandId||!_pmState.grupo)return;
   pmShowLoad(true);
   try{
-    const url=LAB_PROXY+'/api/versions?brand_id='+encodeURIComponent(_pmState.brandId)+'&grupo='+encodeURIComponent(_pmState.grupo)+'&year='+encodeURIComponent(year);
+    const url=IA_PROXY+'/api/versions?brand_id='+encodeURIComponent(_pmState.brandId)+'&grupo='+encodeURIComponent(_pmState.grupo)+'&year='+encodeURIComponent(year);
     const r=await fetch(url);
     if(!r.ok) throw new Error('HTTP '+r.status);
     const d=await r.json();
@@ -7209,7 +7209,7 @@ async function pmOnVersion(){
   if(!codia||!_pmState.year)return;
   pmShowLoad(true);
   try{
-    const url=LAB_PROXY+'/api/price?codia='+encodeURIComponent(codia)+'&year='+encodeURIComponent(_pmState.year);
+    const url=IA_PROXY+'/api/price?codia='+encodeURIComponent(codia)+'&year='+encodeURIComponent(_pmState.year);
     const r=await fetch(url);
     if(!r.ok) throw new Error('HTTP '+r.status);
     const d=await r.json();
