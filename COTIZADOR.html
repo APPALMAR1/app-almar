@@ -3661,8 +3661,12 @@ function rCampMini(){
   function crearBotonBanco(nombreBanco, esMarca){
     let campsDeBanco=act.filter(c=>c.banco===nombreBanco);
     if(esMarca){
-      // Financieras de marca: filtrar por modo usado/0km
-      campsDeBanco=campsDeBanco.filter(c=>esUsado?c.usados===true:!c.usados);
+      // Financieras de marca: filtrar por modo usado/0km Y por marca exacta
+      campsDeBanco=campsDeBanco.filter(c=>{
+        const modoOk = esUsado ? c.usados===true : !c.usados;
+        const marcaOk = !c.marca || c.marca.toUpperCase()===ma;
+        return modoOk && marcaOk;
+      });
     } else {
       // Bancos generales: no tienen usados:true, aplican siempre
       campsDeBanco=campsDeBanco.filter(c=>!c.usados&&!c.marca);
