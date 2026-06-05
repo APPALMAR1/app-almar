@@ -7132,6 +7132,9 @@ function _iapIniciar(){
 }
 
 async function iaPropAbrir(){
+  // Cerrar cualquier otro modal abierto
+  const pmOv=$$('pm-overlay'); if(pmOv) pmOv.style.display='none';
+  const iaOv=$$('ia-modal-overlay'); if(iaOv) iaOv.style.display='none';
   _iapBrandId=null; _iapBrandName=''; _iapGrupoIdx=null; _iapAnio=null; _iapCodia=null;
   $p('iap-paso2').style.display='none';
   $p('iap-paso3').style.display='none';
