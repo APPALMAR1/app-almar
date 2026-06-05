@@ -2252,6 +2252,8 @@ function onTipo(){
   if(t==='mercado_usado'){
     $$('subtipo').style.display='none';
     $$('subtipo').disabled=true;
+    // Reset completo del modal antes de abrir
+    _iapBrands=null; _iapModels=null; _iapBrandId=null; _iapBrandName=''; _iapGrupoIdx=null; _iapAnio=null; _iapCodia=null;
     _iapIniciar();
     return;
   }
