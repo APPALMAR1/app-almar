@@ -3720,14 +3720,15 @@ function mostrarSubCampanas(banco, camps){
   const esUsado=t==='usado'||t==='mercado_usado';
   camps=camps.filter(c=>{
     if(esUsado){
-      // En modo usado: mostrar campañas con usados:true (PSA Finance usados, FCA usados)
-      // O campañas de bancos generales sin marca y sin usados (ICBC, Santander, etc.)
       return c.usados===true || (!c.marca&&!c.usados);
     } else {
-      // En modo 0km: mostrar campañas sin usados
       return !c.usados;
     }
   });
+  // Excluir campañas de OTRAS marcas (ej: elegí DFSK → no mostrar campañas de FOTON)
+  if(ma){
+    camps=camps.filter(c=>!c.marca || c.marca.toUpperCase()===ma);
+  }
   if(!camps.length) return;
 
   // Ordenar: campañas de marca específica primero, generales después
