@@ -2058,6 +2058,12 @@ function login(u){
   $$('p-vend').value=(esGerencia(u)&&!esMaster(u))?'':u.name;
   $$('dfec').textContent=tod();
   bDr(); bBN(); rCampMini(); rCampCot(); uHB();
+  // Precargar marcas Infoauto en segundo plano para que estén listas
+  setTimeout(()=>{
+    if(!_iaBrands) fetch(IA_PROXY+'/api/brands').then(r=>r.json()).then(d=>{
+      if(d.ok&&d.brands){ _iaBrands=d.brands; _iapBrands=d.brands; }
+    }).catch(()=>{});
+  }, 2000);
   // Cargar cache de clientes para autocompletado (silencioso)
   fetch(PROPUESTAS_URL+'?action=getClientes&t='+Date.now(),{cache:'no-store'})
     .then(r=>r.json())
