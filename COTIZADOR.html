@@ -458,6 +458,11 @@ select option{background:var(--s2)}
 .divider{height:1px;background:var(--bdr);margin:8px 0}
 
 /* PRINT */
+/* Modales Infoauto: forzar colores independiente del tema del SO */
+#pm-overlay select,#pm-overlay option,#ia-prop-overlay select,#ia-prop-overlay option{color:#111!important;background:#fff!important}
+#pm-overlay select:disabled,#ia-prop-overlay select:disabled{background:#f0f0f0!important;color:#666!important}
+</style>
+<style>
 @media print{
 @page{size:A4 portrait;margin:8mm 10mm}
 *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;animation:none!important;transition:none!important}
