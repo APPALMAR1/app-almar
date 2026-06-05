@@ -1299,100 +1299,6 @@ input[type=text]#p-obs{background:#F5F7FA!important;border:1px solid #D5DCE6!imp
 </div>
 </div>
 
-<div id="ia-prop-overlay" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.85);z-index:5000;overflow-y:auto;padding:20px 0">
-  <div style="max-width:500px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.7);color:#111">
-    <div style="background:var(--r);padding:14px 16px;display:flex;align-items:center;justify-content:space-between">
-      <div>
-        <div style="font-family:var(--hf);font-weight:900;font-size:14px;color:#fff" id="iap-modal-title">📊 Buscar vehículo en Infoauto</div>
-        <div id="iap-modal-sub" style="font-size:10px;color:rgba(255,255,255,.7);margin-top:2px">Multimarcas Usado — precio de referencia bancaria</div>
-      </div>
-      <div onclick="iaPropCerrar()" style="cursor:pointer;color:rgba(255,255,255,.7);font-size:22px;line-height:1;padding:0 4px">✕</div>
-    </div>
-    <div style="padding:14px 16px">
-      <!-- PASO 1: MARCA -->
-      <div style="margin-bottom:12px">
-        <div style="font-size:9px;font-weight:800;letter-spacing:1px;color:#e67e22;text-transform:uppercase;margin-bottom:6px">1 · Marca</div>
-        <input type="text" id="iap-marca-input" placeholder="Escribí para filtrar..." autocomplete="off"
-          oninput="iapFiltrarMarcas(this.value)"
-          style="margin:0 0 6px;font-size:12px;width:100%;color:#111;background:#fff;border:1.5px solid #ddd;border-radius:7px;padding:8px 10px">
-        <div id="iap-marca-lista" style="max-height:150px;overflow-y:auto;border:1px solid var(--bdr);border-radius:6px"></div>
-      </div>
-      <!-- PASO 2: MODELO -->
-      <div id="iap-paso2" style="margin-bottom:12px;display:none">
-        <div style="font-size:9px;font-weight:800;letter-spacing:1px;color:#e67e22;text-transform:uppercase;margin-bottom:4px">2 · Modelo</div>
-        <div id="iap-marca-sel" style="font-size:11px;color:#41c0f0;font-weight:700;margin-bottom:6px"></div>
-        <input type="text" id="iap-modelo-input" placeholder="Escribí para filtrar..." autocomplete="off"
-          oninput="iapFiltrarModelos(this.value)"
-          style="margin:0 0 6px;font-size:12px;width:100%;color:#111;background:#fff;border:1.5px solid #ddd;border-radius:7px;padding:8px 10px">
-        <div id="iap-modelo-lista" style="max-height:150px;overflow-y:auto;border:1px solid var(--bdr);border-radius:6px"></div>
-        <div id="iap-modelo-loading" style="display:none;font-size:11px;color:var(--m);padding:10px;text-align:center">⏳ Cargando modelos...</div>
-      </div>
-      <!-- PASO 3: AÑO -->
-      <div id="iap-paso3" style="margin-bottom:12px;display:none">
-        <div style="font-size:9px;font-weight:800;letter-spacing:1px;color:#e67e22;text-transform:uppercase;margin-bottom:4px">3 · Año</div>
-        <div id="iap-modelo-sel" style="font-size:11px;color:#41c0f0;font-weight:700;margin-bottom:8px"></div>
-        <div id="iap-anio-grid" style="display:flex;flex-wrap:wrap;gap:6px"></div>
-      </div>
-      <!-- PASO 4: VERSION -->
-      <div id="iap-paso4" style="margin-bottom:8px;display:none">
-        <div style="font-size:9px;font-weight:800;letter-spacing:1px;color:var(--y);text-transform:uppercase;margin-bottom:4px">
-          4 · Versión <span id="iap-ver-count" style="color:var(--m);font-weight:400;font-size:9px"></span>
-        </div>
-        <div id="iap-anio-sel" style="font-size:11px;color:#41c0f0;font-weight:700;margin-bottom:6px"></div>
-        <div id="iap-version-lista" style="max-height:200px;overflow-y:auto;display:flex;flex-direction:column;gap:4px"></div>
-        <div id="iap-ver-loading" style="display:none;font-size:11px;color:var(--m);padding:10px;text-align:center">⏳ Obteniendo precio...</div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- MODAL BUSCADOR INFOAUTO -->
-
-<div id="ia-modal-overlay" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.8);z-index:4000;overflow-y:auto;padding:20px 0">
-  <div style="max-width:480px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.7);color:#111">
-    <!-- Header -->
-    <div style="background:var(--r);padding:14px 16px;display:flex;align-items:center;justify-content:space-between">
-      <div style="font-family:var(--hf);font-weight:900;font-size:14px;color:#fff">🔍 Buscar precio Infoauto</div>
-      <div onclick="labIACerrar()" style="cursor:pointer;color:rgba(255,255,255,.7);font-size:20px;padding:0 4px">✕</div>
-    </div>
-    <!-- Pasos -->
-    <div style="padding:14px 16px">
-      <!-- PASO 1: MARCA -->
-      <div style="margin-bottom:12px">
-        <div style="font-size:9px;font-weight:800;letter-spacing:1px;color:#e67e22;text-transform:uppercase;margin-bottom:6px">1 · Marca</div>
-        <input type="text" id="ia-marca-input" placeholder="Escribí para filtrar..." autocomplete="off"
-          oninput="iaFiltrarMarcas(this.value)"
-          style="margin:0 0 6px;font-size:12px;width:100%;color:#111;background:#fff;border:1.5px solid #ddd;border-radius:7px;padding:8px 10px">
-        <div id="ia-marca-lista" style="max-height:160px;overflow-y:auto;border:1px solid #ddd;border-radius:6px;background:#fff"></div>
-      </div>
-      <!-- PASO 2: MODELO -->
-      <div id="ia-paso2" style="margin-bottom:12px;display:none">
-        <div style="font-size:9px;font-weight:800;letter-spacing:1px;color:var(--y);text-transform:uppercase;margin-bottom:6px">2 · Modelo</div>
-        <div id="ia-marca-sel" style="font-size:11px;color:#41c0f0;font-weight:700;margin-bottom:6px"></div>
-        <input type="text" id="ia-modelo-input" placeholder="Escribí para filtrar..." autocomplete="off"
-          oninput="iaFiltrarModelos(this.value)"
-          style="margin:0 0 6px;font-size:12px;width:100%;color:#111;background:#fff;border:1.5px solid #ddd;border-radius:7px;padding:8px 10px">
-        <div id="ia-modelo-lista" style="max-height:160px;overflow-y:auto;border:1px solid #ddd;border-radius:6px;background:#fff"></div>
-        <div id="ia-modelo-loading" style="display:none;font-size:11px;color:var(--m);padding:10px;text-align:center">⏳ Cargando modelos...</div>
-      </div>
-      <!-- PASO 3: AÑO -->
-      <div id="ia-paso3" style="margin-bottom:12px;display:none">
-        <div style="font-size:9px;font-weight:800;letter-spacing:1px;color:var(--y);text-transform:uppercase;margin-bottom:6px">3 · Año</div>
-        <div id="ia-modelo-sel" style="font-size:11px;color:#41c0f0;font-weight:700;margin-bottom:8px"></div>
-        <div id="ia-anio-grid" style="display:flex;flex-wrap:wrap;gap:6px"></div>
-      </div>
-      <!-- PASO 4: VERSION -->
-      <div id="ia-paso4" style="margin-bottom:12px;display:none">
-        <div style="font-size:9px;font-weight:800;letter-spacing:1px;color:var(--y);text-transform:uppercase;margin-bottom:6px">4 · Versión <span id="ia-ver-count" style="color:var(--m);font-weight:400;font-size:9px"></span></div>
-        <div id="ia-anio-sel" style="font-size:11px;color:#41c0f0;font-weight:700;margin-bottom:6px"></div>
-        <div id="ia-version-lista" style="max-height:200px;overflow-y:auto;display:flex;flex-direction:column;gap:4px"></div>
-        <div id="ia-ver-loading" style="display:none;font-size:11px;color:var(--m);padding:10px;text-align:center">⏳ Obteniendo precio...</div>
-      </div>
-    </div>
-  </div>
-</div>
-
-
 </div><!-- /main -->
 <div id="bn"></div>
 
@@ -2058,12 +1964,6 @@ function login(u){
   $$('p-vend').value=(esGerencia(u)&&!esMaster(u))?'':u.name;
   $$('dfec').textContent=tod();
   bDr(); bBN(); rCampMini(); rCampCot(); uHB();
-  // Precargar marcas Infoauto en segundo plano para que estén listas
-  setTimeout(()=>{
-    if(!_iaBrands) fetch(IA_PROXY+'/api/brands').then(r=>r.json()).then(d=>{
-      if(d.ok&&d.brands){ _iaBrands=d.brands; _iapBrands=d.brands; }
-    }).catch(()=>{});
-  }, 2000);
   // Cargar cache de clientes para autocompletado (silencioso)
   fetch(PROPUESTAS_URL+'?action=getClientes&t='+Date.now(),{cache:'no-store'})
     .then(r=>r.json())
@@ -2249,16 +2149,10 @@ function onTipo(){
   $$('ar').style.display='none'; $$('ar-al').innerHTML='';
   const t=$$('tipo').value; if(!t)return;
   // Multimarcas 0km y Usado → buscador Infoauto en cascada
-  if(t==='mercado'){
+  if(t==='mercado'||t==='mercado_usado'){
     $$('subtipo').style.display='none';
     $$('subtipo').disabled=true;
     abrirModalInfoauto(t);
-    return;
-  }
-  if(t==='mercado_usado'){
-    $$('subtipo').style.display='none';
-    $$('subtipo').disabled=true;
-    _iapIniciar();
     return;
   }
   $$('subtipo').style.display='none';
@@ -6947,13 +6841,13 @@ async function _iaLoadBrands(){
 
 function _iaRenderMarcas(list){
   const cont=$ia('ia-marca-lista');
-  if(!list||!list.length){ cont.innerHTML='<div style="padding:8px;font-size:11px;color:#666">Sin resultados</div>'; return; }
+  if(!list||!list.length){ cont.innerHTML='<div style="padding:8px;font-size:11px;color:var(--m)">Sin resultados</div>'; return; }
   const html=list.slice(0,100).map((b,i)=>
     `<div data-id="${b.id}" data-name="${b.name.replace(/"/g,'&quot;')}"
-      style="padding:10px 14px;cursor:pointer;font-size:12px;color:#111;border-bottom:1px solid #eee;background:#fff"
+      style="padding:10px 14px;cursor:pointer;font-size:12px;color:var(--t);border-bottom:1px solid var(--bdr)"
       onmousedown="iaSelMarca(this)"
-      onmouseover="this.style.background='#e8f4fd'"
-      onmouseout="this.style.background='#fff'">${b.name}</div>`
+      onmouseover="this.style.background='rgba(65,192,240,.12)'"
+      onmouseout="this.style.background=''">${b.name}</div>`
   ).join('');
   cont.innerHTML=html;
 }
@@ -6997,15 +6891,15 @@ async function iaSelMarca(el){
 // ── MODELOS ─────────────────────────────────────────────────
 function _iaRenderModelos(list){
   const cont=$ia('ia-modelo-lista');
-  if(!list||!list.length){ cont.innerHTML='<div style="padding:8px;font-size:11px;color:#666">Sin modelos</div>'; return; }
+  if(!list||!list.length){ cont.innerHTML='<div style="padding:8px;font-size:11px;color:var(--m)">Sin modelos</div>'; return; }
   const html=list.map((m,i)=>
     `<div data-idx="${i}"
-      style="padding:10px 14px;cursor:pointer;font-size:12px;color:#111;border-bottom:1px solid #eee;background:#fff"
+      style="padding:10px 14px;cursor:pointer;font-size:12px;color:var(--t);border-bottom:1px solid var(--bdr)"
       onmousedown="iaSelModelo(this)"
-      onmouseover="this.style.background='#e8f4fd'"
-      onmouseout="this.style.background='#fff'">
-      <strong style="color:#111">${m.grupo}</strong>
-      <span style="color:#666;font-size:10px;margin-left:8px">${m.anioDesde||''}${m.anioHasta?'–'+m.anioHasta:''}</span>
+      onmouseover="this.style.background='rgba(65,192,240,.12)'"
+      onmouseout="this.style.background=''">
+      <strong>${m.grupo}</strong>
+      <span style="color:var(--m);font-size:10px;margin-left:8px">${m.anioDesde||''}${m.anioHasta?'–'+m.anioHasta:''}</span>
     </div>`
   ).join('');
   cont.innerHTML=html;
@@ -7114,305 +7008,6 @@ function labIALimpiar(){
   labCalcMatch();
 }
 
-// ══ INFOAUTO PROPUESTA COMERCIAL ══════════════════════════════
-let _iapBrands   = null;
-let _iapModels   = null;
-let _iapBrandId  = null;
-let _iapBrandName= '';
-let _iapGrupoIdx = null;
-let _iapAnio     = null;
-let _iapCodia    = null;
-
-function $p(id){ return document.getElementById(id); }
-function _iapIniciar(){
-  // Resetear selects de la propuesta
-  ['marca','modelo','version','anno'].forEach(id=>{
-    const el=$$(id); if(el){ el.innerHTML='<option value="">—</option>'; el.disabled=true; }
-  });
-  // Ocultar badge infoauto
-  const badge=$p('pa1-ia-badge'); if(badge) badge.style.display='none';
-  // Abrir modal
-  iaPropAbrir();
-}
-
-async function iaPropAbrir(){
-  // Cerrar cualquier otro modal abierto
-  const pmOv=$$('pm-overlay'); if(pmOv) pmOv.style.display='none';
-  const iaOv=$$('ia-modal-overlay'); if(iaOv) iaOv.style.display='none';
-  _iapBrandId=null; _iapBrandName=''; _iapGrupoIdx=null; _iapAnio=null; _iapCodia=null;
-  $p('iap-paso2').style.display='none';
-  $p('iap-paso3').style.display='none';
-  $p('iap-paso4').style.display='none';
-  $p('iap-marca-input').value='';
-  const t2=$p('iap-modal-title'); if(t2) t2.textContent='📊 Buscar vehículo en Infoauto';
-  const s2=$p('iap-modal-sub'); if(s2) s2.textContent='Multimarcas Usado — precio de referencia bancaria';
-  $p('ia-prop-overlay').style.display='block';
-  document.body.style.overflow='hidden';
-  if(!_iapBrands || _iapBrands===_iaBrands){
-    // Reusar cache del LAB si ya está cargado
-    if(_iaBrands){ _iapBrands=_iaBrands; _iapRenderMarcas(_iaBrands); }
-    else await _iapLoadBrands();
-  } else {
-    _iapRenderMarcas(_iapBrands);
-  }
-}
-
-function iaPropCerrar(){
-  $p('ia-prop-overlay').style.display='none';
-  document.body.style.overflow='';
-}
-
-async function _iapLoadBrands(){
-  $p('iap-marca-lista').innerHTML='<div style="padding:12px;text-align:center;color:var(--m);font-size:11px">⏳ Cargando marcas...</div>';
-  try {
-    const res=await fetch(IA_PROXY+'/api/brands');
-    const data=await res.json();
-    if(!data.ok) throw new Error(data.error);
-    _iapBrands=data.brands;
-    _iaBrands=data.brands; // Compartir cache con LAB
-    _iapRenderMarcas(data.brands);
-  } catch(e){
-    $p('iap-marca-lista').innerHTML='<div style="padding:12px;color:var(--r);font-size:11px">❌ Error cargando marcas. Verificá conexión.</div>';
-  }
-}
-
-function _iapRenderMarcas(list){
-  const cont=$p('iap-marca-lista');
-  if(!list||!list.length){ cont.innerHTML='<div style="padding:8px;font-size:11px;color:#666">Sin resultados</div>'; return; }
-  cont.innerHTML=list.slice(0,120).map(b=>
-    `<div data-id="${b.id}" data-name="${b.name.replace(/"/g,'&quot;')}"
-      style="padding:10px 14px;cursor:pointer;font-size:12px;color:#111;border-bottom:1px solid #eee;background:#fff"
-      onmousedown="iapSelMarca(this)"
-      onmouseover="this.style.background='#e8f4fd'"
-      onmouseout="this.style.background='#fff'">${b.name}</div>`
-  ).join('');
-}
-
-function iapFiltrarMarcas(q){
-  if(!_iapBrands&&!_iaBrands) return;
-  const lista=_iapBrands||_iaBrands;
-  const q2=q.toUpperCase().trim();
-  _iapRenderMarcas(!q2?lista:lista.filter(b=>b.name.toUpperCase().includes(q2)));
-}
-
-async function iapSelMarca(el){
-  const id=parseInt(el.dataset.id);
-  const name=el.dataset.name;
-  _iapBrandId=id; _iapBrandName=name; _iapGrupoIdx=null; _iapAnio=null;
-  $p('iap-marca-input').value=name;
-  $p('iap-marca-lista').innerHTML='';
-  $p('iap-marca-sel').textContent='✓ '+name;
-  $p('iap-paso2').style.display='block';
-  $p('iap-paso3').style.display='none';
-  $p('iap-paso4').style.display='none';
-  $p('iap-modelo-input').value='';
-  $p('iap-modelo-loading').style.display='block';
-  $p('iap-modelo-lista').innerHTML='';
-  _iapModels=null;
-
-  try {
-    const res=await fetch(IA_PROXY+'/api/models?brand_id='+id);
-    const data=await res.json();
-    if(!data.ok) throw new Error(data.error);
-    _iapModels=data.models;
-    $p('iap-modelo-loading').style.display='none';
-    _iapRenderModelos(_iapModels);
-  } catch(e){
-    $p('iap-modelo-loading').style.display='none';
-    $p('iap-modelo-lista').innerHTML='<div style="padding:8px;color:var(--r);font-size:11px">❌ Error cargando modelos</div>';
-  }
-}
-
-function _iapRenderModelos(list){
-  const cont=$p('iap-modelo-lista');
-  if(!list||!list.length){ cont.innerHTML='<div style="padding:8px;font-size:11px;color:#666">Sin modelos</div>'; return; }
-  cont.innerHTML=list.map((m,i)=>
-    `<div data-idx="${i}"
-      style="padding:10px 14px;cursor:pointer;font-size:12px;color:#111;border-bottom:1px solid #eee;background:#fff"
-      onmousedown="iapSelModelo(this)"
-      onmouseover="this.style.background='#e8f4fd'"
-      onmouseout="this.style.background='#fff'">
-      <strong style="color:#111">${m.grupo}</strong>
-      <span style="color:#666;font-size:10px;margin-left:8px">${m.anioDesde||''}${m.anioHasta?'–'+m.anioHasta:''}</span>
-    </div>`
-  ).join('');
-}
-
-function iapFiltrarModelos(q){
-  if(!_iapModels) return;
-  const q2=q.toUpperCase().trim();
-  _iapRenderModelos(!q2?_iapModels:_iapModels.filter(m=>m.grupo.toUpperCase().includes(q2)));
-}
-
-function iapSelModelo(el){
-  const grupo=el.querySelector('strong').textContent;
-  const m=_iapModels.find(x=>x.grupo===grupo);
-  if(!m) return;
-  _iapGrupoIdx=_iapModels.indexOf(m); _iapAnio=null;
-  $p('iap-modelo-input').value=grupo;
-  $p('iap-modelo-lista').innerHTML='';
-  $p('iap-modelo-sel').textContent='✓ '+_iapBrandName+' '+grupo;
-
-  // Setear marca y modelo en los selects de la propuesta
-  selOpts('marca',[_iapBrandName],'');
-  $$('marca').value=_iapBrandName;
-  selOpts('modelo',[grupo],'');
-  $$('modelo').value=grupo;
-
-  // Años disponibles
-  const anioMin=m.anioDesde||2000;
-  const anioMax=m.anioHasta||new Date().getFullYear();
-  const grid=$p('iap-anio-grid');
-  grid.innerHTML='';
-  for(let y=anioMax; y>=anioMin; y--){
-    const btn=document.createElement('button');
-    btn.className='btn btn-ghost btn-sm';
-    btn.style.cssText='font-size:11px;padding:5px 10px;min-width:52px';
-    btn.textContent=y;
-    btn.onclick=(()=>{ const yr=y; return ()=>iapSelAnio(yr,btn); })();
-    grid.appendChild(btn);
-  }
-  $p('iap-paso3').style.display='block';
-  $p('iap-paso4').style.display='none';
-}
-
-function iapSelAnio(anio, btnEl){
-  _iapAnio=anio;
-  $p('iap-anio-grid').querySelectorAll('button').forEach(b=>{ b.style.background=''; b.style.color=''; });
-  if(btnEl){ btnEl.style.background='var(--r)'; btnEl.style.color='#fff'; }
-  $p('iap-anio-sel').textContent='✓ Año '+anio;
-
-  // Setear año en select de propuesta
-  selOpts('anno',[anio],'');
-  $$('anno').value=anio;
-
-  const m=_iapModels[_iapGrupoIdx];
-  const versiones=(m&&m.versiones||[]).filter(v=>(v.anioDesde||0)<=anio&&(v.anioHasta||9999)>=anio);
-  const count=$p('iap-ver-count'); if(count) count.textContent='('+versiones.length+' disponibles)';
-
-  const cont=$p('iap-version-lista');
-  $p('iap-ver-loading').style.display='none';
-  cont.innerHTML=versiones.length
-    ? versiones.map(v=>
-        `<div data-codia="${v.codia}" data-desc="${(v.descripcion||'').replace(/"/g,'&quot;')}"
-          style="padding:10px 12px;cursor:pointer;font-size:11px;color:var(--t);background:var(--s3);border-radius:6px;border:1px solid transparent;margin-bottom:2px"
-          onmousedown="iapSelVersion(this)"
-          onmouseover="this.style.borderColor='rgba(65,192,240,.5)';this.style.background='rgba(65,192,240,.1)'"
-          onmouseout="this.style.borderColor='transparent';this.style.background='var(--s3)'">
-          ${v.descripcion}
-          <span style="color:var(--m);font-size:9px;display:block;margin-top:2px">CODIA ${v.codia}</span>
-        </div>`
-      ).join('')
-    : '<div style="font-size:11px;color:var(--m);padding:8px">Sin versiones para este año.</div>';
-
-  $p('iap-paso4').style.display='block';
-}
-
-async function iapSelVersion(el){
-  const codia=el.dataset.codia;
-  const desc=el.dataset.desc;
-  $p('iap-ver-loading').style.display='block';
-  try {
-    // Setear campos en propuesta
-    selOpts('version',[desc],''); $$('version').value=desc;
-    _iapCodia=parseInt(codia);
-
-    // Obtener precio Infoauto
-    const res=await fetch(IA_PROXY+'/api/price?codia='+codia+'&year='+_iapAnio);
-    const data=await res.json();
-    iaPropCerrar();
-
-    const badge=$p('pa1-ia-badge');
-    const precioEl=$p('pa1-ia-precio');
-    const descEl=$p('pa1-ia-desc');
-    const aral=$$('ar-al');
-
-    if(data.ok && data.precio){
-      const precio=data.precio;
-      if(precioEl) precioEl.textContent=fmt(precio);
-      if(descEl)   descEl.textContent=_iapBrandName+' '+desc+' ('+data.year+')'+(data.exacto?'':' · año más cercano');
-      if(badge)    badge.style.display='block';
-
-      if(_iapModoOkm){
-        // Modo 0km: mostrar precio Infoauto como referencia, NO autocompletar pa1
-        if(aral) aral.innerHTML='<div class="al info">📊 <strong>Ref. Infoauto: '+fmt(precio)+'</strong> — Ingresá el precio de venta ALMAR en el campo Precio del vehículo.</div>';
-      } else {
-        // Modo usado: autocompletar pa1 si está vacío
-        const pa1=$$('pa1');
-        if(pa1&&(!pa1.value||pa1.value==='0'||pa1.value==='')){pa1.value=precio;cP();}
-        if(aral) aral.innerHTML='<div class="al info">📊 <strong>Precio Infoauto: '+fmt(precio)+'</strong> — Referencia bancaria para LTV. Ajustá el precio de venta ALMAR arriba si es diferente.</div>';
-      }
-    } else {
-      if(badge) badge.style.display='none';
-      if(aral) aral.innerHTML='<div class="al warn">⚠️ Sin precio Infoauto disponible. Ingresá el precio manualmente.</div>';
-    }
-
-    _iapModoOkm=false; // Reset flag
-    if(typeof rCampMini==='function') rCampMini();
-    updR();
-
-  } catch(e){
-    $p('iap-ver-loading').style.display='none';
-    iaPropCerrar();
-    _iapModoOkm=false;
-    const aral=$$('ar-al');
-    if(aral) aral.innerHTML='<div class="al warn">⚠️ No se pudo obtener precio. Ingresá el precio manualmente.</div>';
-  }
-}
-
-// ── INFOAUTO para Multimarcas 0km (marcas no propias ALMAR) ─
-let _iapModoOkm = false; // flag para saber si estamos en modo 0km
-
-function _iapAbrirOkm(marcaNombre){
-  _iapModoOkm = true;
-  // Cambiar título del modal
-  const t=$p('iap-modal-title'); if(t) t.textContent='🔍 Buscar versión 0km';
-  const s=$p('iap-modal-sub'); if(s) s.textContent=marcaNombre+' — seleccioná modelo, año y versión';
-  // Preseleccionar la marca en el modal
-  _iapBrandId=null; _iapBrandName=marcaNombre; _iapGrupoIdx=null; _iapAnio=null; _iapCodia=null;
-  
-  // Buscar el id de la marca en _iaBrands o _iapBrands
-  const lista = _iapBrands || _iaBrands;
-  const marcaObj = lista ? lista.find(b=>b.name.toUpperCase()===marcaNombre.toUpperCase()) : null;
-  
-  $p('iap-paso2').style.display='none';
-  $p('iap-paso3').style.display='none';
-  $p('iap-paso4').style.display='none';
-  $p('iap-marca-input').value = marcaNombre;
-  $p('ia-prop-overlay').style.display='block';
-  document.body.style.overflow='hidden';
-
-  if(marcaObj){
-    // Cargar modelos directamente sin mostrar paso 1
-    _iapBrandId = marcaObj.id;
-    $p('iap-marca-lista').innerHTML='';
-    $p('iap-marca-sel').textContent='✓ '+marcaNombre;
-    $p('iap-paso2').style.display='block';
-    $p('iap-modelo-loading').style.display='block';
-    $p('iap-modelo-lista').innerHTML='';
-    _iapModels=null;
-    fetch(IA_PROXY+'/api/models?brand_id='+marcaObj.id)
-      .then(r=>r.json())
-      .then(data=>{
-        if(!data.ok) throw new Error(data.error);
-        _iapModels=data.models;
-        $p('iap-modelo-loading').style.display='none';
-        _iapRenderModelos(_iapModels);
-      })
-      .catch(()=>{
-        $p('iap-modelo-loading').style.display='none';
-        $p('iap-modelo-lista').innerHTML='<div style="padding:8px;color:var(--r);font-size:11px">❌ Error cargando modelos</div>';
-      });
-  } else {
-    // Cargar lista de marcas para selección manual
-    if(!_iapBrands&&!_iaBrands) _iapLoadBrands();
-    else _iapRenderMarcas(_iapBrands||_iaBrands);
-  }
-}
-
-// ══ FIN INFOAUTO PROPUESTA COMERCIAL ══════════════════════════
-
-
 // ─── FIN LABORATORIO ───────────────────────────────────────────────────────
 </script>
 
@@ -7432,28 +7027,28 @@ function _iapAbrirOkm(marcaNombre){
       <!-- Marca -->
       <div>
         <label style="font-size:12px;font-weight:600;color:#333;display:block;margin-bottom:4px">Marca <span style="color:#e74c3c">*</span></label>
-        <select id="pm-marca" onchange="pmOnMarca()" style="width:100%;padding:9px 10px;border:1.5px solid #ddd;border-radius:8px;font-size:13px;background:#fff;color:#111">
+        <select id="pm-marca" onchange="pmOnMarca()" style="width:100%;padding:9px 10px;border:1.5px solid #ddd;border-radius:8px;font-size:13px;background:#fff">
           <option value="">⏳ Cargando…</option>
         </select>
       </div>
       <!-- Modelo -->
       <div>
         <label style="font-size:12px;font-weight:600;color:#333;display:block;margin-bottom:4px">Modelo <span style="color:#e74c3c">*</span></label>
-        <select id="pm-modelo" onchange="pmOnModelo()" disabled style="width:100%;padding:9px 10px;border:1.5px solid #ddd;border-radius:8px;font-size:13px;background:#f5f5f5;color:#111">
+        <select id="pm-modelo" onchange="pmOnModelo()" disabled style="width:100%;padding:9px 10px;border:1.5px solid #ddd;border-radius:8px;font-size:13px;background:#f5f5f5">
           <option value="">— Seleccionar modelo —</option>
         </select>
       </div>
       <!-- Año -->
       <div>
         <label style="font-size:12px;font-weight:600;color:#333;display:block;margin-bottom:4px">Año <span style="color:#e74c3c">*</span></label>
-        <select id="pm-anno" onchange="pmOnAnno()" disabled style="width:100%;padding:9px 10px;border:1.5px solid #ddd;border-radius:8px;font-size:13px;background:#f5f5f5;color:#111">
+        <select id="pm-anno" onchange="pmOnAnno()" disabled style="width:100%;padding:9px 10px;border:1.5px solid #ddd;border-radius:8px;font-size:13px;background:#f5f5f5">
           <option value="">— Seleccionar año —</option>
         </select>
       </div>
       <!-- Versión -->
       <div>
         <label style="font-size:12px;font-weight:600;color:#333;display:block;margin-bottom:4px">Versión <span style="color:#e74c3c">*</span></label>
-        <select id="pm-version" onchange="pmOnVersion()" disabled style="width:100%;padding:9px 10px;border:1.5px solid #ddd;border-radius:8px;font-size:13px;background:#f5f5f5;color:#111">
+        <select id="pm-version" onchange="pmOnVersion()" disabled style="width:100%;padding:9px 10px;border:1.5px solid #ddd;border-radius:8px;font-size:13px;background:#f5f5f5">
           <option value="">— Seleccionar versión —</option>
         </select>
       </div>
