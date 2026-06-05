@@ -3672,6 +3672,7 @@ function rCampMini(){
       campsDeBanco=campsDeBanco.filter(c=>!c.usados&&!c.marca);
     }
     const seleccionado=campsDeBanco.some(c=>c.id===credCampId);
+    if(!campsDeBanco.length) return; // no mostrar botón vacío
     const d=document.createElement('div');
     const color=esMarca?'#ef7d00':'var(--b)';
     d.style.cssText=`display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:8px;cursor:pointer;border:1.5px solid ${seleccionado?color:'var(--brd)'};background:${seleccionado?(esMarca?'rgba(230,126,34,.15)':'rgba(0,105,180,.12)'):'var(--bg)'};transition:all .15s`;
