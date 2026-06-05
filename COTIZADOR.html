@@ -5860,7 +5860,6 @@ function labSyncPerfiles(callback){
     })
     .catch(()=>{ if(callback) callback(); });
 }
-}
 function labUID(){ return 'lab_'+Date.now()+'_'+Math.random().toString(36).slice(2,7); }
 const _hoy = new Date().getFullYear();
 
