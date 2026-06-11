@@ -6274,38 +6274,45 @@ function labAbrirEnCotizador(matchIdx){
     if(!tipoEl) return;
 
     if(u._esUsado){
-      // ── USADO DEL STOCK ───────────────────────────────────────
+      // ── USADO DEL STOCK — carga por dominio vía búsqueda rápida ──
       tipoEl.value='usado';
       if(typeof onTipo==='function') onTipo();
 
-      // Usar dominio para encontrar el auto exacto en stk
+      // Buscar unidad exacta en stk por dominio
       const stkUnit = stk.find(x=>
         (u.dominio && x.dominio && x.dominio===u.dominio) ||
         (x.marca===u.marca && x.modelo===u.modelo && x.version===u.version && x.anno===u.anno)
       );
+      const unitRef = stkUnit || u;
 
       setTimeout(()=>{
         // PASO 1: Marca
         const marcaEl=$$('marca');
-        if(marcaEl && u.marca){
-          marcaEl.value=u.marca;
+        if(marcaEl && unitRef.marca){
+          marcaEl.value=unitRef.marca;
           marcaEl.disabled=false;
           if(typeof onMarca==='function') onMarca();
         }
         setTimeout(()=>{
-          // PASO 2: Modelo
+          // PASO 2: Modelo — set AFTER onMarca populates options
           const modeloEl=$$('modelo');
-          if(modeloEl && u.modelo){
-            modeloEl.value=u.modelo;
+          if(modeloEl && unitRef.modelo){
+            // Ensure the option exists in the select before setting
+            const modExists = Array.from(modeloEl.options).some(o=>o.value===unitRef.modelo);
+            if(!modExists){
+              const opt=document.createElement('option');
+              opt.value=unitRef.modelo; opt.text=unitRef.modelo;
+              modeloEl.appendChild(opt);
+            }
+            modeloEl.value=unitRef.modelo;
             modeloEl.disabled=false;
             if(typeof onModelo==='function') onModelo();
           }
           setTimeout(()=>{
             // PASO 3: Versión — usar valor exacto del stock
-            const version = stkUnit ? stkUnit.version : u.version;
+            const version = unitRef.version;
             const verEl=$$('version');
             if(verEl && version){
-              // Asegurarse que la opción existe en el select
               const optExists = Array.from(verEl.options).some(o=>o.value===version);
               if(!optExists){
                 const opt=document.createElement('option');
@@ -6318,7 +6325,7 @@ function labAbrirEnCotizador(matchIdx){
             }
             setTimeout(()=>{
               // PASO 4: Año
-              const anno = stkUnit ? stkUnit.anno : u.anno;
+              const anno = unitRef.anno;
               const annoEl=$$('anno');
               if(annoEl && anno){
                 const aOptExists = Array.from(annoEl.options).some(o=>parseInt(o.value)===parseInt(anno));
@@ -6330,11 +6337,12 @@ function labAbrirEnCotizador(matchIdx){
                 annoEl.value=String(anno);
                 annoEl.disabled=false;
                 if(typeof onAuto==='function') onAuto();
-                // Forzar precio pa1 desde el match (onAuto puede no cargarlo si el stock cambió)
+                // Forzar precio pa1 desde el stock (precio definitivo)
                 setTimeout(()=>{
                   const pa1=$$('pa1');
-                  if(pa1&&(!pa1.value||parseFloat(pa1.value)<=0)&&u.precio>0){
-                    pa1.value=u.precio;
+                  const precioFinal = unitRef.precio || u.precio;
+                  if(pa1 && precioFinal>0){
+                    pa1.value=precioFinal;
                     if(typeof cP==='function') cP();
                   }
                 },300);
@@ -6343,7 +6351,7 @@ function labAbrirEnCotizador(matchIdx){
               setTimeout(()=>_labCargarFinanciacion(m,p),500);
             },150);
           },150);
-        },150);
+        },200);
       },200);
 
     } else {
