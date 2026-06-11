@@ -6112,11 +6112,14 @@ function labMatch(perfil){
           return;
         }
 
-        // Con límite de cuota: ¿precio ≤ capacidad total?
-        if(precio > capacidadTotal) return;
+        // Con límite de cuota: ¿precio + gestoría ≤ capacidad total?
+        // Gestoría estimada = (precio×6%) + (plazo×cuotaMax×1%)
+        const _gestEst = Math.round(precio * 0.06 + n * cuotaMax * 0.01);
+        const precioReal = precio + _gestEst;
+        if(precioReal > capacidadTotal) return;
 
-        // Verificar LTV sobre el monto real a financiar
-        const necesita = precio - totalSinCred;
+        // Verificar LTV sobre el monto real a financiar (incluye gestoría)
+        const necesita = precioReal - totalSinCred;
         if(necesita <= 0) return; // ya cubierto al contado (no debería llegar aquí)
 
         const ltvInfo = labLTV(c.banco, u.anno||_hoy, u._esUsado);
@@ -6394,12 +6397,35 @@ function _labCargarFinanciacion(m, p){
     const obs=$$('obs-interna');
     if(obs) obs.value=`[LAB] ${m.campana.banco} — ${m.campana.nombre} · ${m.plazo}c · Cuota: ${fmt(m.cuotaCalc)} · Financiado: ${fmt(m.mBruto)}`;
   }
-  // Seleccionar campaña bancaria
+  // ── GESTORÍA / PATENTAMIENTO AUTOMÁTICA ────────────────────
+  // Fórmula: (precio × 6%) + (plazo × cuota × 1%)
+  if(m.precio>0 && m.campana && m.plazo>0 && m.cuotaCalc>0){
+    const gestComp1 = Math.round(m.precio * 0.06);
+    const gestComp2 = Math.round(m.plazo * m.cuotaCalc * 0.01);
+    const gestTotal = gestComp1 + gestComp2;
+    setTimeout(()=>{
+      const pa2=$$('pa2');
+      if(pa2 && (!pa2.value || parseFloat(pa2.value)===0)){
+        pa2.value = gestTotal;
+        if(typeof cP==='function') cP();
+      }
+    },400);
+  }
+  // Seleccionar campaña bancaria — esperar a que pb1 esté cargado
   if(m.campana && m.campana.id && typeof sCredCamp==='function'){
-    sCredCamp(m.campana.id);
-    if(m.plazo && typeof calcCred==='function') setTimeout(()=>{
-      const pb1=$$('pb1'); if(pb1&&parseFloat(pb1.value)>0) calcCred();
-    },300);
+    setTimeout(()=>{
+      // Asegurar que pb1 tiene el monto antes de seleccionar campaña
+      const pb1=$$('pb1');
+      if(pb1 && parseFloat(pb1.value)<=0 && m.mBruto>0){
+        pb1.value=Math.round(m.mBruto);
+        if(typeof cP==='function') cP();
+      }
+      sCredCamp(m.campana.id);
+      // Forzar plazo correcto después de seleccionar campaña
+      if(m.plazo && typeof calcCred==='function') setTimeout(()=>{
+        const pb1b=$$('pb1'); if(pb1b&&parseFloat(pb1b.value)>0) calcCred();
+      },300);
+    },150);
   }
   if(typeof updR==='function') updR();
 }
@@ -6718,6 +6744,7 @@ function labCalcMatch(){
       ${m.campana?`
         <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:4px">
           <span style="background:rgba(65,192,240,.15);color:#41c0f0;border-radius:4px;padding:2px 7px;font-size:10px;font-weight:700">💳 ${m.campana.banco}</span>
+          ${m.campana.tipo==='UVA' ? '<span style="background:rgba(255,193,7,.18);color:#f0c040;border-radius:4px;padding:2px 7px;font-size:10px;font-weight:700">📈 UVA</span>' : '<span style="background:rgba(46,204,113,.15);color:#2ecc71;border-radius:4px;padding:2px 7px;font-size:10px;font-weight:700">🔒 TASA FIJA</span>'}
           <span style="background:rgba(65,192,240,.1);color:var(--m);border-radius:4px;padding:2px 7px;font-size:10px">${m.campana.nombre}</span>
           <span style="background:rgba(65,192,240,.1);color:var(--m);border-radius:4px;padding:2px 7px;font-size:10px">${m.plazo} cuotas · TNA ${m.campana.tna}%</span>
         </div>
@@ -6865,6 +6892,7 @@ function labVerDetalle(id){
         ${m.campana?`
           <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:6px 8px;background:rgba(65,192,240,.08);border-radius:6px;margin-bottom:4px">
             <span class="lab-match-camp" style="margin:0">💳 ${m.campana.banco}</span>
+            ${m.campana.tipo==='UVA' ? '<span style="background:rgba(255,193,7,.18);color:#f0c040;border-radius:4px;padding:2px 7px;font-size:10px;font-weight:700">📈 UVA</span>' : '<span style="background:rgba(46,204,113,.15);color:#2ecc71;border-radius:4px;padding:2px 7px;font-size:10px;font-weight:700">🔒 TASA FIJA</span>'}
             <span style="font-size:11px"><strong>${m.plazo} cuotas</strong> de <strong style="color:${m.sinLimiteCuota?'var(--y)':'var(--g)'}">${fmt(m.cuotaCalc)}/mes</strong>${m.sinLimiteCuota?' <em style="font-size:9px;color:var(--m)">(aprox)</em>':''}</span>
           </div>
           <div style="font-size:10px;color:var(--m);margin-bottom:6px">
