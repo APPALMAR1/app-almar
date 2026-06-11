@@ -6456,9 +6456,21 @@ function _labCargarFinanciacion(m, p){
     const gestComp2 = Math.round(m.plazo * m.cuotaCalc * 0.01);
     const gestTotal = gestComp1 + gestComp2;
     setTimeout(()=>{
-      const pa2=$$('pa2');
+      const pa1=$$('pa1'), pa2=$$('pa2'), pa4=$$('pa4');
       if(pa2 && (!pa2.value || parseFloat(pa2.value)===0)){
         pa2.value = gestTotal;
+        // Recalcular pb1 como totalACubrir - totalSinCred
+        // para que propuesta y LAB muestren el mismo monto a financiar
+        const precioPA1 = parseFloat(pa1?.value)||m.precio;
+        const otorg     = parseFloat(pa4?.value)||0;
+        const totalA    = precioPA1 + gestTotal + otorg;
+        const _pb2      = parseFloat($$('pb2')?.value)||0;
+        const _pb3      = parseFloat($$('pb3')?.value)||0;
+        const _pb4      = parseFloat($$('pb4')?.value)||0;
+        const totalSC   = _pb2 + _pb3 + _pb4;
+        const pb1Calc   = Math.max(0, totalA - totalSC);
+        const pb1El     = $$('pb1');
+        if(pb1El && pb1Calc > 0) pb1El.value = pb1Calc;
         if(typeof cP==='function') cP();
       }
     },400);
