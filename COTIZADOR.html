@@ -6012,15 +6012,34 @@ function labMatch(perfil){
   // ── Calcular cuánto puede financiar por campaña/plazo ─────────
   // Para cada campaña activa calculamos el monto M máximo tal que cuota ≤ cuotaMax
   // Usando la fórmula inversa de la cuota francesa
-  function montoMaxFinanciable(c, n){
-    if(sinLimiteCuota) return Infinity; // sin límite declarado
+  // Calcula cuota usando coef table (igual que propuesta) o TEM si no hay coef
+  function cuotaConCoef(c, n, mBruto){
+    const coefArr = c.coefs && c.coefs[n];
+    if(coefArr){
+      const idx = (c.comision||0)>0 ? 0 : 1;
+      const coef = coefArr[Math.min(idx, coefArr.length-1)];
+      return Math.round(mBruto / (c.coefBase||1000) * coef);
+    }
+    // Fallback TEM
     const tna = c.tna/100;
     const tem = Math.pow(1+tna, 1/12)-1;
-    if(tem <= 0){
-      // TNA=0: cuota = M/n  →  M = cuotaMax * n
-      return cuotaMax * n;
+    return tem>0 ? Math.round(mBruto*tem/(1-Math.pow(1+tem,-n))) : Math.round(mBruto/n);
+  }
+
+  function montoMaxFinanciable(c, n){
+    if(sinLimiteCuota) return Infinity; // sin límite declarado
+    const coefArr = c.coefs && c.coefs[n];
+    if(coefArr){
+      // cuota = mBruto / coefBase * coef  →  mBruto = cuotaMax * coefBase / coef
+      const idx = (c.comision||0)>0 ? 0 : 1;
+      const coef = coefArr[Math.min(idx, coefArr.length-1)];
+      if(coef <= 0) return 0;
+      return cuotaMax * (c.coefBase||1000) / coef;
     }
-    // cuota = M * tem / (1 - (1+tem)^-n)  →  M = cuota / (tem/(1-(1+tem)^-n))
+    // Fallback TEM
+    const tna = c.tna/100;
+    const tem = Math.pow(1+tna, 1/12)-1;
+    if(tem <= 0) return cuotaMax * n;
     const factor = tem / (1 - Math.pow(1+tem, -n));
     return cuotaMax / factor;
   }
@@ -6098,9 +6117,7 @@ function labMatch(perfil){
           if(necesita > tope) return;
           const ceR = (c.comision||0)/100;
           const mBrutoNec = ceR>0 ? necesita*(1+ceR*1.21) : necesita;
-          const tna = c.tna/100;
-          const tem = Math.pow(1+tna,1/12)-1;
-          const q = tem>0 ? Math.round(mBrutoNec*tem/(1-Math.pow(1+tem,-n))) : Math.round(mBrutoNec/n);
+          const q = cuotaConCoef(c, n, mBrutoNec);
           const gastosNec = mBrutoNec - necesita;
           results.push({
             unidad:u, campana:c, plazo:n,
@@ -6132,10 +6149,8 @@ function labMatch(perfil){
         const mBrutoReal = ceR>0 ? necesita*(1+ceR*1.21) : necesita;
         if(mBrutoReal > tope) return; // LTV no alcanza
 
-        // Calcular cuota real con el monto bruto
-        const tna = c.tna/100;
-        const tem = Math.pow(1+tna,1/12)-1;
-        const q = tem>0 ? Math.round(mBrutoReal*tem/(1-Math.pow(1+tem,-n))) : Math.round(mBrutoReal/n);
+        // Calcular cuota real con el monto bruto (usando coef table igual que propuesta)
+        const q = cuotaConCoef(c, n, mBrutoReal);
         if(q > cuotaMax) return; // cuota no entra
 
         const gastosReal = mBrutoReal - necesita;
