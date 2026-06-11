@@ -648,6 +648,7 @@ input[type=text]#p-obs{background:#F5F7FA!important;border:1px solid #D5DCE6!imp
 <div id="tb">
   <div class="tb-logo" onclick="tgD()"><div class="n">ALMAR</div><div class="s">Cotizador</div></div>
   <div id="sw"><h1 id="stit">Propuesta Comercial</h1><p id="ssub">Unidad · Crédito · Saldo</p></div>
+  <button id="btn-volver-lab" onclick="volverAlLab()" style="display:none;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:8px;padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer;margin-left:8px;white-space:nowrap">🧪 ← LAB</button>
   <div id="uchip" onclick="tgD()">
     <div class="av" id="cav" style="background:var(--r)">?</div>
     <div class="nm" id="cnm">—</div>
@@ -2104,6 +2105,12 @@ const SC={
 function goTo(n){
   // Protección de acceso: admin solo para Master
   if(n==='admin'&&!esMaster(CU)) return;
+  // Ocultar botón LAB si se navega fuera de propuesta
+  if(n!=='propuesta'){
+    const btnLab=$$('btn-volver-lab');
+    if(btnLab) btnLab.style.display='none';
+    window._labOpeningPropuesta=false;
+  }
   clD();
   document.querySelectorAll('.scr').forEach(s=>s.classList.remove('on'));
   document.querySelectorAll('.ni,.bi').forEach(e=>e.classList.remove('on'));
@@ -6188,6 +6195,18 @@ function labMatch(perfil){
 // ── Abrir coincidencia en la Propuesta Comercial ──────────────────
 
 // ── Guardar match seleccionado y abrir propuesta ─────────────
+function volverAlLab(){
+  goTo('laboratorio');
+  // Reabrir el perfil que estaba activo
+  setTimeout(()=>{
+    const p = window._labLastPerfTemp;
+    if(p && p.id){
+      // Abrir el detalle del perfil activo
+      if(typeof labVerDetalle==='function') labVerDetalle(p.id);
+    }
+  }, 300);
+}
+
 function labGuardarYAbrir(matchIdx){
   // 1. Determinar el perfil activo
   let p, matches, m;
@@ -6243,7 +6262,10 @@ function labGuardarYAbrir(matchIdx){
   window._labLastMatches  = matches;
   window._labLastPerfTemp = p;
 
-  // 5. Abrir propuesta
+  // 5. Marcar que venimos del LAB y abrir propuesta
+  window._labOpeningPropuesta=true;
+
+  // 6. Abrir propuesta
   labAbrirEnCotizador(matchIdx);
 }
 
@@ -6266,6 +6288,13 @@ function labAbrirEnCotizador(matchIdx){
   labCerrarDet();
   labCerrarModal();
   goTo('propuesta');
+
+  // Mostrar botón volver al LAB si viene del LAB
+  if(window._labOpeningPropuesta){
+    const btnLab=$$('btn-volver-lab');
+    if(btnLab) btnLab.style.display='inline-flex';
+    window._labOpeningPropuesta=false;
+  }
 
   setTimeout(()=>{
     if(typeof limpiar==='function') limpiar();
