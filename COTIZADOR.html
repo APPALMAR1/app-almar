@@ -6464,24 +6464,38 @@ function _labCargarFinanciacion(m, p){
         if(typeof cP==='function') cP();
       }
     },400);
-    // PASO 2 (t=700ms): recalcular pb1 DESPUÉS de que pa4 (otorgamiento) esté seteado
-    // pa4 se setea por calcCred() que se dispara a t=450ms (150+300ms)
+    // PASO 2 (t=700ms): recalcular pb1 con todos los campos ya seteados
+    // pa3b (gastos otorgamiento) = pb1 * pctAlmar (setea sCredCamp a t=150ms)
+    // Necesitamos recalcular pa3b sobre el pb1 correcto también
     setTimeout(()=>{
-      const pa1=$$('pa1'), pa2=$$('pa2'), pa4=$$('pa4');
+      const pa1=$$('pa1'), pa2=$$('pa2');
       const precioPA1 = parseFloat(pa1?.value)||m.precio;
       const gestReal  = parseFloat(pa2?.value)||gestTotal;
-      const otorg     = parseFloat(pa4?.value)||0;
       const _pb2      = parseFloat($$('pb2')?.value)||0;
       const _pb3      = parseFloat($$('pb3')?.value)||0;
       const _pb4      = parseFloat($$('pb4')?.value)||0;
       const totalSC   = _pb2 + _pb3 + _pb4;
-      // Resolver dependencia circular: mBruto = mUtil / (1 - ceRate)
-      const mUtil     = Math.max(0, precioPA1 + gestReal + otorg - totalSC);
-      const ceRate    = ((m.campana?.comision||0)/100) * 1.21;
-      const pb1Calc   = ceRate > 0 ? Math.round(mUtil / (1 - ceRate)) : mUtil;
+      // Resolver dependencia circular con comision (pa3) y otorgamiento (pa3b)
+      // pa3  = pb1 * (comision/100) * 1.21
+      // pa3b = pb1 * pctAlmar (0.03 sin fee, 0.02 con fee)
+      const comRate   = ((m.campana?.comision||0)/100) * 1.21;
+      const pctAlmar  = (m.campana?.comision||0) > 0 ? 0.02 : 0.03;
+      const totalRate = comRate + pctAlmar; // % de pb1 que va a gastos
+      // mUtil = precio + gestoria - totalSC
+      // pb1 = mUtil + pb1*totalRate  →  pb1*(1-totalRate) = mUtil  →  pb1 = mUtil/(1-totalRate)
+      const mUtil     = Math.max(0, precioPA1 + gestReal - totalSC);
+      const pb1Calc   = totalRate > 0 ? Math.round(mUtil / (1 - totalRate)) : mUtil;
       const pb1El     = $$('pb1');
       if(pb1El && pb1Calc > 0){
         pb1El.value = pb1Calc;
+        // Actualizar pa3b con el otorgamiento correcto sobre el nuevo pb1
+        const pa3bEl = $$('pa3b');
+        if(pa3bEl) pa3bEl.value = Math.round(pb1Calc * pctAlmar);
+        // pa3 (quebranto banco) si hay comision
+        if(comRate > 0){
+          const pa3El = $$('pa3');
+          if(pa3El) pa3El.value = Math.round(pb1Calc * comRate);
+        }
         if(typeof cP==='function') cP();
       }
     },700);
