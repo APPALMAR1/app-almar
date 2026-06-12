@@ -6456,28 +6456,35 @@ function _labCargarFinanciacion(m, p){
     const gestComp1 = Math.round(m.precio * 0.06);
     const gestComp2 = Math.round(m.plazo * m.cuotaCalc * 0.01);
     const gestTotal = gestComp1 + gestComp2;
+    // PASO 1 (t=400ms): setear gestoría
     setTimeout(()=>{
-      const pa1=$$('pa1'), pa2=$$('pa2'), pa4=$$('pa4');
+      const pa2=$$('pa2');
       if(pa2 && (!pa2.value || parseFloat(pa2.value)===0)){
         pa2.value = gestTotal;
-        // Calcular pb1 = mBruto que cubre totalA incluyendo gastos bancarios de campaña
-        // mUtil = precio + gestoria + otorg - totalSinCred
-        // Si hay comisión: mBruto = mUtil / (1 - comision%*1.21)  [resuelve la dependencia circular]
-        // Si no hay comisión: mBruto = mUtil
-        const precioPA1 = parseFloat(pa1?.value)||m.precio;
-        const otorg     = parseFloat(pa4?.value)||0;
-        const _pb2      = parseFloat($$('pb2')?.value)||0;
-        const _pb3      = parseFloat($$('pb3')?.value)||0;
-        const _pb4      = parseFloat($$('pb4')?.value)||0;
-        const totalSC   = _pb2 + _pb3 + _pb4;
-        const mUtil     = Math.max(0, precioPA1 + gestTotal + otorg - totalSC);
-        const ceRate    = ((m.campana?.comision||0)/100) * 1.21;
-        const pb1Calc   = ceRate > 0 ? Math.round(mUtil / (1 - ceRate)) : mUtil;
-        const pb1El     = $$('pb1');
-        if(pb1El && pb1Calc > 0) pb1El.value = pb1Calc;
         if(typeof cP==='function') cP();
       }
     },400);
+    // PASO 2 (t=700ms): recalcular pb1 DESPUÉS de que pa4 (otorgamiento) esté seteado
+    // pa4 se setea por calcCred() que se dispara a t=450ms (150+300ms)
+    setTimeout(()=>{
+      const pa1=$$('pa1'), pa2=$$('pa2'), pa4=$$('pa4');
+      const precioPA1 = parseFloat(pa1?.value)||m.precio;
+      const gestReal  = parseFloat(pa2?.value)||gestTotal;
+      const otorg     = parseFloat(pa4?.value)||0;
+      const _pb2      = parseFloat($$('pb2')?.value)||0;
+      const _pb3      = parseFloat($$('pb3')?.value)||0;
+      const _pb4      = parseFloat($$('pb4')?.value)||0;
+      const totalSC   = _pb2 + _pb3 + _pb4;
+      // Resolver dependencia circular: mBruto = mUtil / (1 - ceRate)
+      const mUtil     = Math.max(0, precioPA1 + gestReal + otorg - totalSC);
+      const ceRate    = ((m.campana?.comision||0)/100) * 1.21;
+      const pb1Calc   = ceRate > 0 ? Math.round(mUtil / (1 - ceRate)) : mUtil;
+      const pb1El     = $$('pb1');
+      if(pb1El && pb1Calc > 0){
+        pb1El.value = pb1Calc;
+        if(typeof cP==='function') cP();
+      }
+    },700);
   }
   // Seleccionar campaña bancaria — esperar a que pb1 esté cargado
   if(m.campana && m.campana.id && typeof sCredCamp==='function'){
