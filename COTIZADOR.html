@@ -7167,7 +7167,15 @@ function labEditarDesdeDetalle(){
       const el=$$(id); 
       if(el&&val!=null){
         // Normalizar segmento a mayúsculas para compatibilidad con perfiles viejos
-        el.value = (id==='lf-segmento') ? String(val).toUpperCase() : val;
+        const normalVal = (id==='lf-segmento') ? String(val).toUpperCase() : val;
+        el.value = normalVal;
+        // Si el valor no existe en el select (perfil viejo con valor distinto),
+        // buscar la opción que empiece igual (ej: "PICKUP" matchea "PICKUP")
+        if(id==='lf-segmento' && el.value !== normalVal){
+          const opts = Array.from(el.options);
+          const match = opts.find(o=>o.value.toUpperCase()===normalVal.toUpperCase());
+          if(match) el.value = match.value;
+        }
       }
     });
     if(p.clienteVinculadoId) labVincularCliente(p.clienteVinculadoId, p.clienteVinculadoNombre||p.nombre, p.tel||'', p.email||'');
