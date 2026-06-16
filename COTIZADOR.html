@@ -7034,7 +7034,16 @@ function labVerDetalle(id){
       <span style="font-size:11px">El perfil permanece activo. Cuando ingrese una unidad que coincida con la capacidad del cliente se mostrará aquí automáticamente.</span>
     </div>`;
   } else {
-    matchesHTML=ms.slice(0,15).map((m,idx)=>{
+    // Banner de aviso cuando no hay segmento declarado
+    const sinSegmento = !p.segmento || p.segmento.trim()==='';    const bannerSinSeg = sinSegmento ? `
+      <div onclick="labVerDetalle('${p.id||''}')" style="cursor:pointer;display:flex;align-items:flex-start;gap:8px;background:rgba(239,125,0,.13);border:1px solid rgba(239,125,0,.35);border-radius:8px;padding:10px 12px;margin-bottom:10px">
+        <span style="font-size:16px;flex-shrink:0">⚠️</span>
+        <div>
+          <div style="font-size:12px;font-weight:700;color:#ef7d00;margin-bottom:2px">Sin segmento declarado</div>
+          <div style="font-size:11px;color:var(--m)">Los resultados incluyen todos los tipos de vehículo. Tocá aquí para completar el segmento en el perfil y afinar las coincidencias.</div>
+        </div>
+      </div>` : '';
+    matchesHTML=bannerSinSeg+ms.slice(0,15).map((m,idx)=>{
       const u=m.unidad;
       const autoStr=`${u.marca||''} ${u.modelo||''} ${(u.version||'').substring(0,35)}`.trim();
       const ant=_hoy-(u.anno||_hoy);
