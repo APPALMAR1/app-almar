@@ -5672,16 +5672,9 @@ function syncDrive(){
     .catch(e=>{bar.style.background='rgba(0,105,180,.12)';bar.style.color='var(--r)';bar.textContent='Error: '+e.message;btn.textContent='Reintentar';btn.disabled=false;});
 }
 function parseDrv(csv){
-  const MARCAS=new Set(['CITROEN','CHERY','CHEVROLET','DS','FIAT','FORD','NISSAN','PEUGEOT','RENAULT','TOYOTA','VOLKSWAGEN','HONDA','JEEP']);
+  const MARCAS=new Set(['CITROEN','CHERY','CHEVROLET','DS','FIAT','FORD','NISSAN','PEUGEOT','RENAULT','TOYOTA','VOLKSWAGEN','HONDA','JEEP','BAIC','FOTON','DFSK','RENAULT','MITSUBISHI']);
   const autos=[];let marca='';let hi=-1;
   const lns=csv.split(/\r?\n/);
-  for(let i=0;i<Math.min(lns.length,15);i++){
-    const u=lns[i].toUpperCase();
-    if(u.includes('DOMINIO')&&u.includes('UNIDAD')){hi=i;break;}
-  }
-  if(hi<0)return autos;
-  const hdr=cF(lns[hi]);
-  // Buscar indices por nombre (tolerante a tildes y espacios)
   const norm=s=>s.toUpperCase().trim()
     .replace(/[\u00C0-\u00C6]/g,'A').replace(/[\u00C8-\u00CB]/g,'E')
     .replace(/[\u00CC-\u00CF]/g,'I').replace(/[\u00D2-\u00D6]/g,'O')
@@ -5690,19 +5683,30 @@ function parseDrv(csv){
     .replace(/[\u00EC-\u00EF]/g,'I').replace(/[\u00F2-\u00F6]/g,'O')
     .replace(/[\u00F9-\u00FC]/g,'U').replace(/\u00F1/g,'N')
     .replace(/[^A-Z0-9 ]/g,'').trim();
+  // Buscar fila header: debe tener DOMINIO — no requiere UNIDAD (puede estar vacía)
+  for(let i=0;i<Math.min(lns.length,20);i++){
+    const u=lns[i].toUpperCase();
+    if(u.includes('DOMINIO')){hi=i;break;}
+  }
+  if(hi<0)return autos;
+  const hdr=cF(lns[hi]);
   const nh=hdr.map(norm);
   const fi=t=>nh.findIndex(h=>h===t||h.startsWith(t));
+  // Tolerante: busca variantes de cada columna
   const iDom=fi('DOMINIO');
   const iEmp=fi('EMPRESA');
-  const iUni=fi('UNIDAD');
+  // UNIDAD: puede estar vacía — fallback a columna C (índice 2)
+  const iUni=fi('UNIDAD')>=0 ? fi('UNIDAD') : 2;
   const iCol=fi('COLOR');
-  const iAno=fi('ANO');
+  const iAno=fi('ANO'); // norm() quita la tilde de AÑO → ANO
   const iKm=fi('KM');
-  const iPre=fi('PUBLICO');
-  // La columna de estado/comentarios es SIEMPRE la columna K (índice 10)
-  // aunque tenga el encabezado vacío en el CSV del Drive.
-  // "INFO TOMA" en el encabezado (índice 11) es el VALOR TOMA en pesos → ignorar para estado.
-  const iInf=10; // Columna K fija — contiene los estados: Señado, A recibir, Nuevo ingreso, etc.
+  // PRECIO: acepta "PUBLICO", "PUBLICO JUNIO", "PUBLICO MAYO", "PRECIO", etc.
+  const iPre=(()=>{
+    const idx=nh.findIndex(h=>h.startsWith('PUBLICO')||h==='PRECIO'||h.includes('PRECIO PUBLICO'));
+    return idx>=0?idx:-1;
+  })();
+  // Estado: columna K fija (índice 10) — contiene Señado, A recibir, etc.
+  const iInf=10;
   const iVToma=nh.findIndex(h=>h.includes('VALOR')&&h.includes('TOMA'));
   const iCosto=nh.findIndex(h=>h.includes('COSTO')&&h.includes('TOTAL'));
   const gc=(c,i)=>i>=0&&i<c.length?c[i].trim():'';
@@ -5712,22 +5716,25 @@ function parseDrv(csv){
     const dom=gc(c,iDom),emp=gc(c,iEmp),uni=gc(c,iUni);
     const ndom=norm(dom);
     if(ndom.includes('DIAS DE STOCK'))break;
-    if(dom&&!emp&&!uni){if(MARCAS.has(ndom)){marca=ndom;continue;}}
+    // Detectar fila de marca: dominio vacío o es una marca conocida sin empresa ni unidad
+    if(!emp&&!uni&&dom&&MARCAS.has(ndom)){marca=ndom;continue;}
+    if(dom&&!emp&&MARCAS.has(ndom)){marca=ndom;continue;}
     if(!dom||ndom==='DOMINIO')continue;
     const anio=parseInt(gc(c,iAno).replace(/[^0-9]/g,''))||0;
     if(anio<1990||anio>2030)continue;
-    // Leer estado desde columna K (índice 10 fijo)
+    // Estado desde columna K fija
     const inf=gc(c,iInf);
     let est='DISPONIBLE';
     if(/se[nñ]ado|seniado/i.test(inf))          est='SENIADO';
     else if(/a recibir|recibir/i.test(inf))      est='A RECIBIR';
     else if(/preparac|taller|reparac/i.test(inf))est='EN PREPARACION';
-    else if(/nuevo ingreso|ingreso/i.test(inf))  est='NUEVO INGRESO';
+    else if(/nuevo ingreso|ingreso|nuevo precio/i.test(inf)) est='NUEVO INGRESO';
     else if(/en camino|camino/i.test(inf))       est='EN CAMINO';
     else if(/reservado/i.test(inf))              est='RESERVADO';
+    // Unidad: puede tener formato "MODELO VERSION" o solo "MODELO"
     const pts=(uni||'').split(' ');
     autos.push({
-      dominio:(dom==='-')?'':dom,empresa:emp,marca,
+      dominio:(dom==='-'||dom==='0')?'':dom,empresa:emp,marca,
       modelo:pts[0]||uni,version:pts.slice(1).join(' ')||'',
       anno:anio,km:parseInt(gc(c,iKm).replace(/[^0-9]/g,''))||0,
       precio:pNv(gc(c,iPre)),color:gc(c,iCol),estado:est,
@@ -6159,7 +6166,7 @@ function labMatch(perfil){
 
         // Calcular cuota real con el monto bruto (usando coef table igual que propuesta)
         const q = cuotaConCoef(c, n, mBrutoReal);
-        if(q > cuotaMax) return; // cuota no entra
+        if(q > cuotaMax * 1.20) return; // cuota excede 120% del máximo → excluir
 
         const gastosReal = mBrutoReal - necesita;
 
@@ -6174,23 +6181,77 @@ function labMatch(perfil){
     });
   });
 
-  // Ordenar: contado primero, luego por precio desc (mejor auto posible), cuota asc
+  // ── SCORING DE RELEVANCIA ───────────────────────────────────────────────────
+  // 1. Segmento: coincidencia exacta = 100pts, mismo tipo carrocería = 50pts, distinto = 0pts
+  // 2. Cuota: más cercana al límite del cliente (aprovecha mejor la capacidad) = mejor score
+  // 3. Precio: mejor auto posible dentro del rango
+  const SEG_TIPOS = {
+    'A':'CITYCAR','B':'SUBCOMPACTO','C':'COMPACTO','D':'MEDIANO',
+    'SUV':'SUV','PICKUP':'PICKUP','FURGON':'FURGON','MINIVAN':'MINIVAN'
+  };
+  const segTipoPref = segPref ? (SEG_TIPOS[segPref]||segPref) : null;
+
+  results.forEach(r=>{
+    let score = 0;
+    // Score segmento
+    if(segPref && r.unidad){
+      const key = ((r.unidad.marca||'')+' '+(r.unidad.modelo||'')).toUpperCase().trim();
+      const seg = SEG_D[key];
+      const segAuto = (seg?.seg||'').toUpperCase();
+      const carAuto = (seg?.car||'').toUpperCase();
+      if(segAuto === segPref || carAuto === segPref) score += 100;
+      else if(segTipoPref && (segAuto.includes(segTipoPref)||carAuto.includes(segTipoPref))) score += 50;
+      else score -= 20; // penalizar segmento distinto
+    } else {
+      score += 50; // sin preferencia: neutro
+    }
+    // Score cuota: premia cuotas que aprovechan bien la capacidad (80-100% del máximo)
+    if(cuotaMax > 0 && r.cuotaCalc > 0){
+      const ratio = r.cuotaCalc / cuotaMax;
+      if(ratio >= 0.80 && ratio <= 1.00) score += 40;      // zona óptima
+      else if(ratio >= 0.65 && ratio < 0.80) score += 20;  // aceptable
+      else if(ratio > 1.00 && ratio <= 1.20) score += 10;  // leve estirón
+      else score -= 10;                                      // muy holgado o muy ajustado
+    }
+    // Score precio: mejor auto = más puntos (normalizado)
+    score += Math.min(30, Math.round(r.precio / 1_000_000));
+    r._score = score;
+  });
+
+  // Ordenar por score descendente, luego cuota más aprovechada
   results.sort((a,b)=>{
     if(a.campana===null && b.campana!==null) return -1;
     if(a.campana!==null && b.campana===null) return 1;
-    if(b.precio !== a.precio) return b.precio - a.precio; // mejor auto primero
-    return a.cuotaCalc - b.cuotaCalc;
+    if(b._score !== a._score) return (b._score||0) - (a._score||0);
+    return b.cuotaCalc - a.cuotaCalc;
   });
 
-  // Deduplicar: mejor resultado por unidad+banco (no por plazo)
+  // Deduplicar: mejor resultado por unidad+banco
   const seen = new Set();
-  return results.filter(r=>{
+  const deduped = results.filter(r=>{
     const dom = r.unidad.dominio||r.unidad.version||r.unidad.modelo||'';
-    const key = dom+'_'+(r.campana?.banco||'contado')+'_'+r.plazo;
+    const key = dom+'_'+(r.campana?.banco||'contado');
     if(seen.has(key)) return false;
     seen.add(key);
     return true;
-  }).slice(0,30);
+  });
+
+  // Límite dinámico:
+  // — Con segmento preferido: mostrar hasta 15 resultados
+  // — Sin segmento: mostrar hasta 20 resultados
+  // — Pero SIEMPRE al menos 5 si hay pocos en el segmento
+  const LIMIT = segPref ? 15 : 20;
+  const enSegmento = deduped.filter(r=>{
+    if(!segPref) return true;
+    const key = ((r.unidad.marca||'')+' '+(r.unidad.modelo||'')).toUpperCase().trim();
+    const seg = SEG_D[key];
+    return (seg?.seg||'').toUpperCase()===segPref || (seg?.car||'').toUpperCase()===segPref;
+  });
+  // Si hay suficientes del segmento, mostrar solo esos; si no, completar con los mejores del resto
+  if(enSegmento.length >= 5){
+    return enSegmento.slice(0, LIMIT);
+  }
+  return deduped.slice(0, LIMIT);
 }
 
 // ── Abrir coincidencia en la Propuesta Comercial ──────────────────
