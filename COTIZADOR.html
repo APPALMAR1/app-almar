@@ -5981,9 +5981,11 @@ function labMatch(perfil){
   // Modo contado: buscar unidades donde precio ≤ monto contado
   if(modoContado){
     if(contado <= 0) return [];
+    const stkC = (typeof stk!=='undefined'&&stk.length>0)?stk:(typeof STK_D!=='undefined'?STK_D:[]);
+    const okmC = (typeof okm!=='undefined'&&okm.length>0)?okm:(typeof OKM_D!=='undefined'?OKM_D:[]);
     const unidades = [
-      ...(typeof stk!=='undefined'&&stk.length?stk:(typeof STK_D!=='undefined'?STK_D:[])).filter(u=>{ const e=(u.estado||'').toLowerCase(); return u.precio>0&&(e==='disponible'||e==='nuevo ingreso'||e==='en preparacion'); }).map(u=>({...u,_tipo:'usado',_esUsado:true})),
-      ...(typeof okm!=='undefined'&&okm.length?okm:(typeof OKM_D!=='undefined'?OKM_D:[])).filter(u=>u.precio>0&&(u.estado||'DISPONIBLE').toUpperCase()!=='VENDIDO').map(u=>({...u,_tipo:'0km',_esUsado:false}))
+      ...stkC.filter(u=>{ const e=(u.estado||'').toLowerCase(); return u.precio>0&&(e==='disponible'||e==='nuevo ingreso'||e==='en preparacion'); }).map(u=>({...u,_tipo:'usado',_esUsado:true})),
+      ...okmC.filter(u=>u.precio>0&&(u.estado||'DISPONIBLE').toUpperCase()!=='VENDIDO').map(u=>({...u,_tipo:'0km',_esUsado:false}))
     ];
     const busca = perfil.buscaMarca&&perfil.buscaModelo ? ((perfil.buscaMarca+' '+perfil.buscaModelo).toUpperCase().trim()) : null;
     const results = [];
@@ -6010,12 +6012,15 @@ function labMatch(perfil){
 
   if(totalSinCred <= 0 && sinLimiteCuota) return [];
 
-  // Unidades candidatas
-  const usados = (typeof STK_D!=="undefined"?STK_D:[]).filter(u=>{
+  // Unidades candidatas — usar stk (live desde Drive) cuando esté disponible
+  // stk se actualiza con parseDrv() al sincronizar; STK_D es el fallback hardcodeado
+  const stkLive = (typeof stk!=='undefined'&&stk.length>0) ? stk : (typeof STK_D!=='undefined'?STK_D:[]);
+  const usados = stkLive.filter(u=>{
     const est=(u.estado||'').toLowerCase();
     return u.precio>0 && (est==='disponible'||est==='nuevo ingreso'||est==='en preparacion');
   });
-  const nuevos = (typeof OKM_D!=="undefined"?OKM_D:[]).filter(u=>u.precio>0);
+  const okmLive = (typeof okm!=='undefined'&&okm.length>0) ? okm : (typeof OKM_D!=='undefined'?OKM_D:[]);
+  const nuevos = okmLive.filter(u=>u.precio>0&&(u.estado||'DISPONIBLE').toUpperCase()!=='VENDIDO');
   const unidades = [
     ...usados.map(u=>({...u, _tipo:'usado', _esUsado:true})),
     ...nuevos.map(u=>({...u, _tipo:'0km',   _esUsado:false}))
@@ -6043,20 +6048,20 @@ function labMatch(perfil){
 
   function montoMaxFinanciable(c, n){
     if(sinLimiteCuota) return Infinity; // sin límite declarado
+    // Usar cuotaMax*1.20 para incluir opciones con cuota hasta 20% mayor al límite del cliente
+    const cuotaLimite = cuotaMax * 1.20;
     const coefArr = c.coefs && c.coefs[n];
     if(coefArr){
-      // cuota = mBruto / coefBase * coef  →  mBruto = cuotaMax * coefBase / coef
-      // [1] = primera cuota — usar para calcular monto máximo financiable
       const coef = coefArr[Math.min(1, coefArr.length-1)];
       if(coef <= 0) return 0;
-      return cuotaMax * (c.coefBase||1000) / coef;
+      return cuotaLimite * (c.coefBase||1000) / coef;
     }
     // Fallback TEM
     const tna = c.tna/100;
     const tem = Math.pow(1+tna, 1/12)-1;
-    if(tem <= 0) return cuotaMax * n;
+    if(tem <= 0) return cuotaLimite * n;
     const factor = tem / (1 - Math.pow(1+tem, -n));
-    return cuotaMax / factor;
+    return cuotaLimite / factor;
   }
 
   campActivas.forEach(c=>{
@@ -6130,6 +6135,8 @@ function labMatch(perfil){
           if(!ltvInfo) return;
           const tope = Math.min(precioLTV(u)*(ltvInfo.ltv/100), c.montoMax||Infinity, ltvInfo.montoMax);
           if(necesita > tope) return;
+          // Filtro segmento también en modo sin límite de cuota
+          if(segPref && !encuadraSegmento(u)) return;
           const ceR = (c.comision||0)/100;
           const mBrutoNec = ceR>0 ? necesita*(1+ceR*1.21) : necesita;
           const q = cuotaConCoef(c, n, mBrutoNec);
