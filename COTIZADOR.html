@@ -1144,7 +1144,6 @@ input[type=text]#p-obs{background:#F5F7FA!important;border:1px solid #D5DCE6!imp
         <option value="C">C — Compacto (Golf, Cruze, Corolla, 308…)</option>
         <option value="SUV">SUV / Crossover (2008, Duster, Taos, Aircross…)</option>
         <option value="PICKUP">Pick-up / Utilitario (Hilux, Amarok, Strada, Toro…)</option>
-        <option value="Pickup">Pickup / Utilitario</option>
       </select>
     </div>
     <div style="flex:1"><label class="m" style="font-size:10px">Precio Infoauto $ <span style="color:var(--y);font-size:9px">(base LTV banco)</span></label>
@@ -6860,7 +6859,7 @@ function labCalcMatch(){
   }
 
   // ── VALIDACIÓN: requiere segmento antes de mostrar matches ───────────────
-  const segVal = ($$('lf-segmento')?.value||'').trim();
+  const segVal = ($$('lf-segmento')?.value||'').trim().toUpperCase();
   if(!segVal){
     if($$('lf-match-preview')) $$('lf-match-preview').style.display='none';
     const empty=$$('lf-match-empty');
@@ -6877,7 +6876,7 @@ function labCalcMatch(){
     marcaPref:$$('lf-marca-pref')?.value||'',
     buscaMarca:($$('lf-busca-marca')?.value||'').trim(),
     buscaModelo:($$('lf-busca-modelo')?.value||'').trim(),
-    segmento:($$('lf-segmento')?.value||'').trim(),
+    segmento:($$('lf-segmento')?.value||'').trim().toUpperCase(),
     infoauto:parseFloat($$('lf-infoauto')?.value)||0,
     aceptaSimilares:$$('lf-acepta-similares')?.checked!==false,
   };
@@ -6956,7 +6955,7 @@ function labGuardarPerfil(){
   const nombre=($$('lf-nombre')?.value||'').trim();
   if(!nombre){alert('Ingresá al menos el nombre del cliente.');return;}
   // Validar segmento obligatorio
-  const segVal=($$('lf-segmento')?.value||'').trim();
+  const segVal=($$('lf-segmento')?.value||'').trim().toUpperCase();
   if(!segVal){
     // Destacar el campo de segmento
     const segEl=$$('lf-segmento');
