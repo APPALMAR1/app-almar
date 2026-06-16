@@ -6949,6 +6949,30 @@ function labCalcMatch(){
 function labGuardarPerfil(){
   const nombre=($$('lf-nombre')?.value||'').trim();
   if(!nombre){alert('Ingresá al menos el nombre del cliente.');return;}
+  // Validar segmento obligatorio
+  const segVal=($$('lf-segmento')?.value||'').trim();
+  if(!segVal){
+    // Destacar el campo de segmento
+    const segEl=$$('lf-segmento');
+    if(segEl){
+      segEl.style.borderColor='#ef7d00';
+      segEl.style.boxShadow='0 0 0 2px rgba(239,125,0,.35)';
+      segEl.focus();
+      setTimeout(()=>{ segEl.style.borderColor=''; segEl.style.boxShadow=''; }, 3000);
+    }
+    // Mostrar mensaje de error inline (no alert)
+    const segContainer = segEl?.closest('.pr')||segEl?.parentElement;
+    const errId = 'seg-err-msg';
+    if(!document.getElementById(errId) && segContainer){
+      const err = document.createElement('div');
+      err.id = errId;
+      err.style.cssText = 'color:#ef7d00;font-size:11px;font-weight:600;margin-top:4px';
+      err.textContent = '⚠️ Seleccioná el segmento que busca el cliente para poder guardar el perfil';
+      segContainer.appendChild(err);
+      setTimeout(()=>{ const e=document.getElementById(errId); if(e) e.remove(); }, 3000);
+    }
+    return;
+  }
   const id=$$('lf-id')?.value||labUID();
   const perfiles=labGetPerfiles();
   const idx=perfiles.findIndex(p=>p.id===id);
@@ -7035,15 +7059,7 @@ function labVerDetalle(id){
     </div>`;
   } else {
     // Banner de aviso cuando no hay segmento declarado
-    const sinSegmento = !p.segmento || p.segmento.trim()==='';    const bannerSinSeg = sinSegmento ? `
-      <div onclick="labVerDetalle('${p.id||''}')" style="cursor:pointer;display:flex;align-items:flex-start;gap:8px;background:rgba(239,125,0,.13);border:1px solid rgba(239,125,0,.35);border-radius:8px;padding:10px 12px;margin-bottom:10px">
-        <span style="font-size:16px;flex-shrink:0">⚠️</span>
-        <div>
-          <div style="font-size:12px;font-weight:700;color:#ef7d00;margin-bottom:2px">Sin segmento declarado</div>
-          <div style="font-size:11px;color:var(--m)">Los resultados incluyen todos los tipos de vehículo. Tocá aquí para completar el segmento en el perfil y afinar las coincidencias.</div>
-        </div>
-      </div>` : '';
-    matchesHTML=bannerSinSeg+ms.slice(0,15).map((m,idx)=>{
+    matchesHTML=ms.slice(0,15).map((m,idx)=>{
       const u=m.unidad;
       const autoStr=`${u.marca||''} ${u.modelo||''} ${(u.version||'').substring(0,35)}`.trim();
       const ant=_hoy-(u.anno||_hoy);
