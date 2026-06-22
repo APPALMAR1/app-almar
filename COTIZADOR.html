@@ -3380,7 +3380,21 @@ function _inyectarMarcasUSD(data){
 // ── Sync precios OKM — igual mecanismo que stock usados ──────────────────────
 const PRECIOS_OKM_URL='https://docs.google.com/spreadsheets/d/e/2PACX-1vRZc13F55AeNqNfw0rG-9vVA5-ETS0DH3tPLTS5JA6aDK-F87p5tfrR4U3eB-Cfug/pub?gid=1463445679&single=true&output=csv';
 
-function syncPreciosOKM(){_cargarPrecios(false);}
+function syncPreciosOKM(){
+  // Auto-sync al iniciar: usar caché si es fresco (menos de 1 hora)
+  var cached=localStorage.getItem('almar_precios_okm');
+  if(cached){
+    try{
+      var obj=JSON.parse(cached);
+      var age=(Date.now()-new Date(obj.fecha).getTime())/60000; // minutos
+      if(obj.data&&obj.data.length&&age<60){
+        window._preciosData=obj.data;
+        return; // caché fresco, no hace fetch
+      }
+    }catch(e){}
+  }
+  _cargarPrecios(false);
+}
 
 function _cargarPrecios(conFeedback){
   var el=$$('precios-content');
@@ -3403,7 +3417,11 @@ function _cargarPrecios(conFeedback){
     });
 }
 
-function syncPrecios(){_cargarPrecios(true);}
+function syncPrecios(){
+  // Botón ☁ Actualizar: siempre borra caché y busca datos frescos del Sheet
+  try{localStorage.removeItem('almar_precios_okm');}catch(e){}
+  _cargarPrecios(true);
+}
 
 // Inyecta en el array data las marcas/modelos USD desde MKT_USD_DATA_G.
 // Si la marca ya existe (vino del Excel en ARS), agrega solo los modelos USD que falten.
