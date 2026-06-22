@@ -3378,7 +3378,7 @@ function _inyectarMarcasUSD(data){
 
 
 // ── Sync precios OKM — igual mecanismo que stock usados ──────────────────────
-const PRECIOS_OKM_URL='https://docs.google.com/spreadsheets/d/e/2PACX-1vSlNo1sGT1E4C3lee5V3OUDnSsjAQbZETTP67btS3kyeH1kWQUVvbZciyd7ru7ErTOunOiELMAimu3b/pub?output=csv&gid=1463445679';
+const PRECIOS_OKM_URL='https://docs.google.com/spreadsheets/d/e/2PACX-1vRZc13F55AeNqNfw0rG-9vVA5-ETS0DH3tPLTS5JA6aDK-F87p5tfrR4U3eB-Cfug/pub?gid=1463445679&single=true&output=csv';
 
 function syncPreciosOKM(){_cargarPrecios(false);}
 
@@ -3386,7 +3386,7 @@ function _cargarPrecios(conFeedback){
   var el=$$('precios-content');
   if(conFeedback&&el) el.innerHTML='<div class="empty"><div class="eico">⏳</div><div class="ettl">Actualizando...</div><div class="esub">Conectando con Google Sheets.</div></div>';
   fetch(PRECIOS_OKM_URL+'&t='+Date.now(),{cache:'no-store'})
-    .then(function(r){return r.text();})
+    .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.text();})
     .then(function(csv){
       var data=parsePreciosCSV(csv);
       if(!data||!data.length) throw new Error('sin datos');
