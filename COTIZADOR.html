@@ -3390,6 +3390,8 @@ function _cargarPrecios(conFeedback){
     .then(function(csv){
       var data=parsePreciosCSV(csv);
       if(!data||!data.length) throw new Error('sin datos');
+      // Inyectar marcas USD hardcodeadas que no vengan del Sheet (BAIC, CHERY, etc.)
+      _inyectarMarcasUSD(data);
       window._preciosData=data;
       try{localStorage.setItem('almar_precios_okm',JSON.stringify({data:data,fecha:new Date().toISOString()}));}catch(e){}
       if(typeof actualizarBNA==='function'){
@@ -3403,7 +3405,11 @@ function _cargarPrecios(conFeedback){
     });
 }
 
-function syncPrecios(){_cargarPrecios(true);}
+function syncPrecios(){
+  // Limpiar caché para forzar datos frescos del Sheet
+  try{ localStorage.removeItem('almar_precios_okm'); }catch(e){}
+  _cargarPrecios(true);
+}
 
 // Inyecta en el array data las marcas/modelos USD desde MKT_USD_DATA_G.
 // Si la marca ya existe (vino del Excel en ARS), agrega solo los modelos USD que falten.
