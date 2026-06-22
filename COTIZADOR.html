@@ -3378,7 +3378,7 @@ function _inyectarMarcasUSD(data){
 
 
 // ── Sync precios OKM — igual mecanismo que stock usados ──────────────────────
-const PRECIOS_OKM_URL='https://docs.google.com/spreadsheets/d/e/2PACX-1vRZc13F55AeNqNfw0rG-9vVA5-ETSODH3tPLTS5JA6aDK-F87p5tfrR4U3eB-Cfug/pub?gid=1463445679&single=true&output=csv';
+const PRECIOS_OKM_URL='https://docs.google.com/spreadsheets/d/e/2PACX-1vSlNo1sGT1E4C3lee5V3OUDnSsjAQbZETTP67btS3kyeH1kWQUVvbZciyd7ru7ErTOunOiELMAimu3b/pub?output=csv&gid=1463445679';
 
 function syncPreciosOKM(){_cargarPrecios(false);}
 
@@ -3390,8 +3390,6 @@ function _cargarPrecios(conFeedback){
     .then(function(csv){
       var data=parsePreciosCSV(csv);
       if(!data||!data.length) throw new Error('sin datos');
-      // Inyectar marcas USD hardcodeadas que no vengan del Sheet (BAIC, CHERY, etc.)
-      _inyectarMarcasUSD(data);
       window._preciosData=data;
       try{localStorage.setItem('almar_precios_okm',JSON.stringify({data:data,fecha:new Date().toISOString()}));}catch(e){}
       if(typeof actualizarBNA==='function'){
@@ -3405,11 +3403,7 @@ function _cargarPrecios(conFeedback){
     });
 }
 
-function syncPrecios(){
-  // Limpiar caché para forzar datos frescos del Sheet
-  try{ localStorage.removeItem('almar_precios_okm'); }catch(e){}
-  _cargarPrecios(true);
-}
+function syncPrecios(){_cargarPrecios(true);}
 
 // Inyecta en el array data las marcas/modelos USD desde MKT_USD_DATA_G.
 // Si la marca ya existe (vino del Excel en ARS), agrega solo los modelos USD que falten.
