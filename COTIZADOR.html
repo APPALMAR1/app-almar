@@ -6322,6 +6322,13 @@ function labGuardarYAbrir(matchIdx){
   const perfs = labGetPerfiles();
   let perfGuardado = perfs.find(x=>x.id===(_labDetId||_labModalId));
 
+  // Sincronizar segmento actual (del select) al perfil guardado
+  // para que labFiltrar muestre los mismos resultados que el preview
+  if(perfGuardado && p.segmento && perfGuardado.segmento !== p.segmento){
+    perfGuardado.segmento = p.segmento;
+    labSetPerfiles(perfs);
+  }
+
   if(perfGuardado){
     // Actualizar el perfil existente con el match seleccionado
     perfGuardado.matchSeleccionado = {
@@ -6890,6 +6897,9 @@ function labCalcMatch(){
   const perfTemp={
     entrega, partePago, cheques, cuotaMax, contado,
     modo: _labModo,
+    nombre:($$('lf-nombre')?.value||'').trim(),
+    tel:($$('lf-tel')?.value||'').trim(),
+    email:($$('lf-email')?.value||'').trim(),
     marcaPref:$$('lf-marca-pref')?.value||'',
     buscaMarca:($$('lf-busca-marca')?.value||'').trim(),
     buscaModelo:($$('lf-busca-modelo')?.value||'').trim(),
