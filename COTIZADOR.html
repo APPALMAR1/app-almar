@@ -6346,11 +6346,46 @@ function labGuardarYAbrir(matchIdx){
     labSetPerfiles(perfs);
     mostrarToast('✅ Match guardado en el perfil');
   } else if(p.nombre||p.tel){
-    // Perfil no guardado aún — guardar con labGuardarPerfil si existe
-    if(typeof labGuardarPerfil==='function'){
-      labGuardarPerfil();
-      mostrarToast('✅ Perfil y match guardados');
-    }
+    // Perfil no guardado aún — crear perfil con segmento y match
+    const newId = labUID();
+    const newPerfil = {
+      id: newId,
+      nombre: p.nombre||'',
+      tel: p.tel||'',
+      email: p.email||'',
+      entrega: p.entrega||0,
+      cuotaMax: p.cuotaMax||0,
+      partePago: p.partePago||0,
+      cheques: p.cheques||0,
+      modo: p.modo||'financiado',
+      segmento: p.segmento||'',
+      infoauto: p.infoauto||0,
+      marcaPref: p.marcaPref||'',
+      buscaMarca: p.buscaMarca||'',
+      buscaModelo: p.buscaModelo||'',
+      aceptaSimilares: p.aceptaSimilares!==false,
+      urgencia: 'caliente',
+      estado: 'match',
+      fecha: new Date().toISOString(),
+      fechaMod: new Date().toISOString(),
+      matchSeleccionado: {
+        matchIdx,
+        auto: `${u.marca} ${u.modelo} ${u.version||''}`.trim(),
+        precio: u.precio,
+        dominio: u.dominio,
+        banco: m.campana?.banco,
+        campana: m.campana?.nombre,
+        plazo: m.plazo,
+        cuota: m.cuotaCalc,
+        mBruto: m.mBruto,
+        fecha: new Date().toISOString()
+      }
+    };
+    const allPerfs = labGetPerfiles();
+    allPerfs.unshift(newPerfil);
+    labSetPerfiles(allPerfs);
+    _labDetId = newId;
+    mostrarToast('✅ Perfil y match guardados');
   }
 
   // 3. Cerrar paneles del LAB
