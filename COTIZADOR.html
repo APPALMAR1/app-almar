@@ -5894,11 +5894,40 @@ function labSyncPerfiles(callback){
     .then(r=>r.json())
     .then(d=>{
       if(d.data&&d.data.length>0){
-        localStorage.setItem('lab_perfiles', JSON.stringify(d.data));
+        // MERGE: combinar nube con local — local tiene precedencia (más reciente)
+        const localRaw = localStorage.getItem('lab_perfiles');
+        const localPerfs = localRaw ? JSON.parse(localRaw) : [];
+        const cloudPerfs = d.data;
+        // Indexar locales por id
+        const localMap = {};
+        localPerfs.forEach(p=>{ if(p.id) localMap[p.id]=p; });
+        // Tomar cloud como base, pero mantener locales más recientes
+        const merged = cloudPerfs.map(cp=>{
+          const lp = localMap[cp.id];
+          if(lp){
+            // Usar local si tiene fechaMod más reciente
+            const cloudDate = new Date(cp.fechaMod||cp.fecha||0).getTime();
+            const localDate = new Date(lp.fechaMod||lp.fecha||0).getTime();
+            return localDate >= cloudDate ? lp : cp;
+          }
+          return cp;
+        });
+        // Agregar perfiles locales que no están en la nube (recién creados)
+        localPerfs.forEach(lp=>{
+          if(!cloudPerfs.find(cp=>cp.id===lp.id)) merged.unshift(lp);
+        });
+        localStorage.setItem('lab_perfiles', JSON.stringify(merged));
+        // Subir a la nube los perfiles locales nuevos/modificados
+        labSavePerfiles(merged);
       }
       if(callback) callback();
     })
     .catch(()=>{ if(callback) callback(); });
+}
+function labSavePerfiles(perfiles){
+  // Guardar en nube silenciosamente
+  if(typeof PROPUESTAS_URL==='undefined') return;
+  fetch(PROPUESTAS_URL,{method:'POST',body:JSON.stringify({action:'saveLabPerfiles',perfiles})}).catch(()=>{});
 }
 function labUID(){ return 'lab_'+Date.now()+'_'+Math.random().toString(36).slice(2,7); }
 const _hoy = new Date().getFullYear();
