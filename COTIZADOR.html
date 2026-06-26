@@ -6217,15 +6217,15 @@ function labMatch(perfil){
 
   results.forEach(r=>{
     let score = 0;
-    // Score segmento
+    // Score segmento — penalización fuerte para que nunca superen al segmento correcto
     if(segPref && r.unidad){
       const key = ((r.unidad.marca||'')+' '+(r.unidad.modelo||'')).toUpperCase().trim();
       const seg = SEG_D[key];
       const segAuto = (seg?.seg||'').toUpperCase();
       const carAuto = (seg?.car||'').toUpperCase();
-      if(segAuto === segPref || carAuto === segPref) score += 100;
-      else if(segTipoPref && (segAuto.includes(segTipoPref)||carAuto.includes(segTipoPref))) score += 50;
-      else score -= 20; // penalizar segmento distinto
+      if(segAuto === segPref || carAuto === segPref) score += 100;  // segmento exacto
+      else if(segTipoPref && (segAuto.includes(segTipoPref)||carAuto.includes(segTipoPref))) score += 30; // similar
+      else score -= 200; // penalización fuerte — nunca supera al segmento correcto
     } else {
       score += 50; // sin preferencia: neutro
     }
@@ -6514,17 +6514,22 @@ function labAbrirEnCotizador(matchIdx){
 
 function _labCargarFinanciacion(m, p){
   // ── DATOS DEL CLIENTE ────────────────────────────────────────
-  if(p.nombre){
-    const partes = p.nombre.trim().split(' ');
-    const apellido = partes.length>1 ? partes.pop() : '';
-    const nombre   = partes.join(' ');
-    const pNom=$$('p-nombre'); if(pNom&&!pNom.value) pNom.value=nombre;
-    const pApe=$$('p-apellido'); if(pApe&&!pApe.value) pApe.value=apellido;
-  }
-  if(p.tel){ const el=$$('p-tel'); if(el&&!el.value) el.value=p.tel; }
-  if(p.email){ const el=$$('p-email'); if(el&&!el.value) el.value=p.email; }
-  // Disparar búsqueda de cliente existente
-  if(typeof buscarClienteExistente==='function') buscarClienteExistente();
+  // Setear datos del cliente — forzado, luego buscar cliente existente
+  const _setCliente=()=>{
+    if(p.nombre){
+      const partes = p.nombre.trim().split(' ');
+      const apellido = partes.length>1 ? partes.pop() : '';
+      const nombre   = partes.join(' ');
+      const pNom=$$('p-nombre'); if(pNom) pNom.value=nombre;
+      const pApe=$$('p-apellido'); if(pApe) pApe.value=apellido;
+    }
+    if(p.tel){ const el=$$('p-tel'); if(el) el.value=p.tel; }
+    if(p.email){ const el=$$('p-email'); if(el) el.value=p.email; }
+    if(typeof buscarClienteExistente==='function') buscarClienteExistente();
+  };
+  _setCliente();
+  // Repetir a t=800ms por si limpiar() o buscarClienteExistente() sobreescribió los campos
+  setTimeout(_setCliente, 800);
 
   // ── FINANCIACIÓN ────────────────────────────────────────────
   if(m.campana && m.mBruto>0){
