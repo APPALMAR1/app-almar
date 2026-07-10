@@ -1451,10 +1451,10 @@ const CAMP_VIGENCIAS={
 };
 // pendiente:true = señal del mes actual no recibida aún
 
-// ── CUENTAS BANCARIAS POR MARCA ── usadas en pantalla "Pagos" (envío por WhatsApp)
-// Actualizar este objeto si cambia una cuenta o se suma una marca nueva (ej. BAIC)
+// ── CUENTAS BANCARIAS POR RAZÓN SOCIAL ── usadas en pantalla "Pagos" (envío por WhatsApp)
+// Actualizar este objeto si cambia una cuenta o se suma una razón social nueva
 const CUENTAS_BANCARIAS={
-  'FOTON':{
+  'ALMAR':{
     razonSocial:'ALMAR S.A.', cuit:'30-71586539-0',
     cuentas:[
       {banco:'Banco Macro',    moneda:'ARS', cuenta:'378209420315550',  cbu:'2850782030094203155501'},
@@ -1467,21 +1467,15 @@ const CUENTAS_BANCARIAS={
       {banco:'Banco BBVA',     moneda:'USD', cuenta:'489-060504/2',     cbu:'0170489526000006050429'},
     ]
   },
-  'DFSK':{
+  'KOVIA':{
     razonSocial:'KOVIA S.A.', cuit:'30-71906408-2',
     cuentas:[
       {banco:'Banco Macro', moneda:'ARS', cuenta:'378209424826496', cbu:'2850782030094248264961'},
       {banco:'Banco Macro', moneda:'USD', cuenta:'278209605075554', cbu:'2850782020096050755544'},
     ]
   },
-  'BAIC':{
-    razonSocial:'ALMAR S.A.', cuit:'30-71586539-0',
-    cuentas:[
-      {banco:'Banco Macro',    moneda:'ARS', cuenta:'378209420315550',  cbu:'2850782030094203155501'},
-      {banco:'Banco Macro',    moneda:'USD', cuenta:'278209544270595',  cbu:'2850782020095442705954'},
-    ]
-  },
 };
+
 
 
 const CAMP_D=[
