@@ -2500,6 +2500,12 @@ function onMarca(){
 function onModelo(){
   ['version','anno'].forEach(disEl);
   const t=$$('tipo').value,ma=$$('marca').value,mo=$$('modelo').value; if(!mo)return;
+  // Mostrar campañas disponibles para el modelo al seleccionarlo
+  setTimeout(()=>{
+    const _box=$$('cred-box');
+    if(_box&&ma) _box.style.display='block';
+    rCampMini();
+  },100);
   if(t==='lista_precios'){
     // En lista_precios no hay versión separada — el modelo ya es la versión completa
     // Pasamos directo al año
@@ -3765,6 +3771,9 @@ function cotizarDesdePrecios(marca, modeloCompleto, precioArg, precioUSD){
           const tcRef=precioUSD&&precioUSD>0&&_bnaCotiz?` <span style="font-size:9px;color:var(--m)">(TC BNA $${Math.round(_bnaCotiz).toLocaleString('es-AR')})</span>`:'';
           if(aral) aral.innerHTML=`<div class="al info">💰 <strong>${marca} — ${modeloCompleto}</strong> · Año ${yr}${usdRef}${tcRef}<br><span style="font-size:10px;color:var(--m)">Precio cargado desde lista de precios</span></div>`;
           cP();
+          // Mostrar panel de campañas aunque monto crédito sea 0 (al cargar el auto)
+          const _box=$$('cred-box');
+          if(_box) _box.style.display='block';
           rCampMini();
         },150);
       },150);
@@ -4047,7 +4056,18 @@ function calcCred(){
   const mt=parseFloat($$('pb1').value)||0;
   const box=$$('cred-box');
 
-  if(mt<=0){box.style.display='none';$$('print-cuotas').style.display='none';$$('print-cuotas').innerHTML='';return}
+  if(mt<=0){
+    // Aunque no hay monto, mostrar campañas si hay marca/modelo cargado
+    const _ma=($$('marca')?.value||'').toUpperCase();
+    if(_ma){
+      box.style.display='block';
+      rCampMini();
+    } else {
+      box.style.display='none';
+    }
+    $$('print-cuotas').style.display='none';$$('print-cuotas').innerHTML='';
+    return;
+  }
   // Recalcular gastos bancarios si hay campaña seleccionada
   if(credCampId&&mt>0){
     const cv=camp.find(c=>c.id===credCampId);
