@@ -770,11 +770,11 @@ input[type=text]#p-obs{background:#F5F7FA!important;border:1px solid #D5DCE6!imp
       <div class="ch"><div class="ci g">✅</div><div class="ct">B — Cómo lo paga</div><div class="sn">Paso 3</div></div>
       <div class="cb">
         <!-- CRÉDITO con calculadora integrada -->
-        <div class="pr"><label class="m">Monto del crédito bancario</label><input type="number" id="pb1" placeholder="0" oninput="cP();calcCred()" onfocus="abrirSelectorCampanas()"></div>
+        <div class="pr"><label class="m">Monto del crédito bancario</label><input type="number" id="pb1" placeholder="0" oninput="cP();calcCred()" onfocus="abrirSelectorCampanas()" onclick="abrirSelectorCampanas()"></div>
 
         <!-- BOX CALCULADORA CRÉDITO -->
         <div class="cred-box" id="cred-box" style="display:none">
-          <div class="cred-box-tit" id="cred-box-tit">🏦 Seleccioná campaña y plazo</div>
+          <div class="cred-box-tit" id="cred-box-tit" onclick="abrirSelectorCampanas()" style="cursor:pointer" title="Click para ver campañas">🏦 Seleccioná campaña y plazo ▾</div>
           <!-- campañas mini -->
           <div class="cg-mini no-print-item" id="cg-mini"></div>
           <div id="ltv-al" class="ltv-al"></div>
@@ -3720,6 +3720,11 @@ function cotizarDesdePrecios(marca, modeloCompleto, precioArg, precioUSD){
   version=modeloCompleto.slice(mejorModelo.length).trim();
   if(!version) version=modeloCompleto;
 
+  // Guardar marca/modelo globalmente como fallback para abrirSelectorCampanas
+  window._propMarca=marca.toUpperCase();
+  window._propModelo=mejorModelo.toUpperCase();
+  window._propPrecio=precio;
+
   // Ir a propuesta y cargar datos
   goTo('propuesta');
   const yr=new Date().getFullYear();
@@ -3821,13 +3826,14 @@ function ltvPSAUsados(anno){
 const UMBRAL_TNA_SUBSIDIADA = 20;
 
 function abrirSelectorCampanas(){
-  const ma=($$('marca')?.value||'').toUpperCase();
-  const mo=($$('modelo')?.value||'').toUpperCase();
+  // Usar valor del select o fallback de la carga desde precios/stock
+  const ma=(($$('marca')?.value||'')||(window._propMarca||'')).toUpperCase();
+  const mo=(($$('modelo')?.value||'')||(window._propModelo||'')).toUpperCase();
   const t=$$('tipo')?.value||'';
   const esUsado=t==='usado'||t==='mercado_usado';
   if(!ma||esUsado) return; // Solo para 0km con marca cargada
 
-  const precio=parseFloat($$('pa1')?.value)||0;
+  const precio=parseFloat($$('pa1')?.value)||window._propPrecio||0;
   const act=camp.filter(c=>c.activa&&!c.usados);
 
   // Campañas de MARCA para este modelo
