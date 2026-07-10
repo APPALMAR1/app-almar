@@ -911,7 +911,23 @@ input[type=text]#p-obs{background:#F5F7FA!important;border:1px solid #D5DCE6!imp
 </div>
 </div>
 
-<!-- STOCK USADOS -->
+<!-- PAGOS -->
+<div id="screen-pagos" class="scr">
+<div class="page">
+  <div class="sh"><div><div class="st2">💳 Datos de Pago</div><div class="ss2">Seleccioná marca y cuenta para enviar al cliente</div></div></div>
+
+  <div class="card" style="padding:14px">
+    <div style="font-size:12px;color:var(--m);margin-bottom:8px;font-weight:700">1. Elegí la marca</div>
+    <div id="pg-marcas" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px"></div>
+
+    <div id="pg-cuentas-wrap" style="display:none">
+      <div style="font-size:12px;color:var(--m);margin-bottom:8px;font-weight:700">2. Elegí la cuenta</div>
+      <div id="pg-cuentas"></div>
+    </div>
+  </div>
+</div>
+</div>
+
 <div id="screen-stock" class="scr">
 <div class="page pw-stk">
   <!-- Header impresión stock -->
@@ -1434,6 +1450,39 @@ const CAMP_VIGENCIAS={
   'CREDICUOTAS':   {mes:'Mayo 2026',   fecha:'2026-05-01', pendiente:true},
 };
 // pendiente:true = señal del mes actual no recibida aún
+
+// ── CUENTAS BANCARIAS POR MARCA ── usadas en pantalla "Pagos" (envío por WhatsApp)
+// Actualizar este objeto si cambia una cuenta o se suma una marca nueva (ej. BAIC)
+const CUENTAS_BANCARIAS={
+  'FOTON':{
+    razonSocial:'ALMAR S.A.', cuit:'30-71586539-0',
+    cuentas:[
+      {banco:'Banco Macro',    moneda:'ARS', cuenta:'378209420315550',  cbu:'2850782030094203155501'},
+      {banco:'Banco Nación',   moneda:'ARS', cuenta:'27204070211809',   cbu:'0110407720040702118090'},
+      {banco:'Banco Santander',moneda:'ARS', cuenta:'181-010293/5',     cbu:'0720181920000001029354'},
+      {banco:'Banco Galicia',  moneda:'ARS', cuenta:'0012022-1 070-7',  cbu:'0070070220000012022171'},
+      {banco:'Banco BBVA',     moneda:'ARS', cuenta:'489-001107/2',     cbu:'0170489520000000110729'},
+      {banco:'Banco ICBC',     moneda:'ARS', cuenta:'0828/02104669/00', cbu:'0150828202000104669004'},
+      {banco:'Banco Macro',    moneda:'USD', cuenta:'278209544270595',  cbu:'2850782020095442705954'},
+      {banco:'Banco BBVA',     moneda:'USD', cuenta:'489-060504/2',     cbu:'0170489526000006050429'},
+    ]
+  },
+  'DFSK':{
+    razonSocial:'KOVIA S.A.', cuit:'30-71906408-2',
+    cuentas:[
+      {banco:'Banco Macro', moneda:'ARS', cuenta:'378209424826496', cbu:'2850782030094248264961'},
+      {banco:'Banco Macro', moneda:'USD', cuenta:'278209605075554', cbu:'2850782020096050755544'},
+    ]
+  },
+  'BAIC':{
+    razonSocial:'ALMAR S.A.', cuit:'30-71586539-0',
+    cuentas:[
+      {banco:'Banco Macro',    moneda:'ARS', cuenta:'378209420315550',  cbu:'2850782030094203155501'},
+      {banco:'Banco Macro',    moneda:'USD', cuenta:'278209544270595',  cbu:'2850782020095442705954'},
+    ]
+  },
+};
+
 
 const CAMP_D=[
   //  BANCOS 
@@ -2100,6 +2149,7 @@ const SC={
   propguard:  {t:'Propuestas Guardadas',   s:'Historial del equipo · Ordenado por fecha'},
   clientes:   {t:'Base de Clientes',       s:'Todos los clientes registrados'},
   laboratorio:{t:'Laboratorio Comercial',  s:'Motor de matching · Perfiles financieros'},
+  pagos:      {t:'Datos de Pago',          s:'Enviar cuenta bancaria al cliente'},
 };
 function goTo(n){
   // Protección de acceso: admin solo para Master
@@ -2126,6 +2176,7 @@ function goTo(n){
   if(n==='propguard')cargarPropuestasGuardadas();
   if(n==='clientes'){cargarClientes();}
   if(n==='laboratorio'){rLab();}
+  if(n==='pagos'){rPagos();}
 }
 function tgD(){$$('dr').classList.toggle('on');$$('ov').classList.toggle('on')}
 function clD(){$$('dr').classList.remove('on');$$('ov').classList.remove('on')}
@@ -2149,6 +2200,7 @@ function bDr(){
       {sec:'Herramientas'},
       {s:'cotizador',i:'🔢',l:'Cotizador rápido'},
       {s:'laboratorio',i:'🧪',l:'Lab Comercial'},
+      {s:'pagos',i:'💳',l:'Datos de Pago'},
       {sec:'Inventario'},
       {s:'stock',i:'🚗',l:'Stock Usados'},
       {s:'okm',i:'🏎',l:'Stock 0 km'},
@@ -2178,7 +2230,7 @@ function bBN(){
   ]:[
     {s:'propuesta',i:'📋',l:'Propuesta'},
     {s:'historial',i:'🕐',l:'Historial'},
-    ...(esSupervisor(CU)?[{s:'supervisor',i:'📊',l:'Supervisor',sup:true}]:[]),
+    ...(esSupervisor(CU)?[{s:'supervisor',i:'📊',l:'Supervisor',sup:true}]:[{s:'pagos',i:'💳',l:'Pagos'}]),
     {s:'laboratorio',i:'🧪',l:'Lab'},
     {s:'stock',i:'🚗',l:'Stock'},
     {s:'okm',i:'🏎',l:'0 km'},
@@ -2186,6 +2238,10 @@ function bBN(){
   ];
   if(esSupervisor(CU)||esGerencia(CU)){
     items.splice(-1,0,{s:'clientes',i:'👥',l:'Clientes',sup:true});
+  }
+  // Master y Supervisor también acceden a Pagos (los vendedores ya lo tienen en su slot)
+  if(esSupervisor(CU)){
+    items.splice(-1,0,{s:'pagos',i:'💳',l:'Pagos',sup:true});
   }
   // Master también ve Gerencia
   if(esMaster(CU)){
@@ -2199,6 +2255,65 @@ function bBN(){
     d.innerHTML=`<div class="ic">${x.i}</div>${x.l}`;
     b.appendChild(d);
   });
+}
+
+// ── PAGOS ── selector marca → banco → envío WhatsApp
+function rPagos(){
+  const wrap=$$('pg-marcas'); wrap.innerHTML='';
+  $$('pg-cuentas-wrap').style.display='none';
+  $$('pg-cuentas').innerHTML='';
+  Object.keys(CUENTAS_BANCARIAS).forEach((marca,idx)=>{
+    const b=document.createElement('button');
+    b.className='btn btn-ghost btn-sm';
+    b.style.cssText='padding:10px 20px;font-size:13px;font-weight:700';
+    b.dataset.marca=marca;
+    b.textContent=marca;
+    b.onclick=()=>rPagosCuentas(marca);
+    wrap.appendChild(b);
+  });
+}
+function rPagosCuentas(marca){
+  document.querySelectorAll('#pg-marcas button').forEach(x=>{
+    const on=x.dataset.marca===marca;
+    x.classList.toggle('btn-r',on);
+    x.classList.toggle('btn-ghost',!on);
+  });
+  const data=CUENTAS_BANCARIAS[marca];
+  const wrapWrap=$$('pg-cuentas-wrap'), wrap=$$('pg-cuentas');
+  wrap.innerHTML=''; wrapWrap.style.display='block';
+  if(!data||!data.cuentas.length){
+    wrap.innerHTML='<div class="empty"><div class="eico">🏦</div><div class="ettl">Sin cuentas cargadas para esta marca</div></div>';
+    return;
+  }
+  data.cuentas.forEach(c=>{
+    const card=document.createElement('div');
+    card.className='card';
+    card.style.cssText='padding:12px 14px;margin-bottom:8px';
+    card.innerHTML=`
+      <div style="font-weight:700;font-size:13px;margin-bottom:4px">${c.banco} <span style="color:var(--m);font-weight:400;font-size:11px">· ${c.moneda}</span></div>
+      <div style="font-size:12px;color:var(--m);line-height:1.7">
+        ${data.razonSocial} · CUIT ${data.cuit}<br>
+        Cuenta: ${c.cuenta}<br>
+        CBU: ${c.cbu}
+      </div>
+      <button class="btn btn-r btn-sm" style="margin-top:8px;width:100%" onclick="enviarDatosPago('${marca}','${c.banco.replace(/'/g,"\\'")}','${c.moneda}')">📤 Enviar por WhatsApp</button>
+    `;
+    wrap.appendChild(card);
+  });
+}
+function enviarDatosPago(marca,banco,moneda){
+  const data=CUENTAS_BANCARIAS[marca];
+  if(!data)return;
+  const c=data.cuentas.find(x=>x.banco===banco&&x.moneda===moneda);
+  if(!c)return;
+  const txt='*Datos para transferencia — '+marca+'*\n'
+    +'Razón social: '+data.razonSocial+'\n'
+    +'CUIT: '+data.cuit+'\n'
+    +'Banco: '+c.banco+'\n'
+    +'Moneda: '+c.moneda+'\n'
+    +'Cuenta: '+c.cuenta+'\n'
+    +'CBU: '+c.cbu;
+  window.open('https://wa.me/?text='+encodeURIComponent(txt),'_blank');
 }
 
 //  CASCADA (selector de vehículo) ─
