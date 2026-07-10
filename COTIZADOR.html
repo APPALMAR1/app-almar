@@ -770,7 +770,16 @@ input[type=text]#p-obs{background:#F5F7FA!important;border:1px solid #D5DCE6!imp
       <div class="ch"><div class="ci g">✅</div><div class="ct">B — Cómo lo paga</div><div class="sn">Paso 3</div></div>
       <div class="cb">
         <!-- CRÉDITO con calculadora integrada -->
-        <div class="pr"><label class="m">Monto del crédito bancario</label><input type="number" id="pb1" placeholder="0" oninput="cP();calcCred()" onfocus="abrirSelectorCampanas()" onclick="abrirSelectorCampanas()"></div>
+        <div class="pr"><label class="m">Monto del crédito bancario</label><input type="number" id="pb1" placeholder="0" oninput="cP();calcCred()" ></div>
+
+        <!-- BOTÓN SELECTOR CAMPAÑAS — se muestra cuando hay marca cargada -->
+        <div id="btn-abrir-campanas" style="display:none;margin:6px 0 4px">
+          <div onclick="abrirSelectorCampanas()" style="display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:8px;cursor:pointer;border:2px solid #ef7d00;background:rgba(239,125,0,.08);color:#ef7d00;font-weight:800;font-size:12px;letter-spacing:.5px;transition:all .15s" onmouseenter="this.style.background='rgba(239,125,0,.18)'" onmouseleave="this.style.background='rgba(239,125,0,.08)'">
+            <span style="font-size:16px">⭐</span>
+            <span>Ver campañas disponibles</span>
+            <span style="margin-left:auto;font-size:16px">▾</span>
+          </div>
+        </div>
 
         <!-- BOX CALCULADORA CRÉDITO -->
         <div class="cred-box" id="cred-box" style="display:none">
@@ -3776,9 +3785,9 @@ function cotizarDesdePrecios(marca, modeloCompleto, precioArg, precioUSD){
           const tcRef=precioUSD&&precioUSD>0&&_bnaCotiz?` <span style="font-size:9px;color:var(--m)">(TC BNA $${Math.round(_bnaCotiz).toLocaleString('es-AR')})</span>`:'';
           if(aral) aral.innerHTML=`<div class="al info">💰 <strong>${marca} — ${modeloCompleto}</strong> · Año ${yr}${usdRef}${tcRef}<br><span style="font-size:10px;color:var(--m)">Precio cargado desde lista de precios</span></div>`;
           cP();
-          // Mostrar panel de campañas aunque monto crédito sea 0 (al cargar el auto)
-          const _box=$$('cred-box');
-          if(_box) _box.style.display='block';
+          // Mostrar botón selector de campañas al cargar el auto
+          const _btnC=$$('btn-abrir-campanas');
+          if(_btnC) _btnC.style.display='block';
           rCampMini();
         },150);
       },150);
@@ -3857,36 +3866,27 @@ function abrirSelectorCampanas(){
   // Si no hay nada subsidiado, dejar flujo normal
   if(!subsidiadas.length) return;
 
-  // Construir panel selector dentro de cred-box
-  const box=$$('cred-box');
-  if(!box) return;
-  box.style.display='block';
-
-  // Crear o limpiar el sub-menu de selección
-  let sub=$$('camp-selector-panel');
-  if(!sub){
-    sub=document.createElement('div');
-    sub.id='camp-selector-panel';
-    sub.style.cssText='padding:4px 0;';
-    box.style.position='relative';
-    // Insertar al inicio del cred-box
-    const tit=$$('cred-box-tit');
-    if(tit) tit.after(sub); else box.prepend(sub);
+  // Crear overlay modal sobre la columna B
+  let overlay=$$('camp-overlay');
+  if(!overlay){
+    overlay=document.createElement('div');
+    overlay.id='camp-overlay';
+    overlay.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:flex-start;justify-content:flex-end;padding:12px';
+    document.body.appendChild(overlay);
   }
-  sub.innerHTML='';
-  sub.style.display='block';
+  overlay.innerHTML='';
+  overlay.style.display='flex';
 
-  // Ocultar el cg-mini normal mientras está abierto el selector
-  const cgMini=$$('cg-mini');
-  if(cgMini) cgMini.style.display='none';
-  const credTit=$$('cred-box-tit');
-  if(credTit) credTit.style.display='none';
+  // Panel del selector
+  const sub=document.createElement('div');
+  sub.style.cssText='background:var(--bg);border:1px solid var(--brd);border-radius:12px;padding:12px;width:340px;max-height:80vh;overflow-y:auto;margin-top:80px;box-shadow:0 8px 32px rgba(0,0,0,.4)';
+  overlay.appendChild(sub);
+
+  // Click fuera cierra
+  overlay.onclick=(e)=>{if(e.target===overlay) cerrarSelector();};
 
   function cerrarSelector(){
-    sub.style.display='none';
-    if(cgMini) cgMini.style.display='block';
-    if(credTit) credTit.style.display='block';
-    rCampMini();
+    overlay.style.display='none';
   }
 
   // ── SECCIÓN 1: CAMPAÑAS SUBSIDIADAS (flujo invertido) ──
@@ -3968,6 +3968,7 @@ function _crearBtnNormal(nombreBanco, onclick){
 }
 
 function mostrarSubCampanasInvertido(banco, camps, precio, sub, cerrarSelector){
+  // sub es el panel dentro del overlay
   sub.innerHTML='';
 
   const volver=document.createElement('div');
@@ -4243,15 +4244,13 @@ function calcCred(){
   const mt=parseFloat($$('pb1').value)||0;
   const box=$$('cred-box');
 
+  // Mostrar/ocultar botón selector según si hay marca cargada
+  const _ma2=($$('marca')?.value||window._propMarca||'').toUpperCase();
+  const _btnCamp=$$('btn-abrir-campanas');
+  if(_btnCamp) _btnCamp.style.display=_ma2?'block':'none';
+
   if(mt<=0){
-    // Aunque no hay monto, mostrar campañas si hay marca/modelo cargado
-    const _ma=($$('marca')?.value||'').toUpperCase();
-    if(_ma){
-      box.style.display='block';
-      rCampMini();
-    } else {
-      box.style.display='none';
-    }
+    box.style.display='none';
     $$('print-cuotas').style.display='none';$$('print-cuotas').innerHTML='';
     return;
   }
