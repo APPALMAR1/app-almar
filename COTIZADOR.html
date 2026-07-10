@@ -3829,178 +3829,128 @@ function ltvPSAUsados(anno){
 }
 
 
-// ── SELECTOR DE CAMPAÑAS — Click en campo "Monto crédito bancario" ─────────
-// TNA <= 20%: flujo INVERTIDO — elige campaña → sistema calcula monto por LTV
-// TNA > 20% o bancos: flujo NORMAL — vendedor ingresa monto, luego elige campaña
-const UMBRAL_TNA_SUBSIDIADA = 20;
+// ── SELECTOR DE CAMPAÑAS ────────────────────────────────────────────────────
+const UMBRAL_TNA_SUBSIDIADA=20;
 
 function abrirSelectorCampanas(){
-  // Usar valor del select o fallback de la carga desde precios/stock
-  const ma=(($$('marca')?.value||'')||(window._propMarca||'')).toUpperCase();
-  const mo=(($$('modelo')?.value||'')||(window._propModelo||'')).toUpperCase();
-  const t=$$('tipo')?.value||'';
-  const esUsado=t==='usado'||t==='mercado_usado';
-  if(!ma||esUsado) return; // Solo para 0km con marca cargada
+  const ma=(($$('marca')?.value)||window._propMarca||'').toUpperCase();
+  const mo=(($$('modelo')?.value)||window._propModelo||'').toUpperCase();
+  const t=($$('tipo')?.value)||'';
+  const esUsado=(t==='usado'||t==='mercado_usado');
+  if(!ma||esUsado) return;
 
-  const precio=parseFloat($$('pa1')?.value)||window._propPrecio||0;
+  const precio=parseFloat(($$('pa1')?.value))||window._propPrecio||0;
   const act=camp.filter(c=>c.activa&&!c.usados);
 
-  // Campañas de MARCA para este modelo
+  // Campañas de marca para este modelo
   let campsMarca=act.filter(c=>c.marca&&c.marca.toUpperCase()===ma);
   if(mo&&campsMarca.length){
-    const especificas=campsMarca.filter(c=>{
+    const esp=campsMarca.filter(c=>{
       if(!c.modelos) return true;
       return c.modelos.some(m=>mo.includes(m.toUpperCase())||m.toUpperCase().includes(mo));
     });
-    if(especificas.length) campsMarca=especificas;
+    if(esp.length) campsMarca=esp;
   }
-
-  // Separar: subsidiadas (TNA <= umbral) y de mercado (TNA > umbral)
   const subsidiadas=campsMarca.filter(c=>c.tna<=UMBRAL_TNA_SUBSIDIADA);
   const mercadoMarca=campsMarca.filter(c=>c.tna>UMBRAL_TNA_SUBSIDIADA);
-
-  // Bancos generales (sin marca, sin usados)
   const bancos=act.filter(c=>!c.marca&&!c.usados);
   const bancosUnicos=[...new Set(bancos.map(c=>c.banco))];
+  if(!subsidiadas.length&&!mercadoMarca.length) return;
 
-  // Si no hay nada subsidiado, dejar flujo normal
-  if(!subsidiadas.length) return;
+  // Usar un div dedicado que se muestra ENCIMA del cred-box
+  // sin tocar la lógica de calcCred/rCampMini
+  const colB=$$('cred-box')?.parentElement;
+  if(!colB) return;
 
-  // Crear overlay modal sobre la columna B
-  let overlay=$$('camp-overlay');
-  if(!overlay){
-    overlay=document.createElement('div');
-    overlay.id='camp-overlay';
-    overlay.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:flex-start;justify-content:flex-end;padding:12px';
-    document.body.appendChild(overlay);
+  // Crear o reusar el panel
+  let panel=$$('camp-selector-panel');
+  if(!panel){
+    panel=document.createElement('div');
+    panel.id='camp-selector-panel';
+    // Insertar ANTES del cred-box dentro de colB
+    const box=$$('cred-box');
+    colB.insertBefore(panel,box);
   }
-  overlay.innerHTML='';
-  overlay.style.display='flex';
+  panel.style.cssText='background:var(--bg);border:2px solid #ef7d00;border-radius:10px;padding:10px;margin-bottom:8px;max-height:420px;overflow-y:auto';
+  panel.innerHTML='';
+  panel.style.display='block';
 
-  // Panel del selector
-  const sub=document.createElement('div');
-  sub.style.cssText='background:var(--bg);border:1px solid var(--brd);border-radius:12px;padding:12px;width:340px;max-height:80vh;overflow-y:auto;margin-top:80px;box-shadow:0 8px 32px rgba(0,0,0,.4)';
-  overlay.appendChild(sub);
+  // Header con cerrar
+  const hdr=document.createElement('div');
+  hdr.style.cssText='display:flex;align-items:center;justify-content:space-between;margin-bottom:8px';
+  hdr.innerHTML='<span style="font-size:11px;font-weight:800;color:#ef7d00;letter-spacing:1px">⭐ CAMPAÑAS DISPONIBLES — '+ma+'</span>'
+    +'<span onclick="cerrarSelectorCampanas()" style="cursor:pointer;font-size:18px;color:var(--m);line-height:1">×</span>';
+  panel.appendChild(hdr);
 
-  // Click fuera cierra
-  overlay.onclick=(e)=>{if(e.target===overlay) cerrarSelector();};
+  // SECCIÓN: Tasa subsidiada
+  if(subsidiadas.length){
+    const t1=document.createElement('div');
+    t1.style.cssText='font-size:9px;font-weight:800;color:#27ae60;text-transform:uppercase;letter-spacing:1px;margin:4px 0 6px';
+    t1.textContent='✅ Tasa 0% / Subsidiada — el monto se calcula por LTV';
+    panel.appendChild(t1);
 
-  function cerrarSelector(){
-    overlay.style.display='none';
+    const bancosSubsid=[...new Set(subsidiadas.map(c=>c.banco))];
+    bancosSubsid.forEach(banco=>{
+      const campsB=subsidiadas.filter(c=>c.banco===banco);
+      const montoEj=precio>0?Math.round(precio*(campsB[0].ltv/100)):0;
+      const montoFinal=campsB[0].montoMax&&montoEj>campsB[0].montoMax?campsB[0].montoMax:montoEj;
+      const btn=document.createElement('div');
+      btn.style.cssText='display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;cursor:pointer;border:1.5px solid #27ae60;background:rgba(39,174,96,.06);margin-bottom:5px';
+      btn.innerHTML='<span style="font-size:18px">⭐</span>'
+        +'<div style="flex:1"><div style="font-weight:700;font-size:12px;color:#ef7d00">'+banco+'</div>'
+        +'<div style="font-size:10px;color:var(--m)">'+campsB.length+' línea'+(campsB.length>1?'s':'')
+        +' · TNA '+(campsB[0].tna===0?'0%':campsB[0].tna+'%')
+        +' · LTV '+campsB[0].ltv+'%'
+        +(montoFinal>0?' <span style="color:#27ae60;font-weight:700">→ hasta '+fmt(montoFinal)+'</span>':'')
+        +'</div></div><span style="color:#27ae60;font-weight:800">→</span>';
+      btn.onmouseenter=()=>btn.style.background='rgba(39,174,96,.14)';
+      btn.onmouseleave=()=>btn.style.background='rgba(39,174,96,.06)';
+      btn.onclick=()=>{
+        cerrarSelectorCampanas();
+        if(campsB.length===1){
+          const c=campsB[0];
+          const mLTV=precio>0?Math.round(precio*(c.ltv/100)):0;
+          const mFin=c.montoMax&&mLTV>c.montoMax?c.montoMax:mLTV;
+          if(mFin>0){const el=$$('pb1');if(el){el.value=mFin;cP();}}
+          sCredCamp(c.id);
+        } else {
+          mostrarSubCampanas(banco,campsB);
+        }
+      };
+      panel.appendChild(btn);
+    });
   }
 
-  // ── SECCIÓN 1: CAMPAÑAS SUBSIDIADAS (flujo invertido) ──
-  const tit1=document.createElement('div');
-  tit1.style.cssText='font-size:9px;font-weight:800;letter-spacing:1.5px;color:#27ae60;text-transform:uppercase;padding:6px 0 4px;display:flex;align-items:center;gap:5px';
-  tit1.innerHTML='<span>⭐</span><span>Tasa subsidiada — Elige campaña, el monto se calcula solo</span>';
-  sub.appendChild(tit1);
-
-  // Agrupar subsidiadas por banco (financiera de marca)
-  const bancosSubsid=[...new Set(subsidiadas.map(c=>c.banco))];
-  bancosSubsid.forEach(banco=>{
-    const campsB=subsidiadas.filter(c=>c.banco===banco);
-    const btnBanco=document.createElement('div');
-    btnBanco.style.cssText='display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;cursor:pointer;border:1.5px solid var(--brd);background:var(--bg);margin-bottom:4px;transition:all .15s';
-    btnBanco.innerHTML=`<span style="font-size:16px">⭐</span><div style="flex:1"><div style="font-weight:700;font-size:12px;color:#ef7d00">${banco}</div><div style="font-size:10px;color:var(--m)">${campsB.length} línea${campsB.length>1?'s':''} · Tasa ${campsB[0].tna===0?'0%':'subsidiada'} · LTV ${campsB[0].ltv}%${precio>0?' → hasta '+fmt(Math.round(precio*(campsB[0].ltv/100))):''}</div></div><span style="color:#27ae60;font-size:11px;font-weight:700">→</span>`;
-    btnBanco.onmouseenter=()=>btnBanco.style.borderColor='#ef7d00';
-    btnBanco.onmouseleave=()=>btnBanco.style.borderColor='var(--brd)';
-    btnBanco.onclick=()=>{
-      if(campsB.length===1){
-        // Una sola campaña: seleccionar y calcular monto por LTV
-        const c=campsB[0];
-        const montoLTV=precio>0?Math.round(precio*(c.ltv/100)):0;
-        // Respetar montoMax de la campaña si existe
-        const montoFinal=c.montoMax&&montoLTV>c.montoMax?c.montoMax:montoLTV;
-        if(montoFinal>0){$$('pb1').value=montoFinal;}
-        cerrarSelector();
-        sCredCamp(c.id);
-        setTimeout(()=>{mostrarSubCampanas(banco,campsB);},50);
-        // Abrir sub-selector de plazos dentro del banco
-      } else {
-        // Varias campañas: mostrar sub-selector con cálculo LTV en cada una
-        mostrarSubCampanasInvertido(banco, campsB, precio, sub, cerrarSelector);
-      }
-    };
-    sub.appendChild(btnBanco);
-  });
-
-  // ── SEPARADOR ──
+  // Separador
   if(mercadoMarca.length||bancosUnicos.length){
     const sep=document.createElement('div');
     sep.style.cssText='border-top:1px solid var(--brd);margin:8px 0 6px';
-    sub.appendChild(sep);
+    panel.appendChild(sep);
+    const t2=document.createElement('div');
+    t2.style.cssText='font-size:9px;font-weight:800;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px';
+    t2.textContent='🏦 Tasa de mercado — ingresá el monto primero';
+    panel.appendChild(t2);
 
-    const tit2=document.createElement('div');
-    tit2.style.cssText='font-size:9px;font-weight:800;letter-spacing:1.5px;color:#888;text-transform:uppercase;padding:2px 0 4px';
-    tit2.innerHTML='🏦 Tasa de mercado — Ingresá el monto y elegí banco';
-    sub.appendChild(tit2);
-
-    // Campañas de marca con TNA alta
-    mercadoMarca.forEach(c=>{
-      const btn=_crearBtnNormal(c.banco,()=>{cerrarSelector();setTimeout(()=>mostrarSubCampanas(c.banco,[c]),60);});
-      sub.appendChild(btn);
+    [...new Set(mercadoMarca.map(c=>c.banco)),...bancosUnicos].forEach(banco=>{
+      const campsB=[...mercadoMarca,...bancos].filter(c=>c.banco===banco);
+      if(!campsB.length) return;
+      const btn=document.createElement('div');
+      btn.style.cssText='display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;cursor:pointer;border:1.5px solid var(--brd);background:var(--bg);margin-bottom:4px';
+      btn.innerHTML='<span style="font-size:18px">🏦</span><span style="font-weight:700;font-size:12px">'+banco+'</span><span style="margin-left:auto;color:var(--m);font-size:11px">→</span>';
+      btn.onmouseenter=()=>btn.style.borderColor='var(--b)';
+      btn.onmouseleave=()=>btn.style.borderColor='var(--brd)';
+      btn.onclick=()=>{cerrarSelectorCampanas();setTimeout(()=>mostrarSubCampanas(banco,campsB),60);};
+      panel.appendChild(btn);
     });
-
-    // Bancos generales
-    bancosUnicos.forEach(banco=>{
-      const campsDeBanco=bancos.filter(c=>c.banco===banco);
-      const btn=_crearBtnNormal(banco,()=>{cerrarSelector();setTimeout(()=>mostrarSubCampanas(banco,campsDeBanco),60);});
-      sub.appendChild(btn);
-    });
-
-    // Botón: ingresar monto manualmente
-    const btnManual=document.createElement('div');
-    btnManual.style.cssText='display:flex;align-items:center;gap:8px;padding:7px 12px;border-radius:8px;cursor:pointer;border:1px dashed var(--brd);color:var(--m);font-size:11px;margin-top:4px';
-    btnManual.innerHTML='✏️ Ingresar monto manualmente';
-    btnManual.onclick=()=>{cerrarSelector();$$('pb1').focus();};
-    sub.appendChild(btnManual);
   }
 }
 
-function _crearBtnNormal(nombreBanco, onclick){
-  const btn=document.createElement('div');
-  btn.style.cssText='display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;cursor:pointer;border:1.5px solid var(--brd);background:var(--bg);margin-bottom:4px;transition:all .15s';
-  btn.innerHTML=`<span style="font-size:16px">🏦</span><div style="font-weight:700;font-size:12px">${nombreBanco}</div>`;
-  btn.onmouseenter=()=>btn.style.borderColor='var(--b)';
-  btn.onmouseleave=()=>btn.style.borderColor='var(--brd)';
-  btn.onclick=onclick;
-  return btn;
-}
-
-function mostrarSubCampanasInvertido(banco, camps, precio, sub, cerrarSelector){
-  // sub es el panel dentro del overlay
-  sub.innerHTML='';
-
-  const volver=document.createElement('div');
-  volver.style.cssText='display:flex;align-items:center;gap:6px;padding:6px 0 10px;cursor:pointer;color:var(--b);font-size:11px;font-weight:700';
-  volver.innerHTML='← Volver';
-  volver.onclick=()=>abrirSelectorCampanas();
-  sub.appendChild(volver);
-
-  const tit=document.createElement('div');
-  tit.style.cssText='font-size:10px;font-weight:800;color:#ef7d00;padding:0 0 8px';
-  tit.textContent=banco+' — Elegí una línea:';
-  sub.appendChild(tit);
-
-  camps.forEach(c=>{
-    const montoLTV=precio>0?Math.round(precio*(c.ltv/100)):0;
-    const montoFinal=c.montoMax&&montoLTV>c.montoMax?c.montoMax:montoLTV;
-    const tnaStr=c.tna===0?'Tasa 0%':`TNA ${c.tna.toFixed(1).replace('.',',')}%`;
-    const montoStr=montoFinal>0?'→ '+fmt(montoFinal)+' de crédito':'';
-    const row=document.createElement('div');
-    row.style.cssText='padding:9px 12px;border-radius:8px;cursor:pointer;border:1.5px solid var(--brd);background:var(--bg);margin-bottom:4px;transition:all .15s';
-    row.innerHTML=`<div style="font-weight:700;font-size:12px;color:var(--tx)">${c.nombre}</div><div style="font-size:10px;color:var(--m);margin-top:2px">${tnaStr} · hasta ${c.plazoMax}m · LTV ${c.ltv}% ${montoStr?'<span style="color:#27ae60;font-weight:700">'+montoStr+'</span>':''}</div>`;
-    row.onmouseenter=()=>row.style.borderColor='#ef7d00';
-    row.onmouseleave=()=>row.style.borderColor='var(--brd)';
-    row.onclick=()=>{
-      if(montoFinal>0){$$('pb1').value=montoFinal;}
-      cerrarSelector();
-      sCredCamp(c.id);
-    };
-    sub.appendChild(row);
-  });
+function cerrarSelectorCampanas(){
+  const panel=$$('camp-selector-panel');
+  if(panel) panel.style.display='none';
 }
 // ── FIN SELECTOR DE CAMPAÑAS ─────────────────────────────────────────────────
+
 
 function rCampMini(){
   window._subMenuAbierto=false;
