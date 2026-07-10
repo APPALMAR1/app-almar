@@ -772,13 +772,15 @@ input[type=text]#p-obs{background:#F5F7FA!important;border:1px solid #D5DCE6!imp
         <!-- CRÉDITO con calculadora integrada -->
         <div class="pr"><label class="m">Monto del crédito bancario</label><input type="number" id="pb1" placeholder="0" oninput="cP();calcCred()" ></div>
 
-        <!-- BOTÓN CAMPAÑAS DE MARCA -->
+        <!-- BOTÓN + PANEL CAMPAÑAS DE MARCA (acordeón inline) -->
         <div id="btn-ver-campanas" style="display:none;margin:6px 0 4px">
-          <button type="button" onclick="abrirDialogCampanas()" style="width:100%;display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:8px;cursor:pointer;border:2px solid #ef7d00;background:rgba(239,125,0,.08);color:#ef7d00;font-weight:800;font-size:12px;letter-spacing:.5px;font-family:inherit">
+          <button type="button" onclick="togglePanelCampanas()" id="btn-campanas-trigger" style="width:100%;display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:8px;cursor:pointer;border:2px solid #ef7d00;background:rgba(239,125,0,.08);color:#ef7d00;font-weight:800;font-size:12px;letter-spacing:.5px;font-family:inherit">
             <span style="font-size:16px">⭐</span>
             <span>Ver campañas disponibles para este modelo</span>
-            <span style="margin-left:auto">▾</span>
+            <span id="btn-campanas-arrow" style="margin-left:auto">▾</span>
           </button>
+          <div id="panel-campanas-inline" style="display:none;border:1.5px solid #ef7d00;border-top:none;border-radius:0 0 8px 8px;background:var(--bg);padding:10px;max-height:380px;overflow-y:auto">
+          </div>
         </div>
 
         <!-- BOX CALCULADORA CRÉDITO -->
@@ -8258,66 +8260,92 @@ function pmConfirmar(){
 // ─── FIN MODAL INFOAUTO PROPUESTA ───────────────────────────────────────────
 
 
-// ── DIALOG CAMPAÑAS ──────────────────────────────────────────────────────────
+// ── CAMPAÑAS INLINE ACORDEÓN ────────────────────────────────────────────────
 const _UMBRAL_TNA = 20;
 
-function abrirDialogCampanas(){
-  const dlg = document.getElementById('dlg-campanas');
-  const body = document.getElementById('dlg-camp-body');
-  const titulo = document.getElementById('dlg-camp-titulo');
-  if(!dlg||!body) return;
+function mostrarBtnCampanas(){
+  const btn = document.getElementById('btn-ver-campanas');
+  if(!btn) return;
+  const ma = (($$('marca')?.value)||window._propMarca||'').toUpperCase();
+  btn.style.display = ma ? 'block' : 'none';
+}
+
+function togglePanelCampanas(){
+  const panel = document.getElementById('panel-campanas-inline');
+  const arrow = document.getElementById('btn-campanas-arrow');
+  if(!panel) return;
+  if(panel.style.display === 'none'){
+    rellenarPanelCampanas();
+    panel.style.display = 'block';
+    if(arrow) arrow.textContent = '▴';
+  } else {
+    panel.style.display = 'none';
+    if(arrow) arrow.textContent = '▾';
+  }
+}
+
+function rellenarPanelCampanas(){
+  const panel = document.getElementById('panel-campanas-inline');
+  if(!panel) return;
+  panel.innerHTML = '';
 
   const ma = (($$('marca')?.value)||window._propMarca||'').toUpperCase();
   const mo = (($$('modelo')?.value)||window._propModelo||'').toUpperCase();
   const precio = parseFloat(($$('pa1')?.value))||window._propPrecio||0;
-
-  titulo.textContent = '⭐ Campañas — ' + ma + (mo?' / '+mo:'');
-  body.innerHTML = '';
-
   const act = camp.filter(c=>c.activa&&!c.usados);
+
+  // Campañas de marca filtradas por modelo
   let campsMarca = act.filter(c=>c.marca&&c.marca.toUpperCase()===ma);
   if(mo&&campsMarca.length){
-    const esp=campsMarca.filter(c=>{
+    const esp = campsMarca.filter(c=>{
       if(!c.modelos) return true;
       return c.modelos.some(m=>mo.includes(m.toUpperCase())||m.toUpperCase().includes(mo));
     });
-    if(esp.length) campsMarca=esp;
+    if(esp.length) campsMarca = esp;
   }
-
   const subs = campsMarca.filter(c=>c.tna<=_UMBRAL_TNA);
   const mkt  = campsMarca.filter(c=>c.tna>_UMBRAL_TNA);
   const bancos = act.filter(c=>!c.marca&&!c.usados);
   const bancosU = [...new Set(bancos.map(c=>c.banco))];
 
-  if(!campsMarca.length&&!bancos.length){
-    body.innerHTML='<div style="padding:16px;color:var(--m);text-align:center">Sin campañas disponibles para este modelo</div>';
-    dlg.showModal(); return;
+  function cerrar(){
+    const p=document.getElementById('panel-campanas-inline');
+    const a=document.getElementById('btn-campanas-arrow');
+    if(p) p.style.display='none';
+    if(a) a.textContent='▾';
   }
 
-  function hacerBtn(ico, nombre, sub, color, onclick){
-    const d=document.createElement('div');
-    d.style.cssText='display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;cursor:pointer;border:1.5px solid '+(color||'var(--brd)')+';background:var(--bg);margin-bottom:5px';
-    d.innerHTML='<span style="font-size:18px">'+ico+'</span><div style="flex:1"><div style="font-weight:700;font-size:12px;color:'+(color||'var(--tx)')+'">'+nombre+'</div>'+(sub?'<div style="font-size:10px;color:var(--m);margin-top:2px">'+sub+'</div>':'')+'</div><span style="color:'+(color||'var(--m)')+'">→</span>';
-    d.onclick=onclick;
+  function mkBtn(ico, titulo, subtxt, colorBorde, fn){
+    const d = document.createElement('div');
+    d.style.cssText = 'display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:7px;cursor:pointer;border:1.5px solid '+(colorBorde||'var(--brd)')+';background:var(--bg);margin-bottom:5px';
+    d.innerHTML = '<span style="font-size:17px">'+ico+'</span>'
+      +'<div style="flex:1;min-width:0">'
+        +'<div style="font-weight:700;font-size:12px;color:'+(colorBorde||'var(--tx)')+'">'+titulo+'</div>'
+        +(subtxt?'<div style="font-size:10px;color:var(--m);margin-top:1px">'+subtxt+'</div>':'')
+      +'</div>'
+      +'<span style="color:'+(colorBorde||'var(--m)')+';font-weight:800;flex-shrink:0">→</span>';
+    d.onclick = fn;
     return d;
   }
 
   // SECCIÓN SUBSIDIADAS
   if(subs.length){
-    const h=document.createElement('div');
-    h.style.cssText='font-size:9px;font-weight:800;color:#27ae60;letter-spacing:1px;text-transform:uppercase;padding:4px 0 6px';
-    h.textContent='✅ Tasa subsidiada — el monto se calcula automáticamente por LTV';
-    body.appendChild(h);
+    const h = document.createElement('div');
+    h.style.cssText = 'font-size:9px;font-weight:800;color:#27ae60;letter-spacing:1px;text-transform:uppercase;padding:2px 0 6px';
+    h.textContent = '✅ Tasa 0% / Subsidiada — monto calculado por LTV automáticamente';
+    panel.appendChild(h);
 
-    const bancosS=[...new Set(subs.map(c=>c.banco))];
+    const bancosS = [...new Set(subs.map(c=>c.banco))];
     bancosS.forEach(banco=>{
-      const cs=subs.filter(c=>c.banco===banco);
-      const ltv=cs[0].ltv/100;
-      const mBase=Math.round(precio*ltv);
-      const mFin=cs[0].montoMax&&mBase>cs[0].montoMax?cs[0].montoMax:mBase;
-      const subTxt=cs.length+' línea'+(cs.length>1?'s':'')+' · TNA '+(cs[0].tna===0?'0%':cs[0].tna+'%')+' · LTV '+cs[0].ltv+'%'+(mFin>0?' → <b style="color:#27ae60">hasta '+fmt(mFin)+'</b>':'');
-      body.appendChild(hacerBtn('⭐',banco,subTxt,'#ef7d00',()=>{
-        dlg.close();
+      const cs = subs.filter(c=>c.banco===banco);
+      const ltv = cs[0].ltv/100;
+      const mBase = Math.round(precio*ltv);
+      const mFin = (cs[0].montoMax&&mBase>cs[0].montoMax) ? cs[0].montoMax : mBase;
+      const tnaStr = cs[0].tna===0 ? 'TNA 0%' : 'TNA '+cs[0].tna+'%';
+      const sub = cs.length+' línea'+(cs.length>1?'s':'')+' · '+tnaStr+' · LTV '+cs[0].ltv+'%'
+        +(mFin>0?' &nbsp;→ <b style="color:#27ae60">hasta '+fmt(mFin)+'</b>':'');
+      panel.appendChild(mkBtn('⭐', banco, sub, '#ef7d00', ()=>{
+        cerrar();
         if(cs.length===1){
           if(mFin>0){const e=$$('pb1');if(e){e.value=mFin;cP();}}
           sCredCamp(cs[0].id);
@@ -8328,46 +8356,33 @@ function abrirDialogCampanas(){
     });
   }
 
-  // SECCIÓN MERCADO
+  // SEPARADOR + MERCADO
   if(mkt.length||bancosU.length){
-    const sep=document.createElement('div');
-    sep.style.cssText='border-top:1px solid var(--brd);margin:10px 0 6px';
-    body.appendChild(sep);
-    const h2=document.createElement('div');
-    h2.style.cssText='font-size:9px;font-weight:800;color:#888;letter-spacing:1px;text-transform:uppercase;padding:0 0 6px';
-    h2.textContent='🏦 Tasa de mercado — ingresá el monto y elegí banco';
-    body.appendChild(h2);
-    [...new Set(mkt.map(c=>c.banco)),...bancosU].forEach(banco=>{
-      const cs=[...mkt,...bancos].filter(c=>c.banco===banco);
-      body.appendChild(hacerBtn('🏦',banco,'','var(--b)',()=>{
-        dlg.close();
-        setTimeout(()=>mostrarSubCampanas(banco,cs),80);
+    const sep = document.createElement('div');
+    sep.style.cssText = 'border-top:1px solid var(--brd);margin:8px 0 6px';
+    panel.appendChild(sep);
+    const h2 = document.createElement('div');
+    h2.style.cssText = 'font-size:9px;font-weight:800;color:#888;letter-spacing:1px;text-transform:uppercase;padding:0 0 6px';
+    h2.textContent = '🏦 Tasa de mercado — ingresá el monto primero';
+    panel.appendChild(h2);
+
+    const yaAgregados = new Set();
+    [...mkt,...bancos].forEach(c=>{
+      if(yaAgregados.has(c.banco)) return;
+      yaAgregados.add(c.banco);
+      const cs2 = [...mkt,...bancos].filter(x=>x.banco===c.banco);
+      panel.appendChild(mkBtn('🏦', c.banco, '', 'var(--b)', ()=>{
+        cerrar();
+        setTimeout(()=>mostrarSubCampanas(c.banco,cs2),60);
       }));
     });
   }
 
-  dlg.showModal();
+  if(!subs.length&&!mkt.length&&!bancosU.length){
+    panel.innerHTML='<div style="padding:10px;color:var(--m);font-size:12px">Sin campañas disponibles para este modelo</div>';
+  }
 }
-
-function mostrarBtnCampanas(){
-  const btn=document.getElementById('btn-ver-campanas');
-  if(!btn) return;
-  const ma=(($$('marca')?.value)||window._propMarca||'').toUpperCase();
-  btn.style.display=ma?'block':'none';
-}
-// ── FIN DIALOG CAMPAÑAS ──────────────────────────────────────────────────────
+// ── FIN CAMPAÑAS INLINE ──────────────────────────────────────────────────────
 </script>
-
-<!-- MODAL CAMPAÑAS DE MARCA -->
-<dialog id="dlg-campanas" style="border:none;border-radius:12px;padding:0;background:var(--bg);color:var(--tx);width:360px;max-height:85vh;box-shadow:0 12px 40px rgba(0,0,0,.5);overflow:hidden">
-  <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--brd);background:var(--bg)">
-    <span id="dlg-camp-titulo" style="font-weight:800;font-size:13px;color:#ef7d00">⭐ Campañas disponibles</span>
-    <span onclick="document.getElementById('dlg-campanas').close()" style="cursor:pointer;font-size:22px;color:var(--m);line-height:1">×</span>
-  </div>
-  <div id="dlg-camp-body" style="padding:12px;overflow-y:auto;max-height:calc(85vh - 56px)">
-    <div style="text-align:center;padding:20px;color:var(--m)">Cargando...</div>
-  </div>
-</dialog>
-
 </body>
 </html>
