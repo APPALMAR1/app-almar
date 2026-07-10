@@ -772,16 +772,7 @@ input[type=text]#p-obs{background:#F5F7FA!important;border:1px solid #D5DCE6!imp
         <!-- CRÉDITO con calculadora integrada -->
         <div class="pr"><label class="m">Monto del crédito bancario</label><input type="number" id="pb1" placeholder="0" oninput="cP();calcCred()" ></div>
 
-        <!-- BOTÓN + PANEL CAMPAÑAS DE MARCA (acordeón inline) -->
-        <div id="btn-ver-campanas" style="display:none;margin:6px 0 4px">
-          <button type="button" onclick="togglePanelCampanas()" id="btn-campanas-trigger" style="width:100%;display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:8px;cursor:pointer;border:2px solid #ef7d00;background:rgba(239,125,0,.08);color:#ef7d00;font-weight:800;font-size:12px;letter-spacing:.5px;font-family:inherit">
-            <span style="font-size:16px">⭐</span>
-            <span>Ver campañas disponibles para este modelo</span>
-            <span id="btn-campanas-arrow" style="margin-left:auto">▾</span>
-          </button>
-          <div id="panel-campanas-inline" style="display:none;border:1.5px solid #ef7d00;border-top:none;border-radius:0 0 8px 8px;background:var(--bg);padding:10px;max-height:380px;overflow-y:auto">
-          </div>
-        </div>
+
 
         <!-- BOX CALCULADORA CRÉDITO -->
         <div class="cred-box" id="cred-box" style="display:none">
@@ -3787,8 +3778,6 @@ function cotizarDesdePrecios(marca, modeloCompleto, precioArg, precioUSD){
           const tcRef=precioUSD&&precioUSD>0&&_bnaCotiz?` <span style="font-size:9px;color:var(--m)">(TC BNA $${Math.round(_bnaCotiz).toLocaleString('es-AR')})</span>`:'';
           if(aral) aral.innerHTML=`<div class="al info">💰 <strong>${marca} — ${modeloCompleto}</strong> · Año ${yr}${usdRef}${tcRef}<br><span style="font-size:10px;color:var(--m)">Precio cargado desde lista de precios</span></div>`;
           cP();
-          // Mostrar botón selector de campañas al cargar el auto
-          mostrarBtnCampanas();
           rCampMini();
         },150);
       },150);
@@ -3929,7 +3918,19 @@ function rCampMini(){
   }
 
   // Campañas de marca primero
-  if(marcaUnicas.length){
+    // TIP: si hay campainas subsidiadas disponibles, mostrar aviso
+  if(marcaUnicas.length&&!esUsado){
+    const _haySubs=deMarca.some(c=>c.tna<=20);
+    const _precioRef=parseFloat($$('pa1')?.value)||window._propPrecio||0;
+    if(_haySubs&&_precioRef>0){
+      const tip=document.createElement('div');
+      tip.style.cssText='background:rgba(39,174,96,.1);border:1px solid #27ae60;border-radius:6px;padding:7px 10px;font-size:10px;color:#27ae60;margin-bottom:6px;line-height:1.4';
+      tip.innerHTML='<b>💡 Tasa subsidiada disponible</b> — Elé la campaña y el monto se calcula solo por LTV.';
+      g.appendChild(tip);
+    }
+  }
+
+if(marcaUnicas.length){
     const t=document.createElement('div');
     t.style.cssText='font-size:9px;font-weight:800;letter-spacing:1.5px;color:#ef7d00;text-transform:uppercase;margin:4px 0 4px';
     t.textContent='⭐ Campaña de marca';
@@ -4021,10 +4022,18 @@ function mostrarSubCampanas(banco, camps){
     const seleccionado=credCampId===c.id;
     const d=document.createElement('div');
     d.style.cssText=`padding:10px 14px;border-radius:8px;cursor:pointer;border:1.5px solid ${seleccionado?'var(--b)':'var(--brd)'};background:${seleccionado?'rgba(0,105,180,.12)':'var(--bg)'};margin-bottom:4px`;
-    d.onclick=()=>{sub.style.display='none';window._subMenuAbierto=false;sCredCamp(c.id);};
-    const tnaStr=c.tna>0?c.tna.toFixed(1).replace('.',',')+'\u0025 TNA':'0\u0025 TNA';
-    const comStr=c.comision>0?' � '+c.comision+'\u0025 gastos':'';
-    d.innerHTML=`<div style="font-weight:700;font-size:12px;color:${seleccionado?'var(--b)':'var(--tx)'}">${c.nombre}</div><div style="font-size:10px;color:#888;margin-top:2px">${tnaStr} � hasta ${c.plazoMax}m${comStr}</div>`;
+    d.onclick=()=>{sub.style.display='none';window._subMenuAbierto=false;sCredCamp(c.id)};
+    const tnaStr=c.tna>0?c.tna.toFixed(1).replace('.',',')+' TNA':'0% TNA';
+    const comStr=c.comision>0?' + '+c.comision+'% gastos':'';
+    // Monto LTV para campanas subsidiadas
+    const _pr0=parseFloat($$('pa1')?.value)||window._propPrecio||0;
+    let _ltv_str='';
+    if(c.tna<=20&&_pr0>0){
+      const _mLTV=Math.round(_pr0*(c.ltv/100));
+      const _mFin=(c.montoMax&&_mLTV>c.montoMax)?c.montoMax:_mLTV;
+      _ltv_str='<span style="color:#27ae60;font-weight:800"> \u2192 hasta '+fmt(_mFin)+'</span>';
+    }
+    d.innerHTML=`<div style="font-weight:700;font-size:12px;color:${seleccionado?'var(--b)':'var(--tx)'}">${c.nombre}</div><div style="font-size:10px;color:#888;margin-top:2px">${tnaStr} \u00b7 hasta ${c.plazoMax}m${comStr}${_ltv_str}</div>`;
     sub.appendChild(d);
   });
 }
@@ -4046,7 +4055,19 @@ function sCredCamp(id){
   window._subMenuAbierto=false;
   credCampId=id; credPlazo=null;
   const cv=camp.find(c=>c.id===id);
-  const mt=parseFloat($$('pb1').value)||0;
+  let mt=parseFloat($$('pb1').value)||0;
+  // FLUJO INVERTIDO: si monto vacío y campaña tiene LTV+precio → calcular automáticamente
+  if(cv&&mt===0&&cv.tna<=20){
+    const _pr=parseFloat($$('pa1')?.value)||window._propPrecio||0;
+    if(_pr>0){
+      const _mLTV=Math.round(_pr*(cv.ltv/100));
+      const _mFin=(cv.montoMax&&_mLTV>cv.montoMax)?cv.montoMax:_mLTV;
+      if(_mFin>0){
+        const el=$$('pb1'); if(el) el.value=_mFin;
+        mt=_mFin;
+      }
+    }
+  }
   if(cv&&mt>0){
     // Si el nombre contiene "fee", es ingreso del concesionario → NO es gasto bancario campaña
     const esFee=/fee/i.test(cv.nombre||'');
@@ -4072,8 +4093,6 @@ function sCredCamp(id){
 function calcCred(){
   const mt=parseFloat($$('pb1').value)||0;
   const box=$$('cred-box');
-
-  mostrarBtnCampanas();
 
   if(mt<=0){
     box.style.display='none';
@@ -8260,129 +8279,6 @@ function pmConfirmar(){
 // ─── FIN MODAL INFOAUTO PROPUESTA ───────────────────────────────────────────
 
 
-// ── CAMPAÑAS INLINE ACORDEÓN ────────────────────────────────────────────────
-const _UMBRAL_TNA = 20;
-
-function mostrarBtnCampanas(){
-  const btn = document.getElementById('btn-ver-campanas');
-  if(!btn) return;
-  const ma = (($$('marca')?.value)||window._propMarca||'').toUpperCase();
-  btn.style.display = ma ? 'block' : 'none';
-}
-
-function togglePanelCampanas(){
-  const panel = document.getElementById('panel-campanas-inline');
-  const arrow = document.getElementById('btn-campanas-arrow');
-  if(!panel) return;
-  if(panel.style.display === 'none'){
-    rellenarPanelCampanas();
-    panel.style.display = 'block';
-    if(arrow) arrow.textContent = '▴';
-  } else {
-    panel.style.display = 'none';
-    if(arrow) arrow.textContent = '▾';
-  }
-}
-
-function rellenarPanelCampanas(){
-  const panel = document.getElementById('panel-campanas-inline');
-  if(!panel) return;
-  panel.innerHTML = '';
-
-  const ma = (($$('marca')?.value)||window._propMarca||'').toUpperCase();
-  const mo = (($$('modelo')?.value)||window._propModelo||'').toUpperCase();
-  const precio = parseFloat(($$('pa1')?.value))||window._propPrecio||0;
-  const act = camp.filter(c=>c.activa&&!c.usados);
-
-  // Campañas de marca filtradas por modelo
-  let campsMarca = act.filter(c=>c.marca&&c.marca.toUpperCase()===ma);
-  if(mo&&campsMarca.length){
-    const esp = campsMarca.filter(c=>{
-      if(!c.modelos) return true;
-      return c.modelos.some(m=>mo.includes(m.toUpperCase())||m.toUpperCase().includes(mo));
-    });
-    if(esp.length) campsMarca = esp;
-  }
-  const subs = campsMarca.filter(c=>c.tna<=_UMBRAL_TNA);
-  const mkt  = campsMarca.filter(c=>c.tna>_UMBRAL_TNA);
-  const bancos = act.filter(c=>!c.marca&&!c.usados);
-  const bancosU = [...new Set(bancos.map(c=>c.banco))];
-
-  function cerrar(){
-    const p=document.getElementById('panel-campanas-inline');
-    const a=document.getElementById('btn-campanas-arrow');
-    if(p) p.style.display='none';
-    if(a) a.textContent='▾';
-  }
-
-  function mkBtn(ico, titulo, subtxt, colorBorde, fn){
-    const d = document.createElement('div');
-    d.style.cssText = 'display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:7px;cursor:pointer;border:1.5px solid '+(colorBorde||'var(--brd)')+';background:var(--bg);margin-bottom:5px';
-    d.innerHTML = '<span style="font-size:17px">'+ico+'</span>'
-      +'<div style="flex:1;min-width:0">'
-        +'<div style="font-weight:700;font-size:12px;color:'+(colorBorde||'var(--tx)')+'">'+titulo+'</div>'
-        +(subtxt?'<div style="font-size:10px;color:var(--m);margin-top:1px">'+subtxt+'</div>':'')
-      +'</div>'
-      +'<span style="color:'+(colorBorde||'var(--m)')+';font-weight:800;flex-shrink:0">→</span>';
-    d.onclick = fn;
-    return d;
-  }
-
-  // SECCIÓN SUBSIDIADAS
-  if(subs.length){
-    const h = document.createElement('div');
-    h.style.cssText = 'font-size:9px;font-weight:800;color:#27ae60;letter-spacing:1px;text-transform:uppercase;padding:2px 0 6px';
-    h.textContent = '✅ Tasa 0% / Subsidiada — monto calculado por LTV automáticamente';
-    panel.appendChild(h);
-
-    const bancosS = [...new Set(subs.map(c=>c.banco))];
-    bancosS.forEach(banco=>{
-      const cs = subs.filter(c=>c.banco===banco);
-      const ltv = cs[0].ltv/100;
-      const mBase = Math.round(precio*ltv);
-      const mFin = (cs[0].montoMax&&mBase>cs[0].montoMax) ? cs[0].montoMax : mBase;
-      const tnaStr = cs[0].tna===0 ? 'TNA 0%' : 'TNA '+cs[0].tna+'%';
-      const sub = cs.length+' línea'+(cs.length>1?'s':'')+' · '+tnaStr+' · LTV '+cs[0].ltv+'%'
-        +(mFin>0?' &nbsp;→ <b style="color:#27ae60">hasta '+fmt(mFin)+'</b>':'');
-      panel.appendChild(mkBtn('⭐', banco, sub, '#ef7d00', ()=>{
-        cerrar();
-        if(cs.length===1){
-          if(mFin>0){const e=$$('pb1');if(e){e.value=mFin;cP();}}
-          sCredCamp(cs[0].id);
-        } else {
-          mostrarSubCampanas(banco,cs);
-        }
-      }));
-    });
-  }
-
-  // SEPARADOR + MERCADO
-  if(mkt.length||bancosU.length){
-    const sep = document.createElement('div');
-    sep.style.cssText = 'border-top:1px solid var(--brd);margin:8px 0 6px';
-    panel.appendChild(sep);
-    const h2 = document.createElement('div');
-    h2.style.cssText = 'font-size:9px;font-weight:800;color:#888;letter-spacing:1px;text-transform:uppercase;padding:0 0 6px';
-    h2.textContent = '🏦 Tasa de mercado — ingresá el monto primero';
-    panel.appendChild(h2);
-
-    const yaAgregados = new Set();
-    [...mkt,...bancos].forEach(c=>{
-      if(yaAgregados.has(c.banco)) return;
-      yaAgregados.add(c.banco);
-      const cs2 = [...mkt,...bancos].filter(x=>x.banco===c.banco);
-      panel.appendChild(mkBtn('🏦', c.banco, '', 'var(--b)', ()=>{
-        cerrar();
-        setTimeout(()=>mostrarSubCampanas(c.banco,cs2),60);
-      }));
-    });
-  }
-
-  if(!subs.length&&!mkt.length&&!bancosU.length){
-    panel.innerHTML='<div style="padding:10px;color:var(--m);font-size:12px">Sin campañas disponibles para este modelo</div>';
-  }
-}
-// ── FIN CAMPAÑAS INLINE ──────────────────────────────────────────────────────
 </script>
 </body>
 </html>
