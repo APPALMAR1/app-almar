@@ -3824,7 +3824,7 @@ function ltvPSAUsados(anno){
 // ── CAMPAÑAS SUBSIDIADAS — panel visible sin monto ──────────────────────────
 function renderCampSubs(){
   const box = $$('camp-subs-box');
-  if(!box) return;
+  if(!box){ console.log('[CampSubs] box no encontrado'); return; }
 
   const ma = ($$('marca')?.value || window._propMarca || '').toUpperCase();
   const mo = ($$('modelo')?.value || window._propModelo || '').toUpperCase();
@@ -3844,6 +3844,7 @@ function renderCampSubs(){
     if(esp.length) filtradas = esp;
   }
 
+  console.log('[CampSubs] ma='+ma+' mo='+mo+' filtradas='+filtradas.length+' precio='+precio);
   if(!filtradas.length){ box.style.display='none'; box.innerHTML=''; return; }
 
   // Agrupar por banco
@@ -4333,6 +4334,8 @@ function cP(){
 
   // Disparar calculadora si hay crédito
   calcCred();
+  // Mostrar campañas subsidiadas disponibles
+  renderCampSubs();
 }
 
 function addEx(col){
