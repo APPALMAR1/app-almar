@@ -769,6 +769,9 @@ input[type=text]#p-obs{background:#F5F7FA!important;border:1px solid #D5DCE6!imp
     <div class="col-b card">
       <div class="ch"><div class="ci g">✅</div><div class="ct">B — Cómo lo paga</div><div class="sn">Paso 3</div></div>
       <div class="cb">
+        <!-- CAMPAÑAS SUBSIDIADAS — visible sin necesidad de monto -->
+        <div id="camp-subs-box" style="display:none;margin-bottom:8px"></div>
+
         <!-- CRÉDITO con calculadora integrada -->
         <div class="pr"><label class="m">Monto del crédito bancario</label><input type="number" id="pb1" placeholder="0" oninput="cP();calcCred()" ></div>
 
@@ -2502,12 +2505,8 @@ function onMarca(){
 function onModelo(){
   ['version','anno'].forEach(disEl);
   const t=$$('tipo').value,ma=$$('marca').value,mo=$$('modelo').value; if(!mo)return;
-  // Mostrar campañas disponibles para el modelo al seleccionarlo
-  setTimeout(()=>{
-    const _box=$$('cred-box');
-    if(_box&&ma) _box.style.display='block';
-    rCampMini();
-  },100);
+  // Mostrar campañas subsidiadas disponibles para el modelo
+  setTimeout(()=>{ renderCampSubs(); },120);
   if(t==='lista_precios'){
     // En lista_precios no hay versión separada — el modelo ya es la versión completa
     // Pasamos directo al año
@@ -3779,6 +3778,7 @@ function cotizarDesdePrecios(marca, modeloCompleto, precioArg, precioUSD){
           if(aral) aral.innerHTML=`<div class="al info">💰 <strong>${marca} — ${modeloCompleto}</strong> · Año ${yr}${usdRef}${tcRef}<br><span style="font-size:10px;color:var(--m)">Precio cargado desde lista de precios</span></div>`;
           cP();
           rCampMini();
+          renderCampSubs();
         },150);
       },150);
     },150);
@@ -3819,6 +3819,76 @@ function ltvPSAUsados(anno){
 }
 
 
+
+
+// ── CAMPAÑAS SUBSIDIADAS — panel visible sin monto ──────────────────────────
+function renderCampSubs(){
+  const box = $$('camp-subs-box');
+  if(!box) return;
+
+  const ma = ($$('marca')?.value || window._propMarca || '').toUpperCase();
+  const mo = ($$('modelo')?.value || window._propModelo || '').toUpperCase();
+  const precio = parseFloat($$('pa1')?.value) || window._propPrecio || 0;
+  const t = $$('tipo')?.value || '';
+  const esUsado = t==='usado' || t==='mercado_usado';
+
+  if(!ma || esUsado){ box.style.display='none'; box.innerHTML=''; return; }
+
+  const act = camp.filter(c=>c.activa&&!c.usados&&c.marca&&c.marca.toUpperCase()===ma&&c.tna<=20);
+  let filtradas = act;
+  if(mo && act.length){
+    const esp = act.filter(c=>{
+      if(!c.modelos) return true;
+      return c.modelos.some(m=>mo.includes(m.toUpperCase())||m.toUpperCase().includes(mo));
+    });
+    if(esp.length) filtradas = esp;
+  }
+
+  if(!filtradas.length){ box.style.display='none'; box.innerHTML=''; return; }
+
+  // Agrupar por banco
+  const bancos = [...new Set(filtradas.map(c=>c.banco))];
+  box.innerHTML = '';
+
+  // Tip informativo
+  const tip = document.createElement('div');
+  tip.style.cssText = 'background:rgba(39,174,96,.12);border:1.5px solid #27ae60;border-radius:8px;padding:8px 12px;font-size:11px;color:#27ae60;margin-bottom:6px;font-weight:600';
+  tip.innerHTML = '💡 <b>Tasa subsidiada disponible.</b> Elegí la campaña — el monto se calcula solo por LTV.';
+  box.appendChild(tip);
+
+  // Botón por cada financiera de marca
+  bancos.forEach(banco=>{
+    const cs = filtradas.filter(c=>c.banco===banco);
+    const ltv = cs[0].ltv;
+    const mBase = precio>0 ? Math.round(precio*(ltv/100)) : 0;
+    const mFin = (cs[0].montoMax&&mBase>cs[0].montoMax) ? cs[0].montoMax : mBase;
+
+    const btn = document.createElement('div');
+    btn.style.cssText = 'display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;border:1.5px solid #ef7d00;background:rgba(239,125,0,.07);margin-bottom:4px;cursor:pointer';
+    btn.innerHTML =
+      '<span style="font-size:20px">⭐</span>'
+      +'<div style="flex:1">'
+        +'<div style="font-weight:800;font-size:12px;color:#ef7d00">'+banco+'</div>'
+        +'<div style="font-size:10px;color:var(--m);margin-top:2px">'
+          +cs.length+' línea'+(cs.length>1?'s':'')+' · TNA '+(cs[0].tna===0?'0%':cs[0].tna+'%')+' · LTV '+ltv+'%'
+          +(mFin>0?' · <b style="color:#27ae60">hasta '+fmt(mFin)+'</b>':'')
+        +'</div>'
+      +'</div>'
+      +'<span style="color:#ef7d00;font-size:14px;font-weight:800">›</span>';
+
+    btn.onmouseenter = ()=>{ btn.style.background='rgba(239,125,0,.16)'; };
+    btn.onmouseleave = ()=>{ btn.style.background='rgba(239,125,0,.07)'; };
+    btn.onclick = ()=>{
+      // Rellenar monto por LTV y abrir sub-selector de plazos
+      if(mFin>0){ const e=$$('pb1'); if(e){ e.value=mFin; cP(); } }
+      mostrarSubCampanas(banco, cs);
+    };
+    box.appendChild(btn);
+  });
+
+  box.style.display = 'block';
+}
+// ── FIN CAMPAÑAS SUBSIDIADAS ─────────────────────────────────────────────────
 
 function rCampMini(){
   window._subMenuAbierto=false;
