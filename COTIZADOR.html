@@ -7067,22 +7067,37 @@ function labFiltrar(){
   const filtEst=$$('lab-filtro-est')?.value||'';
   const filtUrg=$$('lab-filtro-urg')?.value||'';
 
-  let perfiles = labGetPerfiles();
+  const todosLosPerfiles = labGetPerfiles();
 
-  // ── Visibilidad por rol: vendedores solo ven sus propios perfiles ──
-  if(window.CU && !esSupervisor(CU) && !esGerencia(CU)){
-    perfiles = perfiles.filter(p=>(p.creadoPor||p.vendedor)===CU.name);
-  }
+  // ── Visibilidad por rol ───────────────────────────────────────
+  // Vendedor puro: solo ve sus propios perfiles
+  // Supervisor / Master / Gerencia: ve todos
+  const esSoloVendedor = window.CU && esVendedor(CU) && !esSupervisor(CU) && !esGerencia(CU);
+  let perfilesFiltrados = esSoloVendedor
+    ? todosLosPerfiles.filter(p=>{
+        const creador = (p.creadoPor||p.vendedor||'').trim();
+        // Perfiles sin creador asignado NO son visibles para vendedores (solo Master los ve)
+        if(!creador) return false;
+        // Coincidencia por nombre o por id de usuario
+        return creador === CU.name || (p.creadoPorId && p.creadoPorId === CU.id);
+      })
+    : todosLosPerfiles;
 
-  // Recalcular estados (sin guardar _matches en storage)
-  const conMatches = perfiles.map(p=>{
+  // Recalcular matches solo sobre los perfiles visibles
+  const conMatches = perfilesFiltrados.map(p=>{
     if(p.estado==='cerrado') return {...p, _matches:[]};
     const ms = labMatch(p);
     return {...p, estado: ms.length>0?'match':'espera', _matches:ms};
   });
 
-  // Guardar estados actualizados
-  labSetPerfiles(conMatches.map(({_matches,...p})=>p));
+  // Guardar estados actualizados sobre TODOS los perfiles (no solo los filtrados)
+  const estadosMap = {};
+  conMatches.forEach(p=>{ estadosMap[p.id] = p.estado; });
+  const todosActualizados = todosLosPerfiles.map(p=>
+    estadosMap[p.id] ? {...p, estado:estadosMap[p.id]} : p
+  );
+  labSetPerfiles(todosActualizados);
+
   labRenderStats(conMatches);
 
   let lista = conMatches;
