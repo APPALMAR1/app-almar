@@ -7069,6 +7069,11 @@ function labFiltrar(){
 
   let perfiles = labGetPerfiles();
 
+  // ── Visibilidad por rol: vendedores solo ven sus propios perfiles ──
+  if(window.CU && !esSupervisor(CU) && !esGerencia(CU)){
+    perfiles = perfiles.filter(p=>(p.creadoPor||p.vendedor)===CU.name);
+  }
+
   // Recalcular estados (sin guardar _matches en storage)
   const conMatches = perfiles.map(p=>{
     if(p.estado==='cerrado') return {...p, _matches:[]};
@@ -7127,10 +7132,11 @@ function labFiltrar(){
     }
 
     const fecha = p.fecha?new Date(p.fecha).toLocaleDateString('es-AR'):'';
+    const nroLbl = p.nroCliente?`<span style="background:var(--b);color:#fff;font-size:9px;font-weight:800;padding:2px 8px;border-radius:10px;margin-left:6px">#${p.nroCliente}</span>`:'';
     card.innerHTML=`
       ${tieneMatch?`<div class="lab-match-badge">🎯 ${ms.length}</div>`:''}
-      <div class="lab-nom">${p.nombre||'Sin nombre'}</div>
-      <div class="lab-tel">${p.tel||''}${p.vendedor?' · '+p.vendedor:''}${fecha?' · '+fecha:''}</div>
+      <div class="lab-nom" style="display:flex;align-items:center;gap:4px">${p.nombre||'Sin nombre'}${nroLbl}</div>
+      <div class="lab-tel">${p.tel||''}${(p.creadoPor||p.vendedor)?' · '+(p.creadoPor||p.vendedor):''}${fecha?' · '+fecha:''}</div>
       <span class="lab-urg">${labUrgLabel(p.urgencia)}</span>${labEstLabel(p.estado)}
       <div class="lab-caps" style="margin-top:6px">${caps}</div>
       ${p.marcaPref?`<div style="font-size:10px;color:var(--m);margin-top:3px">🚗 Pref: ${p.marcaPref}</div>`:''}
@@ -7191,17 +7197,25 @@ function labCerrarModal(){
 // ── Detección de duplicados en tiempo real ────────────────────────
 let _labDupPerfilId = null; // perfil duplicado detectado
 
+// ── Numeración secuencial de clientes LAB ─────────────────────────
+// Asigna un nroCliente secuencial al crear perfil nuevo si no tiene uno
+function labGetNextNroCliente(){
+  const perfs = labGetPerfiles();
+  const maxN = perfs.reduce((mx,p)=>Math.max(mx, parseInt(p.nroCliente||0)), 0);
+  return maxN + 1;
+}
+
 function labOnNombreTel(){
   const nombre=$$('lf-nombre')?.value||'';
   const tel=($$('lf-tel')?.value||'').replace(/[^0-9]/g,'');
   const email=($$('lf-email')?.value||'').trim().toLowerCase();
-  const idActual=$$('lf-id')?.value||''; // si estamos editando, ignorar el propio perfil
+  const idActual=$$('lf-id')?.value||'';
 
   // Validación visual en tiempo real de formato
   _labValidarCampoVisual('lf-tel', tel.length>=8 && tel.length<=15);
   _labValidarCampoVisual('lf-email', !email || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email));
 
-  // Detección de duplicado por teléfono o email en perfiles LAB existentes
+  // ── Detección de duplicado por teléfono o email ───────────────
   const perfiles = labGetPerfiles();
   let dupPerfil = null;
   let dupCampo  = '';
@@ -7217,16 +7231,37 @@ function labOnNombreTel(){
   const panel=$$('lf-dup-panel');
   if(dupPerfil && panel){
     _labDupPerfilId = dupPerfil.id;
-    const fd = dupPerfil.fecha ? new Date(dupPerfil.fecha).toLocaleDateString('es-AR') : '—';
-    const vendNom = dupPerfil.creadoPor || dupPerfil.vendedor || '—';
-    $$('lf-dup-msg').innerHTML=`⚠️ Este <strong>${dupCampo}</strong> ya pertenece a <strong>${dupPerfil.nombre}</strong> (perfil del ${fd}, vendedor: ${vendNom})`;
+    const vendedorActual = window.CU ? CU.name : '';
+    const creadoPorDup   = dupPerfil.creadoPor || dupPerfil.vendedor || '';
+    const esPropio       = creadoPorDup === vendedorActual; // mismo vendedor
+    const nroCliente     = dupPerfil.nroCliente ? `#${dupPerfil.nroCliente}` : '';
+    const fd             = dupPerfil.fecha ? new Date(dupPerfil.fecha).toLocaleDateString('es-AR') : '—';
+
+    if(esPropio){
+      // El mismo vendedor ya tiene a este cliente cargado
+      $$('lf-dup-msg').innerHTML=
+        `⚠️ Ya tenés a este cliente en tu LAB — <strong>${dupPerfil.nombre}</strong> ${nroCliente} (${fd})<br>
+        <span style="font-size:10px;color:var(--m)">¿Querés abrir su perfil o crear una nueva búsqueda para él?</span>`;
+    } else {
+      // Es de otro vendedor — NO revelar datos internos, solo el número de cliente
+      $$('lf-dup-msg').innerHTML=
+        `⚠️ Este <strong>${dupCampo}</strong> corresponde al <strong>Cliente ${nroCliente}</strong> que ya existe en el sistema.<br>
+        <span style="font-size:10px;color:var(--m)">Consultá con tu supervisor antes de continuar.</span>`;
+    }
     panel.style.display='block';
+    // Ajustar botones según si es propio o de otro
+    const btnVer   = panel.querySelector('button:nth-child(1)');
+    const btnNuevo = panel.querySelector('button:nth-child(2)');
+    const btnCorr  = panel.querySelector('button:nth-child(3)');
+    if(btnVer)   btnVer.style.display   = esPropio ? '' : 'none';
+    if(btnNuevo) btnNuevo.style.display = esPropio ? '' : 'none';
+    if(btnCorr)  btnCorr.style.display  = ''; // siempre visible
   } else {
     _labDupPerfilId = null;
     if(panel) panel.style.display='none';
   }
 
-  // Búsqueda en base de clientes (Infoauto/Oversoft)
+  // ── Búsqueda en base de clientes (Oversoft) ───────────────────
   const sugsEl=$$('lf-cliente-sugs'); if(!sugsEl) return;
   if(nombre.length<3 && tel.length<6 && email.length<4){sugsEl.innerHTML='';return;}
   const encontrados=labBuscarCliente(nombre, $$('lf-tel')?.value||'', email);
@@ -7235,12 +7270,16 @@ function labOnNombreTel(){
     <div style="font-size:9px;color:var(--m);font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-bottom:4px">👤 Clientes en la base</div>
     ${encontrados.map(c=>{
       const fn=`${c.Nombre||''} ${c.Apellido||''}`.trim();
-      const pa=labGetPerfiles().filter(x=>x.clienteVinculadoId===c.NroCliente);
+      // Ver cuántos perfiles LAB propios tiene este cliente (solo del vendedor actual)
+      const vendedorActual = window.CU ? CU.name : '';
+      const paTotal = labGetPerfiles().filter(x=>x.clienteVinculadoId===String(c.NroCliente));
+      const paPropios = paTotal.filter(x=>(x.creadoPor||x.vendedor)===vendedorActual);
+      const nroLbl = c.NroCliente ? `<span style="background:var(--b);color:#fff;font-size:9px;font-weight:800;padding:2px 7px;border-radius:10px;margin-left:4px">N° ${c.NroCliente}</span>` : '';
       return `<div onclick="labVincularCliente('${c.NroCliente}','${fn}','${c.Telefono||''}','${c.Email||''}')"
         style="padding:8px 10px;background:var(--s3);border:1px solid var(--bdr);border-radius:6px;cursor:pointer;margin-bottom:4px">
-        <div style="font-weight:700;font-size:12px">${fn}</div>
+        <div style="font-weight:700;font-size:12px;display:flex;align-items:center;gap:4px">${fn}${nroLbl}</div>
         <div style="font-size:10px;color:var(--m)">📱 ${c.Telefono||'—'} · Última visita: ${c.UltimaVisita||'—'} · ${c.UltimasMarca||''} ${c.UltimoModelo||''}</div>
-        ${pa.length?`<div style="font-size:9px;color:#41c0f0">🧪 ${pa.length} perfil${pa.length>1?'es':''} previo${pa.length>1?'s':''} en el Lab</div>`:''}
+        ${paPropios.length?`<div style="font-size:9px;color:#41c0f0">🧪 ${paPropios.length} perfil${paPropios.length>1?'es':''} tuyo${paPropios.length>1?'s':''} en el Lab</div>`:''}
         <div style="font-size:9px;color:var(--r);font-weight:700;margin-top:2px">← Tocá para vincular</div>
       </div>`;
     }).join('')}`;
@@ -7547,13 +7586,15 @@ function labGuardarPerfil(){
   const idx=perfilesAct.findIndex(p=>p.id===id);
   const esNuevo=idx<0;
   const ahora=new Date().toISOString();
+  // Asignar número de cliente secuencial solo a perfiles nuevos
+  const nroCliente = esNuevo ? labGetNextNroCliente() : (perfilesAct[idx]?.nroCliente||labGetNextNroCliente());
 
   // Registrar creador automáticamente desde sesión actual
   const creadorActual = window.CU ? CU.name : ($$('lf-vendedor')?.value||'');
   const creadorId     = window.CU ? CU.id   : '';
 
   const perfil={
-    id, nombre, tel, email,
+    id, nroCliente, nombre, tel, email,
     vendedor: creadorActual,               // asignado = quien lo crea
     creadoPor: esNuevo ? creadorActual : (perfilesAct[idx]?.creadoPor||creadorActual),
     creadoPorId: esNuevo ? creadorId   : (perfilesAct[idx]?.creadoPorId||creadorId),
