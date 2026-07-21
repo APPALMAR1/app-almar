@@ -1093,10 +1093,19 @@ input[type=text]#p-obs{background:#F5F7FA!important;border:1px solid #D5DCE6!imp
   <!-- Búsqueda de cliente existente -->
   <div style="margin-bottom:8px">
     <div style="display:flex;gap:8px;margin-bottom:6px">
-      <div style="flex:1"><label class="m" style="font-size:10px">Nombre *</label><input type="text" id="lf-nombre" placeholder="Juan Pérez" oninput="labOnNombreTel()" style="margin:2px 0 0"></div>
-      <div style="flex:1"><label class="m" style="font-size:10px">Teléfono</label><input type="text" id="lf-tel" placeholder="3764..." oninput="labOnNombreTel()" style="margin:2px 0 0"></div>
+      <div style="flex:1"><label class="m" style="font-size:10px">Nombre y Apellido <span style="color:#e74c3c">*</span></label><input type="text" id="lf-nombre" placeholder="Ej: Juan Pérez" oninput="labOnNombreTel()" style="margin:2px 0 0"></div>
+      <div style="flex:1"><label class="m" style="font-size:10px">Teléfono <span style="color:#e74c3c">*</span></label><input type="text" id="lf-tel" placeholder="Ej: 3764460807" oninput="labOnNombreTel()" style="margin:2px 0 0"></div>
     </div>
-    <div style="margin-bottom:6px"><label class="m" style="font-size:10px">Email</label><input type="text" id="lf-email" placeholder="email@ejemplo.com" oninput="labOnNombreTel()" style="margin:2px 0 0;width:100%"></div>
+    <div style="margin-bottom:6px"><label class="m" style="font-size:10px">Email <span style="color:#e74c3c">*</span></label><input type="text" id="lf-email" placeholder="email@ejemplo.com" oninput="labOnNombreTel()" style="margin:2px 0 0;width:100%"></div>
+    <!-- Panel de duplicado detectado -->
+    <div id="lf-dup-panel" style="display:none;margin-bottom:8px;padding:10px 12px;background:rgba(231,76,60,.08);border:1px solid rgba(231,76,60,.4);border-radius:8px">
+      <div style="font-size:11px;font-weight:800;color:#e74c3c;margin-bottom:6px" id="lf-dup-msg">⚠️ Dato duplicado</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button class="btn btn-sm" style="font-size:10px;background:var(--r);color:#fff;flex:1" onclick="labDupVerPerfil()">👁 Ver perfil existente</button>
+        <button class="btn btn-sm" style="font-size:10px;background:rgba(65,192,240,.15);color:#41c0f0;border:1px solid rgba(65,192,240,.3);flex:1" onclick="labDupNuevaBusqueda()">➕ Nueva búsqueda mismo cliente</button>
+        <button class="btn btn-sm" style="font-size:10px;background:var(--s3);color:var(--m);flex:1" onclick="labDupCorregir()">✏️ Corregir dato</button>
+      </div>
+    </div>
     <!-- Sugerencias de clientes existentes -->
     <div id="lf-cliente-sugs" style="margin-bottom:4px"></div>
     <!-- Badge de cliente vinculado -->
@@ -1106,9 +1115,11 @@ input[type=text]#p-obs{background:#F5F7FA!important;border:1px solid #D5DCE6!imp
     <input type="hidden" id="lf-cliente-id">
     <input type="hidden" id="lf-cliente-nm">
   </div>
-  <div style="display:flex;gap:8px;margin-bottom:12px">
-    <div style="flex:1"><label class="m" style="font-size:10px">Vendedor asignado</label>
-      <select id="lf-vendedor" style="margin:2px 0 0"></select>
+  <!-- Vendedor: autoasignado desde sesión, hidden. Master puede ver/editar -->
+  <select id="lf-vendedor" style="display:none"></select>
+  <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center">
+    <div id="lf-creador-badge" style="flex:1;padding:6px 10px;background:var(--s3);border-radius:6px;font-size:10px;color:var(--m)">
+      👤 Vendedor: <strong id="lf-creador-nombre">—</strong>
     </div>
     <div style="flex:1"><label class="m" style="font-size:10px">Urgencia</label>
       <select id="lf-urgencia" style="margin:2px 0 0">
@@ -1258,6 +1269,23 @@ input[type=text]#p-obs{background:#F5F7FA!important;border:1px solid #D5DCE6!imp
     <div class="ch"><div class="ci y">👥</div><div class="ct">Equipo de Vendedores</div></div>
     <div id="gvl" style="padding:0;overflow:hidden"></div>
   </div>
+  <!-- LOG DE AUDITORÍA LAB — solo Master -->
+  <div id="lab-audit-card" class="card" style="display:none;margin-bottom:12px">
+    <div class="ch" style="flex-wrap:wrap;gap:8px">
+      <div class="ci" style="background:rgba(146,43,33,.15)">📋</div>
+      <div class="ct">Actividad LAB — Auditoría</div>
+      <select id="lab-audit-filtro-dias" onchange="labAuditRender()" style="margin-left:auto;font-size:11px;padding:4px 8px;background:var(--s3);border:1px solid var(--bdr);border-radius:6px;color:var(--t)">
+        <option value="7">Últimos 7 días</option>
+        <option value="30" selected>Últimos 30 días</option>
+        <option value="90">Últimos 90 días</option>
+        <option value="0">Todo el historial</option>
+      </select>
+    </div>
+    <div id="lab-audit-body" style="padding:0 4px 4px">
+      <div class="empty"><div class="eico">📋</div><div class="ettl">Sin actividad registrada</div></div>
+    </div>
+  </div>
+
   <div class="card">
     <div class="ch"><div class="ci">📋</div><div class="ct" id="gdtit">Seleccionar vendedor</div></div>
     <div id="gdh" style="padding:0;overflow:hidden">
@@ -4750,6 +4778,12 @@ function rGer(){
   let tot=0;todos.forEach(u=>tot+=gH(u.id).length);
   const hoy=tod(),hC=todos.reduce((s,u)=>s+gH(u.id).filter(h=>h.fecha===hoy).length,0);
   $$('gsst').innerHTML=`<div class="stc"><div class="stn">${tot}</div><div class="stl">Total cotizaciones</div></div><div class="stc"><div class="stn" style="color:var(--g)">${hC}</div><div class="stl">Hoy</div></div><div class="stc"><div class="stn" style="color:var(--b)">${todos.filter(esVendedor).length}</div><div class="stl">Vendedores</div></div><div class="stc"><div class="stn" style="color:var(--y)">${camp.filter(c=>c.activa).length}</div><div class="stl">Campañas activas</div></div>`;
+  // Log de auditoría LAB — solo Master
+  if(window.CU && esMaster(CU)){
+    labAuditSyncFromCloud(); // sincroniza y luego renderiza
+  } else {
+    const card=$$('lab-audit-card'); if(card) card.style.display='none';
+  }
   const vl=$$('gvl');vl.innerHTML='';
   todos.forEach(u=>{
     const h=gH(u.id),hd=h.filter(x=>x.fecha===hoy).length;
@@ -7134,15 +7168,19 @@ function labNuevoPerfil(){
   if($$('lf-cliente-vinc'))  $$('lf-cliente-vinc').style.display='none';
   if($$('lf-hist-prev'))     $$('lf-hist-prev').style.display='none';
 
+  // Autoasignar vendedor desde sesión actual
   const sv=$$('lf-vendedor');
   if(sv){
-    sv.innerHTML='<option value="">— Sin asignar —</option>';
+    sv.innerHTML='';
     (window.USERS||[]).filter(u=>esVendedor(u)||esSupervisor(u)).forEach(u=>{
       const o=document.createElement('option');
       o.value=u.name; o.textContent=u.name; sv.appendChild(o);
     });
     if(window.CU) sv.value=CU.name;
   }
+  // Mostrar badge del creador
+  const cnBadge=$$('lf-creador-nombre');
+  if(cnBadge) cnBadge.textContent=window.CU?CU.name:'—';
   $$('lab-modal-overlay').style.display='block';
 }
 function labCerrarModal(){
@@ -7150,14 +7188,48 @@ function labCerrarModal(){
   _labModalId = null;
 }
 
-// ── Búsqueda de cliente en tiempo real ───────────────────────────
+// ── Detección de duplicados en tiempo real ────────────────────────
+let _labDupPerfilId = null; // perfil duplicado detectado
+
 function labOnNombreTel(){
   const nombre=$$('lf-nombre')?.value||'';
-  const tel=$$('lf-tel')?.value||'';
-  const email=$$('lf-email')?.value||'';
+  const tel=($$('lf-tel')?.value||'').replace(/[^0-9]/g,'');
+  const email=($$('lf-email')?.value||'').trim().toLowerCase();
+  const idActual=$$('lf-id')?.value||''; // si estamos editando, ignorar el propio perfil
+
+  // Validación visual en tiempo real de formato
+  _labValidarCampoVisual('lf-tel', tel.length>=8 && tel.length<=15);
+  _labValidarCampoVisual('lf-email', !email || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email));
+
+  // Detección de duplicado por teléfono o email en perfiles LAB existentes
+  const perfiles = labGetPerfiles();
+  let dupPerfil = null;
+  let dupCampo  = '';
+  if(tel.length>=8){
+    dupPerfil = perfiles.find(p=>p.id!==idActual && p.tel && p.tel.replace(/[^0-9]/g,'')===tel);
+    if(dupPerfil) dupCampo='teléfono';
+  }
+  if(!dupPerfil && email.length>=5 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
+    dupPerfil = perfiles.find(p=>p.id!==idActual && p.email && p.email.trim().toLowerCase()===email);
+    if(dupPerfil) dupCampo='email';
+  }
+
+  const panel=$$('lf-dup-panel');
+  if(dupPerfil && panel){
+    _labDupPerfilId = dupPerfil.id;
+    const fd = dupPerfil.fecha ? new Date(dupPerfil.fecha).toLocaleDateString('es-AR') : '—';
+    const vendNom = dupPerfil.creadoPor || dupPerfil.vendedor || '—';
+    $$('lf-dup-msg').innerHTML=`⚠️ Este <strong>${dupCampo}</strong> ya pertenece a <strong>${dupPerfil.nombre}</strong> (perfil del ${fd}, vendedor: ${vendNom})`;
+    panel.style.display='block';
+  } else {
+    _labDupPerfilId = null;
+    if(panel) panel.style.display='none';
+  }
+
+  // Búsqueda en base de clientes (Infoauto/Oversoft)
   const sugsEl=$$('lf-cliente-sugs'); if(!sugsEl) return;
-  if(nombre.length<3 && tel.replace(/[^0-9]/g,'').length<6 && email.length<4){sugsEl.innerHTML='';return;}
-  const encontrados=labBuscarCliente(nombre,tel,email);
+  if(nombre.length<3 && tel.length<6 && email.length<4){sugsEl.innerHTML='';return;}
+  const encontrados=labBuscarCliente(nombre, $$('lf-tel')?.value||'', email);
   if(!encontrados.length){sugsEl.innerHTML='';return;}
   sugsEl.innerHTML=`
     <div style="font-size:9px;color:var(--m);font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-bottom:4px">👤 Clientes en la base</div>
@@ -7172,6 +7244,58 @@ function labOnNombreTel(){
         <div style="font-size:9px;color:var(--r);font-weight:700;margin-top:2px">← Tocá para vincular</div>
       </div>`;
     }).join('')}`;
+}
+
+function _labValidarCampoVisual(id, valido){
+  const el=$$(id); if(!el) return;
+  const v=el.value.trim();
+  if(!v){ el.style.borderColor=''; el.style.boxShadow=''; return; }
+  if(valido){
+    el.style.borderColor='rgba(46,204,113,.6)';
+    el.style.boxShadow='0 0 0 2px rgba(46,204,113,.15)';
+  } else {
+    el.style.borderColor='rgba(231,76,60,.6)';
+    el.style.boxShadow='0 0 0 2px rgba(231,76,60,.15)';
+  }
+}
+
+// ── Acciones del panel de duplicado ──────────────────────────────
+function labDupVerPerfil(){
+  if(!_labDupPerfilId) return;
+  $$('lf-dup-panel').style.display='none';
+  labCerrarModal();
+  labVerDetalle(_labDupPerfilId);
+}
+function labDupNuevaBusqueda(){
+  // Usar los datos del perfil duplicado como base del cliente vinculado
+  if(!_labDupPerfilId) return;
+  const dup = labGetPerfiles().find(p=>p.id===_labDupPerfilId);
+  if(!dup) return;
+  $$('lf-dup-panel').style.display='none';
+  // Vincular al mismo cliente
+  if($$('lf-cliente-id')) $$('lf-cliente-id').value = dup.clienteVinculadoId||'';
+  if($$('lf-cliente-nm')) $$('lf-cliente-nm').value = dup.nombre||'';
+  if($$('lf-nombre'))     $$('lf-nombre').value      = dup.nombre||'';
+  if($$('lf-tel'))        $$('lf-tel').value          = dup.tel||'';
+  if($$('lf-email'))      $$('lf-email').value        = dup.email||'';
+  const vc=$$('lf-cliente-vinc');
+  if(vc){ vc.style.display='block'; vc.innerHTML=`<div style="padding:6px 10px;background:rgba(0,105,180,.15);border:1px solid var(--r);border-radius:6px;font-size:11px;display:flex;align-items:center;gap:8px">
+    ✅ Vinculado: <strong>${dup.nombre}</strong> <span style="font-size:9px;color:#41c0f0;margin-left:4px">nueva búsqueda</span><span onclick="labDesvincularCliente()" style="cursor:pointer;color:var(--m);margin-left:auto;font-size:10px">✕</span></div>`; }
+  _labDupPerfilId = null;
+  // Limpiar campos de búsqueda para la nueva propuesta
+  ['lf-busca-marca','lf-busca-modelo','lf-infoauto','lf-entrega','lf-cuota','lf-partepago','lf-cheques'].forEach(id=>{
+    const el=$$(id); if(el) el.value='';
+  });
+  const seg=$$('lf-segmento'); if(seg) seg.value='';
+}
+function labDupCorregir(){
+  if($$('lf-dup-panel')) $$('lf-dup-panel').style.display='none';
+  _labDupPerfilId = null;
+  // Limpiar el campo conflictivo y enfocar
+  const tel=$$('lf-tel'); const email=$$('lf-email');
+  // Detectar cuál está en conflicto limpiando ambos estilos
+  if(tel){ tel.style.borderColor=''; tel.style.boxShadow=''; }
+  if(email){ email.style.borderColor=''; email.style.boxShadow=''; }
 }
 function labVincularCliente(id,nombre,tel,email){
   if($$('lf-cliente-id')) $$('lf-cliente-id').value=id;
@@ -7344,40 +7468,95 @@ function labCalcMatch(){
 
 // ── Guardar perfil ────────────────────────────────────────────────
 function labGuardarPerfil(){
+  // ── Validaciones obligatorias ─────────────────────────────────
   const nombre=($$('lf-nombre')?.value||'').trim();
-  if(!nombre){alert('Ingresá al menos el nombre del cliente.');return;}
-  // Validar segmento obligatorio
-  const segVal=($$('lf-segmento')?.value||'').trim().toUpperCase();
-  if(!segVal){
-    // Destacar el campo de segmento
-    const segEl=$$('lf-segmento');
-    if(segEl){
-      segEl.style.borderColor='#ef7d00';
-      segEl.style.boxShadow='0 0 0 2px rgba(239,125,0,.35)';
-      segEl.focus();
-      setTimeout(()=>{ segEl.style.borderColor=''; segEl.style.boxShadow=''; }, 3000);
-    }
-    // Mostrar mensaje de error inline (no alert)
-    const segContainer = segEl?.closest('.pr')||segEl?.parentElement;
-    const errId = 'seg-err-msg';
-    if(!document.getElementById(errId) && segContainer){
-      const err = document.createElement('div');
-      err.id = errId;
-      err.style.cssText = 'color:#ef7d00;font-size:11px;font-weight:600;margin-top:4px';
-      err.textContent = '⚠️ Seleccioná el segmento que busca el cliente para poder guardar el perfil';
-      segContainer.appendChild(err);
-      setTimeout(()=>{ const e=document.getElementById(errId); if(e) e.remove(); }, 3000);
+  const tel=($$('lf-tel')?.value||'').trim();
+  const email=($$('lf-email')?.value||'').trim();
+  const telNum=tel.replace(/[^0-9]/g,'');
+  const errores=[];
+
+  // Nombre y apellido: debe tener al menos 2 palabras
+  if(!nombre || nombre.split(/\s+/).filter(Boolean).length<2){
+    errores.push({id:'lf-nombre', msg:'Ingresá nombre Y apellido (ej: Juan Pérez)'});
+  }
+  // Teléfono: 8 a 15 dígitos
+  if(!tel || telNum.length<8 || telNum.length>15){
+    errores.push({id:'lf-tel', msg:'Teléfono inválido — ingresá entre 8 y 15 dígitos (ej: 3764460807)'});
+  }
+  // Email: formato válido
+  if(!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
+    errores.push({id:'lf-email', msg:'Email inválido — ingresá una dirección correcta (ej: juan@gmail.com)'});
+  }
+
+  if(errores.length>0){
+    // Resaltar campos con error y mostrar mensaje inline
+    errores.forEach(err=>{
+      const el=$$(err.id); if(!el) return;
+      el.style.borderColor='rgba(231,76,60,.8)';
+      el.style.boxShadow='0 0 0 2px rgba(231,76,60,.25)';
+      const errId=err.id+'-err';
+      let eDiv=document.getElementById(errId);
+      if(!eDiv){ eDiv=document.createElement('div'); eDiv.id=errId; eDiv.style.cssText='color:#e74c3c;font-size:10px;font-weight:600;margin-top:3px'; el.parentElement?.appendChild(eDiv); }
+      eDiv.textContent='⚠️ '+err.msg;
+      setTimeout(()=>{ el.style.borderColor=''; el.style.boxShadow=''; const e=document.getElementById(errId); if(e)e.remove(); },4000);
+    });
+    if(errores[0]) { const el=$$(errores[0].id); if(el) el.focus(); }
+    return;
+  }
+
+  // ── Unicidad: bloquear si hay duplicado confirmado ────────────
+  const idActual=$$('lf-id')?.value||'';
+  const perfilesAct=labGetPerfiles();
+  const dupTel=perfilesAct.find(p=>p.id!==idActual && p.tel && p.tel.replace(/[^0-9]/g,'')===telNum);
+  const dupEmail=perfilesAct.find(p=>p.id!==idActual && p.email && p.email.trim().toLowerCase()===email.toLowerCase());
+  if(dupTel||dupEmail){
+    const dup=dupTel||dupEmail;
+    const campo=dupTel?'teléfono':'email';
+    const fd=dup.fecha?new Date(dup.fecha).toLocaleDateString('es-AR'):'—';
+    // Mostrar panel de duplicado en lugar de alert
+    const panel=$$('lf-dup-panel');
+    if(panel){
+      _labDupPerfilId=dup.id;
+      $$('lf-dup-msg').innerHTML=`⚠️ Este <strong>${campo}</strong> ya pertenece a <strong>${dup.nombre}</strong> (perfil del ${fd}). ¿Qué querés hacer?`;
+      panel.style.display='block';
+      panel.scrollIntoView({behavior:'smooth',block:'center'});
     }
     return;
   }
-  const id=$$('lf-id')?.value||labUID();
-  const perfiles=labGetPerfiles();
-  const idx=perfiles.findIndex(p=>p.id===id);
+
+  // ── Segmento obligatorio ──────────────────────────────────────
+  const segVal=($$('lf-segmento')?.value||'').trim().toUpperCase();
+  if(!segVal){
+    const segEl=$$('lf-segmento');
+    if(segEl){ segEl.style.borderColor='#ef7d00'; segEl.style.boxShadow='0 0 0 2px rgba(239,125,0,.35)'; segEl.focus();
+      setTimeout(()=>{ segEl.style.borderColor=''; segEl.style.boxShadow=''; },3000); }
+    const segContainer=segEl?.parentElement;
+    const errId='seg-err-msg';
+    if(!document.getElementById(errId)&&segContainer){
+      const err=document.createElement('div'); err.id=errId;
+      err.style.cssText='color:#ef7d00;font-size:11px;font-weight:600;margin-top:4px';
+      err.textContent='⚠️ Seleccioná el segmento que busca el cliente';
+      segContainer.appendChild(err);
+      setTimeout(()=>{ const e=document.getElementById(errId); if(e)e.remove(); },3000);
+    }
+    return;
+  }
+
+  // ── Construir perfil ──────────────────────────────────────────
+  const id=idActual||labUID();
+  const idx=perfilesAct.findIndex(p=>p.id===id);
+  const esNuevo=idx<0;
+  const ahora=new Date().toISOString();
+
+  // Registrar creador automáticamente desde sesión actual
+  const creadorActual = window.CU ? CU.name : ($$('lf-vendedor')?.value||'');
+  const creadorId     = window.CU ? CU.id   : '';
+
   const perfil={
-    id, nombre,
-    tel:($$('lf-tel')?.value||'').trim(),
-    email:($$('lf-email')?.value||'').trim(),
-    vendedor:$$('lf-vendedor')?.value||'',
+    id, nombre, tel, email,
+    vendedor: creadorActual,               // asignado = quien lo crea
+    creadoPor: esNuevo ? creadorActual : (perfilesAct[idx]?.creadoPor||creadorActual),
+    creadoPorId: esNuevo ? creadorId   : (perfilesAct[idx]?.creadoPorId||creadorId),
     urgencia:$$('lf-urgencia')?.value||'fria',
     entrega:parseFloat($$('lf-entrega')?.value)||0,
     cuotaMax:parseFloat($$('lf-cuota')?.value)||0,
@@ -7395,13 +7574,125 @@ function labGuardarPerfil(){
     clienteVinculadoId:$$('lf-cliente-id')?.value||'',
     clienteVinculadoNombre:$$('lf-cliente-nm')?.value||nombre,
     estado:'activo',
-    fecha:idx>=0?(perfiles[idx].fecha||new Date().toISOString()):new Date().toISOString(),
-    fechaMod:new Date().toISOString(),
+    fecha:esNuevo?ahora:(perfilesAct[idx].fecha||ahora),
+    fechaMod:ahora,
   };
-  if(idx>=0) perfiles[idx]=perfil; else perfiles.unshift(perfil);
-  labSetPerfiles(perfiles);
+
+  // ── Detectar cambios para el log (si es edición) ──────────────
+  if(!esNuevo){
+    const prev=perfilesAct[idx];
+    const cambios=[];
+    const campos=[
+      ['nombre','Nombre'],['tel','Teléfono'],['email','Email'],
+      ['urgencia','Urgencia'],['entrega','Entrega'],['cuotaMax','Cuota máx'],
+      ['estado','Estado'],['segmento','Segmento'],['obs','Observaciones']
+    ];
+    campos.forEach(([k,lbl])=>{
+      if(String(prev[k]||'')!==String(perfil[k]||'')){
+        cambios.push(`${lbl}: "${prev[k]||'—'}" → "${perfil[k]||'—'}"`);
+      }
+    });
+    if(cambios.length) labAuditLog('edicion', perfil, cambios.join(' | '));
+  } else {
+    labAuditLog('nuevo', perfil, `Entrega ${fmt(perfil.entrega)} · Cuota ${fmt(perfil.cuotaMax)}/mes · Segmento ${perfil.segmento}`);
+  }
+
+  if(idx>=0) perfilesAct[idx]=perfil; else perfilesAct.unshift(perfil);
+  labSetPerfiles(perfilesAct);
   labCerrarModal();
   rLab();
+}
+
+// ── Sistema de Auditoría LAB ──────────────────────────────────────
+function labAuditLog(accion, perfil, detalle){
+  // Solo disponible si hay sesión activa
+  const quien = window.CU ? CU.name : (perfil.vendedor||'—');
+  const quienId = window.CU ? CU.id : '';
+  const evento = {
+    id: 'aud_'+Date.now()+'_'+Math.random().toString(36).slice(2,5),
+    accion,       // 'nuevo' | 'edicion' | 'cerrado' | 'eliminado'
+    perfilId: perfil.id,
+    perfilNombre: perfil.nombre,
+    quien,
+    quienId,
+    detalle: detalle||'',
+    fecha: new Date().toISOString()
+  };
+  // Guardar en localStorage
+  const logs = labAuditGetLogs();
+  logs.unshift(evento);
+  // Mantener máx 500 registros
+  if(logs.length>500) logs.splice(500);
+  localStorage.setItem('lab_audit', JSON.stringify(logs));
+  // Sincronizar en nube en segundo plano
+  fetch(PROPUESTAS_URL,{method:'POST',body:JSON.stringify({action:'saveLabAudit',logs})}).catch(()=>{});
+}
+function labAuditGetLogs(){
+  try{ return JSON.parse(localStorage.getItem('lab_audit')||'[]'); } catch(e){ return []; }
+}
+function labAuditSyncFromCloud(){
+  fetch(PROPUESTAS_URL+'?action=getLabAudit&t='+Date.now(),{cache:'no-store'})
+    .then(r=>r.json())
+    .then(d=>{
+      if(d.data&&Array.isArray(d.data)&&d.data.length>0){
+        const local=labAuditGetLogs();
+        const localIds=new Set(local.map(x=>x.id));
+        const merged=[...local];
+        d.data.forEach(x=>{ if(!localIds.has(x.id)) merged.push(x); });
+        merged.sort((a,b)=>new Date(b.fecha)-new Date(a.fecha));
+        if(merged.length>500) merged.splice(500);
+        localStorage.setItem('lab_audit',JSON.stringify(merged));
+      }
+      labAuditRender();
+    }).catch(()=>labAuditRender());
+}
+function labAuditRender(){
+  const card=$$('lab-audit-card');
+  const body=$$('lab-audit-body');
+  if(!card||!body) return;
+  // Solo visible para Master
+  if(!window.CU||!esMaster(CU)){ card.style.display='none'; return; }
+  card.style.display='block';
+
+  const dias=parseInt($$('lab-audit-filtro-dias')?.value||'30');
+  const ahora=Date.now();
+  const corte=dias>0?(ahora-dias*86400000):0;
+
+  const logs=labAuditGetLogs().filter(x=> dias===0 || new Date(x.fecha).getTime()>=corte);
+
+  if(!logs.length){
+    body.innerHTML='<div class="empty"><div class="eico">📋</div><div class="ettl">Sin actividad en este período</div></div>';
+    return;
+  }
+
+  const iconAcc={nuevo:'🟢',edicion:'🟡',cerrado:'✅',eliminado:'🔴'};
+  const lblAcc={nuevo:'Nuevo perfil',edicion:'Editó perfil',cerrado:'Cerró perfil',eliminado:'Eliminó perfil'};
+  const colAcc={nuevo:'#2ecc71',edicion:'#f39c12',cerrado:'#41c0f0',eliminado:'#e74c3c'};
+
+  // Agrupar por día
+  const porDia={};
+  logs.forEach(ev=>{
+    const d=new Date(ev.fecha);
+    const key=d.toLocaleDateString('es-AR',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+    if(!porDia[key]) porDia[key]=[];
+    porDia[key].push(ev);
+  });
+
+  body.innerHTML=Object.entries(porDia).map(([dia,evs])=>`
+    <div style="font-size:9px;font-weight:800;letter-spacing:.8px;color:var(--m);text-transform:uppercase;padding:8px 0 4px">${dia}</div>
+    ${evs.map(ev=>{
+      const hora=new Date(ev.fecha).toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
+      const u=USERS.find(x=>x.id===ev.quienId)||{col:'#888',ini:'?'};
+      return `<div style="display:flex;align-items:flex-start;gap:10px;padding:8px 10px;background:var(--s3);border-radius:8px;margin-bottom:6px;border-left:3px solid ${colAcc[ev.accion]||'#888'}">
+        <div style="width:28px;height:28px;border-radius:50%;background:${u.col};color:#fff;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0">${u.ini||'?'}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:11px;font-weight:700;color:var(--t)">${iconAcc[ev.accion]||'•'} <span style="color:${colAcc[ev.accion]||'#888'}">${lblAcc[ev.accion]||ev.accion}</span>: <strong>${ev.perfilNombre||'—'}</strong></div>
+          <div style="font-size:10px;color:var(--m);margin-top:2px">${ev.quien||'—'} · ${hora}</div>
+          ${ev.detalle?`<div style="font-size:10px;color:var(--m);margin-top:3px;font-style:italic">${ev.detalle}</div>`:''}
+        </div>
+      </div>`;
+    }).join('')}
+  `).join('');
 }
 
 // ── Detalle del perfil ────────────────────────────────────────────
@@ -7560,11 +7851,8 @@ function labEditarDesdeDetalle(){
     Object.entries(campos).forEach(([id,val])=>{ 
       const el=$$(id); 
       if(el&&val!=null){
-        // Normalizar segmento a mayúsculas para compatibilidad con perfiles viejos
         const normalVal = (id==='lf-segmento') ? String(val).toUpperCase() : val;
         el.value = normalVal;
-        // Si el valor no existe en el select (perfil viejo con valor distinto),
-        // buscar la opción que empiece igual (ej: "PICKUP" matchea "PICKUP")
         if(id==='lf-segmento' && el.value !== normalVal){
           const opts = Array.from(el.options);
           const match = opts.find(o=>o.value.toUpperCase()===normalVal.toUpperCase());
@@ -7572,6 +7860,9 @@ function labEditarDesdeDetalle(){
         }
       }
     });
+    // Mostrar badge del creador original del perfil
+    const cnBadge=$$('lf-creador-nombre');
+    if(cnBadge) cnBadge.textContent = p.creadoPor || p.vendedor || '—';
     if(p.clienteVinculadoId) labVincularCliente(p.clienteVinculadoId, p.clienteVinculadoNombre||p.nombre, p.tel||'', p.email||'');
     labCalcMatch();
   },80);
@@ -7582,7 +7873,12 @@ function labCerrarPerfil(){
   if(!confirm('¿Marcar este perfil como cerrado?')) return;
   const perfiles=labGetPerfiles();
   const idx=perfiles.findIndex(p=>p.id===_labDetId);
-  if(idx>=0){ perfiles[idx].estado='cerrado'; labSetPerfiles(perfiles); }
+  if(idx>=0){
+    perfiles[idx].estado='cerrado';
+    perfiles[idx].fechaMod=new Date().toISOString();
+    labAuditLog('cerrado', perfiles[idx], 'Perfil marcado como cerrado');
+    labSetPerfiles(perfiles);
+  }
   labCerrarDet(); rLab();
 }
 
