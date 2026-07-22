@@ -4434,26 +4434,38 @@ function uHB(){if(!CU)return;const cnt=gH(CU.id).length;const nb=$$('nb-h');if(n
 // ── HISTORIAL VENDEDOR ──────────────────────────────────────────
 let _histVendData=[];  // caché para buscador
 
+function normalizarFecha(f){
+  if(!f) return 'Sin fecha';
+  // Si ya es dd/mm/yyyy devolver tal cual
+  if(/^\d{2}\/\d{2}\/\d{4}$/.test(f)) return f;
+  // Si es ISO o cualquier formato parseable por Date
+  const d = new Date(f);
+  if(!isNaN(d.getTime())) return d.toLocaleDateString('es-AR');
+  return f;
+}
+
 function agruparPorDia(lista){
   const dias={};
   lista.forEach(p=>{
-    const f=p.fecha||p.Fecha||'Sin fecha';
+    const f = normalizarFecha(p.fecha||p.Fecha||'');
     if(!dias[f]) dias[f]=[];
-    dias[f].push(p);
+    dias[f].push({...p, _fechaNorm:f});
   });
   // Ordenar días descendente
   return Object.entries(dias).sort((a,b)=>{
-    const pa=a[0].split('/').reverse().join(''),pb=b[0].split('/').reverse().join('');
-    return pb.localeCompare(pa);
+    // Convertir dd/mm/yyyy a yyyymmdd para comparar
+    const toSort = s => s.split('/').reverse().join('');
+    return toSort(b[0]).localeCompare(toSort(a[0]));
   });
 }
 
 function etiquetaDia(fecha){
+  const f = normalizarFecha(fecha);
   const hoy=tod();
   const ayer=(()=>{const d=new Date();d.setDate(d.getDate()-1);return d.toLocaleDateString('es-AR')})();
-  if(fecha===hoy) return '📅 Hoy';
-  if(fecha===ayer) return '📅 Ayer';
-  return '📅 '+fecha;
+  if(f===hoy) return '📅 Hoy';
+  if(f===ayer) return '📅 Ayer';
+  return '📅 '+f;
 }
 
 function mkHI(h){
