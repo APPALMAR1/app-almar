@@ -4567,9 +4567,17 @@ function rMH(){
       .then(r=>r.json())
       .then(rows=>{
         if(!Array.isArray(rows)||!rows.length) return;
-        const idsLocal=new Set(hLocalSup.map(p=>String(p.id)));
-        const rowsDrive=rows.reverse().filter(p=>!idsLocal.has(String(p.ID||p.id||'')));
-        _histVendData=[...hLocalSup,...rowsDrive];
+        // Drive es la fuente de verdad — reemplazar local completamente
+        const merged = rows.reverse();
+        // Agregar locales muy recientes (últimas 2hs) que quizás no llegaron a Drive
+        const dosHoras = Date.now() - 2*60*60*1000;
+        const localesNuevos = hLocalSup.filter(p=>{
+          const t = new Date(p.fecha||p.Fecha||0).getTime();
+          return t > dosHoras && !rows.find(r=>String(r.ID||r.id)===String(p.id));
+        });
+        _histVendData=[...localesNuevos,...merged];
+        // Actualizar localStorage con datos frescos de Drive
+        localStorage.setItem('almar_propuestas', JSON.stringify(_histVendData.slice(0,200)));
         renderHistorialAgrupado(el,_histVendData,false);
       }).catch(()=>{});
     return;
