@@ -6210,46 +6210,33 @@ function labSetModo(modo){
   labCalcMatch();
 }
 function labGetPerfiles(){
-  try{
-    const raw = JSON.parse(localStorage.getItem('lab_perfiles')||'[]');
-    // Asignar dueño a perfiles viejos sin propietario
-    return raw.map(p=>labAsignarDuenio(p));
-  }
+  try{ return JSON.parse(localStorage.getItem('lab_perfiles')||'[]'); }
   catch(e){ return []; }
 }
-// Asigna Master a cualquier perfil que no tenga dueño definido
-function labAsignarDuenio(p){
-  if(!p) return p;
-  const tieneDuenio = p.creadoPorId || p.creadoPor || p.vendedor;
-  if(tieneDuenio) return p;
-  return {...p, creadoPorId:'master', creadoPor:'Master ALMAR', vendedor:'Master ALMAR'};
-}
-// Devuelve solo los perfiles visibles para el usuario actual
 function labGetPerfilesPropios(){
   const todos = labGetPerfiles();
   if(!window.CU) return todos;
-  // SOLO role===vendedor queda restringido — master, supervisor y gerencia ven todo
   if(CU.role !== 'vendedor') return todos;
-  // Vendedor: solo sus propios perfiles
-  return todos.filter(p=>{
-    // Primero intentar por id (más confiable, nuevo sistema)
-    if(p.creadoPorId && p.creadoPorId === CU.id) return true;
-    // Luego por nombre (retrocompatibilidad)
-    const creador = (p.creadoPor || p.vendedor || '').trim();
-    if(!creador) return false; // sin dueño → invisible para vendedores
-    return creador === CU.name;
-  });
+  return todos.filter(p=>
+    (p.creadoPorId && p.creadoPorId === CU.id) ||
+    ((p.creadoPor||p.vendedor||'').trim() === CU.name)
+  );
 }
 function labSetPerfiles(arr){
-  // Guardar local inmediatamente
   localStorage.setItem('lab_perfiles', JSON.stringify(arr));
-  // Sincronizar con Apps Script en segundo plano
-  fetch(PROPUESTAS_URL, {
-    method:'POST',
-    body: JSON.stringify({ action:'saveLabPerfiles', perfiles: arr })
-  }).catch(()=>{});
+  fetch(PROPUESTAS_URL,{method:'POST',body:JSON.stringify({action:'saveLabPerfiles',perfiles:arr})}).catch(()=>{});
 }
-// Cargar perfiles desde Apps Script (sincroniza entre dispositivos)
+function labSyncPerfiles(callback){
+  fetch(PROPUESTAS_URL+'?action=getLabPerfiles&t='+Date.now(),{cache:'no-store'})
+    .then(r=>r.json())
+    .then(d=>{
+      const cloudPerfs = (d.data&&d.data.length>0) ? d.data : [];
+      // Guardar directamente lo que viene de la nube (fuente de verdad)
+      localStorage.setItem('lab_perfiles', JSON.stringify(cloudPerfs));
+      if(callback) callback();
+    })
+    .catch(()=>{ if(callback) callback(); });
+}
 function labSyncPerfiles(callback){
   fetch(PROPUESTAS_URL+'?action=getLabPerfiles&t='+Date.now(),{cache:'no-store'})
     .then(r=>r.json())
@@ -6281,9 +6268,17 @@ function labSyncPerfiles(callback){
     .catch(()=>{ if(callback) callback(); });
 }
 function labSavePerfiles(perfiles){
-  // Guardar en nube silenciosamente
   if(typeof PROPUESTAS_URL==='undefined') return;
   fetch(PROPUESTAS_URL,{method:'POST',body:JSON.stringify({action:'saveLabPerfiles',perfiles})}).catch(()=>{});
+}
+// ── Limpieza total (ejecutar desde consola del browser como Master) ──
+function labLimpiarTodo(){
+  if(!window.CU||CU.role!=='master'){alert('Solo Master puede ejecutar esta acción.');return;}
+  if(!confirm('⚠️ Esto borra TODOS los perfiles LAB de la nube y del localStorage. ¿Confirmar?')) return;
+  localStorage.removeItem('lab_perfiles');
+  fetch(PROPUESTAS_URL,{method:'POST',body:JSON.stringify({action:'saveLabPerfiles',perfiles:[]})})
+    .then(()=>{alert('✅ Perfiles LAB borrados. Recargá la página.'); location.reload();})
+    .catch(()=>alert('Error al limpiar la nube.'));
 }
 function labUID(){ return 'lab_'+Date.now()+'_'+Math.random().toString(36).slice(2,7); }
 const _hoy = new Date().getFullYear();
@@ -7083,12 +7078,11 @@ function rLab(){
     fetch(PROPUESTAS_URL+'?action=getClientes&t='+Date.now(),{cache:'no-store'})
       .then(r=>r.json()).then(d=>{window._clientesCache=d.data||d||[];}).catch(()=>{});
   }
-  // Asegurar que CU esté definido — si no hay sesión, mostrar vacío
   if(!window.CU){ labFiltrar(); return; }
-  // Mostrar skeleton mientras carga
+  // Limpiar localStorage para forzar carga fresca desde la nube
+  localStorage.removeItem('lab_perfiles');
   const cont=$$('lab-lista');
-  if(cont) cont.innerHTML='<div class="empty"><div class="eico" style="font-size:24px;animation:spin 1s linear infinite">⏳</div><div class="ettl">Cargando perfiles...</div></div>';
-  // Sincronizar desde la nube y luego filtrar con la sesión activa
+  if(cont) cont.innerHTML='<div class="empty"><div class="eico">⏳</div><div class="ettl">Cargando...</div></div>';
   labSyncPerfiles(()=>labFiltrar());
 }
 // ── Filtrar y renderizar lista ────────────────────────────────────
