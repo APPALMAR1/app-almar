@@ -1,8 +1,12 @@
 <!DOCTYPE html>
 <html lang="es">
+<!-- build:2026-07-22-LAB-VISIBILIDAD-V4 -->
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>ALMAR — Cotizador</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -6213,12 +6217,15 @@ function labGetPerfiles(){
 function labGetPerfilesPropios(){
   const todos = labGetPerfiles();
   if(!window.CU) return todos;
-  if(!esVendedor(CU) || esSupervisor(CU) || esGerencia(CU)) return todos;
-  // Vendedor puro: solo sus perfiles
+  // SOLO role===vendedor queda restringido — master, supervisor y gerencia ven todo
+  if(CU.role !== 'vendedor') return todos;
+  // Vendedor: solo sus propios perfiles
   return todos.filter(p=>{
+    // Primero intentar por id (más confiable, nuevo sistema)
     if(p.creadoPorId && p.creadoPorId === CU.id) return true;
-    const creador = (p.creadoPor||p.vendedor||'').trim();
-    if(!creador) return false;
+    // Luego por nombre (retrocompatibilidad)
+    const creador = (p.creadoPor || p.vendedor || '').trim();
+    if(!creador) return false; // sin dueño → invisible para vendedores
     return creador === CU.name;
   });
 }
@@ -7070,10 +7077,14 @@ function rLab(){
     fetch(PROPUESTAS_URL+'?action=getClientes&t='+Date.now(),{cache:'no-store'})
       .then(r=>r.json()).then(d=>{window._clientesCache=d.data||d||[];}).catch(()=>{});
   }
-  // Sincronizar perfiles desde Apps Script antes de renderizar
+  // Asegurar que CU esté definido — si no hay sesión, mostrar vacío
+  if(!window.CU){ labFiltrar(); return; }
+  // Mostrar skeleton mientras carga
+  const cont=$$('lab-lista');
+  if(cont) cont.innerHTML='<div class="empty"><div class="eico" style="font-size:24px;animation:spin 1s linear infinite">⏳</div><div class="ettl">Cargando perfiles...</div></div>';
+  // Sincronizar desde la nube y luego filtrar con la sesión activa
   labSyncPerfiles(()=>labFiltrar());
 }
-
 // ── Filtrar y renderizar lista ────────────────────────────────────
 function labFiltrar(){
   const busq=($$('lab-busq')?.value||'').toLowerCase();
