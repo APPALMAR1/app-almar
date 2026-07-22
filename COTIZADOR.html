@@ -6273,12 +6273,11 @@ function labSavePerfiles(perfiles){
 }
 // ── Limpieza total (ejecutar desde consola del browser como Master) ──
 function labLimpiarTodo(){
-  if(!window.CU||CU.role!=='master'){alert('Solo Master puede ejecutar esta acción.');return;}
-  if(!confirm('⚠️ Esto borra TODOS los perfiles LAB de la nube y del localStorage. ¿Confirmar?')) return;
+  if(!confirm('⚠️ Borra TODOS los perfiles LAB. ¿Confirmar?')) return;
   localStorage.removeItem('lab_perfiles');
   fetch(PROPUESTAS_URL,{method:'POST',body:JSON.stringify({action:'saveLabPerfiles',perfiles:[]})})
-    .then(()=>{alert('✅ Perfiles LAB borrados. Recargá la página.'); location.reload();})
-    .catch(()=>alert('Error al limpiar la nube.'));
+    .then(()=>{ alert('✅ Perfiles borrados.'); location.reload(); })
+    .catch(()=>{ alert('Error al limpiar la nube.'); });
 }
 function labUID(){ return 'lab_'+Date.now()+'_'+Math.random().toString(36).slice(2,7); }
 const _hoy = new Date().getFullYear();
