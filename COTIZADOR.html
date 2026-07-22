@@ -4573,23 +4573,31 @@ function rMH(){
   if(esSupervisor(CU)||esGerencia(CU)){
     el.innerHTML='<div class="hist-no-result">⏳ Cargando...</div>';
     const hLocalSup=JSON.parse(localStorage.getItem('almar_propuestas')||'[]');
+    // Mostrar locales mientras carga Drive
     _histVendData=hLocalSup;
     renderHistorialAgrupado(el,_histVendData,false);
     fetch(PROPUESTAS_URL+'?action=get&t='+Date.now(),{cache:'no-store'})
       .then(r=>r.json())
       .then(rows=>{
-        if(!Array.isArray(rows)||!rows.length) return;
-        // Drive es la fuente de verdad — reemplazar local completamente
-        const merged = rows.reverse();
-        // Agregar locales muy recientes (últimas 2hs) que quizás no llegaron a Drive
-        const dosHoras = Date.now() - 2*60*60*1000;
-        const localesNuevos = hLocalSup.filter(p=>{
-          const t = new Date(p.fecha||p.Fecha||0).getTime();
-          return t > dosHoras && !rows.find(r=>String(r.ID||r.id)===String(p.id));
+        if(!Array.isArray(rows)||!rows.length){
+          // Drive vacío o error — quedarse con locales
+          return;
+        }
+        // IDs que ya están en Drive
+        const idsEnDrive = new Set(rows.map(r=>String(r.ID||r.id||'')).filter(Boolean));
+        // Locales que NO están en Drive (recién guardadas, aún no sincronizadas)
+        const soloLocales = hLocalSup.filter(p=> !idsEnDrive.has(String(p.id||'')));
+        // Merge: locales nuevas + todo Drive
+        const merged = [...soloLocales, ...rows];
+        // Ordenar por fecha descendente
+        merged.sort((a,b)=>{
+          const fa = new Date(a.fecha||a.Fecha||0).getTime();
+          const fb = new Date(b.fecha||b.Fecha||0).getTime();
+          return fb - fa;
         });
-        _histVendData=[...localesNuevos,...merged];
-        // Actualizar localStorage con datos frescos de Drive
-        localStorage.setItem('almar_propuestas', JSON.stringify(_histVendData.slice(0,200)));
+        _histVendData = merged;
+        // Actualizar localStorage con el merge fresco
+        localStorage.setItem('almar_propuestas', JSON.stringify(merged.slice(0,300)));
         renderHistorialAgrupado(el,_histVendData,false);
       }).catch(()=>{});
     return;
