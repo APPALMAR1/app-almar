@@ -6210,8 +6210,19 @@ function labSetModo(modo){
   labCalcMatch();
 }
 function labGetPerfiles(){
-  try{ return JSON.parse(localStorage.getItem('lab_perfiles')||'[]'); }
+  try{
+    const raw = JSON.parse(localStorage.getItem('lab_perfiles')||'[]');
+    // Asignar dueño a perfiles viejos sin propietario
+    return raw.map(p=>labAsignarDuenio(p));
+  }
   catch(e){ return []; }
+}
+// Asigna Master a cualquier perfil que no tenga dueño definido
+function labAsignarDuenio(p){
+  if(!p) return p;
+  const tieneDuenio = p.creadoPorId || p.creadoPor || p.vendedor;
+  if(tieneDuenio) return p;
+  return {...p, creadoPorId:'master', creadoPor:'Master ALMAR', vendedor:'Master ALMAR'};
 }
 // Devuelve solo los perfiles visibles para el usuario actual
 function labGetPerfilesPropios(){
@@ -6257,20 +6268,13 @@ function labSyncPerfiles(callback){
             const localDate = new Date(lp.fechaMod||lp.fecha||0).getTime();
             perfil = localDate >= cloudDate ? lp : cp;
           }
-          // ── FIX RETROCOMPATIBILIDAD ──────────────────────────────
-          // Perfiles sin dueño → asignar a master para que solo master los vea
-          if(!perfil.creadoPorId && !perfil.creadoPor && !perfil.vendedor){
-            perfil = {...perfil, creadoPorId:'master', creadoPor:'Master ALMAR'};
-          }
-          return perfil;
+          return labAsignarDuenio(perfil);
         });
         localPerfs.forEach(lp=>{
-          if(!cloudPerfs.find(cp=>cp.id===lp.id)) merged.unshift(lp);
+          if(!cloudPerfs.find(cp=>cp.id===lp.id)) merged.unshift(labAsignarDuenio(lp));
         });
         localStorage.setItem('lab_perfiles', JSON.stringify(merged));
-        // Solo subir a la nube si hay perfiles sin dueño para actualizar
-        const sinDueno = merged.filter(p=>p.creadoPor==='Master ALMAR' && cloudPerfs.find(c=>c.id===p.id && !c.creadoPor));
-        if(sinDueno.length > 0) labSavePerfiles(merged);
+        labSavePerfiles(merged);
       }
       if(callback) callback();
     })
