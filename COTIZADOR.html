@@ -6209,6 +6209,19 @@ function labGetPerfiles(){
   try{ return JSON.parse(localStorage.getItem('lab_perfiles')||'[]'); }
   catch(e){ return []; }
 }
+// Devuelve solo los perfiles visibles para el usuario actual
+function labGetPerfilesPropios(){
+  const todos = labGetPerfiles();
+  if(!window.CU) return todos;
+  if(!esVendedor(CU) || esSupervisor(CU) || esGerencia(CU)) return todos;
+  // Vendedor puro: solo sus perfiles
+  return todos.filter(p=>{
+    if(p.creadoPorId && p.creadoPorId === CU.id) return true;
+    const creador = (p.creadoPor||p.vendedor||'').trim();
+    if(!creador) return false;
+    return creador === CU.name;
+  });
+}
 function labSetPerfiles(arr){
   // Guardar local inmediatamente
   localStorage.setItem('lab_perfiles', JSON.stringify(arr));
@@ -7067,21 +7080,9 @@ function labFiltrar(){
   const filtEst=$$('lab-filtro-est')?.value||'';
   const filtUrg=$$('lab-filtro-urg')?.value||'';
 
+  // Perfiles visibles según rol (helper centralizado)
   const todosLosPerfiles = labGetPerfiles();
-
-  // ── Visibilidad por rol ───────────────────────────────────────
-  // Vendedor puro: solo ve sus propios perfiles
-  // Supervisor / Master / Gerencia: ve todos
-  const esSoloVendedor = window.CU && esVendedor(CU) && !esSupervisor(CU) && !esGerencia(CU);
-  let perfilesFiltrados = esSoloVendedor
-    ? todosLosPerfiles.filter(p=>{
-        const creador = (p.creadoPor||p.vendedor||'').trim();
-        // Perfiles sin creador asignado NO son visibles para vendedores (solo Master los ve)
-        if(!creador) return false;
-        // Coincidencia por nombre o por id de usuario
-        return creador === CU.name || (p.creadoPorId && p.creadoPorId === CU.id);
-      })
-    : todosLosPerfiles;
+  const perfilesFiltrados = labGetPerfilesPropios();
 
   // Recalcular matches solo sobre los perfiles visibles
   const conMatches = perfilesFiltrados.map(p=>{
@@ -7090,13 +7091,13 @@ function labFiltrar(){
     return {...p, estado: ms.length>0?'match':'espera', _matches:ms};
   });
 
-  // Guardar estados actualizados sobre TODOS los perfiles (no solo los filtrados)
+  // Actualizar estados en localStorage SIN subir a la nube
   const estadosMap = {};
   conMatches.forEach(p=>{ estadosMap[p.id] = p.estado; });
   const todosActualizados = todosLosPerfiles.map(p=>
     estadosMap[p.id] ? {...p, estado:estadosMap[p.id]} : p
   );
-  labSetPerfiles(todosActualizados);
+  try{ localStorage.setItem('lab_perfiles', JSON.stringify(todosActualizados)); } catch(e){}
 
   labRenderStats(conMatches);
 
