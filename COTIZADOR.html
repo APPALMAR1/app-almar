@@ -4586,9 +4586,16 @@ function rMH(){
         // IDs que ya están en Drive
         const idsEnDrive = new Set(rows.map(r=>String(r.ID||r.id||'')).filter(Boolean));
         // Locales que NO están en Drive (recién guardadas, aún no sincronizadas)
-        const soloLocales = hLocalSup.filter(p=> !idsEnDrive.has(String(p.id||'')));
+        const soloLocales = hLocalSup.filter(p=> p.id && !idsEnDrive.has(String(p.id)));
         // Merge: locales nuevas + todo Drive
-        const merged = [...soloLocales, ...rows];
+        const mergedRaw = [...soloLocales, ...rows];
+        // Deduplicar por ID
+        const vistos = new Set();
+        const merged = mergedRaw.filter(p=>{
+          const key = String(p.ID||p.id||Math.random());
+          if(vistos.has(key)) return false;
+          vistos.add(key); return true;
+        });
         // Ordenar por fecha descendente
         merged.sort((a,b)=>{
           const fa = new Date(a.fecha||a.Fecha||0).getTime();
