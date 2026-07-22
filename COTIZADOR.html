@@ -6244,31 +6244,33 @@ function labSyncPerfiles(callback){
     .then(r=>r.json())
     .then(d=>{
       if(d.data&&d.data.length>0){
-        // MERGE: combinar nube con local — local tiene precedencia (más reciente)
         const localRaw = localStorage.getItem('lab_perfiles');
         const localPerfs = localRaw ? JSON.parse(localRaw) : [];
         const cloudPerfs = d.data;
-        // Indexar locales por id
         const localMap = {};
         localPerfs.forEach(p=>{ if(p.id) localMap[p.id]=p; });
-        // Tomar cloud como base, pero mantener locales más recientes
         const merged = cloudPerfs.map(cp=>{
           const lp = localMap[cp.id];
+          let perfil = cp;
           if(lp){
-            // Usar local si tiene fechaMod más reciente
             const cloudDate = new Date(cp.fechaMod||cp.fecha||0).getTime();
             const localDate = new Date(lp.fechaMod||lp.fecha||0).getTime();
-            return localDate >= cloudDate ? lp : cp;
+            perfil = localDate >= cloudDate ? lp : cp;
           }
-          return cp;
+          // ── FIX RETROCOMPATIBILIDAD ──────────────────────────────
+          // Perfiles sin dueño → asignar a master para que solo master los vea
+          if(!perfil.creadoPorId && !perfil.creadoPor && !perfil.vendedor){
+            perfil = {...perfil, creadoPorId:'master', creadoPor:'Master ALMAR'};
+          }
+          return perfil;
         });
-        // Agregar perfiles locales que no están en la nube (recién creados)
         localPerfs.forEach(lp=>{
           if(!cloudPerfs.find(cp=>cp.id===lp.id)) merged.unshift(lp);
         });
         localStorage.setItem('lab_perfiles', JSON.stringify(merged));
-        // Subir a la nube los perfiles locales nuevos/modificados
-        labSavePerfiles(merged);
+        // Solo subir a la nube si hay perfiles sin dueño para actualizar
+        const sinDueno = merged.filter(p=>p.creadoPor==='Master ALMAR' && cloudPerfs.find(c=>c.id===p.id && !c.creadoPor));
+        if(sinDueno.length > 0) labSavePerfiles(merged);
       }
       if(callback) callback();
     })
