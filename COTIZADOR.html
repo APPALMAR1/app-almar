@@ -4567,61 +4567,74 @@ function filtrarHistorialVend(){
 function rMH(){
   if(!CU)return;
   const el=$$('hl'); if(!el) return;
-  // Resetear buscador
   if($$('hist-busq')) $$('hist-busq').value='';
+  el.innerHTML='<div class="hist-no-result">⏳ Cargando...</div>';
+
+  function normP(p){
+    const raw=p._propuesta||p;
+    return {
+      id:String(raw.id||raw.ID||p.id||p.ID||''),
+      fecha:normalizarFecha(raw.fecha||raw.Fecha||p.fecha||p.Fecha||''),
+      hora:raw.hora||raw.Hora||p.hora||p.Hora||'',
+      vendedor:raw.vendedor||raw.Vendedor||p.vendedor||p.Vendedor||p.vNom||'—',
+      nombre:raw.nombre||raw.Nombre||raw.cliente||raw.Cliente||'',
+      apellido:raw.apellido||raw.Apellido||'',
+      auto:raw.auto||raw.Auto||[raw.marca,raw.modelo,raw.version].filter(Boolean).join(' ')||'',
+      marca:raw.marca||raw.Marca||'',modelo:raw.modelo||raw.Modelo||'',
+      version:raw.version||raw.Version||'',anno:raw.anno||raw.Anno||'',
+      km:raw.km||raw.Km||0,banco:raw.banco||raw.Banco||'',
+      campana:raw.campana||raw.Campana||raw.campNom||p.campNom||'',
+      cuota:raw.cuota||raw.Cuota||p.c60||0,
+      plazo:raw.plazo||raw.Plazo||p.plazo||0,
+      precio:raw.precio||raw.Precio||raw.totalA||raw.TotalA||p.pr||0,
+      totalA:raw.totalA||raw.TotalA||raw.precio||raw.Precio||p.pr||0,
+      totalB:raw.totalB||raw.TotalB||0,
+      obs:raw.obs||raw.Obs||'',
+      detalleA:raw.detalleA||raw.DetalleA||'',
+      detalleB:raw.detalleB||raw.DetalleB||'',
+      _raw:raw
+    };
+  }
+  function dedup(arr){
+    const seen=new Set();
+    return arr.filter(p=>{
+      if(!p.id)return true;
+      if(seen.has(p.id))return false;
+      seen.add(p.id);return true;
+    });
+  }
+  function ordenarDesc(arr){
+    return arr.sort((a,b)=>{
+      const ta=new Date((a._raw?.Fecha||a._raw?.fecha||a.fecha||'')+(a.hora?' '+a.hora:'')).getTime()||0;
+      const tb=new Date((b._raw?.Fecha||b._raw?.fecha||b.fecha||'')+(b.hora?' '+b.hora:'')).getTime()||0;
+      return tb-ta;
+    });
+  }
+
+  const hLocal=JSON.parse(localStorage.getItem('almar_propuestas')||'[]');
 
   if(esSupervisor(CU)||esGerencia(CU)){
-    el.innerHTML='<div class="hist-no-result">⏳ Cargando...</div>';
-    const hLocalSup=JSON.parse(localStorage.getItem('almar_propuestas')||'[]');
-    // Mostrar locales mientras carga Drive
-    _histVendData=hLocalSup;
+    const locNorm=dedup(hLocal.map(normP));
+    _histVendData=ordenarDesc([...locNorm]);
     renderHistorialAgrupado(el,_histVendData,false);
     fetch(PROPUESTAS_URL+'?action=get&t='+Date.now(),{cache:'no-store'})
       .then(r=>r.json())
-      .then(rows=>{
-        if(!Array.isArray(rows)||!rows.length){
-          // Drive vacío o error — quedarse con locales
-          return;
-        }
-        // IDs que ya están en Drive
-        const idsEnDrive = new Set(rows.map(r=>String(r.ID||r.id||'')).filter(Boolean));
-        // Locales que NO están en Drive (recién guardadas, aún no sincronizadas)
-        const soloLocales = hLocalSup.filter(p=> p.id && !idsEnDrive.has(String(p.id)));
-        // Merge: locales nuevas + todo Drive
-        const mergedRaw = [...soloLocales, ...rows];
-        // Deduplicar por ID
-        const vistos = new Set();
-        const merged = mergedRaw.filter(p=>{
-          const key = String(p.ID||p.id||Math.random());
-          if(vistos.has(key)) return false;
-          vistos.add(key); return true;
-        });
-        // Ordenar por fecha descendente
-        merged.sort((a,b)=>{
-          const fa = new Date(a.fecha||a.Fecha||0).getTime();
-          const fb = new Date(b.fecha||b.Fecha||0).getTime();
-          return fb - fa;
-        });
-        _histVendData = merged;
-        // Actualizar localStorage con el merge fresco
-        localStorage.setItem('almar_propuestas', JSON.stringify(merged.slice(0,300)));
+      .then(driveRows=>{
+        if(!Array.isArray(driveRows)||!driveRows.length)return;
+        const driveNorm=driveRows.map(normP);
+        const driveIds=new Set(driveNorm.map(p=>p.id).filter(Boolean));
+        const soloLocal=locNorm.filter(p=>p.id&&!driveIds.has(p.id));
+        _histVendData=ordenarDesc(dedup([...soloLocal,...driveNorm]));
+        localStorage.setItem('almar_propuestas',JSON.stringify(_histVendData.map(p=>p._raw).filter(Boolean).slice(0,300)));
         renderHistorialAgrupado(el,_histVendData,false);
       }).catch(()=>{});
     return;
   }
-  // Vendedor
   const hMem=gH(CU.id);
-  const hLocal=JSON.parse(localStorage.getItem('almar_propuestas')||'[]')
-    .filter(p=>(p.vendedor===CU.name||p.Vendedor===CU.name));
-  const idsEnMem=new Set(hMem.map(x=>String(x.id)));
-  const hLocalExtra=hLocal.filter(p=>!idsEnMem.has(String(p.id)));
-  // Normalizar hMem para que tengan misma estructura que propuestas
-  const memNorm=hMem.map(x=>x._propuesta||{
-    auto:x.nom, cliente:x.cli, banco:x.banco, campana:x.campNom,
-    plazo:x.plazo, cuota:x.c60, precio:x.pr, totalA:x.pr,
-    vendedor:x.vNom, fecha:x.fecha, hora:x.hora, id:x.id
-  });
-  _histVendData=[...memNorm,...hLocalExtra];
+  const memNorm=hMem.map(normP);
+  const memIds=new Set(memNorm.map(p=>p.id).filter(Boolean));
+  const localVend=hLocal.filter(p=>(p.vendedor===CU.name||p.Vendedor===CU.name)).map(normP).filter(p=>!memIds.has(p.id));
+  _histVendData=ordenarDesc(dedup([...memNorm,...localVend]));
   renderHistorialAgrupado(el,_histVendData,false);
 }
 function lmpH(){if(!CU)return;if(confirm('¿Eliminar tu historial?')){HG[CU.id]=[];localStorage.removeItem('almar_propuestas');_histVendData=[];uHB();rMH()}}
