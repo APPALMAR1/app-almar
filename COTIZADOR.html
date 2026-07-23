@@ -7305,15 +7305,17 @@ function labOnNombreTel(){
   _labValidarCampoVisual('lf-tel', tel.length>=8 && tel.length<=15);
   _labValidarCampoVisual('lf-email', !email || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email));
 
-  // ── Detección de duplicado por teléfono o email ───────────────
+  // ── Detección de duplicado: tel>=10 dígitos, email>=3 letras después del @ ──
   const perfiles = labGetPerfiles();
   let dupPerfil = null;
   let dupCampo  = '';
-  if(tel.length>=8){
+  if(tel.length>=10){
     dupPerfil = perfiles.find(p=>p.id!==idActual && p.tel && p.tel.replace(/[^0-9]/g,'')===tel);
     if(dupPerfil) dupCampo='teléfono';
   }
-  if(!dupPerfil && email.length>=5 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
+  const _emailPartes = email.split('@');
+  const _emailPost = _emailPartes.length>1 ? _emailPartes[1] : '';
+  if(!dupPerfil && _emailPost.length>=3 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
     dupPerfil = perfiles.find(p=>p.id!==idActual && p.email && p.email.trim().toLowerCase()===email);
     if(dupPerfil) dupCampo='email';
   }
@@ -7353,8 +7355,9 @@ function labOnNombreTel(){
 
   // ── Búsqueda en base de clientes (Oversoft) ───────────────────
   const sugsEl=$$('lf-cliente-sugs'); if(!sugsEl) return;
-  if(nombre.length<3 && tel.length<6 && email.length<4){sugsEl.innerHTML='';return;}
-  const encontrados=labBuscarCliente(nombre, $$('lf-tel')?.value||'', email);
+  const _post=email.split('@'); const _postArr=_post.length>1?_post[1]:'';
+  if(tel.length<10 && _postArr.length<3){sugsEl.innerHTML='';return;}
+  const encontrados=labBuscarCliente('', $$('lf-tel')?.value||'', email);
   if(!encontrados.length){sugsEl.innerHTML='';return;}
   sugsEl.innerHTML=`
     <div style="font-size:9px;color:var(--m);font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-bottom:4px">👤 Clientes en la base</div>
