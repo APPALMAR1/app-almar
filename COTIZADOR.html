@@ -6244,6 +6244,7 @@ function syncGonzalez(){
       // Sacar cualquier unidad GONZALEZ anterior antes de sumar las nuevas (evita duplicados en re-sync)
       stk=stk.filter(u=>u.origen!=='GONZALEZ').concat(g);
       rStk();
+      cargarVerificacionesGuardadas();
       const ts=new Date().toLocaleDateString('es-AR')+' '+new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
       bar.style.background='rgba(39,174,96,.12)';bar.style.color='var(--g)';bar.textContent=g.length+' vehículos de González actualizados '+ts;
       btn.textContent='🤝 Actualizar González';btn.disabled=false;
@@ -6297,6 +6298,7 @@ function syncRR(){
       if(!g.length)throw new Error('Sin vehiculos');
       stk=stk.filter(u=>u.origen!=='RR').concat(g);
       rStk();
+      cargarVerificacionesGuardadas();
       const ts=new Date().toLocaleDateString('es-AR')+' '+new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
       bar.style.background='rgba(39,174,96,.12)';bar.style.color='var(--g)';bar.textContent=g.length+' vehículos de RR actualizados '+ts;
       btn.textContent='🤝 Actualizar RR';btn.disabled=false;
@@ -6340,6 +6342,9 @@ async function verificarInfoautoConsignado(){
       if(pData.ok&&pData.precio){
         u._infoToma='Infoauto verif. $'+pData.precio.toLocaleString('es-AR')+(pData.exacto?'':' (año aprox.)');
         u._iaMatch=match.descripcion;u._iaVerificado=true;ok++;
+        fetch(`${IA_PROXY}/api/verif-save`,{method:'POST',headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({dominio:u.dominio,precio:pData.precio,descripcion:match.descripcion,exacto:pData.exacto})
+        }).catch(()=>{}); // si falla el guardado no interrumpe el resto de la verificación
       }else{
         u._iaVerificado=true;u._iaMatch=match.descripcion+' (sin precio)';sinMatch++;
       }
@@ -6352,6 +6357,28 @@ async function verificarInfoautoConsignado(){
   bar.style.background='rgba(39,174,96,.12)';bar.style.color='var(--g)';
   bar.textContent=`Verificación completa: ${ok} confirmados con precio real de Infoauto, ${sinMatch} sin coincidencia clara (quedan con la referencia del proveedor).`;
   btn.textContent='🔍 Verificar Infoauto';btn.disabled=false;
+}
+// Trae las verificaciones ya guardadas (de días anteriores) y las aplica al
+// stock actual — no consulta la API de Infoauto, solo lee lo ya confirmado.
+// Se llama sola después de cada sync de González/RR.
+function cargarVerificacionesGuardadas(){
+  fetch(`${IA_PROXY}/api/verif-get`)
+    .then(r=>r.json())
+    .then(data=>{
+      if(!data.ok||!data.verificaciones)return;
+      let aplicadas=0;
+      stk.forEach(u=>{
+        if((u.origen==='GONZALEZ'||u.origen==='RR')&&!u._iaVerificado){
+          const v=data.verificaciones[u.dominio];
+          if(v){
+            u._infoToma='Infoauto verif. $'+Number(v.precio).toLocaleString('es-AR')+(v.exacto?'':' (año aprox.)');
+            u._iaMatch=v.descripcion;u._iaVerificado=true;aplicadas++;
+          }
+        }
+      });
+      if(aplicadas)rStk();
+    })
+    .catch(()=>{}); // si falla, simplemente no se aplican (no rompe el resto de la app)
 }
 //  FIN VERIFICACIÓN INFOAUTO 
 //  FIN SYNC DRIVE ─
