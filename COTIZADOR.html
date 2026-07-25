@@ -3074,13 +3074,14 @@ function guardarPropuesta(){
   local.unshift(propuesta);
   localStorage.setItem('almar_propuestas',JSON.stringify(local.slice(0,200)));
 
-  // Sincronizar propuesta con Drive
+  // Sincronizar propuesta con Drive — con confirmación de recepción
   fetch(PROPUESTAS_URL,{
     method:'POST',
-    mode:'no-cors',
     headers:{'Content-Type':'text/plain'},
     body:JSON.stringify({action:'savePropuesta',...propuesta})
-  }).catch(()=>{});
+  }).then(r=>r.json()).then(d=>{
+    if(!d.ok) console.warn('savePropuesta error:',d);
+  }).catch(e=>console.warn('savePropuesta sin conexión:',e));
 
   // Guardar/actualizar cliente en base de datos
   const clienteData={
@@ -3098,10 +3099,9 @@ function guardarPropuesta(){
   };
   fetch(PROPUESTAS_URL,{
     method:'POST',
-    mode:'no-cors',
     headers:{'Content-Type':'text/plain'},
     body:JSON.stringify(clienteData)
-  }).then(()=>{
+  }).then(r=>r.json()).then(()=>{
     // Actualizar cache local de clientes
     const idx=_clientesCache.findIndex(c=>{
       const cTel=String(c.Telefono||c.telefono||'').replace(/\D/g,'');
