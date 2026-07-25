@@ -953,6 +953,7 @@ input[type=text]#p-obs{background:#F5F7FA!important;border:1px solid #D5DCE6!imp
       <button class="btn btn-r btn-sm" id="btn-drive-sync" onclick="syncDrive()">☁ Actualizar Drive</button>
       <button class="btn btn-r btn-sm" id="btn-gonzalez-sync" onclick="syncGonzalez()" style="background:#6a3fb5">🤝 Actualizar González</button>
       <button class="btn btn-r btn-sm" id="btn-rr-sync" onclick="syncRR()" style="background:#d97706">🤝 Actualizar RR</button>
+      <button class="btn btn-r btn-sm" id="btn-ia-verificar" onclick="verificarInfoautoConsignado()" style="background:#0a7ea4">🔍 Verificar Infoauto</button>
       <button class="btn btn-ghost btn-sm" onclick="pdfStock()">🖨 Imprimir / PDF</button>
       <button class="btn btn-ghost btn-sm" onclick="emailStock()">📧 Email</button>
     </div>
@@ -960,6 +961,7 @@ input[type=text]#p-obs{background:#F5F7FA!important;border:1px solid #D5DCE6!imp
   <div id="drive-sync-bar" style="display:none;margin-bottom:8px;padding:8px 12px;border-radius:6px;font-size:11px;font-weight:600"></div>
   <div id="gonzalez-sync-bar" style="display:none;margin-bottom:8px;padding:8px 12px;border-radius:6px;font-size:11px;font-weight:600"></div>
   <div id="rr-sync-bar" style="display:none;margin-bottom:8px;padding:8px 12px;border-radius:6px;font-size:11px;font-weight:600"></div>
+  <div id="ia-verificar-bar" style="display:none;margin-bottom:8px;padding:8px 12px;border-radius:6px;font-size:11px;font-weight:600"></div>
   <div class="card" id="sl" style="padding:0;overflow:hidden"></div>
   <div class="pft-stk" style="display:none">Precios orientativos · Sujeto a disponibilidad · ALMAR Concesionario Oficial · Posadas, Misiones</div>
 </div>
@@ -5245,8 +5247,10 @@ function rStk(){
     const tagFinal=esNuevo?'tag-b':tag;
     const etiqueta=esNuevo?'NUEVO INGRESO':u.estado;
     const skipInfo=['a recibir','en preparacion','nuevo ingreso','señado'];
+    const iaColor=u._iaVerificado&&u._infoToma.startsWith('Infoauto verif.')?'#0a7ea4':'#ef7d00';
+    const iaTitle=u._iaMatch?` title="Infoauto matcheó con: ${u._iaMatch.replace(/"/g,'')}"`:'';
     const infoExtra=u._infoToma&&u._infoToma.trim()&&!skipInfo.some(x=>(u._infoToma||'').toLowerCase().includes(x))
-      ?`<span style="font-size:9px;color:#ef7d00;font-weight:600;margin-left:4px">· ${u._infoToma}</span>`:'';
+      ?`<span${iaTitle} style="font-size:9px;color:${iaColor};font-weight:600;margin-left:4px">· ${u._infoToma}</span>`:'';
     const badgeOrigen=u.origen==='GONZALEZ'?`<span style="font-size:9px;color:#fff;background:#6a3fb5;padding:1px 6px;border-radius:8px;font-weight:700;margin-left:4px">🤝 CONSIGNADO — GONZÁLEZ</span>`
       :u.origen==='RR'?`<span style="font-size:9px;color:#fff;background:#d97706;padding:1px 6px;border-radius:8px;font-weight:700;margin-left:4px">🤝 CONSIGNADO — RR</span>`:'';
     const d=document.createElement('div'); d.className='hi';
@@ -6296,6 +6300,51 @@ function syncRR(){
     .catch(e=>{bar.style.background='rgba(0,105,180,.12)';bar.style.color='var(--r)';bar.textContent='Error: '+e.message;btn.textContent='Reintentar';btn.disabled=false;});
 }
 //  FIN STOCK RR AUTOMOTORES 
+
+//  VERIFICACIÓN REAL CONTRA INFOAUTO — solo stock consignado (González/RR) 
+// A diferencia de la "Ref." que viene en el Excel del proveedor (una estimación
+// de ellos), esto consulta la API real de Infoauto vía el proxy y reemplaza
+// la referencia por el precio verificado. Se corre a pedido (botón), nunca
+// automático, y con demora entre llamadas para no pasarse del límite de la API.
+function sleepIA(ms){return new Promise(r=>setTimeout(r,ms));}
+async function verificarInfoautoConsignado(){
+  const btn=$$('btn-ia-verificar'),bar=$$('ia-verificar-bar');
+  if(!btn||!bar)return;
+  const candidatos=stk.filter(u=>(u.origen==='GONZALEZ'||u.origen==='RR')&&!u._iaVerificado);
+  if(!candidatos.length){bar.style.display='block';bar.style.background='rgba(0,105,180,.12)';bar.style.color='var(--r)';bar.textContent='No hay vehículos consignados pendientes de verificar (o ya se verificaron todos).';return;}
+  btn.disabled=true;
+  bar.style.display='block';bar.style.background='rgba(26,79,160,.12)';bar.style.color='var(--b)';
+  let ok=0,sinMatch=0;
+  for(let i=0;i<candidatos.length;i++){
+    const u=candidatos[i];
+    btn.textContent=`Verificando ${i+1}/${candidatos.length}...`;
+    bar.textContent=`Consultando Infoauto: ${u.marca} ${u.modelo} ${u.version} (${i+1}/${candidatos.length})`;
+    try{
+      const q=encodeURIComponent(`${u.marca} ${u.modelo} ${u.version}`.trim());
+      const sRes=await fetch(`${IA_PROXY}/api/search?q=${q}&year=${u.anno}`);
+      const sData=await sRes.json();
+      const match=(sData.results||[])[0];
+      if(!match){u._iaVerificado=true;u._iaMatch='sin coincidencia';sinMatch++;await sleepIA(350);continue;}
+      await sleepIA(250);
+      const pRes=await fetch(`${IA_PROXY}/api/price?codia=${match.codia}&year=${u.anno}`);
+      const pData=await pRes.json();
+      if(pData.ok&&pData.precio){
+        u._infoToma='Infoauto verif. $'+pData.precio.toLocaleString('es-AR')+(pData.exacto?'':' (año aprox.)');
+        u._iaMatch=match.descripcion;u._iaVerificado=true;ok++;
+      }else{
+        u._iaVerificado=true;u._iaMatch=match.descripcion+' (sin precio)';sinMatch++;
+      }
+    }catch(e){
+      u._iaVerificado=true;u._iaMatch='error: '+e.message;sinMatch++;
+    }
+    await sleepIA(350);
+  }
+  rStk();
+  bar.style.background='rgba(39,174,96,.12)';bar.style.color='var(--g)';
+  bar.textContent=`Verificación completa: ${ok} confirmados con precio real de Infoauto, ${sinMatch} sin coincidencia clara (quedan con la referencia del proveedor).`;
+  btn.textContent='🔍 Verificar Infoauto';btn.disabled=false;
+}
+//  FIN VERIFICACIÓN INFOAUTO 
 //  FIN SYNC DRIVE ─
 
 //  INIT ─
