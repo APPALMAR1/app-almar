@@ -6208,12 +6208,13 @@ function parseGonzalez(csv){
     const {marca,resto}=splitMarcaGonzalez(vehiculo);
     const pts=resto.split(' ');
     const anio=parseInt((c[4]||'').replace(/[^0-9]/g,''))||0;
+    const infoautoRef=pNvAR(c[8]);
     autos.push({
       dominio:dom,empresa:'GONZALEZ',marca:marca.toUpperCase(),
       modelo:pts[0]||resto,version:pts.slice(1).join(' ')||'',
       anno:anio,km:pNv(c[5]),precio:pNvAR(c[7]),color:(c[3]||'').trim(),
       estado:'DISPONIBLE',origen:'GONZALEZ',
-      _infoToma:'',_valorToma:0,_costoTotal:0
+      _infoToma:infoautoRef?('Ref. Infoauto $'+infoautoRef.toLocaleString('es-AR')):'',_valorToma:0,_costoTotal:0
     });
   }
   // De-duplicar por dominio (por si la planilla tiene filas repetidas) — se queda con la última
