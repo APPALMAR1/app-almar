@@ -5223,6 +5223,10 @@ function vVend(uid, titId='dtit', listId='dh'){
 //  STOCK 
 function rStk(){
   const el=$$('sl'); el.innerHTML='';
+  // Botón "Verificar Infoauto" solo visible para Master y Supervisor (Mauricio) —
+  // si lo usan todos los vendedores a la vez puede gatillar el límite de la API.
+  const btnIA=$$('btn-ia-verificar');
+  if(btnIA) btnIA.style.display=esSupervisor(CU)?'':'none';
   // Mostrar todo el stock incluyendo A RECIBIR
   const visible=stk;
   if(!visible.length){
@@ -6310,6 +6314,11 @@ function sleepIA(ms){return new Promise(r=>setTimeout(r,ms));}
 async function verificarInfoautoConsignado(){
   const btn=$$('btn-ia-verificar'),bar=$$('ia-verificar-bar');
   if(!btn||!bar)return;
+  if(!esSupervisor(CU)){ // Solo Master/Supervisor — evita que varios vendedores lo disparen a la vez y bloqueen la API
+    bar.style.display='block';bar.style.background='rgba(0,105,180,.12)';bar.style.color='var(--r)';
+    bar.textContent='Esta acción está reservada a Master y Supervisor.';
+    return;
+  }
   const candidatos=stk.filter(u=>(u.origen==='GONZALEZ'||u.origen==='RR')&&!u._iaVerificado);
   if(!candidatos.length){bar.style.display='block';bar.style.background='rgba(0,105,180,.12)';bar.style.color='var(--r)';bar.textContent='No hay vehículos consignados pendientes de verificar (o ya se verificaron todos).';return;}
   btn.disabled=true;
