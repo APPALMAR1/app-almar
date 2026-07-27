@@ -6498,71 +6498,56 @@ function labGetPerfiles(){
   try{ return JSON.parse(localStorage.getItem('lab_perfiles')||'[]'); }
   catch(e){ return []; }
 }
+// Perfiles visibles según rol: vendedor ve solo los suyos, resto ve todos
 function labGetPerfilesPropios(){
   const todos = labGetPerfiles();
   if(!window.CU) return todos;
   if(CU.role !== 'vendedor') return todos;
-  return todos.filter(p=>
-    (p.creadoPorId && p.creadoPorId === CU.id) ||
-    ((p.creadoPor||p.vendedor||'').trim() === CU.name)
-  );
+  return todos.filter(p=>{
+    if(p.creadoPorId && p.creadoPorId === CU.id) return true;
+    const creador = (p.creadoPor||p.vendedor||'').trim();
+    return creador === CU.name;
+  });
 }
 function labSetPerfiles(arr){
+  // Solo actualiza localStorage — la nube se actualiza explícitamente al guardar
   localStorage.setItem('lab_perfiles', JSON.stringify(arr));
-  fetch(PROPUESTAS_URL,{method:'POST',body:JSON.stringify({action:'saveLabPerfiles',perfiles:arr})}).catch(()=>{});
-}
-function labSyncPerfiles(callback){
-  fetch(PROPUESTAS_URL+'?action=getLabPerfiles&t='+Date.now(),{cache:'no-store'})
-    .then(r=>r.json())
-    .then(d=>{
-      const cloudPerfs = (d.data&&d.data.length>0) ? d.data : [];
-      // Guardar directamente lo que viene de la nube (fuente de verdad)
-      localStorage.setItem('lab_perfiles', JSON.stringify(cloudPerfs));
-      if(callback) callback();
-    })
-    .catch(()=>{ if(callback) callback(); });
-}
-function labSyncPerfiles(callback){
-  fetch(PROPUESTAS_URL+'?action=getLabPerfiles&t='+Date.now(),{cache:'no-store'})
-    .then(r=>r.json())
-    .then(d=>{
-      if(d.data&&d.data.length>0){
-        const localRaw = localStorage.getItem('lab_perfiles');
-        const localPerfs = localRaw ? JSON.parse(localRaw) : [];
-        const cloudPerfs = d.data;
-        const localMap = {};
-        localPerfs.forEach(p=>{ if(p.id) localMap[p.id]=p; });
-        const merged = cloudPerfs.map(cp=>{
-          const lp = localMap[cp.id];
-          let perfil = cp;
-          if(lp){
-            const cloudDate = new Date(cp.fechaMod||cp.fecha||0).getTime();
-            const localDate = new Date(lp.fechaMod||lp.fecha||0).getTime();
-            perfil = localDate >= cloudDate ? lp : cp;
-          }
-          return labAsignarDuenio(perfil);
-        });
-        localPerfs.forEach(lp=>{
-          if(!cloudPerfs.find(cp=>cp.id===lp.id)) merged.unshift(labAsignarDuenio(lp));
-        });
-        localStorage.setItem('lab_perfiles', JSON.stringify(merged));
-        labSavePerfiles(merged);
-      }
-      if(callback) callback();
-    })
-    .catch(()=>{ if(callback) callback(); });
 }
 function labSavePerfiles(perfiles){
   if(typeof PROPUESTAS_URL==='undefined') return;
-  fetch(PROPUESTAS_URL,{method:'POST',body:JSON.stringify({action:'saveLabPerfiles',perfiles})}).catch(()=>{});
+  fetch(PROPUESTAS_URL,{method:'POST',
+    body:JSON.stringify({action:'saveLabPerfiles',perfiles})
+  }).catch(()=>{});
 }
-// ── Limpieza total (ejecutar desde consola del browser como Master) ──
-function labLimpiarTodo(){
-  if(!confirm('⚠️ Borra TODOS los perfiles LAB. ¿Confirmar?')) return;
+function labSyncPerfiles(callback){
+  // Limpiar localStorage para forzar datos frescos de la nube
   localStorage.removeItem('lab_perfiles');
-  fetch(PROPUESTAS_URL,{method:'POST',body:JSON.stringify({action:'saveLabPerfiles',perfiles:[]})})
-    .then(()=>{ alert('✅ Perfiles borrados.'); location.reload(); })
-    .catch(()=>{ alert('Error al limpiar la nube.'); });
+  fetch(PROPUESTAS_URL+'?action=getLabPerfiles&t='+Date.now(),{cache:'no-store'})
+    .then(r=>r.json())
+    .then(d=>{
+      const cloudPerfs = (d.data&&Array.isArray(d.data)) ? d.data : [];
+      // Taggear perfiles sin dueño como Master
+      const tagged = cloudPerfs.map(p=>{
+        if(p.creadoPorId||p.creadoPor||p.vendedor) return p;
+        return {...p, creadoPorId:'master', creadoPor:'Master ALMAR', vendedor:'Master ALMAR'};
+      });
+      localStorage.setItem('lab_perfiles', JSON.stringify(tagged));
+      // Si hubo perfiles sin dueño, persistir en la nube con el tag
+      const sinDueno = cloudPerfs.filter(p=>!p.creadoPorId&&!p.creadoPor&&!p.vendedor);
+      if(sinDueno.length > 0) labSavePerfiles(tagged);
+      if(callback) callback();
+    })
+    .catch(()=>{ if(callback) callback(); });
+}
+// ── Limpieza total LAB — ejecutar desde consola como Master ──
+function labLimpiarTodo(){
+  if(!confirm('⚠️ Borra TODOS los perfiles LAB de la nube y de este browser. ¿Confirmar?')) return;
+  localStorage.removeItem('lab_perfiles');
+  fetch(PROPUESTAS_URL,{method:'POST',
+    body:JSON.stringify({action:'saveLabPerfiles',perfiles:[]})
+  }).then(r=>r.json())
+    .then(()=>{ alert('✅ Perfiles LAB borrados correctamente.'); location.reload(); })
+    .catch(()=>{ alert('Error al conectar con la nube. El localStorage fue limpiado.'); location.reload(); });
 }
 function labUID(){ return 'lab_'+Date.now()+'_'+Math.random().toString(36).slice(2,7); }
 const _hoy = new Date().getFullYear();
