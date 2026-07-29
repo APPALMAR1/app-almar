@@ -4445,9 +4445,12 @@ let _histVendData=[];  // caché para buscador
 
 function normalizarFecha(f){
   if(!f) return 'Sin fecha';
-  // Si ya es dd/mm/yyyy devolver tal cual
-  if(/^\d{2}\/\d{2}\/\d{4}$/.test(f)) return f;
-  // Si es ISO o cualquier formato parseable por Date
+  // dd/mm/yyyy con o sin ceros a la izquierda: parsear a mano SIEMPRE.
+  // OJO: new Date("9/5/2026") lo interpreta como formato EEUU (mes/día) y
+  // invierte día y mes silenciosamente — nunca delegarle este caso a Date().
+  const m=String(f).match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if(m) return `${m[1].padStart(2,'0')}/${m[2].padStart(2,'0')}/${m[3]}`;
+  // Otros formatos (ISO, timestamps, etc.) sí son seguros para Date()
   const d = new Date(f);
   if(!isNaN(d.getTime())) return d.toLocaleDateString('es-AR');
   return f;
