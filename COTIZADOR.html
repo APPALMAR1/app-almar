@@ -2307,6 +2307,7 @@ function goTo(n){
   if(n==='clientes'){cargarClientes();}
   if(n==='laboratorio'){rLab();}
   if(n==='pagos'){rPagos();}
+  if(n==='info'){cargarHistorialInfo();}
 }
 function tgD(){$$('dr').classList.toggle('on');$$('ov').classList.toggle('on')}
 function clD(){$$('dr').classList.remove('on');$$('ov').classList.remove('on')}
@@ -8752,11 +8753,19 @@ async function iapSelVersion(el){
           <div style="font-size:24px;font-weight:900;color:var(--r)">${fmt(data.precio)}</div>
         </div>`;
         if(cont){cont.innerHTML=html;cont.style.display='block';}
-        if(histCont){
-          const item=document.createElement('div');
-          item.className='card'; item.style.cssText='padding:10px 14px;margin-top:8px;display:flex;justify-content:space-between;align-items:center;font-size:11px';
-          item.innerHTML=`<span>${_iapBrandName} ${desc} (${data.year})</span><strong>${fmt(data.precio)}</strong>`;
-          histCont.prepend(item);
+        // Guardar en el historial del usuario (persistente, no solo esta sesión)
+        if(CU){
+          fetch(IA_PROXY+'/api/info-consulta-save',{method:'POST',headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({usuario_id:CU.id,usuario_nom:CU.name,marca:_iapBrandName,modelo:desc,anio:data.year,precio:data.precio})
+          }).then(()=>cargarHistorialInfo()).catch(()=>{
+            // si falla el guardado remoto, al menos lo mostramos local para esta sesión
+            if(histCont){
+              const item=document.createElement('div');
+              item.className='card'; item.style.cssText='padding:10px 14px;margin-top:8px;display:flex;justify-content:space-between;align-items:center;font-size:11px';
+              item.innerHTML=`<span>${_iapBrandName} ${desc} (${data.year})</span><strong>${fmt(data.precio)}</strong>`;
+              histCont.prepend(item);
+            }
+          });
         }
       } else {
         if(cont){cont.innerHTML='<div class="al warn">⚠️ Sin precio Infoauto disponible para esta versión/año.</div>';cont.style.display='block';}
@@ -8827,6 +8836,24 @@ function abrirInfoStandalone(){
   _iapModoStandalone = true;
   const r=$$('info-resultado'); if(r) r.style.display='none';
   iaPropAbrir();
+}
+function cargarHistorialInfo(){
+  const histCont=$$('info-historial');
+  if(!histCont||!CU)return;
+  fetch(IA_PROXY+'/api/info-consulta-list?usuario_id='+encodeURIComponent(CU.id)+'&limit=30')
+    .then(r=>r.json())
+    .then(data=>{
+      if(!data.ok||!data.consultas){histCont.innerHTML='';return;}
+      if(!data.consultas.length){histCont.innerHTML='<div style="font-size:11px;color:var(--m);text-align:center;padding:10px">Todavía no hiciste ninguna consulta.</div>';return;}
+      histCont.innerHTML='<div style="font-size:10px;color:var(--m);text-transform:uppercase;letter-spacing:1px;margin:14px 0 6px">Tu historial de consultas</div>'
+        + data.consultas.map(c=>
+          `<div class="card" style="padding:10px 14px;margin-top:6px;display:flex;justify-content:space-between;align-items:center;font-size:11px">
+            <span>${c.marca} ${c.modelo} (${c.anio||'—'})<span style="color:var(--m);font-size:9px;display:block">${new Date(c.consultado_en).toLocaleString('es-AR')}</span></span>
+            <strong>${fmt(c.precio)}</strong>
+          </div>`
+        ).join('');
+    })
+    .catch(()=>{ histCont.innerHTML=''; });
 }
 
 function _iapAbrirOkm(marcaNombre){
