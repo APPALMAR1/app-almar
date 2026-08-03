@@ -6455,7 +6455,7 @@ function cargarVerificacionesGuardadas(){
 //  FIN SYNC DRIVE ─
 
 //  INIT ─
-cargarUsuariosYArrancar();
+setTimeout(cargarUsuariosYArrancar,0); // diferido: espera a que termine de cargar el resto del script (ej. IA_PROXY, definida más abajo)
 // Trae los usuarios reales desde Supabase antes de armar la pantalla de login.
 // Si la API no responde en 1.5s, arranca igual con los usuarios locales de
 // respaldo (USERS ya definido arriba) — el login nunca se queda colgado.
