@@ -972,6 +972,19 @@ input[type=text]#p-obs{background:#F5F7FA!important;border:1px solid #D5DCE6!imp
 <div class="page"><div class="sh"><div><div class="st2">Stock 0 km</div><div class="ss2">Unidades nuevas</div></div></div><div class="card" id="ol" style="padding:0;overflow:hidden"></div></div>
 </div>
 
+<!-- INFO — consulta rápida de precio Infoauto, independiente de Propuesta -->
+<div id="screen-info" class="scr">
+<div class="page">
+  <div class="sh"><div><div class="st2">📊 Info Infoauto</div><div class="ss2">Consulta rápida de precio de referencia</div></div></div>
+  <div class="card" style="padding:20px;text-align:center">
+    <div style="font-size:12px;color:var(--m);margin-bottom:14px">Buscá cualquier vehículo (Marca → Modelo → Año → Versión) y consultá su precio de referencia en Infoauto. No modifica ninguna propuesta ni stock — es solo para consultar.</div>
+    <button class="btn btn-r" onclick="abrirInfoStandalone()" style="padding:12px 24px;font-size:13px">🔍 Buscar vehículo</button>
+  </div>
+  <div id="info-resultado" style="display:none;margin-top:14px"></div>
+  <div id="info-historial" style="margin-top:14px"></div>
+</div>
+</div>
+
 
 <!-- PRECIOS OKM -->
 <div id="screen-precios" class="scr">
@@ -2261,6 +2274,7 @@ const SC={
   gerencia:   {t:'Panel Gerencia',         s:'Visión global · Solo lectura'},
   stock:      {t:'Stock Usados',           s:'Inventario Almar'},
   okm:        {t:'Stock 0 km',             s:'Unidades nuevas'},
+  info:       {t:'Info Infoauto',          s:'Consulta rápida de precio de referencia'},
   admin:      {t:'Panel Admin',            s:'Solo administrador'},
   propguard:  {t:'Propuestas Guardadas',   s:'Historial del equipo · Ordenado por fecha'},
   clientes:   {t:'Base de Clientes',       s:'Todos los clientes registrados'},
@@ -2342,14 +2356,14 @@ function bBN(){
   const items=soloGerencia?[
     {s:'gerencia',i:'📊',l:'Gerencia',sup:true},
     {s:'stock',i:'🚗',l:'Stock'},
-    {s:'okm',i:'🏎',l:'0 km'},
+    {s:'info',i:'ℹ️',l:'Info'},
   ]:[
     {s:'propuesta',i:'📋',l:'Propuesta'},
     {s:'historial',i:'🕐',l:'Historial'},
     ...(esSupervisor(CU)?[{s:'supervisor',i:'📊',l:'Supervisor',sup:true}]:[{s:'pagos',i:'💳',l:'Pagos'}]),
     {s:'laboratorio',i:'🧪',l:'Lab'},
     {s:'stock',i:'🚗',l:'Stock'},
-    {s:'okm',i:'🏎',l:'0 km'},
+    {s:'info',i:'ℹ️',l:'Info'},
     {s:'precios',i:'💰',l:'Precios'},
   ];
   if(esSupervisor(CU)||esGerencia(CU)){
@@ -8720,6 +8734,43 @@ async function iapSelVersion(el){
   const codia=el.dataset.codia;
   const desc=el.dataset.desc;
   $p('iap-ver-loading').style.display='block';
+
+  // ── Modo standalone (pantalla Info): no toca nada de Propuesta ──
+  if(_iapModoStandalone){
+    try{
+      const res=await fetch(IA_PROXY+'/api/price?codia='+codia+'&year='+_iapAnio);
+      const data=await res.json();
+      iaPropCerrar();
+      _iapModoStandalone=false;
+      const cont=$$('info-resultado');
+      const histCont=$$('info-historial');
+      if(data.ok&&data.precio){
+        const html=`<div class="card" style="padding:16px;border:1.5px solid var(--r)">
+          <div style="font-size:10px;color:var(--m);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Resultado</div>
+          <div style="font-size:14px;font-weight:800">${_iapBrandName} ${desc}</div>
+          <div style="font-size:11px;color:var(--m);margin:4px 0 10px">${data.year}${data.exacto?'':' · año más cercano disponible'}</div>
+          <div style="font-size:24px;font-weight:900;color:var(--r)">${fmt(data.precio)}</div>
+        </div>`;
+        if(cont){cont.innerHTML=html;cont.style.display='block';}
+        if(histCont){
+          const item=document.createElement('div');
+          item.className='card'; item.style.cssText='padding:10px 14px;margin-top:8px;display:flex;justify-content:space-between;align-items:center;font-size:11px';
+          item.innerHTML=`<span>${_iapBrandName} ${desc} (${data.year})</span><strong>${fmt(data.precio)}</strong>`;
+          histCont.prepend(item);
+        }
+      } else {
+        if(cont){cont.innerHTML='<div class="al warn">⚠️ Sin precio Infoauto disponible para esta versión/año.</div>';cont.style.display='block';}
+      }
+    }catch(e){
+      $p('iap-ver-loading').style.display='none';
+      iaPropCerrar();
+      _iapModoStandalone=false;
+      const cont=$$('info-resultado');
+      if(cont){cont.innerHTML='<div class="al warn">⚠️ No se pudo consultar el precio. Intentá de nuevo.</div>';cont.style.display='block';}
+    }
+    return;
+  }
+
   try {
     // Setear campos en propuesta
     selOpts('version',[desc],''); $$('version').value=desc;
@@ -8770,6 +8821,13 @@ async function iapSelVersion(el){
 
 // ── INFOAUTO para Multimarcas 0km (marcas no propias ALMAR) ─
 let _iapModoOkm = false; // flag para saber si estamos en modo 0km
+let _iapModoStandalone = false; // flag: pantalla Info, no toca Propuesta
+
+function abrirInfoStandalone(){
+  _iapModoStandalone = true;
+  const r=$$('info-resultado'); if(r) r.style.display='none';
+  iaPropAbrir();
+}
 
 function _iapAbrirOkm(marcaNombre){
   _iapModoOkm = true;
