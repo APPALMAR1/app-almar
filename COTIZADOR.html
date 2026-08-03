@@ -1311,7 +1311,7 @@ input[type=text]#p-obs{background:#F5F7FA!important;border:1px solid #D5DCE6!imp
 <!-- ADMIN -->
 <div id="screen-admin" class="scr">
 <div class="page">
-  <div class="sh"><div><div class="st2">⚙️ Panel Admin</div><div class="ss2">Solo Mauricio García</div></div></div>
+  <div class="sh"><div><div class="st2">⚙️ Panel Admin</div><div class="ss2">Solo Master ALMAR</div></div></div>
 
   <!-- Panel de vigencia de señales bancarias -->
   <div class="card" style="margin-bottom:10px;padding:12px 14px">
@@ -1345,6 +1345,12 @@ input[type=text]#p-obs{background:#F5F7FA!important;border:1px solid #D5DCE6!imp
           style="width:100%;padding:8px 12px;border:1.5px solid var(--bdr);border-radius:8px;background:var(--s2);color:var(--t);font-size:12px;box-sizing:border-box;margin-bottom:8px">
         <div id="admin-prop-lista"></div>
       </div>
+    </div>
+  </div>
+  <div class="ads" style="margin-top:10px"><div class="ah" onclick="tgA(this)"><span style="font-size:16px">👥</span><div class="attl">Gestión de Usuarios</div><div class="aarr">▼</div></div>
+    <div class="ab"><div style="font-size:10px;color:var(--m);margin-bottom:8px">Alta, baja y edición de usuarios. Los cambios se guardan al instante y afectan a todo el equipo.</div>
+      <div style="overflow-x:auto"><table class="atbl" id="atu"></table></div>
+      <div class="brow"><button class="btn btn-r btn-sm" onclick="guardarUsuarios()">💾 Guardar cambios</button><button class="btn btn-ghost btn-sm" onclick="aU()">＋ Nuevo usuario</button></div>
     </div>
   </div>
   <div class="ads" style="margin-top:10px"><div class="ah" onclick="tgA(this)"><span style="font-size:16px">🔐</span><div class="attl">Desbloquear Usuarios</div><div class="aarr">▼</div></div>
@@ -2186,10 +2192,17 @@ function cambiarPin(uid){
   const nuevo=prompt(`Nuevo PIN para ${u.name} (4 dígitos):`);
   if(!nuevo)return;
   if(!/^\d{4}$/.test(nuevo)){alert('❌ El PIN debe tener exactamente 4 dígitos.');return;}
-  const ocupado=USERS.find(x=>x.id!==uid&&x.pin===nuevo);
+  const ocupado=USERS.find(x=>x.id!==uid&&x.pin===nuevo&&x.activo!==false);
   if(ocupado){alert(`❌ Ese PIN ya lo usa ${ocupado.name}.`);return;}
+  const pinAnterior=u.pin;
   u.pin=nuevo;
-  alert(`✅ PIN de ${u.name} cambiado correctamente.`);
+  fetch(`${IA_PROXY}/api/usuarios-save`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(u)})
+    .then(r=>r.json())
+    .then(res=>{
+      if(res.ok) alert(`✅ PIN de ${u.name} cambiado correctamente.`);
+      else{ u.pin=pinAnterior; alert('❌ No se pudo guardar: '+res.error); }
+    })
+    .catch(()=>{ u.pin=pinAnterior; alert('❌ No se pudo guardar el cambio (sin conexión).'); });
 }
 
 //  LOGIN ─
@@ -2206,7 +2219,7 @@ function roleBadge(u){
   return {txt:'Vendedor',cls:'v'};
 }
 function bLogin(){
-  USERS.forEach(u=>{
+  USERS.filter(u=>u.activo!==false).forEach(u=>{
     const {txt,cls}=roleBadge(u);
     const blocked=(pinAttempts[u.id]||0)>=PIN_MAX;
     const d=document.createElement('div');d.className='ubtn';d.onclick=()=>showPin(u);
@@ -5517,6 +5530,30 @@ function rAdm(){
   const to=$$('ato');to.innerHTML='<thead><tr><th>Marca</th><th>Modelo</th><th>Versión</th><th>Año</th><th>Precio</th><th>Color</th><th>Estado</th><th>Obs.</th></tr></thead>';
   const tob=document.createElement('tbody');
   okm.forEach((u,i)=>{const tr=document.createElement('tr');tr.innerHTML=`<td><input value="${u.marca||''}" onchange="okm[${i}].marca=this.value" style="width:72px"></td><td><input value="${u.modelo||''}" onchange="okm[${i}].modelo=this.value" style="width:82px"></td><td><input value="${u.version||''}" onchange="okm[${i}].version=this.value" style="width:138px"></td><td><input type="number" value="${u.anno||2025}" onchange="okm[${i}].anno=parseInt(this.value)" style="width:46px"></td><td><input type="number" value="${u.precio||0}" onchange="okm[${i}].precio=parseInt(this.value)" style="width:88px"></td><td><input value="${u.color||''}" onchange="okm[${i}].color=this.value" style="width:80px"></td><td><select onchange="okm[${i}].estado=this.value" style="padding:3px 4px;font-size:10px"><option ${u.estado==='DISPONIBLE'?'selected':''}>DISPONIBLE</option><option ${u.estado==='CONSULTAR'?'selected':''}>CONSULTAR</option><option ${u.estado==='RESERVADO'?'selected':''}>RESERVADO</option><option ${u.estado==='EN CAMINO'?'selected':''}>EN CAMINO</option></select></td><td><input value="${u.obs||''}" onchange="okm[${i}].obs=this.value" placeholder="Observación..." style="width:100px"></td>`;tob.appendChild(tr)});to.appendChild(tob);
+  //  Tabla Gestión de Usuarios 
+  const tu=$$('atu');
+  if(tu){
+    tu.innerHTML='<thead><tr><th>Nombre</th><th>Inic.</th><th>Rol</th><th>Color</th><th>PIN</th><th>Activo</th></tr></thead>';
+    const tub=document.createElement('tbody');
+    USERS.forEach((u,i)=>{
+      const tr=document.createElement('tr');
+      if(u.activo===false) tr.style.opacity='0.45';
+      tr.innerHTML=`
+        <td><input value="${u.name}" onchange="USERS[${i}].name=this.value" style="width:130px"></td>
+        <td><input value="${u.ini}" maxlength="2" onchange="USERS[${i}].ini=this.value.toUpperCase()" style="width:36px;text-transform:uppercase"></td>
+        <td><select onchange="USERS[${i}].role=this.value" style="padding:3px 4px;font-size:10px">
+              <option value="vendedor" ${u.role==='vendedor'?'selected':''}>Vendedor</option>
+              <option value="supervisor" ${u.role==='supervisor'?'selected':''}>Supervisor</option>
+              <option value="gerencia" ${u.role==='gerencia'?'selected':''}>Gerencia</option>
+              <option value="master" ${u.role==='master'?'selected':''}>Master</option>
+            </select></td>
+        <td><input type="color" value="${u.col}" onchange="USERS[${i}].col=this.value" style="width:36px;padding:0;height:26px"></td>
+        <td><input value="${u.pin}" maxlength="4" onchange="USERS[${i}].pin=this.value.replace(/\\D/g,'').slice(0,4)" style="width:50px"></td>
+        <td style="text-align:center"><input type="checkbox" ${u.activo!==false?'checked':''} onchange="USERS[${i}].activo=this.checked" style="width:auto;transform:scale(1.3)"></td>`;
+      tub.appendChild(tr);
+    });
+    tu.appendChild(tub);
+  }
   //  Lista desbloqueo 
   const bl=$$('blk-list'); if(!bl)return; bl.innerHTML='';
   USERS.filter(u=>!esGerencia(u)).forEach(u=>{
@@ -5654,6 +5691,37 @@ function gO(){rOkm();alert('✅ Stock 0km guardado.')}
 function aC(){camp.push({id:Date.now(),banco:"NUEVO",nombre:"NUEVA CAMPAÑA",tipo:"TRAD",tna:50,comision:0,plazoMax:60,ltv:80,activa:false});rAdm()}
 function aS(){stk.unshift({dominio:"",marca:"",modelo:"",version:"",anno:2025,km:0,precio:0,color:"",estado:"DISPONIBLE"});rAdm()}
 function aO(){okm.unshift({marca:"",modelo:"",version:"",anno:2025,precio:0,color:"",estado:"DISPONIBLE",obs:""});rAdm()}
+function aU(){
+  if(!esMaster(CU)){alert('⛔ Solo el usuario Master ALMAR puede crear usuarios.');return;}
+  const idSug='nuevo'+Date.now().toString().slice(-5);
+  USERS.push({id:idSug,name:'Nuevo Usuario',ini:'NU',role:'vendedor',col:'#0069b4',pin:'0000',activo:true});
+  rAdm();
+  mostrarToast('👤 Completá los datos y apretá "Guardar cambios"');
+}
+async function guardarUsuarios(){
+  if(!esMaster(CU)){alert('⛔ Solo el usuario Master ALMAR puede modificar usuarios.');return;}
+  // Validar PINs de 4 dígitos y sin duplicados entre activos
+  for(const u of USERS){
+    if(!/^\d{4}$/.test(u.pin)){alert(`❌ El PIN de ${u.name} debe tener 4 dígitos.`);return;}
+  }
+  const activos=USERS.filter(u=>u.activo!==false);
+  for(let i=0;i<activos.length;i++){
+    for(let j=i+1;j<activos.length;j++){
+      if(activos[i].pin===activos[j].pin){alert(`❌ ${activos[i].name} y ${activos[j].name} tienen el mismo PIN.`);return;}
+    }
+  }
+  let errores=0;
+  for(const u of USERS){
+    try{
+      const r=await fetch(`${IA_PROXY}/api/usuarios-save`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(u)});
+      const res=await r.json();
+      if(!res.ok)errores++;
+    }catch(e){errores++;}
+  }
+  if(errores===0){alert('✅ Usuarios guardados correctamente. Los cambios ya están disponibles para todo el equipo.');bLogin_refrescar();}
+  else alert(`⚠️ Se guardaron con ${errores} error(es). Revisá la conexión e intentá de nuevo.`);
+}
+function bLogin_refrescar(){ if($$('ul')){$$('ul').innerHTML='';bLogin();} }
 function expD(){
   const precios=localStorage.getItem('almar_precios_okm');
   const preciosObj=precios?JSON.parse(precios):null;
@@ -6387,7 +6455,25 @@ function cargarVerificacionesGuardadas(){
 //  FIN SYNC DRIVE ─
 
 //  INIT ─
-bLogin();
+cargarUsuariosYArrancar();
+// Trae los usuarios reales desde Supabase antes de armar la pantalla de login.
+// Si la API no responde en 1.5s, arranca igual con los usuarios locales de
+// respaldo (USERS ya definido arriba) — el login nunca se queda colgado.
+function cargarUsuariosYArrancar(){
+  let arrancado=false;
+  const arrancar=()=>{ if(arrancado)return; arrancado=true; bLogin(); };
+  setTimeout(arrancar,1500);
+  fetch(`${IA_PROXY}/api/usuarios-list`)
+    .then(r=>r.json())
+    .then(data=>{
+      if(data.ok&&Array.isArray(data.usuarios)&&data.usuarios.length){
+        USERS.length=0;
+        data.usuarios.forEach(u=>USERS.push(u));
+      }
+      arrancar();
+    })
+    .catch(()=>arrancar());
+}
 
 //  AUTO-SYNC DRIVE AL INICIAR ─
 (function autoSync(){
