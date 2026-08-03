@@ -5710,16 +5710,16 @@ async function guardarUsuarios(){
       if(activos[i].pin===activos[j].pin){alert(`❌ ${activos[i].name} y ${activos[j].name} tienen el mismo PIN.`);return;}
     }
   }
-  let errores=0;
+  let errores=0,primerError='';
   for(const u of USERS){
     try{
       const r=await fetch(`${IA_PROXY}/api/usuarios-save`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(u)});
       const res=await r.json();
-      if(!res.ok)errores++;
-    }catch(e){errores++;}
+      if(!res.ok){errores++;if(!primerError)primerError=res.error||('HTTP '+r.status);}
+    }catch(e){errores++;if(!primerError)primerError='Sin conexión al servidor: '+e.message;}
   }
   if(errores===0){alert('✅ Usuarios guardados correctamente. Los cambios ya están disponibles para todo el equipo.');bLogin_refrescar();}
-  else alert(`⚠️ Se guardaron con ${errores} error(es). Revisá la conexión e intentá de nuevo.`);
+  else alert(`⚠️ Se guardaron con ${errores} error(es).\n\nDetalle del primero: ${primerError}`);
 }
 function bLogin_refrescar(){ if($$('ul')){$$('ul').innerHTML='';bLogin();} }
 function expD(){
