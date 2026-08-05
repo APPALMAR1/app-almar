@@ -1505,13 +1505,13 @@ const PL=[6,12,18,24,30,36,48,60];
 // ── VIGENCIA DE CAMPAÑAS ── última actualización por banco/financiera
 // Actualizar este objeto cada vez que se cargue una nueva señal mensual
 const CAMP_VIGENCIAS={
-  'ICBC':          {mes:'Agosto 2026', fecha:'2026-08-01', pendiente:false},
-  'BBVA':          {mes:'Mayo 2026',   fecha:'2026-05-01', pendiente:true},
-  'SANTANDER':     {mes:'Junio 2026',  fecha:'2026-06-02', pendiente:true},
-  'PSA Finance':   {mes:'Agosto 2026', fecha:'2026-08-01', pendiente:false},
-  'GPAT':          {mes:'Agosto 2026', fecha:'2026-08-01', pendiente:false},
-  'FCA':           {mes:'Agosto 2026', fecha:'2026-08-01', pendiente:false},
-  'MOBILIZE':      {mes:'Agosto 2026', fecha:'2026-08-01', pendiente:false},
+  'ICBC':          {mes:'Mayo 2026',   fecha:'2026-05-01', pendiente:true},
+  'BBVA':          {mes:'Mayo 2026',   fecha:'2026-05-01', pendiente:false},
+  'SANTANDER':     {mes:'Junio 2026',  fecha:'2026-06-02', pendiente:false},
+  'PSA Finance':   {mes:'Junio 2026',  fecha:'2026-06-01', pendiente:false},
+  'GPAT':          {mes:'Junio 2026',  fecha:'2026-06-02', pendiente:false},
+  'FCA':           {mes:'Julio 2026',  fecha:'2026-07-01', pendiente:false},
+  'MOBILIZE':      {mes:'Julio 2026',  fecha:'2026-07-01', pendiente:false},
   'CREDICUOTAS':   {mes:'Mayo 2026',   fecha:'2026-05-01', pendiente:true},
 };
 // pendiente:true = señal del mes actual no recibida aún
@@ -1545,13 +1545,11 @@ const CUENTAS_BANCARIAS={
 
 const CAMP_D=[
   //  BANCOS 
-  // ICBC — Tasas Generales + Tasa Reducida General — Agosto 2026
-  {id:1, banco:"ICBC", nombre:"TASA OPORTUNIDAD",      tipo:"TRAD",tna:48, comision:0,  plazoMax:60,ltv:80,activa:true,marca:null,coefBase:1000,coefs:{12:[114.95,111.43],24:[73.99,70.61],36:[61.29,58.16],48:[55.58,52.71],60:[52.60,49.98]}},
-  {id:2, banco:"ICBC", nombre:"TASA PROMOCIONAL",      tipo:"TRAD",tna:56, comision:5,  plazoMax:60,ltv:80,activa:true,marca:null,coefBase:1000,coefs:{12:[120.51,116.46],24:[79.94,76.12],36:[67.67,64.19],48:[62.35,59.21],60:[59.70,56.88]}},
-  {id:3, banco:"ICBC", nombre:"TASA MAX 36M",          tipo:"TRAD",tna:58, comision:10, plazoMax:36,ltv:80,activa:true,marca:null,coefBase:1000,coefs:{12:[119.81,115.83],24:[80.69,76.82],36:[69.30,65.73]}},
-  {id:4, banco:"ICBC", nombre:"TASA MAX 60M",          tipo:"TRAD",tna:58, comision:11, plazoMax:60,ltv:80,activa:true,marca:null,coefBase:1000,coefs:{12:[119.81,115.83],24:[80.69,76.82],36:[69.30,65.73],48:[64.08,60.88],60:[61.51,58.64]}},
-  {id:5, banco:"ICBC", nombre:"SEGURO LIBERADO",       tipo:"TRAD",tna:54, comision:0,  plazoMax:60,ltv:80,activa:true,marca:null,coefBase:1000,coefs:{12:[119.12,115.20],24:[78.44,74.72],36:[66.06,62.66],48:[60.64,57.56],60:[57.90,55.13]}},
-  {id:6, banco:"ICBC", nombre:"TASA REDUCIDA GENERAL", tipo:"TRAD",tna:43, comision:8,  plazoMax:36,ltv:80,activa:true,marca:null,coefBase:1000,coefs:{12:[111.52,108.33],24:[70.34,67.26],36:[57.40,54.52]}},
+  {id:1, banco:"ICBC",      nombre:"TASA OPORTUNIDAD",        tipo:"TRAD",tna:53,   comision:0,  plazoMax:60,ltv:80,activa:true,  marca:null, coefBase:1000,coefs:{12:[118.42,114.56],24:[77.69,74.03],36:[65.25,61.90],48:[59.79,56.74],60:[57.01,54.26]}},
+  {id:2, banco:"ICBC",      nombre:"TASA PROMOCIONAL",        tipo:"TRAD",tna:61,   comision:5,  plazoMax:60,ltv:80,activa:true,  marca:null, coefBase:1000,coefs:{12:[124.03,119.66],24:[83.73,79.65],36:[71.76,68.08],48:[66.69,63.41],60:[64.24,61.32]}},
+  {id:3, banco:"ICBC",      nombre:"TASA MAX 36M",            tipo:"TRAD",tna:63,   comision:10, plazoMax:36,ltv:80,activa:true,  marca:null, coefBase:1000,coefs:{12:[123.33,119.02],24:[84.50,80.37],36:[73.41,69.66]}},
+  {id:4, banco:"ICBC",      nombre:"TASA MAX 60M",            tipo:"TRAD",tna:63,   comision:11, plazoMax:60,ltv:80,activa:true,  marca:null, coefBase:1000,coefs:{12:[123.33,119.02],24:[84.50,80.37],36:[73.41,69.66],48:[68.45,65.11],60:[66.08,63.12]}},
+  {id:5, banco:"ICBC",      nombre:"SEGURO LIBERADO",         tipo:"TRAD",tna:59,   comision:0,  plazoMax:60,ltv:80,activa:true,  marca:null, coefBase:1000,coefs:{12:[122.62,118.38],24:[82.21,78.23],36:[70.11,66.51],48:[64.95,61.72],60:[62.42,59.53]}},
   {id:6, banco:"BBVA",      nombre:"TRAD AUTOS c/fee",         tipo:"TRAD",tna:42.9, comision:5,  plazoMax:60,ltv:80,activa:true,  marca:null, coefBase:100000,coefs:{12:[11144.87,10826.89],18:[8379.65,8064.3],24:[7027.18,6719.49],36:[5732.44,5444.51],48:[5138.61,4871.81],60:[4820.35,4574.22]}},
   {id:7, banco:"BBVA",      nombre:"TRAD UTILITARIOS c/fee",   tipo:"TRAD",tna:42.9, comision:5,  plazoMax:60,ltv:80,activa:true,  marca:null, coefBase:100000,coefs:{12:[11144.87,10826.89],18:[8379.65,8064.3],24:[7027.18,6719.49],36:[5732.44,5444.51],48:[5138.61,4871.81],60:[4820.35,4574.22]}},
   {id:8, banco:"BBVA",      nombre:"ELEC/HÍBRIDO c/fee",       tipo:"TRAD",tna:39.9, comision:5,  plazoMax:60,ltv:80,activa:true,  marca:null, coefBase:100000,coefs:{12:[10940.35,10642.94],18:[8170.37,7874.59],24:[6811.62,6522.18],36:[5503.43,5230.94],48:[4896.68,4642.6],60:[4566.78,4330.92]}},
@@ -1566,7 +1564,7 @@ const CAMP_D=[
   {id:15,banco:"SANTANDER", nombre:"LINEA GREEN",             tipo:"TRAD",tna:39.9, comision:4,  plazoMax:60,ltv:80,activa:true,  marca:null, coefBase:100000,coefs:{12:[10242.1,10242.1],18:[7472.12,7472.12],24:[6113.37,6113.37],36:[4805.18,4805.18],48:[4198.43,4198.43],60:[3868.53,3868.53]}},
   {id:16,banco:"SANTANDER", nombre:"CAMIONES/UTILITARIOS",    tipo:"TRAD",tna:47.9, comision:4,  plazoMax:60,ltv:80,activa:true,  marca:null, coefBase:100000,coefs:{12:[10650.07,10650.07],18:[7893.98,7893.98],24:[6553.09,6553.09],36:[5282.59,5282.59],48:[4711.49,4711.49],60:[4413.21,4413.21]}},
   //  CAMPAÑAS DE MARCA ─
-  // GPAT — Chevrolet — GMA Circular Comercial N°28 2026 (Vigencia 01/08/2026 — sin cambios vs N°20)
+  // GPAT — Chevrolet — GMA Circular Comercial N°20 2026 (Vigencia 02/06/2026)
   {id:300,banco:"GPAT",nombre:"ONIX PROMO 12c",tipo:"TRAD",tna:0.0,comision:17.0,plazoMax:12,ltv:70,activa:true,marca:"CHEVROLET",modelos:["ONIX","ONIX PLUS"],montoMax:25000000},
   {id:301,banco:"GPAT",nombre:"ONIX PROMO 18c",tipo:"TRAD",tna:9.9,comision:17.0,plazoMax:18,ltv:70,activa:true,marca:"CHEVROLET",modelos:["ONIX","ONIX PLUS"],montoMax:18000000},
   {id:302,banco:"GPAT",nombre:"ONIX PROMO 18c ALT",tipo:"TRAD",tna:15.9,comision:17.0,plazoMax:18,ltv:70,activa:true,marca:"CHEVROLET",modelos:["ONIX","ONIX PLUS"],montoMax:26500000},
@@ -1680,10 +1678,10 @@ const CAMP_D=[
   {id:423,banco:"FCA",nombre:"600 HYBRID TASA FIJA 18c",tipo:"TRAD",tna:13.9,comision:11.0,plazoMax:18,ltv:80,activa:true,marca:"FIAT",modelos:["FIAT 600"]},
   {id:424,banco:"FCA",nombre:"600 HYBRID TASA FIJA 36c",tipo:"TRAD",tna:28.9,comision:11.0,plazoMax:36,ltv:80,activa:true,marca:"FIAT",modelos:["FIAT 600"]},
   {id:425,banco:"FCA",nombre:"600 HYBRID TASA FIJA 48c",tipo:"TRAD",tna:32.9,comision:11.0,plazoMax:48,ltv:80,activa:true,marca:"FIAT",modelos:["FIAT 600"]},
-  {id:426,banco:"FCA",nombre:"USADOS TASA FIJA 12c",tipo:"TRAD",tna:10.9,comision:10.0,plazoMax:12,ltv:80,activa:true,marca:"FIAT",modelos:null,usados:true},
-  {id:427,banco:"FCA",nombre:"USADOS TASA FIJA 18c",tipo:"TRAD",tna:23.9,comision:10.0,plazoMax:18,ltv:80,activa:true,marca:"FIAT",modelos:null,usados:true},
-  {id:428,banco:"FCA",nombre:"USADOS TASA FIJA 24c",tipo:"TRAD",tna:30.9,comision:10.0,plazoMax:24,ltv:80,activa:true,marca:"FIAT",modelos:null,usados:true},
-  {id:429,banco:"FCA",nombre:"USADOS TASA FIJA 36c",tipo:"TRAD",tna:36.9,comision:10.0,plazoMax:36,ltv:80,activa:true,marca:"FIAT",modelos:null,usados:true},
+  {id:426,banco:"FCA",nombre:"USADOS TASA FIJA 12c",tipo:"TRAD",tna:9.9,comision:10.0,plazoMax:12,ltv:80,activa:true,marca:"FIAT",modelos:null,usados:true},
+  {id:427,banco:"FCA",nombre:"USADOS TASA FIJA 18c",tipo:"TRAD",tna:22.9,comision:10.0,plazoMax:18,ltv:80,activa:true,marca:"FIAT",modelos:null,usados:true},
+  {id:428,banco:"FCA",nombre:"USADOS TASA FIJA 24c",tipo:"TRAD",tna:29.9,comision:10.0,plazoMax:24,ltv:80,activa:true,marca:"FIAT",modelos:null,usados:true},
+  {id:429,banco:"FCA",nombre:"USADOS TASA FIJA 36c",tipo:"TRAD",tna:35.9,comision:10.0,plazoMax:36,ltv:80,activa:true,marca:"FIAT",modelos:null,usados:true},
   // ── FCA JEEP/RAM — Circular 005.26 (Vigencia 01/07/2026) ─────────────────
   // CAMPAÑA TASA FIJA TODA LA GAMA ($18M) — modelos: null = toda la gama JEEP
   {id:430,banco:"FCA",nombre:"JEEP TASA FIJA TODA GAMA 18c",tipo:"TRAD",tna:0.0,comision:11.0,plazoMax:18,ltv:80,activa:true,marca:"JEEP",modelos:null,montoMax:18000000},
@@ -1715,7 +1713,7 @@ const CAMP_D=[
   {id:451,banco:"FCA",nombre:"JEEP DAKOTA/RAMPAGE 36c",tipo:"TRAD",tna:27.9,comision:12.0,plazoMax:36,ltv:80,activa:true,marca:"JEEP",modelos:["DAKOTA","RAMPAGE"],montoMax:35000000},
 
   // PSA Finance — Peugeot/Citroën 0km (Abril 2026)
-  {id:500,banco:"PSA Finance",nombre:"TASA EXPRESS 12c",tipo:"TRAD",tna:0.0,comision:11.0,plazoMax:12,ltv:80,activa:true,marca:"PEUGEOT",modelos:null},
+  {id:500,banco:"PSA Finance",nombre:"TASA EXPRESS 12c",tipo:"TRAD",tna:0.0,comision:12.0,plazoMax:12,ltv:80,activa:true,marca:"PEUGEOT",modelos:null},
   // PSA Finance CITROEN — Lista actualizada Junio 2026 (Circular 432.26)
   // TASAS EXPRESS — Toda la gama (Opción P.Personal hasta $15M y Prendario hasta $18M)
   {id:501,banco:"PSA Finance",nombre:"CITROËN — TASA EXPRESS 24c P.Personal",tipo:"TRAD",tna:0.0,comision:11.5,plazoMax:24,ltv:80,activa:true,marca:"CITROEN",modelos:null,montoMax:15000000},
@@ -1772,8 +1770,8 @@ const CAMP_D=[
   {id:538,banco:"PSA Finance",nombre:"CITROËN — C5 AIRCROSS VE 24c",tipo:"TRAD",tna:7.9,comision:0.0,plazoMax:24,ltv:80,activa:true,marca:"CITROEN",modelos:["AIRCROSS"],montoMax:18000000},
   {id:539,banco:"PSA Finance",nombre:"CITROËN — C5 AIRCROSS VE 36c",tipo:"TRAD",tna:19.9,comision:0.0,plazoMax:36,ltv:80,activa:true,marca:"CITROEN",modelos:["AIRCROSS"],montoMax:18000000},
   // PSA Finance PEUGEOT — Líneas Tradicionales (Mayo 2026: baja 2 puntos vs Abril)
-  {id:542,banco:"PSA Finance",nombre:"TRADICIONAL VN 10% 60c",tipo:"TRAD",tna:39.9,comision:10.0,plazoMax:60,ltv:80,activa:true,marca:"PEUGEOT",modelos:null},
-  {id:932,banco:"PSA Finance",nombre:"TRADICIONAL VN 15% 60c",tipo:"TRAD",tna:35.9,comision:15.0,plazoMax:60,ltv:80,activa:true,marca:"PEUGEOT",modelos:null},
+  {id:542,banco:"PSA Finance",nombre:"TRADICIONAL VN 10% 60c",tipo:"TRAD",tna:40.5,comision:10.0,plazoMax:60,ltv:80,activa:true,marca:"PEUGEOT",modelos:null},
+  {id:932,banco:"PSA Finance",nombre:"TRADICIONAL VN 15% 60c",tipo:"TRAD",tna:36.5,comision:15.0,plazoMax:60,ltv:80,activa:true,marca:"PEUGEOT",modelos:null},
   // PSA Finance — Usados todas las marcas (año 2016-2026, max $12M PROMO / $17M UVA VO)
   {id:600,banco:"PSA Finance",nombre:"USADOS PROMO 12c TASA 0%",tipo:"TRAD",tna:0.0,comision:10.0,plazoMax:12,ltv:80,activa:true,marca:null,modelos:null,usados:true,montoMax:12000000},
 
@@ -1783,7 +1781,7 @@ const CAMP_D=[
   {id:604,banco:"PSA Finance",nombre:"UVA VO PROMO 12c",tipo:"TRAD",tna:0.0,comision:6.0,plazoMax:12,ltv:80,activa:true,marca:null,modelos:null,usados:true,montoMax:12000000},
   {id:605,banco:"PSA Finance",nombre:"UVA VO PROMO 24c",tipo:"TRAD",tna:6.9,comision:6.0,plazoMax:24,ltv:80,activa:true,marca:null,modelos:null,usados:true,montoMax:12000000},
   {id:606,banco:"PSA Finance",nombre:"UVA VO PROMO 36c",tipo:"TRAD",tna:9.9,comision:6.0,plazoMax:36,ltv:80,activa:true,marca:null,modelos:null,usados:true,montoMax:17000000},
-  // MOBILIZE — Renault — Política Comercial MFS 01/08/2026 (sin cambios de TNA) (Política Comercial MFS 15/05/2026)
+  // MOBILIZE — Renault (Política Comercial MFS 15/05/2026)
   {id:700,banco:"MOBILIZE",nombre:"KWID 18 MARS TASA 0",tipo:"TRAD",tna:0.0,comision:9.0,plazoMax:12,ltv:70,activa:true,marca:"RENAULT",modelos:["KWID"],montoMax:18000000},
   {id:701,banco:"MOBILIZE",nombre:"KWID 16 MARS TASA 0",tipo:"TRAD",tna:0.0,comision:9.0,plazoMax:18,ltv:70,activa:true,marca:"RENAULT",modelos:["KWID"],montoMax:16000000},
   {id:702,banco:"MOBILIZE",nombre:"KWID 12 MARS TASA 0",tipo:"TRAD",tna:0.0,comision:9.0,plazoMax:24,ltv:70,activa:true,marca:"RENAULT",modelos:["KWID"],montoMax:12000000},
@@ -3699,17 +3697,29 @@ function parsePreciosCSV(csv){
     var modelo=(cols[1]||'').trim();
     var precio=(cols[2]||'').trim();
     var moneda=(cols[3]||'').trim().toUpperCase();
+    var bonifRaw=(cols[4]||'').trim();
     // Saltar encabezado
     if(marca.toUpperCase()==='MARCA') continue;
     if(!marca||!modelo||!precio) continue;
     // Convertir precio: quitar $, espacios, puntos y comas → número entero
     var precioNum=parseInt(precio.replace(/[^0-9]/g,''))||0;
     if(!precioNum) continue;
+    // Bonificación: acepta "5%" (porcentaje) o "500000" / "$500.000" (monto fijo). Vacío = sin bonificación.
+    var bonifTipo=null, bonifValor=0;
+    if(bonifRaw){
+      if(bonifRaw.indexOf('%')>-1){
+        bonifTipo='pct';
+        bonifValor=parseFloat(bonifRaw.replace(',','.').replace(/[^0-9.]/g,''))||0;
+      } else {
+        var n=parseInt(bonifRaw.replace(/[^0-9]/g,''))||0;
+        if(n>0){ bonifTipo='monto'; bonifValor=n; }
+      }
+    }
     // Para USD: el número puede venir como 24305 (de $24.305) o 4310 (de $43,10 mal cargado)
     var monedaFinal=(moneda==='USD')?'USD':'ARS';
     var marcaEntry=result.find(function(m){return m.marca===marca;});
     if(!marcaEntry){marcaEntry={marca:marca,modelos:[]};result.push(marcaEntry);}
-    marcaEntry.modelos.push({modelo:modelo,precio:precioNum,moneda:monedaFinal});
+    marcaEntry.modelos.push({modelo:modelo,precio:precioNum,moneda:monedaFinal,bonifTipo:bonifTipo,bonifValor:bonifValor});
   }
   return result.filter(function(m){return m.modelos.length>0;});
 }
@@ -3753,10 +3763,12 @@ function rPrecios(data){
       }
       const precioParaCotizar=esUSD&&_bnaCotiz?precioNum:(typeof mod.precio==='number'?mod.precio:parseInt(String(mod.precio).replace(/[^0-9]/g,''))||0);
       const precioUSDRef=esUSD?(typeof mod.precio==='number'?mod.precio:parseFloat(String(mod.precio).replace(/[^0-9.]/g,''))||0):0;
+      const tieneBonif=mod.bonifTipo&&mod.bonifValor>0;
+      const bonifBadge=tieneBonif?`<span style="font-size:8px;background:#1a7f45;color:#fff;padding:2px 5px;border-radius:4px;margin-left:5px;white-space:nowrap">💰 ${mod.bonifTipo==='pct'?mod.bonifValor+'% contado':fmt(mod.bonifValor)+' contado'}</span>`:'';
       html_p+=`<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 12px;border-bottom:1px solid var(--bdr);gap:6px">
-        <span style="font-size:11px;color:var(--t);flex:1">${mod.modelo}${esUSD?' 💵':''}</span>
+        <span style="font-size:11px;color:var(--t);flex:1">${mod.modelo}${esUSD?' 💵':''}${bonifBadge}</span>
         ${precioDisplay}
-        <button onclick="cotizarDesdePrecios('${m.marca}','${mod.modelo.replace(/'/g,"\\'")}',${precioParaCotizar},${precioUSDRef})"
+        <button onclick="cotizarDesdePrecios('${m.marca}','${mod.modelo.replace(/'/g,"\\'")}',${precioParaCotizar},${precioUSDRef},'${mod.bonifTipo||''}',${mod.bonifValor||0})"
           style="background:#0069b4;color:#fff;border:none;border-radius:6px;padding:4px 8px;font-size:9px;font-weight:700;letter-spacing:.5px;cursor:pointer;white-space:nowrap;flex-shrink:0">
           ＋ Cotizar
         </button>
@@ -3768,9 +3780,11 @@ function rPrecios(data){
   el.innerHTML=html_p;
 }
 
-function cotizarDesdePrecios(marca, modeloCompleto, precioArg, precioUSD){
+function cotizarDesdePrecios(marca, modeloCompleto, precioArg, precioUSD, bonifTipo, bonifValor){
   // Precio puede llegar como número o string
   const precio=typeof precioArg==='number'?precioArg:parseInt(String(precioArg).replace(/[^0-9]/g,''))||0;
+  window._propBonifTipo=bonifTipo||null;
+  window._propBonifValor=bonifValor||0;
   
   // Separar modelo y version: primera palabra = modelo base, resto = version
   // Ej: "HILUX 4X2 CC DX 2.4 TDI 6 MT" → modelo="HILUX", version="4X2 CC DX 2.4 TDI 6 MT"
@@ -3846,7 +3860,12 @@ function cotizarDesdePrecios(marca, modeloCompleto, precioArg, precioUSD){
           const aral=$$('ar-al');
           const usdRef=precioUSD&&precioUSD>0?` &nbsp;·&nbsp; <span style="color:#F39C12;font-weight:700">💵 USD ${precioUSD.toLocaleString('es-AR')}</span>`:'';
           const tcRef=precioUSD&&precioUSD>0&&_bnaCotiz?` <span style="font-size:9px;color:var(--m)">(TC BNA $${Math.round(_bnaCotiz).toLocaleString('es-AR')})</span>`:'';
-          if(aral) aral.innerHTML=`<div class="al info">💰 <strong>${marca} — ${modeloCompleto}</strong> · Año ${yr}${usdRef}${tcRef}<br><span style="font-size:10px;color:var(--m)">Precio cargado desde lista de precios</span></div>`;
+          const montoBonif=bonifTipo==='pct'?Math.round(precio*(bonifValor/100)):(bonifTipo==='monto'?bonifValor:0);
+          const bonifHtml=(bonifTipo&&montoBonif>0)?`<div style="margin-top:8px;padding:8px 10px;background:rgba(26,127,69,.12);border:1px solid var(--g);border-radius:8px;display:flex;justify-content:space-between;align-items:center;gap:8px">
+              <span style="font-size:11px;color:var(--g);font-weight:700">💰 Bonificación pago contado: ${fmt(montoBonif)}${bonifTipo==='pct'?' ('+bonifValor+'%)':''}</span>
+              <button onclick="aplicarBonifContado(${montoBonif})" id="btn-aplicar-bonif" style="background:var(--g);color:#fff;border:none;border-radius:6px;padding:5px 10px;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap">✅ Aplicar</button>
+            </div>`:'';
+          if(aral) aral.innerHTML=`<div class="al info">💰 <strong>${marca} — ${modeloCompleto}</strong> · Año ${yr}${usdRef}${tcRef}<br><span style="font-size:10px;color:var(--m)">Precio cargado desde lista de precios</span></div>${bonifHtml}`;
           cP();
           rCampMini();
           renderCampSubs();
@@ -4414,6 +4433,15 @@ function addEx(col){
   const d=document.createElement('div'); d.className='pr';
   d.innerHTML=`<div style="display:flex;align-items:center;gap:5px"><input type="text" placeholder="Concepto..." style="flex:1;font-size:11px;padding:5px 7px"><span onclick="this.parentElement.parentElement.remove();cP()" style="cursor:pointer;color:var(--m);font-size:18px;flex-shrink:0">×</span></div><input type="number" data-x${col} placeholder="0" oninput="cP()" style="width:122px">`;
   $$(c).appendChild(d);
+}
+function aplicarBonifContado(monto){
+  if(!monto||monto<=0)return;
+  const d=document.createElement('div'); d.className='pr';
+  d.innerHTML=`<div style="display:flex;align-items:center;gap:5px"><input type="text" value="Bonificación pago contado" style="flex:1;font-size:11px;padding:5px 7px"><span onclick="this.parentElement.parentElement.remove();cP()" style="cursor:pointer;color:var(--m);font-size:18px;flex-shrink:0">×</span></div><input type="number" data-xa value="-${monto}" oninput="cP()" style="width:122px">`;
+  $$('exa').appendChild(d);
+  cP();
+  const btn=$$('btn-aplicar-bonif');
+  if(btn){ btn.textContent='✓ Aplicada'; btn.disabled=true; btn.style.opacity='.6'; btn.style.cursor='default'; }
 }
 
 function resetP(sinConfirmar){
