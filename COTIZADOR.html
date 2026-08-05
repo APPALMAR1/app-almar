@@ -4261,11 +4261,9 @@ function sCredCamp(id){
     } else {
       const el=$$('pa3'); if(el) el.value='';
     }
-    // Gastos adicionales ALMAR:
-    // — Con fee: banco paga comisión al concesionario → ALMAR cobra igual 2% (como si hubiera comisión)
-    // — Sin comisión bancaria → 3% del monto
-    // — Con comisión bancaria (quebranto) → 2% del monto
-    const pctAlmar=(cv.comision>0)?0.02:0.03;
+    // Gastos de otorgamiento ALMAR: siempre 3% del monto, sin IVA,
+    // sin importar si la campaña tiene comisión bancaria o no.
+    const pctAlmar=0.03;
     const gastosAlmar=Math.round(mt*pctAlmar);
     const el3b=$$('pa3b'); if(el3b) el3b.value=gastosAlmar;
   }
@@ -4295,8 +4293,8 @@ function calcCred(){
       } else {
         $$('pa3').value='';
       }
-      // Gastos adicionales ALMAR: 3% sin comisión / 2% con comisión (fee cuenta como "con comisión")
-      const pctAlmar=(cv.comision>0)?0.02:0.03;
+      // Gastos de otorgamiento ALMAR: siempre 3% del monto, sin IVA
+      const pctAlmar=0.03;
       const gastosAlmar=Math.round(mt*pctAlmar);
       $$('pa3b').value=gastosAlmar;
       // Recalcular Total A y saldo pendiente directamente (sin llamar cP() para evitar loop)
