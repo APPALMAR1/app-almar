@@ -3790,7 +3790,19 @@ function rPrecios(data){
   el.innerHTML=html_p;
 }
 
+// Limpia el crédito, campaña seleccionada y conceptos extra de una cotización
+// anterior antes de cargar un vehículo nuevo (desde Stock o desde Precios) —
+// si no, quedan pisados con datos viejos (ej. una campaña GPAT de un 0km
+// anterior apareciendo para un usado recién elegido).
+function limpiarCreditoAnterior(){
+  ['pb1','pb2','pb3','pb4','pb5','pb6'].forEach(id=>{const el=$$(id);if(el)el.value='';});
+  const exa=$$('exa'),exb=$$('exb'); if(exa)exa.innerHTML=''; if(exb)exb.innerHTML='';
+  credCampId=null; credPlazo=null;
+  const box=$$('cred-box'); if(box) box.style.display='none';
+  const mini=$$('cg-mini'); if(mini) mini.innerHTML='';
+}
 function cotizarDesdePrecios(marca, modeloCompleto, precioArg, precioUSD, bonifTipo, bonifValor){
+  limpiarCreditoAnterior();
   // Precio puede llegar como número o string
   const precio=typeof precioArg==='number'?precioArg:parseInt(String(precioArg).replace(/[^0-9]/g,''))||0;
   window._propBonifTipo=bonifTipo||null;
@@ -5336,6 +5348,7 @@ function rStk(){
   });
 }
 function cotizarDesdeStock(marca,modelo,version,anno){
+  limpiarCreditoAnterior();
   goTo('propuesta');
   setTimeout(()=>{
     const tipo=$$('tipo');
