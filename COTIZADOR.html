@@ -1678,10 +1678,10 @@ const CAMP_D=[
   {id:423,banco:"FCA",nombre:"600 HYBRID TASA FIJA 18c",tipo:"TRAD",tna:13.9,comision:11.0,plazoMax:18,ltv:80,activa:true,marca:"FIAT",modelos:["FIAT 600"]},
   {id:424,banco:"FCA",nombre:"600 HYBRID TASA FIJA 36c",tipo:"TRAD",tna:28.9,comision:11.0,plazoMax:36,ltv:80,activa:true,marca:"FIAT",modelos:["FIAT 600"]},
   {id:425,banco:"FCA",nombre:"600 HYBRID TASA FIJA 48c",tipo:"TRAD",tna:32.9,comision:11.0,plazoMax:48,ltv:80,activa:true,marca:"FIAT",modelos:["FIAT 600"]},
-  {id:426,banco:"FCA",nombre:"USADOS TASA FIJA 12c",tipo:"TRAD",tna:9.9,comision:10.0,plazoMax:12,ltv:80,activa:true,marca:"FIAT",modelos:null,usados:true},
-  {id:427,banco:"FCA",nombre:"USADOS TASA FIJA 18c",tipo:"TRAD",tna:22.9,comision:10.0,plazoMax:18,ltv:80,activa:true,marca:"FIAT",modelos:null,usados:true},
-  {id:428,banco:"FCA",nombre:"USADOS TASA FIJA 24c",tipo:"TRAD",tna:29.9,comision:10.0,plazoMax:24,ltv:80,activa:true,marca:"FIAT",modelos:null,usados:true},
-  {id:429,banco:"FCA",nombre:"USADOS TASA FIJA 36c",tipo:"TRAD",tna:35.9,comision:10.0,plazoMax:36,ltv:80,activa:true,marca:"FIAT",modelos:null,usados:true},
+  {id:426,banco:"FCA",nombre:"USADOS TASA FIJA 12c",tipo:"TRAD",tna:9.9,comision:10.0,plazoMax:12,ltv:80,activa:false,marca:"FIAT",modelos:null,usados:true},
+  {id:427,banco:"FCA",nombre:"USADOS TASA FIJA 18c",tipo:"TRAD",tna:22.9,comision:10.0,plazoMax:18,ltv:80,activa:false,marca:"FIAT",modelos:null,usados:true},
+  {id:428,banco:"FCA",nombre:"USADOS TASA FIJA 24c",tipo:"TRAD",tna:29.9,comision:10.0,plazoMax:24,ltv:80,activa:false,marca:"FIAT",modelos:null,usados:true},
+  {id:429,banco:"FCA",nombre:"USADOS TASA FIJA 36c",tipo:"TRAD",tna:35.9,comision:10.0,plazoMax:36,ltv:80,activa:false,marca:"FIAT",modelos:null,usados:true},
   // ── FCA JEEP/RAM — Circular 005.26 (Vigencia 01/07/2026) ─────────────────
   // CAMPAÑA TASA FIJA TODA LA GAMA ($18M) — modelos: null = toda la gama JEEP
   {id:430,banco:"FCA",nombre:"JEEP TASA FIJA TODA GAMA 18c",tipo:"TRAD",tna:0.0,comision:11.0,plazoMax:18,ltv:80,activa:true,marca:"JEEP",modelos:null,montoMax:18000000},
@@ -4031,15 +4031,7 @@ function rCampMini(){
       // Sin año definido: mostrar todas las campañas de usados (el año se validará al guardar)
       deMarca=act.filter(c=>c.usados===true);
     }
-    // FCA usados solo si marca es FIAT o JEEP
-    // PSA Finance usados: aplica a TODAS las marcas (no restringir por marca)
-    if(ma&&ma!==''){
-      deMarca=deMarca.filter(c=>{
-        if(c.banco==='FCA') return ma==='FIAT'||ma==='JEEP';
-        // PSA Finance usados y cualquier otro banco con usados:true → todas las marcas
-        return true;
-      });
-    }
+    // FCA no tiene programa de usados — solo bancos y PSA Finance Usados (aplica a todas las marcas)
   } else {
     // 0KM: financiera exacta de la marca (PEUGEOT→PSA PEUGEOT, CITROEN→PSA CITROEN, RENAULT→MOBILIZE, etc.)
     // Filtrar solo campañas donde c.marca === marca elegida (coincidencia exacta)
