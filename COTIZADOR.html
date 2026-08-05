@@ -2643,6 +2643,16 @@ function onAuto(){
         aral.innerHTML='<div class="al warn">🔧 Este vehículo está <strong>EN PREPARACIÓN</strong> — ya ingresó pero no está listo para entrega. Podés cotizarlo normalmente.</div>';
       else if(u.estado==='SENIADO')
         aral.innerHTML='<div class="al err">🔴 Este vehículo está <strong>SEÑADO</strong>. Verificá disponibilidad antes de cotizar.</div>';
+      // Bonificación por pago contado (columna H del stock)
+      if(u.bonifTipo&&u.bonifValor>0){
+        const montoBonif=u.bonifTipo==='pct'?Math.round((u.precio||0)*(u.bonifValor/100)):u.bonifValor;
+        if(montoBonif>0){
+          aral.innerHTML+=`<div style="margin-top:8px;padding:8px 10px;background:rgba(26,127,69,.12);border:1px solid var(--g);border-radius:8px;display:flex;justify-content:space-between;align-items:center;gap:8px">
+              <span style="font-size:11px;color:var(--g);font-weight:700">💰 Bonificación pago contado: ${fmt(montoBonif)}${u.bonifTipo==='pct'?' ('+u.bonifValor+'%)':''}</span>
+              <button onclick="aplicarBonifContado(${montoBonif})" id="btn-aplicar-bonif" style="background:var(--g);color:#fff;border:none;border-radius:6px;padding:5px 10px;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap">✅ Aplicar</button>
+            </div>`;
+        }
+      }
     }
   }
   else if(t==='lista_precios'){
@@ -5318,8 +5328,9 @@ function rStk(){
       ?`<span${iaTitle} style="font-size:9px;color:${iaColor};font-weight:600;margin-left:4px">· ${u._infoToma}</span>`:'';
     const badgeOrigen=u.origen==='GONZALEZ'?`<span style="font-size:9px;color:#fff;background:#6a3fb5;padding:1px 6px;border-radius:8px;font-weight:700;margin-left:4px">🤝 CONSIGNADO — GONZÁLEZ</span>`
       :u.origen==='RR'?`<span style="font-size:9px;color:#fff;background:#d97706;padding:1px 6px;border-radius:8px;font-weight:700;margin-left:4px">🤝 CONSIGNADO — RR</span>`:'';
+    const badgeBonif=(u.bonifTipo&&u.bonifValor>0)?`<span style="font-size:9px;color:#fff;background:#1a7f45;padding:1px 6px;border-radius:8px;font-weight:700;margin-left:4px">💰 ${u.bonifTipo==='pct'?u.bonifValor+'% contado':fmt(u.bonifValor)+' contado'}</span>`:'';
     const d=document.createElement('div'); d.className='hi';
-    d.innerHTML=`<div class="hico" style="background:${colFinal}">🚗</div><div class="hinf"><div class="haut">${u.marca} ${u.modelo} ${u.version}</div><div class="hdet">${u.anno} · ${(u.km||0).toLocaleString('es-AR')} km · ${u.color||'—'} · ${u.dominio||'—'}${badgeOrigen}</div></div><div class="hr2"><div class="hcuo" style="color:${u.precio?'var(--b)':'var(--m)'}">${u.precio?fmt(u.precio):'Consultar'}</div><div class="hfec"><span class="tag ${tagFinal}">${etiqueta}</span>${infoExtra}</div></div>`;
+    d.innerHTML=`<div class="hico" style="background:${colFinal}">🚗</div><div class="hinf"><div class="haut">${u.marca} ${u.modelo} ${u.version}</div><div class="hdet">${u.anno} · ${(u.km||0).toLocaleString('es-AR')} km · ${u.color||'—'} · ${u.dominio||'—'}${badgeOrigen}${badgeBonif}</div></div><div class="hr2"><div class="hcuo" style="color:${u.precio?'var(--b)':'var(--m)'}">${u.precio?fmt(u.precio):'Consultar'}</div><div class="hfec"><span class="tag ${tagFinal}">${etiqueta}</span>${infoExtra}</div></div>`;
     el.appendChild(d);
   });
 }
@@ -6255,6 +6266,8 @@ function parseDrv(csv){
   })();
   // Estado: columna K fija (índice 10) — contiene Señado, A recibir, etc.
   const iInf=10;
+  // Bonificación pago contado: columna H fija (índice 7) — acepta "5%" o "800000"
+  const iBonif=7;
   const iVToma=nh.findIndex(h=>h.includes('VALOR')&&h.includes('TOMA'));
   const iCosto=nh.findIndex(h=>h.includes('COSTO')&&h.includes('TOTAL'));
   const gc=(c,i)=>i>=0&&i<c.length?c[i].trim():'';
@@ -6281,11 +6294,24 @@ function parseDrv(csv){
     else if(/reservado/i.test(inf))              est='RESERVADO';
     // Unidad: puede tener formato "MODELO VERSION" o solo "MODELO"
     const pts=(uni||'').split(' ');
+    // Bonificación pago contado (columna H): "5%" -> porcentaje, "800000" -> monto fijo, vacío -> sin bonif.
+    const bonifRaw=gc(c,iBonif);
+    let bonifTipo=null,bonifValor=0;
+    if(bonifRaw){
+      if(bonifRaw.indexOf('%')>-1){
+        bonifTipo='pct';
+        bonifValor=parseFloat(bonifRaw.replace(',','.').replace(/[^0-9.]/g,''))||0;
+      } else {
+        const n=parseInt(bonifRaw.replace(/[^0-9]/g,''))||0;
+        if(n>0){ bonifTipo='monto'; bonifValor=n; }
+      }
+    }
     autos.push({
       dominio:(dom==='-'||dom==='0')?'':dom,empresa:emp,marca,
       modelo:pts[0]||uni,version:pts.slice(1).join(' ')||'',
       anno:anio,km:parseInt(gc(c,iKm).replace(/[^0-9]/g,''))||0,
       precio:pNv(gc(c,iPre)),color:gc(c,iCol),estado:est,
+      bonifTipo:bonifTipo,bonifValor:bonifValor,
       _infoToma:inf,_valorToma:pNv(gc(c,iVToma)),_costoTotal:pNv(gc(c,iCosto))
     });
   }
