@@ -705,6 +705,9 @@ input[type=text]#p-obs{background:#F5F7FA!important;border:1px solid #D5DCE6!imp
         <div class="fld"><label>KM</label><input type="number" id="km" placeholder="0" oninput="updR()"></div>
         <div class="fld"><label>Tipo</label><select id="tveh"><option value="auto">Auto / Utilitario</option><option value="electrico">Eléctrico / Híbrido</option></select></div>
       </div>
+      <div class="fr f2">
+        <div class="fld"><label>Cliente</label><select id="personaTipo" onchange="rCampMini()"><option value="PF">Persona Física</option><option value="PJ">Persona Jurídica / Act. Comercial</option></select></div>
+      </div>
     </div>
   </div>
 
@@ -3930,6 +3933,84 @@ function ltvPSAUsados(anno){
   return null; // Más de 10 años: no financia PSA
 }
 
+// ── LTV/Antigüedad — BANCOS GENERALES (ICBC / BBVA / Santander) — manuales Agosto 2026 ──
+function getSubtipoVehiculo(marca,modelo){
+  const ma=(marca||'').toUpperCase();
+  const mo=(modelo||'').toUpperCase();
+  const t=MKT_TIPOS[ma];
+  if(!t) return 'Auto'; // sin dato en la base → asumir Auto (no restringe de más)
+  if((t['Utilitario/Pickup']||[]).some(m=>m.toUpperCase()===mo)) return 'Utilitario/Pickup';
+  return 'Auto';
+}
+
+function ltvICBCUsados(anno){
+  const hoy=new Date().getFullYear();
+  const ant=hoy-anno;
+  if(ant<=1)  return {ltv:80,plazoMax:60};
+  if(ant<=5)  return {ltv:70,plazoMax:60};
+  if(ant<=10) return {ltv:60,plazoMax:60};
+  if(ant<=13) return {ltv:50,plazoMax:36};
+  return null; // Más de 13 años: ICBC no financia
+}
+
+function ltvBBVAUsados(anno){
+  const hoy=new Date().getFullYear();
+  const ant=hoy-anno;
+  let ltv;
+  if(ant===0) ltv=80;
+  else if(ant<=3) ltv=70;
+  else if(ant<=9) ltv=60;
+  else return null; // Más de 9 años: BBVA no financia (mismo tramo para Autos y Utilitarios)
+  let plazoMax;
+  if(ant<=7) plazoMax=60;
+  else if(ant===8) plazoMax=48;
+  else plazoMax=36; // ant===9
+  return {ltv,plazoMax};
+}
+
+function ltvSantanderUsados(anno,subtipo,personaTipo){
+  const hoy=new Date().getFullYear();
+  const ant=hoy-anno;
+  const pj=personaTipo==='PJ';
+  if(subtipo==='Utilitario/Pickup'){
+    // Santander no financia utilitarios de más de 6 años de antigüedad
+    if(pj){
+      if(ant===0) return {ltv:80,plazoMax:60};
+      if(ant<=5) return {ltv:75,plazoMax:60};
+      if(ant===6) return {ltv:65,plazoMax:48};
+      return null;
+    } else {
+      if(ant===0) return {ltv:85,plazoMax:60};
+      if(ant<=3) return {ltv:75,plazoMax:60};
+      if(ant<=6) return {ltv:65,plazoMax:48};
+      return null;
+    }
+  } else {
+    // Autos: Santander financia hasta 10 años de antigüedad
+    if(pj){
+      if(ant===0) return {ltv:80,plazoMax:60};
+      if(ant<=5) return {ltv:75,plazoMax:60};
+      if(ant<=8) return {ltv:65,plazoMax:48};
+      if(ant<=10) return {ltv:60,plazoMax:36};
+      return null;
+    } else {
+      if(ant===0) return {ltv:80,plazoMax:60};
+      if(ant<=3) return {ltv:75,plazoMax:60};
+      if(ant<=6) return {ltv:65,plazoMax:48};
+      if(ant<=10) return {ltv:60,plazoMax:48};
+      return null;
+    }
+  }
+}
+
+function ltvBancoGeneral(banco,anno,subtipo,personaTipo){
+  if(!anno) return undefined; // sin año cargado → no filtrar (comportamiento anterior)
+  if(banco==='ICBC') return ltvICBCUsados(anno);
+  if(banco==='BBVA') return ltvBBVAUsados(anno);
+  if(banco==='SANTANDER') return ltvSantanderUsados(anno,subtipo,personaTipo);
+  return undefined; // banco no contemplado → no filtrar
+}
+
 
 
 
@@ -4064,6 +4145,17 @@ function rCampMini(){
     } else {
       // Bancos generales: no tienen usados:true, aplican siempre
       campsDeBanco=campsDeBanco.filter(c=>!c.usados&&!c.marca);
+      if(esUsado&&anno>0){
+        const subtipo=getSubtipoVehiculo(ma,mo);
+        const personaTipo=$$('personaTipo')?.value||'PF';
+        const ltvInfo=ltvBancoGeneral(nombreBanco,anno,subtipo,personaTipo);
+        if(ltvInfo===null){
+          campsDeBanco=[]; // el banco no financia este vehículo por antigüedad
+        } else if(ltvInfo){
+          campsDeBanco=campsDeBanco.filter(c=>c.plazoMax<=ltvInfo.plazoMax);
+        }
+        // ltvInfo===undefined (banco sin tabla cargada, ej. Credicuotas) → sin filtrar, comportamiento anterior
+      }
     }
     const seleccionado=campsDeBanco.some(c=>c.id===credCampId);
     if(!campsDeBanco.length) return; // no mostrar botón vacío
