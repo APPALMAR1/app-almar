@@ -696,6 +696,9 @@ input[type=text]#p-obs{background:#F5F7FA!important;border:1px solid #D5DCE6!imp
         <div class="fld"><label>Marca <span class="req">*</span></label><select id="marca" onchange="onMarca()" disabled><option value="">—</option></select></div>
         <div class="fld"><label>Modelo <span class="req">*</span></label><select id="modelo" onchange="onModelo()" disabled><option value="">—</option></select></div>
       </div>
+      <div class="fr f2" id="origenStockFotonRow" style="display:none">
+        <div class="fld"><label>Origen de la unidad</label><select id="origenStock" onchange="rCampMini()"><option value="RED">Stock del Concesionario (Red)</option><option value="FABRICA">Stock Foton Argentina (Fábrica)</option></select></div>
+      </div>
       <div class="fr f2">
         <div class="fld"><label>Versión</label><select id="version" onchange="onVer()" disabled><option value="">—</option></select></div>
         <div class="fld"><label>Año</label><select id="anno" onchange="onAuto()" disabled><option value="">—</option></select></div>
@@ -1883,24 +1886,70 @@ const CAMP_D=[
   // Coeficiente = cuota por cada $1.000 financiados. TNA implícita ~85% TNA.
   // ── FOTON — Circular Junio 2026 · Banco Santander ────────────────────────
   // Quebranto dealer 5% | LTV 70%
-  {id:900,banco:"SANTANDER",nombre:"FOTON PICKUPS G7/V9 TASA FIJA 12m",tipo:"TRAD",tna:6.5,comision:5.0,plazoMax:12,ltv:70,activa:true,marca:"FOTON",modelos:null,montoMax:25000000},
-  {id:901,banco:"SANTANDER",nombre:"FOTON PICKUPS G7/V9 TASA FIJA 18m",tipo:"TRAD",tna:15.9,comision:5.0,plazoMax:18,ltv:70,activa:true,marca:"FOTON",modelos:null,montoMax:25000000},
-  {id:902,banco:"SANTANDER",nombre:"FOTON PICKUPS G7/V9 TASA FIJA 24m",tipo:"TRAD",tna:20.5,comision:5.0,plazoMax:24,ltv:70,activa:true,marca:"FOTON",modelos:null,montoMax:25000000},
-  {id:903,banco:"SANTANDER",nombre:"FOTON PICKUPS G7/V9 UVA 12m",tipo:"UVA",tna:0.0,comision:5.0,plazoMax:12,ltv:70,activa:true,marca:"FOTON",modelos:null,montoMax:25000000},
-  {id:904,banco:"SANTANDER",nombre:"FOTON PICKUPS G7/V9 UVA 18m",tipo:"UVA",tna:0.0,comision:5.0,plazoMax:18,ltv:70,activa:true,marca:"FOTON",modelos:null,montoMax:25000000},
-  {id:905,banco:"SANTANDER",nombre:"FOTON PICKUPS G7/V9 UVA 24m",tipo:"UVA",tna:0.0,comision:5.0,plazoMax:24,ltv:70,activa:true,marca:"FOTON",modelos:null,montoMax:25000000},
-  {id:906,banco:"SANTANDER",nombre:"FOTON MINITRUCKS TASA FIJA 12m",tipo:"TRAD",tna:6.5,comision:5.0,plazoMax:12,ltv:70,activa:true,marca:"FOTON",modelos:null,montoMax:20000000},
-  {id:907,banco:"SANTANDER",nombre:"FOTON MINITRUCKS TASA FIJA 18m",tipo:"TRAD",tna:15.9,comision:5.0,plazoMax:18,ltv:70,activa:true,marca:"FOTON",modelos:null,montoMax:20000000},
-  {id:908,banco:"SANTANDER",nombre:"FOTON MINITRUCKS TASA FIJA 24m",tipo:"TRAD",tna:20.5,comision:5.0,plazoMax:24,ltv:70,activa:true,marca:"FOTON",modelos:null,montoMax:20000000},
-  {id:909,banco:"SANTANDER",nombre:"FOTON MINITRUCKS UVA 12m",tipo:"UVA",tna:0.0,comision:5.0,plazoMax:12,ltv:70,activa:true,marca:"FOTON",modelos:null,montoMax:20000000},
-  {id:910,banco:"SANTANDER",nombre:"FOTON MINITRUCKS UVA 18m",tipo:"UVA",tna:0.0,comision:5.0,plazoMax:18,ltv:70,activa:true,marca:"FOTON",modelos:null,montoMax:20000000},
-  {id:911,banco:"SANTANDER",nombre:"FOTON MINITRUCKS UVA 24m",tipo:"UVA",tna:0.0,comision:5.0,plazoMax:24,ltv:70,activa:true,marca:"FOTON",modelos:null,montoMax:20000000},
-  {id:912,banco:"SANTANDER",nombre:"FOTON AUMARK TASA FIJA 12m",tipo:"TRAD",tna:6.5,comision:5.0,plazoMax:12,ltv:70,activa:true,marca:"FOTON",modelos:null,montoMax:50000000},
-  {id:913,banco:"SANTANDER",nombre:"FOTON AUMARK TASA FIJA 18m",tipo:"TRAD",tna:15.9,comision:5.0,plazoMax:18,ltv:70,activa:true,marca:"FOTON",modelos:null,montoMax:50000000},
-  {id:914,banco:"SANTANDER",nombre:"FOTON AUMARK TASA FIJA 24m",tipo:"TRAD",tna:20.5,comision:5.0,plazoMax:24,ltv:70,activa:true,marca:"FOTON",modelos:null,montoMax:50000000},
-  {id:915,banco:"SANTANDER",nombre:"FOTON AUMARK UVA 12m",tipo:"UVA",tna:0.0,comision:5.0,plazoMax:12,ltv:70,activa:true,marca:"FOTON",modelos:null,montoMax:50000000},
-  {id:916,banco:"SANTANDER",nombre:"FOTON AUMARK UVA 18m",tipo:"UVA",tna:0.0,comision:5.0,plazoMax:18,ltv:70,activa:true,marca:"FOTON",modelos:null,montoMax:50000000},
-  {id:917,banco:"SANTANDER",nombre:"FOTON AUMARK UVA 24m",tipo:"UVA",tna:0.0,comision:5.0,plazoMax:24,ltv:70,activa:true,marca:"FOTON",modelos:null,montoMax:50000000},
+  {id:900,banco:"SANTANDER",nombre:"FOTON PICKUPS G7/V9 TASA FIJA 12m",tipo:"TRAD",tna:6.5,comision:5.0,plazoMax:12,ltv:70,activa:true,marca:"FOTON",modelos:null,montoMax:25000000,origenStock:"FABRICA"},
+  {id:901,banco:"SANTANDER",nombre:"FOTON PICKUPS G7/V9 TASA FIJA 18m",tipo:"TRAD",tna:15.9,comision:5.0,plazoMax:18,ltv:70,activa:true,marca:"FOTON",modelos:null,montoMax:25000000,origenStock:"FABRICA"},
+  {id:902,banco:"SANTANDER",nombre:"FOTON PICKUPS G7/V9 TASA FIJA 24m",tipo:"TRAD",tna:20.5,comision:5.0,plazoMax:24,ltv:70,activa:true,marca:"FOTON",modelos:null,montoMax:25000000,origenStock:"FABRICA"},
+  {id:903,banco:"SANTANDER",nombre:"FOTON PICKUPS G7/V9 UVA 12m",tipo:"UVA",tna:0.0,comision:5.0,plazoMax:12,ltv:70,activa:true,marca:"FOTON",modelos:null,montoMax:25000000,origenStock:"FABRICA"},
+  {id:904,banco:"SANTANDER",nombre:"FOTON PICKUPS G7/V9 UVA 18m",tipo:"UVA",tna:0.0,comision:5.0,plazoMax:18,ltv:70,activa:true,marca:"FOTON",modelos:null,montoMax:25000000,origenStock:"FABRICA"},
+  {id:905,banco:"SANTANDER",nombre:"FOTON PICKUPS G7/V9 UVA 24m",tipo:"UVA",tna:0.0,comision:5.0,plazoMax:24,ltv:70,activa:true,marca:"FOTON",modelos:null,montoMax:25000000,origenStock:"FABRICA"},
+  {id:906,banco:"SANTANDER",nombre:"FOTON MINITRUCKS TASA FIJA 12m",tipo:"TRAD",tna:6.5,comision:5.0,plazoMax:12,ltv:70,activa:true,marca:"FOTON",modelos:null,montoMax:20000000,origenStock:"FABRICA"},
+  {id:907,banco:"SANTANDER",nombre:"FOTON MINITRUCKS TASA FIJA 18m",tipo:"TRAD",tna:15.9,comision:5.0,plazoMax:18,ltv:70,activa:true,marca:"FOTON",modelos:null,montoMax:20000000,origenStock:"FABRICA"},
+  {id:908,banco:"SANTANDER",nombre:"FOTON MINITRUCKS TASA FIJA 24m",tipo:"TRAD",tna:20.5,comision:5.0,plazoMax:24,ltv:70,activa:true,marca:"FOTON",modelos:null,montoMax:20000000,origenStock:"FABRICA"},
+  {id:909,banco:"SANTANDER",nombre:"FOTON MINITRUCKS UVA 12m",tipo:"UVA",tna:0.0,comision:5.0,plazoMax:12,ltv:70,activa:true,marca:"FOTON",modelos:null,montoMax:20000000,origenStock:"FABRICA"},
+  {id:910,banco:"SANTANDER",nombre:"FOTON MINITRUCKS UVA 18m",tipo:"UVA",tna:0.0,comision:5.0,plazoMax:18,ltv:70,activa:true,marca:"FOTON",modelos:null,montoMax:20000000,origenStock:"FABRICA"},
+  {id:911,banco:"SANTANDER",nombre:"FOTON MINITRUCKS UVA 24m",tipo:"UVA",tna:0.0,comision:5.0,plazoMax:24,ltv:70,activa:true,marca:"FOTON",modelos:null,montoMax:20000000,origenStock:"FABRICA"},
+  {id:912,banco:"SANTANDER",nombre:"FOTON AUMARK TASA FIJA 12m",tipo:"TRAD",tna:6.5,comision:5.0,plazoMax:12,ltv:70,activa:true,marca:"FOTON",modelos:null,montoMax:50000000,origenStock:"FABRICA"},
+  {id:913,banco:"SANTANDER",nombre:"FOTON AUMARK TASA FIJA 18m",tipo:"TRAD",tna:15.9,comision:5.0,plazoMax:18,ltv:70,activa:true,marca:"FOTON",modelos:null,montoMax:50000000,origenStock:"FABRICA"},
+  {id:914,banco:"SANTANDER",nombre:"FOTON AUMARK TASA FIJA 24m",tipo:"TRAD",tna:20.5,comision:5.0,plazoMax:24,ltv:70,activa:true,marca:"FOTON",modelos:null,montoMax:50000000,origenStock:"FABRICA"},
+  {id:915,banco:"SANTANDER",nombre:"FOTON AUMARK UVA 12m",tipo:"UVA",tna:0.0,comision:5.0,plazoMax:12,ltv:70,activa:true,marca:"FOTON",modelos:null,montoMax:50000000,origenStock:"FABRICA"},
+  {id:916,banco:"SANTANDER",nombre:"FOTON AUMARK UVA 18m",tipo:"UVA",tna:0.0,comision:5.0,plazoMax:18,ltv:70,activa:true,marca:"FOTON",modelos:null,montoMax:50000000,origenStock:"FABRICA"},
+  {id:917,banco:"SANTANDER",nombre:"FOTON AUMARK UVA 24m",tipo:"UVA",tna:0.0,comision:5.0,plazoMax:24,ltv:70,activa:true,marca:"FOTON",modelos:null,montoMax:50000000,origenStock:"FABRICA"},
+  // ── FOTON STOCK RED (concesionario) — Circular Corven 01/08/2026, vigencia 05/08/2026 ──
+  {id:1000,banco:"SANTANDER",nombre:"FOTON TUNLAND G7 TASA FIJA 12m",tipo:"TRAD",tna:0.0,comision:10.0,plazoMax:12,ltv:70,activa:true,marca:"FOTON",modelos:["TUNLAND"],versiones:["G7"],montoMax:25000000,origenStock:"RED"},
+  {id:1001,banco:"SANTANDER",nombre:"FOTON TUNLAND G7 TASA FIJA 18m",tipo:"TRAD",tna:15.1,comision:10.0,plazoMax:18,ltv:70,activa:true,marca:"FOTON",modelos:["TUNLAND"],versiones:["G7"],montoMax:25000000,origenStock:"RED"},
+  {id:1002,banco:"SANTANDER",nombre:"FOTON TUNLAND G7 TASA FIJA 24m",tipo:"TRAD",tna:20.7,comision:10.0,plazoMax:24,ltv:70,activa:true,marca:"FOTON",modelos:["TUNLAND"],versiones:["G7"],montoMax:25000000,origenStock:"RED"},
+  {id:1003,banco:"SANTANDER",nombre:"FOTON TUNLAND G7 UVA 12m",tipo:"UVA",tna:0.0,comision:6.65,plazoMax:12,ltv:70,activa:true,marca:"FOTON",modelos:["TUNLAND"],versiones:["G7"],montoMax:25000000,origenStock:"RED"},
+  {id:1004,banco:"SANTANDER",nombre:"FOTON TUNLAND G7 UVA 18m",tipo:"UVA",tna:0.0,comision:9.55,plazoMax:18,ltv:70,activa:true,marca:"FOTON",modelos:["TUNLAND"],versiones:["G7"],montoMax:25000000,origenStock:"RED"},
+  {id:1005,banco:"SANTANDER",nombre:"FOTON TUNLAND G7 UVA 24m",tipo:"UVA",tna:0.0,comision:10.0,plazoMax:24,ltv:70,activa:true,marca:"FOTON",modelos:["TUNLAND"],versiones:["G7"],montoMax:25000000,origenStock:"RED"},
+  {id:1006,banco:"GALICIA",nombre:"FOTON TUNLAND G7 GALICIA 12m (solo PJ)",tipo:"TRAD",tna:10.6,comision:2.3,plazoMax:12,ltv:70,activa:true,marca:"FOTON",modelos:["TUNLAND"],versiones:["G7"],montoMax:25000000,origenStock:"RED",personaTipo:"PJ"},
+  {id:1007,banco:"GALICIA",nombre:"FOTON TUNLAND G7 GALICIA 24m (solo PJ)",tipo:"TRAD",tna:17.9,comision:2.3,plazoMax:24,ltv:70,activa:true,marca:"FOTON",modelos:["TUNLAND"],versiones:["G7"],montoMax:25000000,origenStock:"RED",personaTipo:"PJ"},
+  {id:1008,banco:"GALICIA",nombre:"FOTON TUNLAND G7 GALICIA 36m (solo PJ)",tipo:"TRAD",tna:24.3,comision:2.3,plazoMax:36,ltv:70,activa:true,marca:"FOTON",modelos:["TUNLAND"],versiones:["G7"],montoMax:25000000,origenStock:"RED",personaTipo:"PJ"},
+  {id:1009,banco:"SANTANDER",nombre:"FOTON TUNLAND V7-V9 TASA FIJA 12m",tipo:"TRAD",tna:0.0,comision:5.0,plazoMax:12,ltv:70,activa:true,marca:"FOTON",modelos:["TUNLAND"],versiones:["V7","V9"],montoMax:45000000,origenStock:"RED"},
+  {id:1010,banco:"SANTANDER",nombre:"FOTON TUNLAND V7-V9 TASA FIJA 18m",tipo:"TRAD",tna:15.1,comision:5.0,plazoMax:18,ltv:70,activa:true,marca:"FOTON",modelos:["TUNLAND"],versiones:["V7","V9"],montoMax:45000000,origenStock:"RED"},
+  {id:1011,banco:"SANTANDER",nombre:"FOTON TUNLAND V7-V9 TASA FIJA 24m",tipo:"TRAD",tna:20.7,comision:5.0,plazoMax:24,ltv:70,activa:true,marca:"FOTON",modelos:["TUNLAND"],versiones:["V7","V9"],montoMax:45000000,origenStock:"RED"},
+  {id:1012,banco:"SANTANDER",nombre:"FOTON TUNLAND V7-V9 UVA 12m",tipo:"UVA",tna:0.0,comision:1.65,plazoMax:12,ltv:70,activa:true,marca:"FOTON",modelos:["TUNLAND"],versiones:["V7","V9"],montoMax:45000000,origenStock:"RED"},
+  {id:1013,banco:"SANTANDER",nombre:"FOTON TUNLAND V7-V9 UVA 18m",tipo:"UVA",tna:0.0,comision:4.55,plazoMax:18,ltv:70,activa:true,marca:"FOTON",modelos:["TUNLAND"],versiones:["V7","V9"],montoMax:45000000,origenStock:"RED"},
+  {id:1014,banco:"SANTANDER",nombre:"FOTON TUNLAND V7-V9 UVA 24m",tipo:"UVA",tna:0.0,comision:7.30,plazoMax:24,ltv:70,activa:true,marca:"FOTON",modelos:["TUNLAND"],versiones:["V7","V9"],montoMax:45000000,origenStock:"RED"},
+  {id:1015,banco:"GALICIA",nombre:"FOTON TUNLAND V7-V9 GALICIA 12m (solo PJ)",tipo:"TRAD",tna:10.6,comision:10.0,plazoMax:12,ltv:70,activa:true,marca:"FOTON",modelos:["TUNLAND"],versiones:["V7","V9"],montoMax:45000000,origenStock:"RED",personaTipo:"PJ"},
+  {id:1016,banco:"GALICIA",nombre:"FOTON TUNLAND V7-V9 GALICIA 24m (solo PJ)",tipo:"TRAD",tna:17.9,comision:10.0,plazoMax:24,ltv:70,activa:true,marca:"FOTON",modelos:["TUNLAND"],versiones:["V7","V9"],montoMax:45000000,origenStock:"RED",personaTipo:"PJ"},
+  {id:1017,banco:"GALICIA",nombre:"FOTON TUNLAND V7-V9 GALICIA 36m (solo PJ)",tipo:"TRAD",tna:24.3,comision:10.0,plazoMax:36,ltv:70,activa:true,marca:"FOTON",modelos:["TUNLAND"],versiones:["V7","V9"],montoMax:45000000,origenStock:"RED",personaTipo:"PJ"},
+  {id:1018,banco:"SANTANDER",nombre:"FOTON AUMARK 615 TASA FIJA 12m",tipo:"TRAD",tna:23.9,comision:5.0,plazoMax:12,ltv:70,activa:true,marca:"FOTON",modelos:["AUMARK S3 615"],montoMax:47000000,origenStock:"RED"},
+  {id:1019,banco:"SANTANDER",nombre:"FOTON AUMARK 615 TASA FIJA 24m",tipo:"TRAD",tna:29.5,comision:5.0,plazoMax:24,ltv:70,activa:true,marca:"FOTON",modelos:["AUMARK S3 615"],montoMax:47000000,origenStock:"RED"},
+  {id:1020,banco:"SANTANDER",nombre:"FOTON AUMARK 615 TASA FIJA 36m",tipo:"TRAD",tna:30.9,comision:5.0,plazoMax:36,ltv:70,activa:true,marca:"FOTON",modelos:["AUMARK S3 615"],montoMax:47000000,origenStock:"RED"},
+  {id:1021,banco:"SANTANDER",nombre:"FOTON AUMARK 615 UVA 12m",tipo:"UVA",tna:3.3,comision:5.0,plazoMax:12,ltv:70,activa:true,marca:"FOTON",modelos:["AUMARK S3 615"],montoMax:47000000,origenStock:"RED"},
+  {id:1022,banco:"SANTANDER",nombre:"FOTON AUMARK 615 UVA 18m",tipo:"UVA",tna:6.3,comision:5.0,plazoMax:18,ltv:70,activa:true,marca:"FOTON",modelos:["AUMARK S3 615"],montoMax:47000000,origenStock:"RED"},
+  {id:1023,banco:"SANTANDER",nombre:"FOTON AUMARK 615 UVA 24m",tipo:"UVA",tna:7.9,comision:5.0,plazoMax:24,ltv:70,activa:true,marca:"FOTON",modelos:["AUMARK S3 615"],montoMax:47000000,origenStock:"RED"},
+  {id:1024,banco:"GALICIA",nombre:"FOTON AUMARK 615 GALICIA 12m (solo PJ)",tipo:"TRAD",tna:10.6,comision:0,plazoMax:12,ltv:70,activa:true,marca:"FOTON",modelos:["AUMARK S3 615"],montoMax:47000000,origenStock:"RED",personaTipo:"PJ"},
+  {id:1025,banco:"GALICIA",nombre:"FOTON AUMARK 615 GALICIA 24m (solo PJ)",tipo:"TRAD",tna:17.9,comision:0,plazoMax:24,ltv:70,activa:true,marca:"FOTON",modelos:["AUMARK S3 615"],montoMax:47000000,origenStock:"RED",personaTipo:"PJ"},
+  {id:1026,banco:"GALICIA",nombre:"FOTON AUMARK 615 GALICIA 36m (solo PJ)",tipo:"TRAD",tna:24.3,comision:0,plazoMax:36,ltv:70,activa:true,marca:"FOTON",modelos:["AUMARK S3 615"],montoMax:47000000,origenStock:"RED",personaTipo:"PJ"},
+  {id:1027,banco:"SANTANDER",nombre:"FOTON LINEA AUMARK 916-1016 TASA FIJA 12m",tipo:"TRAD",tna:13.4,comision:10.0,plazoMax:12,ltv:70,activa:true,marca:"FOTON",modelos:["AUMARK S3 916","AUMARK S3 1016"],montoMax:51000000,origenStock:"RED"},
+  {id:1028,banco:"SANTANDER",nombre:"FOTON LINEA AUMARK 916-1016 TASA FIJA 24m",tipo:"TRAD",tna:23.5,comision:10.0,plazoMax:24,ltv:70,activa:true,marca:"FOTON",modelos:["AUMARK S3 916","AUMARK S3 1016"],montoMax:51000000,origenStock:"RED"},
+  {id:1029,banco:"SANTANDER",nombre:"FOTON LINEA AUMARK 916-1016 TASA FIJA 36m",tipo:"TRAD",tna:26.7,comision:10.0,plazoMax:36,ltv:70,activa:true,marca:"FOTON",modelos:["AUMARK S3 916","AUMARK S3 1016"],montoMax:51000000,origenStock:"RED"},
+  {id:1030,banco:"SANTANDER",nombre:"FOTON LINEA AUMARK 916-1016 UVA 12m",tipo:"UVA",tna:0.0,comision:10.0,plazoMax:12,ltv:70,activa:true,marca:"FOTON",modelos:["AUMARK S3 916","AUMARK S3 1016"],montoMax:51000000,origenStock:"RED"},
+  {id:1031,banco:"SANTANDER",nombre:"FOTON LINEA AUMARK 916-1016 UVA 18m",tipo:"UVA",tna:0.0,comision:10.0,plazoMax:18,ltv:70,activa:true,marca:"FOTON",modelos:["AUMARK S3 916","AUMARK S3 1016"],montoMax:51000000,origenStock:"RED"},
+  {id:1032,banco:"SANTANDER",nombre:"FOTON LINEA AUMARK 916-1016 UVA 24m",tipo:"UVA",tna:2.5,comision:10.0,plazoMax:24,ltv:70,activa:true,marca:"FOTON",modelos:["AUMARK S3 916","AUMARK S3 1016"],montoMax:51000000,origenStock:"RED"},
+  {id:1033,banco:"GALICIA",nombre:"FOTON LINEA AUMARK 916-1016 GALICIA 12m (solo PJ)",tipo:"TRAD",tna:10.6,comision:0,plazoMax:12,ltv:70,activa:true,marca:"FOTON",modelos:["AUMARK S3 916","AUMARK S3 1016"],montoMax:51000000,origenStock:"RED",personaTipo:"PJ"},
+  {id:1034,banco:"GALICIA",nombre:"FOTON LINEA AUMARK 916-1016 GALICIA 24m (solo PJ)",tipo:"TRAD",tna:17.9,comision:0,plazoMax:24,ltv:70,activa:true,marca:"FOTON",modelos:["AUMARK S3 916","AUMARK S3 1016"],montoMax:51000000,origenStock:"RED",personaTipo:"PJ"},
+  {id:1035,banco:"GALICIA",nombre:"FOTON LINEA AUMARK 916-1016 GALICIA 36m (solo PJ)",tipo:"TRAD",tna:24.3,comision:0,plazoMax:36,ltv:70,activa:true,marca:"FOTON",modelos:["AUMARK S3 916","AUMARK S3 1016"],montoMax:51000000,origenStock:"RED",personaTipo:"PJ"},
+  {id:1036,banco:"SANTANDER",nombre:"FOTON TM1 BOX/BOX REFRI TASA FIJA 12m",tipo:"TRAD",tna:9.1,comision:12.0,plazoMax:12,ltv:70,activa:true,marca:"FOTON",modelos:["TM1"],montoMax:25000000,origenStock:"RED"},
+  {id:1037,banco:"SANTANDER",nombre:"FOTON TM1 BOX/BOX REFRI TASA FIJA 18m",tipo:"TRAD",tna:16.5,comision:12.0,plazoMax:18,ltv:70,activa:true,marca:"FOTON",modelos:["TM1"],montoMax:25000000,origenStock:"RED"},
+  {id:1038,banco:"SANTANDER",nombre:"FOTON TM1 BOX/BOX REFRI TASA FIJA 24m",tipo:"TRAD",tna:21.1,comision:12.0,plazoMax:24,ltv:70,activa:true,marca:"FOTON",modelos:["TM1"],montoMax:25000000,origenStock:"RED"},
+  {id:1039,banco:"SANTANDER",nombre:"FOTON TM1 BOX/BOX REFRI UVA 12m",tipo:"UVA",tna:0.0,comision:6.65,plazoMax:12,ltv:70,activa:true,marca:"FOTON",modelos:["TM1"],montoMax:25000000,origenStock:"RED"},
+  {id:1040,banco:"SANTANDER",nombre:"FOTON TM1 BOX/BOX REFRI UVA 18m",tipo:"UVA",tna:0.0,comision:9.55,plazoMax:18,ltv:70,activa:true,marca:"FOTON",modelos:["TM1"],montoMax:25000000,origenStock:"RED"},
+  {id:1041,banco:"SANTANDER",nombre:"FOTON TM1 BOX/BOX REFRI UVA 24m",tipo:"UVA",tna:0.0,comision:12.3,plazoMax:24,ltv:70,activa:true,marca:"FOTON",modelos:["TM1"],montoMax:25000000,origenStock:"RED"},
+  {id:1042,banco:"GALICIA",nombre:"FOTON TM1 BOX/BOX REFRI GALICIA 12m (solo PJ)",tipo:"TRAD",tna:10.6,comision:0,plazoMax:12,ltv:70,activa:true,marca:"FOTON",modelos:["TM1"],montoMax:25000000,origenStock:"RED",personaTipo:"PJ"},
+  {id:1043,banco:"GALICIA",nombre:"FOTON TM1 BOX/BOX REFRI GALICIA 24m (solo PJ)",tipo:"TRAD",tna:17.9,comision:0,plazoMax:24,ltv:70,activa:true,marca:"FOTON",modelos:["TM1"],montoMax:25000000,origenStock:"RED",personaTipo:"PJ"},
+  {id:1044,banco:"GALICIA",nombre:"FOTON TM1 BOX/BOX REFRI GALICIA 36m (solo PJ)",tipo:"TRAD",tna:24.3,comision:0,plazoMax:36,ltv:70,activa:true,marca:"FOTON",modelos:["TM1"],montoMax:25000000,origenStock:"RED",personaTipo:"PJ"},
   // ── DFSK — Circular Junio 2026 · Banco Santander ─────────────────────────
   {id:920,banco:"SANTANDER",nombre:"DFSK E5 TASA FIJA 12m",tipo:"TRAD",tna:2.2,comision:9.5,plazoMax:12,ltv:80,activa:true,marca:"DFSK",modelos:null,montoMax:20000000},
   {id:921,banco:"SANTANDER",nombre:"DFSK GLORY/E5 UVA 12m",tipo:"UVA",tna:0.0,comision:4.0,plazoMax:12,ltv:80,activa:true,marca:"DFSK",modelos:null,montoMax:25000000},
@@ -2552,7 +2601,10 @@ function onSubtipo(){
 }
 function onMarca(){
   ['modelo','version','anno'].forEach(disEl);
-  const t=$$('tipo').value,ma=$$('marca').value; if(!ma)return;
+  const t=$$('tipo').value,ma=$$('marca').value;
+  const origenRow=$$('origenStockFotonRow');
+  if(origenRow) origenRow.style.display=(ma==='FOTON')?'':'none';
+  if(!ma)return;
   let ms;
   if(t==='mercado'){
     const sub=$$('subtipo').value;
@@ -4092,6 +4144,9 @@ function rCampMini(){
   const t=$$('tipo')?.value||'';
   const ma=($$('marca')?.value||'').toUpperCase();
   const mo=($$('modelo')?.value||'').toUpperCase();
+  const ver=($$('version')?.value||'').toUpperCase();
+  const origenStockSel=$$('origenStock')?.value||'RED';
+  const personaTipoSel=$$('personaTipo')?.value||'PF';
   const anno=parseInt($$('anno')?.value)||0;
   const act=camp.filter(c=>c.activa);
   const esUsado=t==='usado'||t==='mercado_usado';
@@ -4116,14 +4171,27 @@ function rCampMini(){
   } else {
     // 0KM: financiera exacta de la marca (PEUGEOT→PSA PEUGEOT, CITROEN→PSA CITROEN, RENAULT→MOBILIZE, etc.)
     // Filtrar solo campañas donde c.marca === marca elegida (coincidencia exacta)
-    const campsMarca=act.filter(c=>c.marca&&c.marca===ma&&!c.usados);
+    let campsMarca=act.filter(c=>c.marca&&c.marca===ma&&!c.usados);
+    // Origen de stock (solo aplica a campañas que declaren origenStock, ej. FOTON Red/Fábrica)
+    campsMarca=campsMarca.filter(c=>!c.origenStock||c.origenStock===origenStockSel);
+    // Persona Física/Jurídica (solo aplica a campañas que declaren personaTipo, ej. Galicia=PJ)
+    campsMarca=campsMarca.filter(c=>!c.personaTipo||c.personaTipo===personaTipoSel);
     if(mo&&campsMarca.length){
       // Filtrar por modelo si la campaña tiene lista de modelos específicos
       const especificas=campsMarca.filter(c=>{
         if(!c.modelos) return true; // sin restricción → aplica a toda la gama
         return c.modelos.some(m=>mo.includes(m.toUpperCase())||m.toUpperCase().includes(mo));
       });
-      deMarca=especificas.length?especificas:campsMarca;
+      let base=especificas.length?especificas:campsMarca;
+      // Filtrar por versión si la campaña además distingue por versión (ej. Tunland G7 vs V7-V9)
+      // Esto se aplica DESPUÉS del fallback de modelo, para no reintroducir campañas ambiguas.
+      if(ver){
+        base=base.filter(c=>!c.versiones||c.versiones.some(v=>ver.includes(v.toUpperCase())));
+      } else {
+        // Sin versión elegida todavía: no mostrar campañas que requieren distinguir versión
+        base=base.filter(c=>!c.versiones);
+      }
+      deMarca=base;
     } else {
       deMarca=campsMarca;
     }
