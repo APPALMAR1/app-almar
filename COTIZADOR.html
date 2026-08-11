@@ -1514,10 +1514,10 @@ const CAMP_VIGENCIAS={
   'ICBC':          {mes:'Mayo 2026',   fecha:'2026-05-01', pendiente:true},
   'BBVA':          {mes:'Mayo 2026',   fecha:'2026-05-01', pendiente:false},
   'SANTANDER':     {mes:'Junio 2026',  fecha:'2026-06-02', pendiente:false},
-  'PSA Finance':   {mes:'Junio 2026',  fecha:'2026-06-01', pendiente:false},
-  'GPAT':          {mes:'Junio 2026',  fecha:'2026-06-02', pendiente:false},
-  'FCA':           {mes:'Julio 2026',  fecha:'2026-07-01', pendiente:false},
-  'MOBILIZE':      {mes:'Julio 2026',  fecha:'2026-07-01', pendiente:false},
+  'PSA Finance':   {mes:'Junio 2026',  fecha:'2026-06-01', pendiente:true}, // circular 456.26 Agosto recibida — Peugeot completo y usados LTV/antigüedad pendientes de carga
+  'GPAT':          {mes:'Agosto 2026', fecha:'2026-08-01', pendiente:false}, // Circular N°28 verificada: tasas 0km sin cambios vs Junio
+  'FCA':           {mes:'Agosto 2026', fecha:'2026-08-01', pendiente:false}, // Circular 009.26: aportes UVA 30M y DAKOTA/RAMPAGE corregidos; Línea Tradicional 0km/Usados aún no cargada
+  'MOBILIZE':      {mes:'Mayo 2026',   fecha:'2026-05-15', pendiente:true}, // política MFS 01/08/2026 recibida — refresh completo pendiente
   'CREDICUOTAS':   {mes:'Mayo 2026',   fecha:'2026-05-01', pendiente:true},
 };
 // pendiente:true = señal del mes actual no recibida aún
@@ -1669,7 +1669,7 @@ const CAMP_D=[
   {id:408,banco:"FCA",nombre:"FIAT TASA 0 26M 18c",tipo:"TRAD",tna:0.0,comision:12.0,plazoMax:18,ltv:80,activa:true,marca:"FIAT",modelos:null},
   {id:409,banco:"FCA",nombre:"FIAT TASA FIJA 26M 24c",tipo:"TRAD",tna:5.9,comision:12.0,plazoMax:24,ltv:80,activa:true,marca:"FIAT",modelos:null},
   {id:410,banco:"FCA",nombre:"FIAT TASA FIJA 26M 36c",tipo:"TRAD",tna:16.9,comision:12.0,plazoMax:36,ltv:80,activa:true,marca:"FIAT",modelos:null},
-  {id:411,banco:"FCA",nombre:"UVA FIAT 30M TASA 0 12c",tipo:"TRAD",tna:0.0,comision:10.0,plazoMax:12,ltv:80,activa:true,marca:"FIAT",modelos:null},
+  {id:411,banco:"FCA",nombre:"UVA FIAT 30M TASA 0 12c",tipo:"TRAD",tna:0.0,comision:6.0,plazoMax:12,ltv:80,activa:true,marca:"FIAT",modelos:null}, // aporte bajó 10%→6% — Circular 009.26 Agosto/2026
   {id:412,banco:"FCA",nombre:"UVA FIAT 30M TASA 0 24c",tipo:"TRAD",tna:0.0,comision:10.0,plazoMax:24,ltv:80,activa:true,marca:"FIAT",modelos:null},
   {id:413,banco:"FCA",nombre:"UVA FIAT 30M TASA 0 36c",tipo:"TRAD",tna:0.0,comision:10.0,plazoMax:36,ltv:80,activa:true,marca:"FIAT",modelos:null},
   {id:414,banco:"FCA",nombre:"UVA FIAT 30M 48c",tipo:"TRAD",tna:5.9,comision:10.0,plazoMax:48,ltv:80,activa:true,marca:"FIAT",modelos:null},
@@ -1706,17 +1706,36 @@ const CAMP_D=[
   // COMPASS SPORT exclusivo
   {id:441,banco:"FCA",nombre:"JEEP COMPASS SPORT 24c",tipo:"TRAD",tna:0.0,comision:12.0,plazoMax:24,ltv:80,activa:true,marca:"JEEP",modelos:["COMPASS"],montoMax:24000000},
   // PROMO UVA JEEP & RAM ($30M)
-  {id:442,banco:"FCA",nombre:"JEEP PROMO UVA 12c",tipo:"UVA",tna:0.0,comision:10.0,plazoMax:12,ltv:80,activa:true,marca:"JEEP",modelos:null,montoMax:30000000},
+  {id:442,banco:"FCA",nombre:"JEEP PROMO UVA 12c",tipo:"UVA",tna:0.0,comision:6.0,plazoMax:12,ltv:80,activa:true,marca:"JEEP",modelos:null,montoMax:30000000}, // aporte bajó 10%→6% — Circular 009.26 Agosto/2026
   {id:443,banco:"FCA",nombre:"JEEP PROMO UVA 18c",tipo:"UVA",tna:0.0,comision:10.0,plazoMax:18,ltv:80,activa:true,marca:"JEEP",modelos:null,montoMax:30000000},
   {id:444,banco:"FCA",nombre:"JEEP PROMO UVA 24c",tipo:"UVA",tna:0.0,comision:10.0,plazoMax:24,ltv:80,activa:true,marca:"JEEP",modelos:null,montoMax:30000000},
   {id:445,banco:"FCA",nombre:"JEEP PROMO UVA 36c",tipo:"UVA",tna:0.0,comision:10.0,plazoMax:36,ltv:80,activa:true,marca:"JEEP",modelos:null,montoMax:30000000},
   {id:446,banco:"FCA",nombre:"JEEP PROMO UVA 48c",tipo:"UVA",tna:5.9,comision:10.0,plazoMax:48,ltv:80,activa:true,marca:"JEEP",modelos:null,montoMax:30000000},
   {id:447,banco:"FCA",nombre:"JEEP PROMO UVA 60c",tipo:"UVA",tna:9.9,comision:10.0,plazoMax:60,ltv:80,activa:true,marca:"JEEP",modelos:null,montoMax:30000000},
   // DAKOTA / RAMPAGE ($35M) — nueva campaña Julio
-  {id:448,banco:"FCA",nombre:"JEEP DAKOTA/RAMPAGE 12c",tipo:"TRAD",tna:0.0,comision:12.0,plazoMax:12,ltv:80,activa:true,marca:"JEEP",modelos:["DAKOTA","RAMPAGE"],montoMax:35000000},
-  {id:449,banco:"FCA",nombre:"JEEP DAKOTA/RAMPAGE 18c",tipo:"TRAD",tna:12.9,comision:12.0,plazoMax:18,ltv:80,activa:true,marca:"JEEP",modelos:["DAKOTA","RAMPAGE"],montoMax:35000000},
-  {id:450,banco:"FCA",nombre:"JEEP DAKOTA/RAMPAGE 24c",tipo:"TRAD",tna:20.7,comision:12.0,plazoMax:24,ltv:80,activa:true,marca:"JEEP",modelos:["DAKOTA","RAMPAGE"],montoMax:35000000},
-  {id:451,banco:"FCA",nombre:"JEEP DAKOTA/RAMPAGE 36c",tipo:"TRAD",tna:27.9,comision:12.0,plazoMax:36,ltv:80,activa:true,marca:"JEEP",modelos:["DAKOTA","RAMPAGE"],montoMax:35000000},
+  {id:448,banco:"FCA",nombre:"JEEP DAKOTA/RAMPAGE 12c",tipo:"TRAD",tna:0.0,comision:11.0,plazoMax:12,ltv:80,activa:true,marca:"JEEP",modelos:["DAKOTA","RAMPAGE"],montoMax:35000000}, // aporte bajó 12%→11% — Circular 009.26 Agosto/2026
+  {id:449,banco:"FCA",nombre:"JEEP DAKOTA/RAMPAGE 18c",tipo:"TRAD",tna:12.9,comision:11.0,plazoMax:18,ltv:80,activa:true,marca:"JEEP",modelos:["DAKOTA","RAMPAGE"],montoMax:35000000},
+  {id:450,banco:"FCA",nombre:"JEEP DAKOTA/RAMPAGE 24c",tipo:"TRAD",tna:20.7,comision:11.0,plazoMax:24,ltv:80,activa:true,marca:"JEEP",modelos:["DAKOTA","RAMPAGE"],montoMax:35000000},
+  {id:451,banco:"FCA",nombre:"JEEP DAKOTA/RAMPAGE 36c",tipo:"TRAD",tna:27.9,comision:11.0,plazoMax:36,ltv:80,activa:true,marca:"JEEP",modelos:["DAKOTA","RAMPAGE"],montoMax:35000000},
+  // ── NUEVO Agosto 2026: Prendario para cancelación de Plan de Ahorro (0km, solo clientes adjudicados) ──
+  {id:2001,banco:"FCA",nombre:"FIAT PdA UVA PLAN 12c",tipo:"UVA",tna:24.9,comision:0.0,plazoMax:12,ltv:80,activa:false,marca:"FIAT",modelos:null,montoMax:25000000,pda:true},
+  {id:2002,banco:"FCA",nombre:"FIAT PdA UVA PLAN 24c",tipo:"UVA",tna:24.9,comision:0.0,plazoMax:24,ltv:80,activa:false,marca:"FIAT",modelos:null,montoMax:25000000,pda:true},
+  {id:2003,banco:"FCA",nombre:"FIAT PdA UVA PLAN 36c",tipo:"UVA",tna:24.9,comision:0.0,plazoMax:36,ltv:80,activa:false,marca:"FIAT",modelos:null,montoMax:25000000,pda:true},
+  {id:2004,banco:"FCA",nombre:"FIAT PdA UVA PLAN 48c",tipo:"UVA",tna:24.9,comision:0.0,plazoMax:48,ltv:80,activa:false,marca:"FIAT",modelos:null,montoMax:25000000,pda:true},
+  {id:2005,banco:"FCA",nombre:"FIAT PdA UVA PLAN 60c",tipo:"UVA",tna:24.9,comision:0.0,plazoMax:60,ltv:80,activa:false,marca:"FIAT",modelos:null,montoMax:25000000,pda:true},
+  {id:2006,banco:"FCA",nombre:"FIAT PdA CUOTA FIJA 24c",tipo:"TRAD",tna:45.9,comision:0.0,plazoMax:24,ltv:80,activa:false,marca:"FIAT",modelos:null,montoMax:25000000,pda:true},
+  {id:2007,banco:"FCA",nombre:"FIAT PdA CUOTA FIJA 36c",tipo:"TRAD",tna:45.9,comision:0.0,plazoMax:36,ltv:80,activa:false,marca:"FIAT",modelos:null,montoMax:25000000,pda:true},
+  {id:2008,banco:"FCA",nombre:"FIAT PdA CUOTA FIJA 48c",tipo:"TRAD",tna:45.9,comision:0.0,plazoMax:48,ltv:80,activa:false,marca:"FIAT",modelos:null,montoMax:25000000,pda:true},
+  {id:2009,banco:"FCA",nombre:"FIAT PdA CUOTA FIJA 60c",tipo:"TRAD",tna:45.9,comision:0.0,plazoMax:60,ltv:80,activa:false,marca:"FIAT",modelos:null,montoMax:25000000,pda:true},
+  {id:2011,banco:"FCA",nombre:"JEEP PdA UVA PLAN 12c",tipo:"UVA",tna:24.9,comision:0.0,plazoMax:12,ltv:80,activa:false,marca:"JEEP",modelos:null,montoMax:25000000,pda:true},
+  {id:2012,banco:"FCA",nombre:"JEEP PdA UVA PLAN 24c",tipo:"UVA",tna:24.9,comision:0.0,plazoMax:24,ltv:80,activa:false,marca:"JEEP",modelos:null,montoMax:25000000,pda:true},
+  {id:2013,banco:"FCA",nombre:"JEEP PdA UVA PLAN 36c",tipo:"UVA",tna:24.9,comision:0.0,plazoMax:36,ltv:80,activa:false,marca:"JEEP",modelos:null,montoMax:25000000,pda:true},
+  {id:2014,banco:"FCA",nombre:"JEEP PdA UVA PLAN 48c",tipo:"UVA",tna:24.9,comision:0.0,plazoMax:48,ltv:80,activa:false,marca:"JEEP",modelos:null,montoMax:25000000,pda:true},
+  {id:2015,banco:"FCA",nombre:"JEEP PdA UVA PLAN 60c",tipo:"UVA",tna:24.9,comision:0.0,plazoMax:60,ltv:80,activa:false,marca:"JEEP",modelos:null,montoMax:25000000,pda:true},
+  {id:2016,banco:"FCA",nombre:"JEEP PdA CUOTA FIJA 24c",tipo:"TRAD",tna:45.9,comision:0.0,plazoMax:24,ltv:80,activa:false,marca:"JEEP",modelos:null,montoMax:25000000,pda:true},
+  {id:2017,banco:"FCA",nombre:"JEEP PdA CUOTA FIJA 36c",tipo:"TRAD",tna:45.9,comision:0.0,plazoMax:36,ltv:80,activa:false,marca:"JEEP",modelos:null,montoMax:25000000,pda:true},
+  {id:2018,banco:"FCA",nombre:"JEEP PdA CUOTA FIJA 48c",tipo:"TRAD",tna:45.9,comision:0.0,plazoMax:48,ltv:80,activa:false,marca:"JEEP",modelos:null,montoMax:25000000,pda:true},
+  {id:2019,banco:"FCA",nombre:"JEEP PdA CUOTA FIJA 60c",tipo:"TRAD",tna:45.9,comision:0.0,plazoMax:60,ltv:80,activa:false,marca:"JEEP",modelos:null,montoMax:25000000,pda:true},
 
   // PSA Finance — Peugeot/Citroën 0km (Abril 2026)
   {id:500,banco:"PSA Finance",nombre:"TASA EXPRESS 12c",tipo:"TRAD",tna:0.0,comision:12.0,plazoMax:12,ltv:80,activa:true,marca:"PEUGEOT",modelos:null},
