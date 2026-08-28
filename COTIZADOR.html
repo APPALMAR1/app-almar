@@ -4509,8 +4509,12 @@ function sCredCamp(id){
   credCampId=id; credPlazo=null;
   const cv=camp.find(c=>c.id===id);
   let mt=parseFloat($$('pb1').value)||0;
-  // FLUJO INVERTIDO: si monto vacío y campaña tiene LTV+precio → calcular automáticamente
-  if(cv&&mt===0&&cv.tna<=20){
+  // FLUJO INVERTIDO: para campañas subsidiadas el monto SIEMPRE se recalcula por LTV
+  // propio de la línea elegida (no solo cuando el campo está vacío). Esto evita que
+  // un monto precargado por el botón del banco (que usa la 1ra línea del grupo,
+  // con su propio montoMax) quede "pegado" al elegir una línea distinta con un
+  // montoMax menor — el LTV/tope siempre debe corresponder a la campaña seleccionada.
+  if(cv&&cv.tna<=20){
     const _pr=parseFloat($$('pa1')?.value)||window._propPrecio||0;
     if(_pr>0){
       const _mLTV=Math.round(_pr*(cv.ltv/100));
